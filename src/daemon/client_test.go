@@ -16,7 +16,7 @@ import (
 func TestNewClient_DaemonNotRunning(t *testing.T) {
 	// Set up temp directories to avoid interfering with real daemon
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 
 	// No daemon running, should fail
@@ -28,7 +28,9 @@ func TestNewClient_DaemonNotRunning(t *testing.T) {
 func TestNewClient_DaemonRunning(t *testing.T) {
 	// Set up temp directories
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
+	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
+
 	// Start daemon
 	d, err := New(createTestConfig(t))
 	require.NoError(t, err)
@@ -56,7 +58,7 @@ func TestNewClient_DaemonRunning(t *testing.T) {
 func TestConnectOrStart(t *testing.T) {
 	// Set up temp directories
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 
 	// Define a starter function that actually starts a daemon in this process
@@ -70,13 +72,7 @@ func TestConnectOrStart(t *testing.T) {
 			_ = d.Start()
 		}()
 		// Give it a tiny bit of time to start listening before the retrying NewClient hits
-		for range 50 {
-			if client, err := NewClient(); err == nil {
-				client.Close()
-				return nil
-			}
-			time.Sleep(10 * time.Millisecond)
-		}
+		time.Sleep(10 * time.Millisecond)
 		return nil
 	}
 
@@ -96,7 +92,7 @@ func TestConnectOrStart(t *testing.T) {
 
 func TestConnectOrStart_StartFails(t *testing.T) {
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 
 	startFunc := func() error {
@@ -112,7 +108,7 @@ func TestConnectOrStart_StartFails(t *testing.T) {
 func TestClient_RenderPrompt(t *testing.T) {
 	// Set up temp directories
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 	t.Setenv("POSH_SESSION_ID", "test-session-123")
 
@@ -150,7 +146,7 @@ func TestClient_RenderPrompt(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err = client.RenderPrompt(ctx, flags, 0, "", nil, func(resp *ipc.PromptResponse) bool {
+	err = client.RenderPrompt(ctx, flags, 0, "", nil, false, func(resp *ipc.PromptResponse) bool {
 		responses = append(responses, resp)
 		return true
 	})
@@ -168,7 +164,7 @@ func TestClient_RenderPrompt(t *testing.T) {
 func TestClient_RenderPromptSync(t *testing.T) {
 	// Set up temp directories
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 	t.Setenv("POSH_SESSION_ID", "test-session-sync")
 
@@ -205,7 +201,7 @@ func TestClient_RenderPromptSync(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	resp, err := client.RenderPromptSync(ctx, flags, 0, "", nil)
+	resp, err := client.RenderPromptSync(ctx, flags, 0, "", nil, false)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
@@ -216,7 +212,7 @@ func TestClient_RenderPromptSync(t *testing.T) {
 func TestClient_CallbackStopsOnFalse(t *testing.T) {
 	// Set up temp directories
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 
 	configPath := createTestConfig(t)
@@ -253,7 +249,7 @@ func TestClient_CallbackStopsOnFalse(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err = client.RenderPrompt(ctx, flags, 0, "", nil, func(_ *ipc.PromptResponse) bool {
+	err = client.RenderPrompt(ctx, flags, 0, "", nil, false, func(_ *ipc.PromptResponse) bool {
 		callCount++
 		return false // Stop after first response
 	})
@@ -265,7 +261,7 @@ func TestClient_CallbackStopsOnFalse(t *testing.T) {
 func TestIsRunning(t *testing.T) {
 	// Set up temp directories
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 
 	// No daemon running
@@ -360,7 +356,7 @@ func TestExtractPrompts(t *testing.T) {
 func TestGetSessionID(t *testing.T) {
 	// Set up temp directories
 	tmpDir := t.TempDir()
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 
 	// Test with environment variable set
 	t.Setenv("POSH_SESSION_ID", "env-session-id")

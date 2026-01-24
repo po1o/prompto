@@ -69,3 +69,66 @@ func TestFeatures(t *testing.T) {
 		assert.Equal(t, tc.Expected, got, tc.Case)
 	}
 }
+
+func TestVimFeatures(t *testing.T) {
+	cases := []struct {
+		Case        string
+		VimEnabled  bool
+		CursorShape bool
+		ExpVimMode  bool
+		ExpCursor   bool
+	}{
+		{
+			Case:       "No vim config",
+			VimEnabled: false,
+			ExpVimMode: false,
+			ExpCursor:  false,
+		},
+		{
+			Case:       "Vim enabled only",
+			VimEnabled: true,
+			ExpVimMode: true,
+			ExpCursor:  false,
+		},
+		{
+			Case:        "Cursor shape implies vim mode",
+			VimEnabled:  false,
+			CursorShape: true,
+			ExpVimMode:  true,
+			ExpCursor:   true,
+		},
+		{
+			Case:        "Both enabled",
+			VimEnabled:  true,
+			CursorShape: true,
+			ExpVimMode:  true,
+			ExpCursor:   true,
+		},
+	}
+
+	for _, tc := range cases {
+		env := &mock.Environment{}
+		env.On("Shell").Return(shell.ZSH)
+
+		var vim *VimConfig
+		if tc.VimEnabled || tc.CursorShape {
+			vim = &VimConfig{
+				Enabled:     tc.VimEnabled,
+				CursorShape: tc.CursorShape,
+			}
+		}
+
+		cfg := &Config{
+			Upgrade: &upgrade.Config{},
+			Vim:     vim,
+		}
+
+		got := cfg.Features(env, false)
+
+		hasVimMode := got&shell.VimMode != 0
+		hasCursor := got&shell.VimCursorShape != 0
+
+		assert.Equal(t, tc.ExpVimMode, hasVimMode, tc.Case+" - VimMode")
+		assert.Equal(t, tc.ExpCursor, hasCursor, tc.Case+" - CursorShape")
+	}
+}

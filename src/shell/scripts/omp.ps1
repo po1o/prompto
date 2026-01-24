@@ -236,6 +236,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
             "--stack-count=$stackCount"
             "--terminal-width=$terminalWidth"
             "--job-count=$script:JobCount"
+            if ($script:VimMode) { "--vim-mode=$(Get-VimMode)" }
             if ($Arguments) { $Arguments }
         )
     }
@@ -451,6 +452,102 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
     $script:DaemonProcess = $null
     $script:DaemonEventJob = $null
 
+    # Vim mode variables
+    $script:VimMode = $false
+    $script:VimModeRepaint = $false
+    $script:CursorShape = $false
+
+    # Get current vim mode for segment template
+    function Get-VimMode {
+        try {
+            $mode = [Microsoft.PowerShell.PSConsoleReadLine]::GetVIMode()
+            switch ($mode) {
+                ([Microsoft.PowerShell.ViMode]::Insert) { return "insert" }
+                ([Microsoft.PowerShell.ViMode]::Command) { return "normal" }
+                default { return "insert" }
+            }
+        }
+        catch {
+            return "insert"
+        }
+    }
+
+    # Check if terminal handles cursor natively (Ghostty, Kitty)
+    function Test-ShouldChangeCursor {
+        if ($env:GHOSTTY_RESOURCES_DIR) { return $false }
+        if ($env:KITTY_WINDOW_ID) { return $false }
+        return $true
+    }
+
+    function Set-VimModeCursor {
+        param([string]$Mode)
+        if (-not $script:CursorShape -or -not (Test-ShouldChangeCursor)) {
+            return
+        }
+        switch ($Mode) {
+            "Command" { [Console]::Write("`e[2 q") }  # Steady block for normal mode
+            "Insert" { [Console]::Write("`e[6 q") }   # Steady beam for insert mode
+        }
+    }
+
+    function Enable-PoshVimMode {
+        if ($script:ConstrainedLanguageMode) {
+            return
+        }
+
+        if ((Get-PSReadLineOption).EditMode -ne "Vi") {
+            return
+        }
+
+        $script:VimMode = $true
+
+        # Escape key -> Command mode
+        Set-PSReadLineKeyHandler -Key Escape -ViMode Insert -BriefDescription 'OhMyPoshViEscapeHandler' -ScriptBlock {
+            $script:VimModeRepaint = $true
+            Set-VimModeCursor "Command"
+            [Microsoft.PowerShell.PSConsoleReadLine]::ViCommandMode()
+            if ($script:DaemonMode) {
+                try {
+                    $previousOutputEncoding = [Console]::OutputEncoding
+                    [Console]::OutputEncoding = [Text.Encoding]::UTF8
+                    [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+                }
+                catch {}
+                finally {
+                    [Console]::OutputEncoding = $previousOutputEncoding
+                }
+            }
+        }
+
+        # Insert keys -> Insert mode
+        foreach ($key in @('i', 'I', 'a', 'A', 'o', 'O')) {
+            Set-PSReadLineKeyHandler -Key $key -ViMode Command -BriefDescription "OhMyPoshVi${key}Handler" -ScriptBlock {
+                param($key)
+                $script:VimModeRepaint = $true
+                Set-VimModeCursor "Insert"
+                switch ($key.KeyChar) {
+                    'i' { [Microsoft.PowerShell.PSConsoleReadLine]::ViInsertMode() }
+                    'I' { [Microsoft.PowerShell.PSConsoleReadLine]::ViInsertAtBegining() }
+                    'a' { [Microsoft.PowerShell.PSConsoleReadLine]::ViInsertWithAppend() }
+                    'A' { [Microsoft.PowerShell.PSConsoleReadLine]::ViInsertAtEnd() }
+                    'o' { [Microsoft.PowerShell.PSConsoleReadLine]::ViAppendLine() }
+                    'O' { [Microsoft.PowerShell.PSConsoleReadLine]::ViInsertLine() }
+                }
+                if ($script:DaemonMode) {
+                    try {
+                        $previousOutputEncoding = [Console]::OutputEncoding
+                        [Console]::OutputEncoding = [Text.Encoding]::UTF8
+                        [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+                    }
+                    catch {}
+                    finally {
+                        [Console]::OutputEncoding = $previousOutputEncoding
+                    }
+                }
+            }.GetNewClosure()
+        }
+    }
+
     function Enable-PoshDaemon {
         if ($script:ConstrainedLanguageMode) {
             return
@@ -479,10 +576,22 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         $stackCount = Get-PoshStackCount
         $terminalWidth = Get-TerminalWidth
 
+        # Include --repaint for vim mode toggles (soft cancel, reuse computations)
+        $repaintFlag = ""
+        if ($script:VimModeRepaint) {
+            $repaintFlag = " --repaint"
+            $script:VimModeRepaint = $false
+        }
+
+        $vimModeArg = ""
+        if ($script:VimMode) {
+            $vimModeArg = " --vim-mode=$(Get-VimMode)"
+        }
+
         $script:DaemonProcess = New-Object System.Diagnostics.Process
         $startInfo = $script:DaemonProcess.StartInfo
         $startInfo.FileName = $global:_ompExecutable
-        $startInfo.Arguments = "render --config=`"$global:_ompConfig`" --shell=$script:ShellName --shell-version=$script:PSVersion --pid=$PID --status=$script:ErrorCode --no-status=$script:NoExitCode --execution-time=$script:ExecutionTime --pswd=`"$nonFSWD`" --stack-count=$stackCount --terminal-width=$terminalWidth --job-count=$script:JobCount"
+        $startInfo.Arguments = "render --config=`"$global:_ompConfig`" --shell=$script:ShellName --shell-version=$script:PSVersion --pid=$PID --status=$script:ErrorCode --no-status=$script:NoExitCode --execution-time=$script:ExecutionTime --pswd=`"$nonFSWD`" --stack-count=$stackCount --terminal-width=$terminalWidth --job-count=$script:JobCount$vimModeArg$repaintFlag"
         $startInfo.StandardOutputEncoding = [System.Text.Encoding]::UTF8
         $startInfo.RedirectStandardOutput = $true
         $startInfo.RedirectStandardError = $true
@@ -612,6 +721,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         "Enable-PoshTransientPrompt"
         "Enable-PoshLineError"
         "Enable-PoshDaemon"
+        "Enable-PoshVimMode"
         "Set-TransientPrompt"
         "prompt"
     )

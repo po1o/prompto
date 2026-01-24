@@ -3,7 +3,6 @@ package daemon
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"sync"
@@ -11,9 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-
 	"github.com/jandedobbeleer/oh-my-posh/src/daemon/ipc"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +24,7 @@ import (
 // start → client connect → render request → graceful shutdown.
 func TestIntegration_DaemonLifecycle(t *testing.T) {
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 	// Send render request
 	configPath := createTestConfig(t)
@@ -60,7 +58,8 @@ func TestIntegration_DaemonLifecycle(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	resp, _ := client.RenderPromptSync(ctx, flags, 0, "", nil)
+	resp, err := client.RenderPromptSync(ctx, flags, 0, "", nil, false)
+	require.NoError(t, err)
 	require.NotNil(t, resp)
 
 	assert.Equal(t, "complete", resp.Type)
@@ -81,7 +80,7 @@ func TestIntegration_DaemonLifecycle(t *testing.T) {
 // session IDs rendering simultaneously. Verifies thread safety and session isolation.
 func TestIntegration_MultipleConcurrentSessions(t *testing.T) {
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 
 	// Start daemon
@@ -185,7 +184,7 @@ func TestIntegration_MultipleConcurrentSessions(t *testing.T) {
 // session cancels any in-progress render.
 func TestIntegration_SessionCancellation(t *testing.T) {
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 
 	// Start daemon
@@ -251,7 +250,7 @@ func TestIntegration_SessionCancellation(t *testing.T) {
 // a stale lock file left by a crashed process.
 func TestIntegration_StaleLockRecovery(t *testing.T) {
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 
 	// Create lock file with a non-existent PID
@@ -262,7 +261,7 @@ func TestIntegration_StaleLockRecovery(t *testing.T) {
 
 	// Write a fake PID that definitely doesn't exist
 	// PID 99999 is unlikely to be a real process
-	err = os.WriteFile(lockPath, []byte("99999\n"), 0600)
+	err = os.WriteFile(lockPath, []byte("99999\nfake_config.json\n"), 0600)
 	require.NoError(t, err)
 
 	// Daemon should detect stale lock and recover
@@ -294,7 +293,7 @@ func TestIntegration_StaleLockRecovery(t *testing.T) {
 // even if a stale socket file exists from a previous crash.
 func TestIntegration_SocketCleanupAfterCrash(t *testing.T) {
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 
 	// Start first daemon
@@ -349,7 +348,7 @@ func TestIntegration_SocketCleanupAfterCrash(t *testing.T) {
 // complete gracefully when shutdown is initiated.
 func TestIntegration_GracefulShutdownDuringRender(t *testing.T) {
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 
 	// Start daemon
@@ -375,21 +374,14 @@ func TestIntegration_GracefulShutdownDuringRender(t *testing.T) {
 	var wg sync.WaitGroup
 	clientsDone := make(chan struct{})
 
-	for i := range numClients {
-		wg.Add(1)
-		go func(_ int) {
-			defer wg.Done()
-
+	for range numClients {
+		wg.Go(func() {
 			client, err := NewClient()
 			if err != nil {
 				// Connection might fail during shutdown, that's expected
 				return
 			}
-			defer func() {
-				if client != nil {
-					_ = client.Close()
-				}
-			}()
+			defer client.Close()
 
 			// Start a render request
 			configPath := createTestConfig(t)
@@ -404,8 +396,8 @@ func TestIntegration_GracefulShutdownDuringRender(t *testing.T) {
 			defer cancel()
 
 			// RenderPromptSync will either complete or fail gracefully
-			_, _ = client.RenderPromptSync(ctx, flags, 0, "", nil)
-		}(i)
+			_, _ = client.RenderPromptSync(ctx, flags, 0, "", nil, false)
+		})
 	}
 
 	// Wait a tiny bit for requests to be in-flight, then shutdown
@@ -444,7 +436,7 @@ func TestIntegration_HighConcurrencyStress(t *testing.T) {
 	}
 
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 
 	// Start daemon
@@ -489,8 +481,9 @@ func TestIntegration_HighConcurrencyStress(t *testing.T) {
 			defer cancel()
 
 			sessionID := fmt.Sprintf("stress-session-%d", reqNum)
-			resp, err := client.RenderPromptSync(ctx, flags, 0, sessionID, nil)
+			resp, err := client.RenderPromptSync(ctx, flags, 0, sessionID, nil, false)
 			if err != nil {
+				t.Logf("request %d failed: %v", reqNum, err)
 				errorCount.Add(1)
 				return
 			}
@@ -504,16 +497,19 @@ func TestIntegration_HighConcurrencyStress(t *testing.T) {
 	wg.Wait()
 
 	success := int(successCount.Load())
+	errors := int(errorCount.Load())
+
+	t.Logf("stress test: %d successful, %d errors out of %d requests", success, errors, numRequests)
 
 	// Most requests should succeed
-	assert.Greater(t, success, numRequests*8/10, "at least 80% of requests should succeed")
+	assert.Greater(t, success, numRequests*8/10, "at least 80%% of requests should succeed")
 }
 
 // TestIntegration_ClientReconnectAfterDaemonRestart tests that clients can
 // reconnect after the daemon is restarted.
 func TestIntegration_ClientReconnectAfterDaemonRestart(t *testing.T) {
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 	t.Setenv("POSH_SESSION_ID", "reconnect-test")
 
@@ -540,7 +536,7 @@ func TestIntegration_ClientReconnectAfterDaemonRestart(t *testing.T) {
 	}
 
 	ctx1, cancel1 := context.WithTimeout(context.Background(), 5*time.Second)
-	resp1, err := client1.RenderPromptSync(ctx1, flags, 0, "", nil)
+	resp1, err := client1.RenderPromptSync(ctx1, flags, 0, "", nil, false)
 	cancel1()
 	require.NoError(t, err)
 	assert.Equal(t, "complete", resp1.Type)
@@ -576,7 +572,7 @@ func TestIntegration_ClientReconnectAfterDaemonRestart(t *testing.T) {
 
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel2()
-	resp2, err := client2.RenderPromptSync(ctx2, flags, 0, "", nil)
+	resp2, err := client2.RenderPromptSync(ctx2, flags, 0, "", nil, false)
 	require.NoError(t, err)
 	assert.Equal(t, "complete", resp2.Type)
 }
@@ -584,23 +580,18 @@ func TestIntegration_ClientReconnectAfterDaemonRestart(t *testing.T) {
 // TestIntegration_ProcessExitDetection tests that sessions are automatically
 // unregistered when their associated process exits.
 func TestIntegration_ProcessExitDetection(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test in short mode")
-	}
-
-	// Set up temp directory as state path
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
+	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 
-	configPath := createTestConfig(t)
-	d, err := New(configPath)
+	// Start daemon
+	d, err := New(createTestConfig(t))
 	require.NoError(t, err)
 
 	go func() {
 		_ = d.Start()
 	}()
 
-	// Wait for daemon to start
 	time.Sleep(100 * time.Millisecond)
 
 	defer func() {
@@ -608,18 +599,15 @@ func TestIntegration_ProcessExitDetection(t *testing.T) {
 		<-d.Done()
 	}()
 
-	// Start a subprocess that will exit (use helper process)
-	cmd := exec.CommandContext(context.Background(), os.Args[0], "-test.run=TestHelperProcess")
-	cmd.Env = append(os.Environ(), "GO_WANT_HELPER_PROCESS=1")
-	stdin, err := cmd.StdinPipe()
-	require.NoError(t, err)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Start a subprocess that will exit
+	cmd := exec.CommandContext(ctx, "sleep", "0.1")
 	err = cmd.Start()
 	require.NoError(t, err)
 
 	pid := cmd.Process.Pid
-
-	// Verify helper process is running
-	require.True(t, IsProcessRunning(pid), "helper process should be running")
 
 	// Register the session via gRPC request with PID
 	conn, err := ipc.Dial()
@@ -627,9 +615,6 @@ func TestIntegration_ProcessExitDetection(t *testing.T) {
 	defer conn.Close()
 
 	client := ipc.NewDaemonServiceClient(conn)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 
 	stream, err := client.RenderPrompt(ctx, &ipc.PromptRequest{
 		Version:   ipc.ProtocolVersion,
@@ -644,33 +629,68 @@ func TestIntegration_ProcessExitDetection(t *testing.T) {
 	_, err = stream.Recv()
 	require.NoError(t, err)
 
-	// Verify session is registered (use Eventually to avoid races)
-	assert.Eventually(t, func() bool {
+	// Wait for session to be registered (may take a moment after Recv)
+	require.Eventually(t, func() bool {
 		return d.sessions.Count() >= 1
-	}, 10*time.Second, 500*time.Millisecond, "session should be registered")
+	}, 2*time.Second, 10*time.Millisecond, "session should be registered")
 
 	initialCount := d.sessions.Count()
 
-	// Trigger exit by closing stdin
-	stdin.Close()
+	// Wait for subprocess to exit
 	err = cmd.Wait()
 	require.NoError(t, err)
 
-	// Session should be unregistered (use Eventually to avoid races)
-	assert.Eventually(t, func() bool {
-		return d.sessions.Count() < initialCount
-	}, 10*time.Second, 10*time.Millisecond, "session count should decrease after process exit")
+	// Give the process watcher time to detect the exit
+	time.Sleep(500 * time.Millisecond)
+
+	// Session should be unregistered
+	finalCount := d.sessions.Count()
+	assert.Less(t, finalCount, initialCount, "session count should decrease after process exit")
 }
 
-// TestHelperProcess is a helper for TestIntegration_ProcessExitDetection.
-// It acts as a long-running process that we can control via stdin.
-func TestHelperProcess(_ *testing.T) {
-	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
-		return
-	}
-	// Run until stdin is closed
-	_, _ = io.Copy(io.Discard, os.Stdin)
-	os.Exit(0)
+// TestIntegration_VersionMismatchHandling tests that clients with mismatched
+// protocol versions receive appropriate errors.
+func TestIntegration_VersionMismatchHandling(t *testing.T) {
+	tmpDir := testSocketDir(t)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
+	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
+
+	// Start daemon
+	d, err := New(createTestConfig(t))
+	require.NoError(t, err)
+
+	go func() {
+		_ = d.Start()
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	defer func() {
+		d.shutdown()
+		<-d.Done()
+	}()
+
+	// Connect with wrong protocol version
+	conn, err := ipc.Dial()
+	require.NoError(t, err)
+	defer conn.Close()
+
+	client := ipc.NewDaemonServiceClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	stream, err := client.RenderPrompt(ctx, &ipc.PromptRequest{
+		Version:   999, // Invalid version
+		SessionId: "version-test",
+		RequestId: "request-1",
+	})
+	require.NoError(t, err)
+
+	// Should receive error when trying to get response
+	_, err = stream.Recv()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "version mismatch")
 }
 
 // TestIntegration_CacheIsolation tests that cache entries are isolated per session.
@@ -713,7 +733,7 @@ func TestIntegration_CacheIsolation(t *testing.T) {
 // from the same session in sequence.
 func TestIntegration_MultipleRequestsSameSession(t *testing.T) {
 	tmpDir := testSocketDir(t)
-	setTestEnv(t, tmpDir)
+	t.Setenv("XDG_STATE_HOME", tmpDir)
 	t.Setenv("XDG_RUNTIME_DIR", tmpDir)
 	t.Setenv("POSH_SESSION_ID", "multi-request-session")
 
@@ -748,7 +768,7 @@ func TestIntegration_MultipleRequestsSameSession(t *testing.T) {
 	for i := range 5 {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
-		resp, err := client.RenderPromptSync(ctx, flags, 0, "", nil)
+		resp, err := client.RenderPromptSync(ctx, flags, 0, "", nil, false)
 		cancel()
 
 		require.NoError(t, err, "request %d should succeed", i)

@@ -72,6 +72,11 @@ function _omp_get_primary() {
     shopt -u promptvars
     trap 'shopt -s promptvars' RETURN
 
+    local vim_mode_arg=""
+    if [[ $_omp_vim_mode == 1 ]]; then
+        vim_mode_arg="--vim-mode=$(_omp_get_vim_mode)"
+    fi
+
     local prompt
     if shopt -oq posix; then
         # Disable in POSIX mode.
@@ -87,7 +92,8 @@ function _omp_get_primary() {
                 --no-status="$_omp_no_status" \
                 --execution-time="$_omp_execution_time" \
                 --stack-count="$_omp_stack_count" \
-                --terminal-width="${COLUMNS-0}" |
+                --terminal-width="${COLUMNS-0}" \
+                $vim_mode_arg |
                 tr -d '\0'
         )
     fi
@@ -169,6 +175,54 @@ _omp_daemon_mode=0
 _omp_config=::CONFIG::
 _omp_transient_prompt=''
 
+# Vim mode variables
+_omp_vim_mode=0
+_omp_vim_mode_repaint=0
+_omp_cursor_shape=0
+
+# Get current vim mode for segment template
+function _omp_get_vim_mode() {
+    if [[ -n "$BLE_VERSION" ]]; then
+        case "$_ble_decode_keymap" in
+            vi_nmap) echo "normal" ;;
+            vi_imap) echo "insert" ;;
+            vi_xmap|vi_smap) echo "visual" ;;
+            vi_omap) echo "operator" ;;
+            vi_cmap) echo "command" ;;
+            *) echo "insert" ;;
+        esac
+    else
+        echo "insert"
+    fi
+}
+
+# Check if terminal handles cursor natively (Ghostty, Kitty)
+function _omp_should_change_cursor() {
+    [[ -n "$GHOSTTY_RESOURCES_DIR" ]] && return 1
+    [[ -n "$KITTY_WINDOW_ID" ]] && return 1
+    return 0
+}
+
+# Vim mode change handler for ble.sh
+function _omp_ble_keymap_change() {
+    # Change cursor shape if enabled and terminal doesn't handle it natively
+    if [[ "$_omp_cursor_shape" == "1" ]] && _omp_should_change_cursor; then
+        case "$1" in
+            vi_nmap|vi_xmap|vi_omap)
+                printf '\e[2 q'  # Steady block for normal/visual mode
+                ;;
+            vi_imap)
+                printf '\e[6 q'  # Steady beam for insert mode
+                ;;
+        esac
+    fi
+
+    # In daemon mode, trigger async repaint with new vim mode
+    if [[ $_omp_daemon_mode == 1 ]]; then
+        _omp_daemon_render --repaint
+    fi
+}
+
 function _omp_daemon_parse_line() {
     local line="$1"
     local type="${line%%:*}"
@@ -198,6 +252,36 @@ function _omp_daemon_job() {
     ble/textarea#render
 }
 
+# Async daemon render - used by both prompt hook and vim mode changes
+# Pass --repaint for vim mode toggles (soft cancel, reuse computations)
+function _omp_daemon_render() {
+    local repaint_flag="$1"
+
+    local vim_mode_arg=""
+    if [[ $_omp_vim_mode == 1 ]]; then
+        vim_mode_arg="--vim-mode=$(_omp_get_vim_mode)"
+    fi
+
+    # Run the render command in the background using ble.sh job system
+    ble/util/job.start \
+        "$_omp_executable" render \
+            --config=$_omp_config \
+            --shell=bash \
+            --shell-version=$BASH_VERSION \
+            --pwd=$PWD \
+            --pid=$$ \
+            --status=$_omp_status \
+            --pipestatus=${_omp_pipestatus[*]} \
+            --no-status=$_omp_no_status \
+            --execution-time=$_omp_execution_time \
+            --stack-count=$_omp_stack_count \
+            --terminal-width=${COLUMNS-0} \
+            --escape=false \
+            $vim_mode_arg \
+            $repaint_flag"
+        _omp_daemon_job
+}
+
 function _omp_daemon_hook() {
     _omp_status=$? _omp_pipestatus=("${PIPESTATUS[@]}")
 
@@ -222,22 +306,7 @@ function _omp_daemon_hook() {
     set_poshcontext
     _omp_set_cursor_position
 
-    # Run the render command in the background
-    ble/util/job.start \
-        "$_omp_executable" render \
-            --config=$_omp_config \
-            --shell=bash \
-            --shell-version=$BASH_VERSION \
-            --pwd=$PWD \
-            --pid=$$ \
-            --status=$_omp_status \
-            --pipestatus=${_omp_pipestatus[*]} \
-            --no-status=$_omp_no_status \
-            --execution-time=$_omp_execution_time \
-            --stack-count=$_omp_stack_count \
-            --terminal-width=${COLUMNS-0} \
-            --escape=false" 
-        _omp_daemon_job
+    _omp_daemon_render
 }
 
 function enable_poshdaemon() {
@@ -250,14 +319,31 @@ function enable_poshdaemon() {
     "$_omp_executable" daemon start --config="$_omp_config" --silent >/dev/null 2>&1 &
 
     _omp_daemon_mode=1
-    
+
     # Remove standard hook and add daemon hook using blehook if possible, or PROMPT_COMMAND
     blehook PROMPT_COMMAND-=_omp_hook
     blehook PROMPT_COMMAND+=_omp_daemon_hook
+
+    # Register vim mode keymap change hook
+    blehook keymap_vi_load+=_omp_register_vim_hooks
 
     # Transient prompt configuration
     if [[ -n "$_omp_transient_prompt" ]]; then
         bleopt prompt_ps1_transient=always
         bleopt prompt_ps1_final='$_omp_transient_prompt'
+    fi
+}
+
+function _omp_register_vim_hooks() {
+    # Hook into ble.sh keymap changes
+    ble/function#try ble/keymap:vi/invoke-hook keymap_enter _omp_ble_keymap_change
+}
+
+function enable_posh_vim_mode() {
+    _omp_vim_mode=1
+
+    # Register vim mode hooks if ble.sh is available
+    if [[ -n "$BLE_VERSION" ]]; then
+        blehook keymap_vi_load+=_omp_register_vim_hooks
     fi
 }

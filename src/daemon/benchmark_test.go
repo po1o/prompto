@@ -116,7 +116,7 @@ func benchmarkDaemonWithConfig(b *testing.B, configPath string) {
 
 	for b.Loop() {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		err := client.RenderPrompt(ctx, flags, 0, "", nil, func(_ *ipc.PromptResponse) bool {
+		err := client.RenderPrompt(ctx, flags, 0, "", nil, false, func(_ *ipc.PromptResponse) bool {
 			return false
 		})
 		cancel()

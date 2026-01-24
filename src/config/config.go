@@ -51,6 +51,12 @@ const (
 	Extend  Action = "extend"
 )
 
+// VimConfig holds vim mode settings
+type VimConfig struct {
+	Enabled     bool `json:"enabled,omitempty" toml:"enabled,omitempty" yaml:"enabled,omitempty"`
+	CursorShape bool `json:"cursor_shape,omitempty" toml:"cursor_shape,omitempty" yaml:"cursor_shape,omitempty"`
+}
+
 // Config holds all the theme for rendering the prompt
 type Config struct {
 	Palette                 color.Palette          `json:"palette,omitempty" toml:"palette,omitempty" yaml:"palette,omitempty"`
@@ -63,34 +69,35 @@ type Config struct {
 	ErrorLine               *Segment               `json:"error_line,omitempty" toml:"error_line,omitempty" yaml:"error_line,omitempty"`
 	Maps                    *maps.Config           `json:"maps,omitempty" toml:"maps,omitempty" yaml:"maps,omitempty"`
 	Upgrade                 *upgrade.Config        `json:"upgrade,omitempty" toml:"upgrade,omitempty" yaml:"upgrade,omitempty"`
-	Extends                 string                 `json:"extends,omitempty" toml:"extends,omitempty" yaml:"extends,omitempty"`
-	AccentColor             color.Ansi             `json:"accent_color,omitempty" toml:"accent_color,omitempty" yaml:"accent_color,omitempty"`
+	Vim                     *VimConfig             `json:"vim,omitempty" toml:"vim,omitempty" yaml:"vim,omitempty"`
+	RenderPendingIcon       string                 `json:"render_pending_icon,omitempty" toml:"render_pending_icon,omitempty" yaml:"render_pending_icon,omitempty"`
 	ConsoleTitleTemplate    string                 `json:"console_title_template,omitempty" toml:"console_title_template,omitempty" yaml:"console_title_template,omitempty"`
 	PWD                     string                 `json:"pwd,omitempty" toml:"pwd,omitempty" yaml:"pwd,omitempty"`
 	Source                  string                 `json:"-" toml:"-" yaml:"-"`
 	Format                  string                 `json:"-" toml:"-" yaml:"-"`
 	TerminalBackground      color.Ansi             `json:"terminal_background,omitempty" toml:"terminal_background,omitempty" yaml:"terminal_background,omitempty"`
 	ToolTipsAction          Action                 `json:"tooltips_action,omitempty" toml:"tooltips_action,omitempty" yaml:"tooltips_action,omitempty"`
-	RenderPendingIcon       string                 `json:"render_pending_icon,omitempty" toml:"render_pending_icon,omitempty" yaml:"render_pending_icon,omitempty"`
+	AccentColor             color.Ansi             `json:"accent_color,omitempty" toml:"accent_color,omitempty" yaml:"accent_color,omitempty"`
 	DaemonIdleTimeout       string                 `json:"daemon_idle_timeout,omitempty" toml:"daemon_idle_timeout,omitempty" yaml:"daemon_idle_timeout,omitempty"`
 	RenderPendingBackground color.Ansi             `json:"render_pending_background,omitempty" toml:"render_pending_background,omitempty" yaml:"render_pending_background,omitempty"`
-	Blocks                  []*Block               `json:"blocks,omitempty" toml:"blocks,omitempty" yaml:"blocks,omitempty"`
-	Tooltips                []*Segment             `json:"tooltips,omitempty" toml:"tooltips,omitempty" yaml:"tooltips,omitempty"`
-	Cycle                   color.Cycle            `json:"cycle,omitempty" toml:"cycle,omitempty" yaml:"cycle,omitempty"`
+	Extends                 string                 `json:"extends,omitempty" toml:"extends,omitempty" yaml:"extends,omitempty"`
 	FilePaths               []string               `json:"-" toml:"-" yaml:"-"`
+	Cycle                   color.Cycle            `json:"cycle,omitempty" toml:"cycle,omitempty" yaml:"cycle,omitempty"`
+	Tooltips                []*Segment             `json:"tooltips,omitempty" toml:"tooltips,omitempty" yaml:"tooltips,omitempty"`
 	ITermFeatures           terminal.ITermFeatures `json:"iterm_features,omitempty" toml:"iterm_features,omitempty" yaml:"iterm_features,omitempty"`
+	Blocks                  []*Block               `json:"blocks,omitempty" toml:"blocks,omitempty" yaml:"blocks,omitempty"`
 	hash                    uint64
 	Version                 int  `json:"version" toml:"version" yaml:"version"`
 	DaemonTimeout           int  `json:"daemon_timeout,omitempty" toml:"daemon_timeout,omitempty" yaml:"daemon_timeout,omitempty"`
-	Async                   bool `json:"async,omitempty" toml:"async,omitempty" yaml:"async,omitempty"`
-	extended                bool
 	PatchPwshBleed          bool `json:"patch_pwsh_bleed,omitempty" toml:"patch_pwsh_bleed,omitempty" yaml:"patch_pwsh_bleed,omitempty"`
+	extended                bool
 	AutoUpgrade             bool `json:"-" toml:"-" yaml:"-"`
 	EnableCursorPositioning bool `json:"enable_cursor_positioning,omitempty" toml:"enable_cursor_positioning,omitempty" yaml:"enable_cursor_positioning,omitempty"`
 	UpgradeNotice           bool `json:"-" toml:"-" yaml:"-"`
 	FinalSpace              bool `json:"final_space,omitempty" toml:"final_space,omitempty" yaml:"final_space,omitempty"`
 	ShellIntegration        bool `json:"shell_integration,omitempty" toml:"shell_integration,omitempty" yaml:"shell_integration,omitempty"`
 	MigrateGlyphs           bool `json:"-" toml:"-" yaml:"-"`
+	Async                   bool `json:"async,omitempty" toml:"async,omitempty" yaml:"async,omitempty"`
 }
 
 func (cfg *Config) MakeColors(env runtime.Environment) color.String {
@@ -201,6 +208,18 @@ func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features
 					feats |= shell.PoshGit
 				}
 			}
+		}
+	}
+
+	if cfg.Vim != nil {
+		// CursorShape implies Enabled - cursor changes require vim mode detection
+		if cfg.Vim.Enabled || cfg.Vim.CursorShape {
+			log.Debug("vim mode enabled")
+			feats |= shell.VimMode
+		}
+		if cfg.Vim.CursorShape {
+			log.Debug("vim cursor shape enabled")
+			feats |= shell.VimCursorShape
 		}
 	}
 

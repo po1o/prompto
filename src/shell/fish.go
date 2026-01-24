@@ -24,7 +24,11 @@ func (f Features) Fish() Code {
 	case Notice:
 		return unixNotice
 	case Daemon:
-		return unixDaemon
+		return enablePoshDaemon
+	case VimMode:
+		return "fish_vi_key_bindings; enable_posh_vim_mode"
+	case VimCursorShape:
+		return "set --global _omp_cursor_shape 1; _omp_should_change_cursor; and printf '\\e[6 q'"
 	case RPrompt, PoshGit, Azure, LineError, Jobs, CursorPositioning, Async:
 		fallthrough
 	default:

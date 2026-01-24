@@ -76,6 +76,7 @@ type Flags struct {
 	ShellVersion  string
 	PWD           string
 	AbsolutePWD   string
+	VimMode       string
 	ErrorCode     int
 	PromptCount   int
 	Column        int
@@ -96,6 +97,7 @@ type Flags struct {
 	IsPrimary     bool
 	Plain         bool
 	Force         bool
+	Daemon        bool
 }
 
 type CommandError struct {

@@ -50,7 +50,11 @@ bleopt prompt_ps1_final='$(
         --escape=false
 )'`
 	case Daemon:
-		return unixDaemon
+		return enablePoshDaemon
+	case VimMode:
+		return "set -o vi; enable_posh_vim_mode"
+	case VimCursorShape:
+		return "_omp_cursor_shape=1; _omp_should_change_cursor && printf '\\e[6 q'"
 	case PromptMark, PoshGit, Azure, LineError, Jobs, Tooltips, Async:
 		fallthrough
 	default:

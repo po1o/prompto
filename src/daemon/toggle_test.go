@@ -57,7 +57,7 @@ func TestDaemon_ToggleMismatch(t *testing.T) {
 	defer cancelA()
 
 	// We pass PID 12345. Client.RenderPrompt uses this PID for the session ID.
-	respA, err := clientA.RenderPromptSync(ctxA, flags, shellPID, "", nil)
+	respA, err := clientA.RenderPromptSync(ctxA, flags, shellPID, "", nil, false)
 	require.NoError(t, err)
 	require.Equal(t, "complete", respA.Type)
 

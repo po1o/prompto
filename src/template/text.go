@@ -234,6 +234,8 @@ func (f *fields) init(data any) {
 		}
 	case reflect.Ptr:
 		f.init(reflect.ValueOf(data).Elem().Interface())
+	default:
+		// do nothing
 	}
 }
 

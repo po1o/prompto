@@ -104,7 +104,7 @@ func TestEdgeCase_CorruptConfig(t *testing.T) {
 
 	// Request should succeed with default config that displays the error
 	// config.Load() falls back to default config on parse errors
-	resp, err := client.RenderPromptSync(ctx, flags, 0, "", nil)
+	resp, err := client.RenderPromptSync(ctx, flags, 0, "", nil, false)
 
 	// Should not error - daemon gracefully falls back to default config
 	require.NoError(t, err)

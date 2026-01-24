@@ -66,7 +66,7 @@ func cacheKey(sh string) string {
 }
 
 func cacheValue(env runtime.Environment) string {
-	return fmt.Sprintf("%d%s", env.Flags().ConfigHash, build.Version)
+	return fmt.Sprintf("%d%s%v", env.Flags().ConfigHash, build.Version, env.Flags().Daemon)
 }
 
 func InitScriptName(flags *runtime.Flags) string {

@@ -41,6 +41,7 @@ func FlagsToProto(f *runtime.Flags) *Flags {
 		IsPrimary:     f.IsPrimary,
 		Plain:         f.Plain,
 		Force:         f.Force,
+		VimMode:       f.VimMode,
 	}
 }
 
@@ -75,5 +76,6 @@ func ProtoToFlags(f *Flags) *runtime.Flags {
 		IsPrimary:     f.IsPrimary,
 		Plain:         f.Plain,
 		Force:         f.Force,
+		VimMode:       f.VimMode,
 	}
 }

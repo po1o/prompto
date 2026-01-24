@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,7 +18,7 @@ type LockFile struct {
 
 // NewLockFile creates and acquires an exclusive lock file.
 // Returns error if lock is already held by another process.
-func NewLockFile() (*LockFile, error) {
+func NewLockFile(configPath string) (*LockFile, error) {
 	stateDir := statePath()
 
 	// Ensure state directory exists
@@ -32,19 +33,19 @@ func NewLockFile() (*LockFile, error) {
 	if err != nil {
 		// Lock file exists - check if process is still alive
 		if os.IsExist(err) {
-			pid, pidErr := ReadPID(path)
+			pid, _, pidErr := ReadLockInfo(path)
 			if pidErr != nil {
 				// Can't read PID - remove stale lock and retry
 				log.Debug("failed to read PID from lock file, removing stale lock")
 				_ = os.Remove(path)
-				return NewLockFile()
+				return NewLockFile(configPath)
 			}
 
 			if !IsProcessRunning(pid) {
 				// Process is dead - remove stale lock and retry
 				log.Debugf("daemon process %d is not running, removing stale lock", pid)
 				_ = os.Remove(path)
-				return NewLockFile()
+				return NewLockFile(configPath)
 			}
 
 			return nil, fmt.Errorf("daemon already running with PID %d", pid)
@@ -57,8 +58,8 @@ func NewLockFile() (*LockFile, error) {
 		path: path,
 	}
 
-	// Write our PID to the lock file
-	if err := lf.WritePID(file); err != nil {
+	// Write our PID and configPath to the lock file
+	if err := lf.WriteLockInfo(file, configPath); err != nil {
 		_ = file.Close()
 		_ = os.Remove(path)
 		return nil, err
@@ -68,29 +69,48 @@ func NewLockFile() (*LockFile, error) {
 	return lf, nil
 }
 
-// WritePID writes the daemon PID to the lock file.
-func (lf *LockFile) WritePID(file *os.File) error {
-	_, err := fmt.Fprintf(file, "%d\n", os.Getpid())
+// WriteLockInfo writes the daemon PID and config path to the lock file.
+func (lf *LockFile) WriteLockInfo(file *os.File, configPath string) error {
+	_, err := fmt.Fprintf(file, "%d\n%s", os.Getpid(), configPath)
 	if err != nil {
 		return err
 	}
 	return file.Sync()
 }
 
-// ReadPID reads the PID from an existing lock file.
-func ReadPID(path string) (int, error) {
-	data, err := os.ReadFile(path)
+// ReadLockInfo reads the PID and config path from an existing lock file.
+func ReadLockInfo(path string) (int, string, error) {
+	file, err := os.Open(path)
 	if err != nil {
-		return 0, err
+		return 0, "", err
 	}
+	defer file.Close()
 
-	pidStr := strings.TrimSpace(string(data))
+	scanner := bufio.NewScanner(file)
+
+	// Read PID (first line)
+	if !scanner.Scan() {
+		return 0, "", fmt.Errorf("empty lock file")
+	}
+	pidStr := strings.TrimSpace(scanner.Text())
 	pid, err := strconv.Atoi(pidStr)
 	if err != nil {
-		return 0, fmt.Errorf("invalid PID in lock file: %s", pidStr)
+		return 0, "", fmt.Errorf("invalid PID in lock file: %s", pidStr)
 	}
 
-	return pid, nil
+	// Read Config Path (second line)
+	var configPath string
+	if scanner.Scan() {
+		configPath = strings.TrimSpace(scanner.Text())
+	}
+
+	return pid, configPath, nil
+}
+
+// ReadPID reads the PID from an existing lock file.
+func ReadPID(path string) (int, error) {
+	pid, _, err := ReadLockInfo(path)
+	return pid, err
 }
 
 // Release removes the lock file.
@@ -102,6 +122,12 @@ func (lf *LockFile) Release() error {
 func CleanupLock() error {
 	path := filepath.Join(statePath(), "daemon.lock")
 	return os.Remove(path)
+}
+
+// GetRunningDaemonInfo returns the PID and config path of the running daemon.
+func GetRunningDaemonInfo() (int, string, error) {
+	path := filepath.Join(statePath(), "daemon.lock")
+	return ReadLockInfo(path)
 }
 
 // KillDaemon checks for an existing daemon and kills it if running.

@@ -138,6 +138,7 @@ func init() {
 	gob.Register(&segments.UpgradeCache{})
 	gob.Register(&segments.V{})
 	gob.Register(&segments.Vala{})
+	gob.Register(&segments.Vim{})
 	gob.Register(&segments.Wakatime{})
 	gob.Register(&segments.WinGet{})
 	gob.Register(&segments.WinGetPackage{})
@@ -357,6 +358,8 @@ const (
 	V SegmentType = "v"
 	// VALA writes the active vala version
 	VALA SegmentType = "vala"
+	// VIM writes the current vim mode
+	VIM SegmentType = "vim"
 	// WAKATIME writes tracked time spend in dev editors
 	WAKATIME SegmentType = "wakatime"
 	// WINGET writes the number of available WinGet package updates
@@ -477,6 +480,7 @@ var Segments = map[SegmentType]func() SegmentWriter{
 	UPGRADE:         func() SegmentWriter { return &segments.Upgrade{} },
 	V:               func() SegmentWriter { return &segments.V{} },
 	VALA:            func() SegmentWriter { return &segments.Vala{} },
+	VIM:             func() SegmentWriter { return &segments.Vim{} },
 	WAKATIME:        func() SegmentWriter { return &segments.Wakatime{} },
 	WINGET:          func() SegmentWriter { return &segments.WinGet{} },
 	WINREG:          func() SegmentWriter { return &segments.WindowsRegistry{} },

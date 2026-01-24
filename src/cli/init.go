@@ -101,6 +101,7 @@ func runInit(sh, command string) {
 		Init:       true,
 		Eval:       eval,
 		Plain:      plain,
+		Daemon:     daemonMode,
 	}
 
 	env := &runtime.Terminal{}

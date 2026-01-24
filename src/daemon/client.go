@@ -23,6 +23,9 @@ const DialTimeout = 2 * time.Second
 // ResponseTypeComplete indicates the final response from the daemon.
 const ResponseTypeComplete = "complete"
 
+// ResponseTypeUpdate indicates a partial response with more updates to follow.
+const ResponseTypeUpdate = "update"
+
 // ResponseCallback is called for each response from the daemon.
 // Return false to stop receiving responses.
 type ResponseCallback func(*ipc.PromptResponse) bool
@@ -121,7 +124,10 @@ func (c *Client) Close() error {
 //
 // The callback is invoked for each response. Return false from callback to stop receiving.
 // The requestID is automatically generated and used to filter stale responses.
-func (c *Client) RenderPrompt(ctx context.Context, flags *runtime.Flags, pid int, sessionID string, env map[string]string, callback ResponseCallback) error {
+//
+// If repaint is true, the daemon performs a "soft cancel" - existing computations continue
+// and can be reused (used for vim mode toggles). If false, "hard cancel" aborts computations.
+func (c *Client) RenderPrompt(ctx context.Context, flags *runtime.Flags, pid int, sessionID string, env map[string]string, repaint bool, callback ResponseCallback) error {
 	requestID := uuid.NewString()
 
 	// Use PID as SessionID if available to ensure accurate session tracking and cleanup in daemon
@@ -138,6 +144,7 @@ func (c *Client) RenderPrompt(ctx context.Context, flags *runtime.Flags, pid int
 		Pid:       int32(pid),
 		Env:       env,
 		Flags:     ipc.FlagsToProto(flags),
+		Repaint:   repaint,
 	}
 
 	log.Debugf("Sending prompt request: session=%s, request=%s, type=%s", sessionID, requestID, flags.Type)
@@ -180,10 +187,10 @@ func (c *Client) RenderPrompt(ctx context.Context, flags *runtime.Flags, pid int
 
 // RenderPromptSync sends a prompt render request and waits for the complete response.
 // This is a convenience wrapper for cases that don't need incremental updates.
-func (c *Client) RenderPromptSync(ctx context.Context, flags *runtime.Flags, pid int, sessionID string, env map[string]string) (*ipc.PromptResponse, error) {
+func (c *Client) RenderPromptSync(ctx context.Context, flags *runtime.Flags, pid int, sessionID string, env map[string]string, repaint bool) (*ipc.PromptResponse, error) {
 	var finalResponse *ipc.PromptResponse
 
-	err := c.RenderPrompt(ctx, flags, pid, sessionID, env, func(resp *ipc.PromptResponse) bool {
+	err := c.RenderPrompt(ctx, flags, pid, sessionID, env, repaint, func(resp *ipc.PromptResponse) bool {
 		finalResponse = resp
 		return resp.Type != ResponseTypeComplete
 	})

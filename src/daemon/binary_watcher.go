@@ -79,7 +79,7 @@ func (bw *BinaryWatcher) eventLoop(onChange func()) {
 				continue
 			}
 
-			if event.Op&(fsnotify.Write|fsnotify.Create) == 0 {
+			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename) == 0 {
 				continue
 			}
 

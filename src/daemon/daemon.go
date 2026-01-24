@@ -6,9 +6,9 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"reflect"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -18,6 +18,7 @@ import (
 	"github.com/jandedobbeleer/oh-my-posh/src/log"
 	"github.com/jandedobbeleer/oh-my-posh/src/maps"
 	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
 	"github.com/jandedobbeleer/oh-my-posh/src/shell"
 	"github.com/jandedobbeleer/oh-my-posh/src/template"
 	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
@@ -154,6 +155,7 @@ type Daemon struct {
 	cache         *MemoryCache
 	configCache   *ConfigCache
 	activeRenders *maps.Concurrent[context.CancelFunc]
+	registry      *ComputationRegistry
 	sessions      *SessionManager
 	done          chan struct{}
 	prototypePath string
@@ -166,7 +168,7 @@ type Daemon struct {
 // Acquires the lock file to ensure single instance.
 func New(configPath string) (*Daemon, error) {
 	// Acquire lock to ensure single instance
-	lockFile, err := NewLockFile()
+	lockFile, err := NewLockFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire lock: %w", err)
 	}
@@ -186,6 +188,7 @@ func New(configPath string) (*Daemon, error) {
 		configCache:   configCache,
 		configWatcher: configWatcher,
 		activeRenders: maps.NewConcurrent[context.CancelFunc](),
+		registry:      NewComputationRegistry(),
 		done:          make(chan struct{}),
 		prototypePath: configPath,
 		idleTimeout:   DefaultIdleTimeout,
@@ -197,8 +200,10 @@ func New(configPath string) (*Daemon, error) {
 
 	// Initialize session manager - starts idle timer when all sessions end
 	d.sessions = NewSessionManager(func(pid int) {
-		// Clean up memory cache for this session (PID)
-		d.cache.CleanSession(fmt.Sprint(pid))
+		// Clean up memory cache and registry for this session (PID)
+		sessionID := fmt.Sprint(pid)
+		d.cache.CleanSession(sessionID)
+		d.registry.CleanSession(sessionID)
 	}, d.startIdleTimer)
 
 	// Start initial idle timer - will shut down if no sessions register
@@ -356,11 +361,8 @@ func (d *Daemon) RenderPrompt(req *ipc.PromptRequest, stream ipc.DaemonService_R
 	log.Debugf("RenderPrompt: session=%s, requestId=%s", req.SessionId, req.RequestId)
 
 	// Register session by PID for process exit tracking
-	// We do this FIRST to ensure the session is registered before any async work or potential cancellation
 	if req.Pid > 0 {
-		// Convert flags early to get Shell
 		flags := ipc.ProtoToFlags(req.Flags)
-		// Extract UUID from Env if present
 		uuid := req.Env["POSH_SESSION_ID"]
 		d.sessions.Register(int(req.Pid), uuid, flags.Shell)
 	}
@@ -371,58 +373,73 @@ func (d *Daemon) RenderPrompt(req *ipc.PromptRequest, stream ipc.DaemonService_R
 	}
 
 	// Cancel any existing render for this session
-	if existingCancel, ok := d.activeRenders.Get(req.SessionId); ok {
-		existingCancel()
-	}
+	d.cancelPreviousRender(req.SessionId, req.Repaint)
 
 	// Create cancellable context for this request
 	ctx, cancel := context.WithCancel(stream.Context())
 	defer cancel()
 
-	// Register this render's cancel function
 	d.activeRenders.Set(req.SessionId, cancel)
 	defer d.activeRenders.Delete(req.SessionId)
 
-	// Get or load config (Prototype) from the daemon's configured path
-	// We ignore req.Config as the daemon operates on a single master config
+	// Setup render context (config, env, engine)
+	rc := d.setupRenderContext(req)
+
+	d.initializeTerminal(rc.env, rc.cfg, rc.flags)
+
+	if req.Repaint {
+		return d.handleRepaint(ctx, req, stream, rc)
+	}
+	return d.handleNormalRender(ctx, req, stream, rc)
+}
+
+// cancelPreviousRender cancels any existing render for the session.
+// Hard Cancel (new command) aborts computations; Soft Cancel (vim toggle) preserves them.
+func (d *Daemon) cancelPreviousRender(sessionID string, repaint bool) {
+	if existingCancel, ok := d.activeRenders.Get(sessionID); ok {
+		existingCancel()
+	}
+	if repaint {
+		d.registry.SoftCancel(sessionID)
+	} else {
+		d.registry.HardCancel(sessionID)
+	}
+}
+
+// renderContext holds the configuration and engine for a render request.
+type renderContext struct {
+	cfg   *config.Config
+	flags *runtime.Flags
+	env   *Environment
+	eng   *prompt.Engine
+}
+
+// setupRenderContext creates the config, environment, and engine for a render request.
+func (d *Daemon) setupRenderContext(req *ipc.PromptRequest) *renderContext {
 	prototypeConfig := d.getOrLoadConfig(d.prototypePath)
-
-	// CLONE the config for this request to ensure isolation
 	cfg := prototypeConfig.Clone()
-
-	// Convert proto flags to runtime flags
 	flags := ipc.ProtoToFlags(req.Flags)
-
-	// Create environment with request's env vars
 	env := NewEnvironment(flags, req.Env)
 
-	// Initialize template system (for non-cache globals like funcMap)
 	template.Init(env, cfg.Var, cfg.Maps)
-
-	// Create per-request template cache to avoid sharing segment data between requests
 	templateCache := template.NewCache(env, cfg.Var, cfg.Maps)
 
-	// Initialize terminal package-level state for functions that read Shell/Program/formats
+	textCache := &sessionTextCache{
+		cache:     d.cache,
+		sessionID: req.SessionId,
+	}
+	sessionRegistry := d.registry.NewSessionRegistry(req.SessionId)
+
+	// Create per-request Writer for concurrent rendering
 	sh := env.Shell()
 	if sh == shell.BASH && !flags.Escape {
 		sh = shell.GENERIC
 	}
-	terminal.Init(sh)
-
-	// Create per-request Writer — this is the key to concurrent rendering.
-	// Each request gets its own builder, so no mutex is needed.
 	writer := terminal.NewWriter(sh)
 	writer.BackgroundColor = cfg.TerminalBackground.ResolveTemplate()
 	writer.Colors = cfg.MakeColors(env)
 	writer.Plain = flags.Plain
 
-	// Create text cache wrapper for this session
-	textCache := &sessionTextCache{
-		cache:     d.cache,
-		sessionID: req.SessionId,
-	}
-
-	// Create engine with per-request template cache, text cache, and writer
 	eng := &prompt.Engine{
 		Config:        cfg,
 		Env:           env,
@@ -430,75 +447,129 @@ func (d *Daemon) RenderPrompt(req *ipc.PromptRequest, stream ipc.DaemonService_R
 		Plain:         flags.Plain,
 		TemplateCache: templateCache,
 		TextCache:     textCache,
+		Registry:      sessionRegistry,
 	}
 
-	// Track pending segments for streaming updates
-	var pendingRemaining atomic.Int32
-	pendingDone := make(chan struct{})
+	return &renderContext{cfg: cfg, flags: flags, env: env, eng: eng}
+}
 
-	// Callback when a segment completes after timeout.
-	// Called from background goroutines in PrimaryStreaming.
-	// Safe without mutex: each request has its own Writer, and updates
-	// for a single request are serialized by the results channel drain.
-	updateCallback := func(segmentName string) {
-		newPrompt := eng.ReRender()
-
-		// Cache the segment's text
-		for _, block := range cfg.Blocks {
-			for _, segment := range block.Segments {
-				if segment.Name() == segmentName {
-					eng.CacheSegmentText(segment)
-					break
-				}
-			}
-		}
-
-		prompts := d.buildPrompts(eng, newPrompt)
-
-		// Send update
-		select {
-		case <-ctx.Done():
-		default:
-			response := &ipc.PromptResponse{
-				Type:      "update",
-				RequestId: req.RequestId,
-				Prompts:   prompts,
-			}
-			if err := stream.Send(response); err != nil {
-				log.Debugf("failed to send update: %v", err)
-			}
-		}
-
-		if pendingRemaining.Add(-1) == 0 {
-			close(pendingDone)
-		}
+// initializeTerminal sets up the terminal package-level state.
+func (d *Daemon) initializeTerminal(env *Environment, cfg *config.Config, flags *runtime.Flags) {
+	sh := env.Shell()
+	if sh == shell.BASH && !flags.Escape {
+		sh = shell.GENERIC
 	}
+	terminal.Init(sh)
+	terminal.BackgroundColor = cfg.TerminalBackground.ResolveTemplate()
+	terminal.Colors = cfg.MakeColors(env)
+	terminal.Plain = flags.Plain
+}
 
-	// Render prompt with streaming
-	asyncTimeout := DefaultAsyncTimeout
-	if cfg.DaemonTimeout > 0 {
-		asyncTimeout = time.Duration(cfg.DaemonTimeout) * time.Millisecond
-	}
-	log.Debugf("RenderPrompt: starting PrimaryStreaming with timeout=%v", asyncTimeout)
-	promptText := eng.PrimaryStreaming(asyncTimeout, updateCallback)
+// handleRepaint handles vim toggle repaints - returns cached values immediately,
+// then streams updates as pending computations complete.
+func (d *Daemon) handleRepaint(ctx context.Context, req *ipc.PromptRequest, stream ipc.DaemonService_RenderPromptServer, rc *renderContext) error {
+	promptText, pendingCacheKeys := rc.eng.PrimaryRepaint()
 
-	// Count pending segments
-	eng.StreamingMu().Lock()
-	pending := int32(len(eng.PendingSegments()))
-	eng.StreamingMu().Unlock()
-	pendingRemaining.Store(pending)
-	log.Debugf("RenderPrompt: initial render done, pending=%d", pending)
-
-	// Build initial response
 	responseType := ResponseTypeComplete
-	if pending > 0 {
-		responseType = "update"
+	if len(pendingCacheKeys) > 0 {
+		responseType = ResponseTypeUpdate
 	}
 
 	response := &ipc.PromptResponse{
 		Type:      responseType,
 		RequestId: req.RequestId,
-		Prompts:   d.buildPrompts(eng, promptText),
+		Prompts:   d.buildPrompts(rc.eng, promptText),
+	}
+	if err := stream.Send(response); err != nil {
+		return err
+	}
+
+	if len(pendingCacheKeys) == 0 {
+		return nil
+	}
+
+	return d.waitForPendingFutures(ctx, req, stream, rc, pendingCacheKeys)
+}
+
+// waitForPendingFutures waits for pending computations and sends updates as each completes.
+func (d *Daemon) waitForPendingFutures(
+	ctx context.Context,
+	req *ipc.PromptRequest,
+	stream ipc.DaemonService_RenderPromptServer,
+	rc *renderContext,
+	pendingCacheKeys []string,
+) error {
+	var pendingFutures []*Future
+	for _, cacheKey := range pendingCacheKeys {
+		if future := d.registry.Get(req.SessionId, cacheKey); future != nil {
+			pendingFutures = append(pendingFutures, future)
+		}
+	}
+
+	remaining := len(pendingFutures)
+	cases := make([]reflect.SelectCase, remaining+1)
+	cases[0] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ctx.Done())}
+	for i, f := range pendingFutures {
+		cases[i+1] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(f.Done())}
+	}
+
+	for remaining > 0 {
+		chosen, _, _ := reflect.Select(cases)
+		if chosen == 0 {
+			return ctx.Err()
+		}
+
+		cases[chosen].Chan = reflect.ValueOf(nil)
+		remaining--
+
+		responseType := ResponseTypeUpdate
+		if remaining == 0 {
+			responseType = ResponseTypeComplete
+		}
+
+		promptText, _ := rc.eng.PrimaryRepaint()
+		resp := &ipc.PromptResponse{
+			Type:      responseType,
+			RequestId: req.RequestId,
+			Prompts:   d.buildPrompts(rc.eng, promptText),
+		}
+		if err := stream.Send(resp); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// handleNormalRender handles standard prompt rendering with async segment updates.
+func (d *Daemon) handleNormalRender(ctx context.Context, req *ipc.PromptRequest, stream ipc.DaemonService_RenderPromptServer, rc *renderContext) error {
+	var pendingCount int
+	pendingDone := make(chan struct{})
+
+	updateCallback := d.createUpdateCallback(ctx, req, stream, rc, &pendingCount, pendingDone)
+
+	asyncTimeout := DefaultAsyncTimeout
+	if rc.cfg.DaemonTimeout > 0 {
+		asyncTimeout = time.Duration(rc.cfg.DaemonTimeout) * time.Millisecond
+	}
+	promptText := rc.eng.PrimaryStreaming(asyncTimeout, updateCallback)
+
+	rc.eng.StreamingMu().Lock()
+	pendingSegments := rc.eng.PendingSegments()
+	pendingCount = len(pendingSegments)
+	rc.eng.StreamingMu().Unlock()
+
+	// Cache all segments that completed within timeout
+	d.cacheCompletedSegments(rc, pendingSegments)
+
+	responseType := ResponseTypeComplete
+	if pendingCount > 0 {
+		responseType = ResponseTypeUpdate
+	}
+
+	response := &ipc.PromptResponse{
+		Type:      responseType,
+		RequestId: req.RequestId,
+		Prompts:   d.buildPrompts(rc.eng, promptText),
 	}
 
 	select {
@@ -510,26 +581,91 @@ func (d *Daemon) RenderPrompt(req *ipc.PromptRequest, stream ipc.DaemonService_R
 		}
 	}
 
-	// If there are pending segments, wait for them to complete
-	if pending > 0 {
+	if pendingCount > 0 {
+		return d.waitForPendingSegments(ctx, req, stream, rc, pendingDone)
+	}
+	return nil
+}
+
+// createUpdateCallback creates the callback invoked when a segment completes after timeout.
+func (d *Daemon) createUpdateCallback(
+	ctx context.Context,
+	req *ipc.PromptRequest,
+	stream ipc.DaemonService_RenderPromptServer,
+	rc *renderContext,
+	pendingCount *int,
+	pendingDone chan struct{},
+) func(string) {
+	return func(segmentName string) {
+		if ctx.Err() != nil {
+			return
+		}
+
+		newPrompt := rc.eng.ReRender()
+
+		if ctx.Err() == nil {
+			for _, block := range rc.cfg.Blocks {
+				for _, segment := range block.Segments {
+					if segment.Name() == segmentName {
+						rc.eng.CacheSegmentText(segment)
+						break
+					}
+				}
+			}
+		}
+
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
-		case <-pendingDone:
-			// All segments completed — send final response
-			finalPrompt := eng.ReRender()
-			finalPrompts := d.buildPrompts(eng, finalPrompt)
-
-			finalResponse := &ipc.PromptResponse{
-				Type:      ResponseTypeComplete,
+			return
+		default:
+			response := &ipc.PromptResponse{
+				Type:      "update",
 				RequestId: req.RequestId,
-				Prompts:   finalPrompts,
+				Prompts:   d.buildPrompts(rc.eng, newPrompt),
 			}
-			return stream.Send(finalResponse)
+			if err := stream.Send(response); err != nil {
+				log.Debugf("failed to send update: %v", err)
+			}
+		}
+
+		*pendingCount--
+		if *pendingCount == 0 {
+			close(pendingDone)
 		}
 	}
+}
 
-	return nil
+// cacheCompletedSegments caches all segments that completed within timeout.
+func (d *Daemon) cacheCompletedSegments(rc *renderContext, pendingSegments map[string]bool) {
+	for _, block := range rc.cfg.Blocks {
+		for _, segment := range block.Segments {
+			if !pendingSegments[segment.Name()] {
+				rc.eng.CacheSegmentText(segment)
+			}
+		}
+	}
+}
+
+// waitForPendingSegments waits for all pending segments to complete and sends final response.
+func (d *Daemon) waitForPendingSegments(
+	ctx context.Context,
+	req *ipc.PromptRequest,
+	stream ipc.DaemonService_RenderPromptServer,
+	rc *renderContext,
+	pendingDone chan struct{},
+) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-pendingDone:
+		finalPrompt := rc.eng.ReRender()
+		finalResponse := &ipc.PromptResponse{
+			Type:      "complete",
+			RequestId: req.RequestId,
+			Prompts:   d.buildPrompts(rc.eng, finalPrompt),
+		}
+		return stream.Send(finalResponse)
+	}
 }
 
 // getOrLoadConfig retrieves a config from cache or loads and caches it.

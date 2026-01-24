@@ -42,7 +42,7 @@ func newLockFileWithPath(path string) (*LockFile, error) {
 	}
 
 	// Write our PID to the lock file
-	if err := lf.WritePID(file); err != nil {
+	if err := lf.WriteLockInfo(file, "test_config_path"); err != nil {
 		_ = file.Close()
 		_ = lf.Release()
 		return nil, err
@@ -66,10 +66,11 @@ func TestLockFileCreation(t *testing.T) {
 	_, err = os.Stat(lockPath)
 	assert.NoError(t, err, "lock file should exist")
 
-	// Verify PID was written
-	pid, err := ReadPID(lockPath)
+	// Verify PID and config path were written
+	pid, config, err := ReadLockInfo(lockPath)
 	require.NoError(t, err)
 	assert.Equal(t, os.Getpid(), pid)
+	assert.Equal(t, "test_config_path", config)
 }
 
 func TestLockFileExclusivity(t *testing.T) {
@@ -117,7 +118,7 @@ func TestStaleLockRecovery(t *testing.T) {
 
 	// Create a stale lock file with a non-existent PID
 	// Use PID 999999 which is unlikely to exist
-	err := os.WriteFile(lockPath, []byte("999999\n"), 0o600)
+	err := os.WriteFile(lockPath, []byte("999999\nsome_config\n"), 0o600)
 	require.NoError(t, err)
 
 	// newLockFileWithPath should recover from stale lock
@@ -127,9 +128,10 @@ func TestStaleLockRecovery(t *testing.T) {
 	defer func() { _ = lock.Release() }()
 
 	// Verify our PID is now in the lock file
-	pid, err := ReadPID(lockPath)
+	pid, config, err := ReadLockInfo(lockPath)
 	require.NoError(t, err)
 	assert.Equal(t, os.Getpid(), pid)
+	assert.Equal(t, "test_config_path", config)
 }
 
 func TestStaleLockWithInvalidPID(t *testing.T) {
@@ -147,44 +149,50 @@ func TestStaleLockWithInvalidPID(t *testing.T) {
 	defer func() { _ = lock.Release() }()
 }
 
-func TestReadPID(t *testing.T) {
+func TestReadLockInfo(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	cases := []struct {
-		name        string
-		content     string
-		expectedPID int
-		expectError bool
+		name           string
+		content        string
+		expectedConfig string
+		expectedPID    int
+		expectError    bool
 	}{
 		{
-			name:        "valid PID",
-			content:     "12345\n",
-			expectedPID: 12345,
-			expectError: false,
+			name:           "valid PID and Config",
+			content:        "12345\n/path/to/config.json",
+			expectedPID:    12345,
+			expectedConfig: "/path/to/config.json",
+			expectError:    false,
 		},
 		{
-			name:        "PID without newline",
-			content:     "12345",
-			expectedPID: 12345,
-			expectError: false,
+			name:           "valid PID only (backward compatibility)",
+			content:        "12345\n",
+			expectedPID:    12345,
+			expectedConfig: "",
+			expectError:    false,
 		},
 		{
-			name:        "PID with whitespace",
-			content:     "  12345  \n",
-			expectedPID: 12345,
-			expectError: false,
+			name:           "valid PID no newline",
+			content:        "12345",
+			expectedPID:    12345,
+			expectedConfig: "",
+			expectError:    false,
 		},
 		{
-			name:        "invalid PID",
-			content:     "not-a-number",
-			expectedPID: 0,
-			expectError: true,
+			name:           "invalid PID",
+			content:        "not-a-number",
+			expectedPID:    0,
+			expectedConfig: "",
+			expectError:    true,
 		},
 		{
-			name:        "empty file",
-			content:     "",
-			expectedPID: 0,
-			expectError: true,
+			name:           "empty file",
+			content:        "",
+			expectedPID:    0,
+			expectedConfig: "",
+			expectError:    true,
 		},
 	}
 
@@ -194,12 +202,13 @@ func TestReadPID(t *testing.T) {
 			err := os.WriteFile(lockPath, []byte(tc.content), 0o600)
 			require.NoError(t, err)
 
-			pid, err := ReadPID(lockPath)
+			pid, config, err := ReadLockInfo(lockPath)
 			if tc.expectError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedPID, pid)
+				assert.Equal(t, tc.expectedConfig, config)
 			}
 		})
 	}
@@ -210,7 +219,7 @@ func TestReadPIDNonExistentFile(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestWritePID(t *testing.T) {
+func TestWriteLockInfo(t *testing.T) {
 	tmpDir := t.TempDir()
 	lockPath := filepath.Join(tmpDir, "daemon.lock")
 
@@ -223,15 +232,17 @@ func TestWritePID(t *testing.T) {
 	}
 	defer func() { _ = lf.Release() }()
 
-	// Write PID
-	err = lf.WritePID(file)
+	// Write PID and Config
+	configPath := "/path/to/config.json"
+	err = lf.WriteLockInfo(file, configPath)
 	require.NoError(t, err)
 	_ = file.Close()
 
 	// Read back and verify
-	pid, err := ReadPID(lockPath)
+	pid, config, err := ReadLockInfo(lockPath)
 	require.NoError(t, err)
 	assert.Equal(t, os.Getpid(), pid)
+	assert.Equal(t, configPath, config)
 }
 
 func TestIsProcessRunning(t *testing.T) {
@@ -292,7 +303,7 @@ func TestNewLockFileIntegration(t *testing.T) {
 	setTestEnv(t, tmpDir)
 
 	// Create lock file using the real NewLockFile function
-	lock, err := NewLockFile()
+	lock, err := NewLockFile("")
 	require.NoError(t, err)
 	require.NotNil(t, lock)
 	defer func() { _ = lock.Release() }()

@@ -45,6 +45,7 @@ message PromptRequest {
   map<string, string> env = 4;        // Environment variables
   Flags flags = 5;                    // Runtime flags
   int32 pid = 6;                      // Shell process ID for session tracking
+  bool repaint = 7;                   // Soft cancel: vim mode toggle (reuse computations)
 }
 
 // Flags contains runtime flags passed to the prompt engine.
@@ -78,6 +79,7 @@ message Flags {
   bool is_primary = 26;               // Is primary prompt
   bool plain = 27;                    // Plain text mode
   bool force = 28;                    // Force rendering
+  string vim_mode = 29;               // Current vim mode (insert, normal, visual, replace)
 }
 
 // PromptResponse contains rendered prompts and segment updates.

@@ -22,7 +22,11 @@ func (f Features) Zsh() Code {
 	case Notice:
 		return unixNotice
 	case Daemon:
-		return unixDaemon
+		return enablePoshDaemon
+	case VimMode:
+		return "bindkey -v; _omp_vim_mode=1; _omp_create_widget zle-keymap-select _omp_zle-keymap-select; _omp_setup_vim_keybindings"
+	case VimCursorShape:
+		return "_omp_cursor_shape=1; _omp_should_change_cursor && print -n '\\e[6 q'"
 	case PromptMark, RPrompt, PoshGit, Azure, LineError, Jobs, Async:
 		fallthrough
 	default:

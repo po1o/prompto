@@ -17,19 +17,23 @@ var (
 	foreground bool
 
 	daemonCmd = &cobra.Command{
-		Use:   "daemon [start|status|serve|log]",
+		Use:   "daemon [start|stop|restart|status|serve|log]",
 		Short: "Manage the oh-my-posh daemon",
 		Long: `Manage the oh-my-posh daemon for faster prompt rendering.
 
 The daemon runs in the background and renders prompt segments asynchronously.
 It automatically shuts down after being idle (no connections) for 5 minutes.
 
-  - start:  Start the daemon (detached)
-  - status: Check if the daemon is running
-  - serve:  Run the daemon server (foreground, silent by default)
-  - log:    Enable/disable daemon logging (log <path> to enable, log off to disable)`,
+  - start:   Start the daemon (detached)
+  - stop:    Stop the daemon
+  - restart: Stop and start the daemon
+  - status:  Check if the daemon is running
+  - serve:   Run the daemon server (foreground, silent by default)
+  - log:     Enable/disable daemon logging (log <path> to enable, log off to disable)`,
 		ValidArgs: []string{
 			"start",
+			"stop",
+			"restart",
 			"status",
 			"serve",
 			"log",
@@ -44,6 +48,10 @@ It automatically shuts down after being idle (no connections) for 5 minutes.
 			switch args[0] {
 			case "start":
 				startDaemon()
+			case "stop":
+				stopDaemon()
+			case "restart":
+				restartDaemon()
 			case "status":
 				daemonStatus()
 			case "serve":
@@ -141,6 +149,43 @@ func daemonLog(args []string) {
 		fmt.Println("daemon logging disabled")
 	} else {
 		fmt.Println("daemon logging to", logPath)
+	}
+}
+
+func stopDaemon() {
+	if !daemon.IsRunning() {
+		fmt.Println("daemon is not running")
+		return
+	}
+
+	if err := daemon.KillDaemon(); err != nil {
+		fmt.Fprintln(os.Stderr, "failed to stop daemon:", err)
+		exitcode = 1
+		return
+	}
+
+	fmt.Println("daemon stopped")
+}
+
+func restartDaemon() {
+	if daemon.IsRunning() {
+		// Try to read config from existing daemon
+		_, configPath, err := daemon.GetRunningDaemonInfo()
+		if err == nil && configPath != "" && configFlag == "" {
+			configFlag = configPath
+		}
+
+		if err := daemon.KillDaemon(); err != nil {
+			fmt.Fprintln(os.Stderr, "failed to stop daemon:", err)
+			exitcode = 1
+			return
+		}
+	}
+
+	if err := startDetachedDaemon(); err != nil {
+		log.Error(err)
+		fmt.Fprintln(os.Stderr, "failed to start daemon:", err)
+		exitcode = 1
 	}
 }
 

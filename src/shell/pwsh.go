@@ -31,6 +31,10 @@ func (f Features) Pwsh() Code {
 		return "& $global:_ompExecutable notice"
 	case Daemon:
 		return "Enable-PoshDaemon"
+	case VimMode:
+		return "Set-PSReadLineOption -EditMode Vi; Enable-PoshVimMode"
+	case VimCursorShape:
+		return "$script:CursorShape = $true; Set-VimModeCursor \"Insert\""
 	case PromptMark, RPrompt, CursorPositioning, Async:
 		fallthrough
 	default:

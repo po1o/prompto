@@ -22,7 +22,11 @@ const (
 	renderTimeout = 10 * time.Second
 )
 
-var pid int
+var (
+	pid           int
+	repaint       bool
+	renderVimMode string
+)
 
 var renderCmd = &cobra.Command{
 	Use:   "render",
@@ -70,9 +74,10 @@ Falls back to direct rendering if daemon is not available.`,
 			JobCount:      jobCount,
 			Escape:        escape,
 			Force:         force,
+			VimMode:       renderVimMode,
 		}
 
-		if err := renderViaDaemon(flags, pid); err != nil {
+		if err := renderViaDaemon(flags, pid, repaint); err != nil {
 			log.Debugf("daemon render failed: %v, falling back to direct render", err)
 			renderDirect(flags)
 		}
@@ -96,11 +101,13 @@ func init() {
 	renderCmd.Flags().BoolVar(&escape, "escape", true, "escape the ANSI sequences for the shell")
 	renderCmd.Flags().BoolVarP(&force, "force", "f", false, "force rendering the segments")
 	renderCmd.Flags().IntVar(&pid, "pid", 0, "shell process id")
+	renderCmd.Flags().BoolVar(&repaint, "repaint", false, "vim mode repaint (soft cancel, reuse computations)")
+	renderCmd.Flags().StringVar(&renderVimMode, "vim-mode", "", "current vim mode (insert, normal, visual, replace)")
 
 	RootCmd.AddCommand(renderCmd)
 }
 
-func renderViaDaemon(flags *runtime.Flags, pid int) error {
+func renderViaDaemon(flags *runtime.Flags, pid int, repaint bool) error {
 	silent = true
 	client, err := daemon.ConnectOrStart(startDetachedDaemon)
 	if err != nil {
@@ -111,7 +118,7 @@ func renderViaDaemon(flags *runtime.Flags, pid int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), renderTimeout)
 	defer cancel()
 
-	return client.RenderPrompt(ctx, flags, pid, "", nil, func(resp *ipc.PromptResponse) bool {
+	return client.RenderPrompt(ctx, flags, pid, "", nil, repaint, func(resp *ipc.PromptResponse) bool {
 		outputPrompts(resp)
 		return resp.Type != "complete"
 	})
