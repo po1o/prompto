@@ -75,20 +75,24 @@ func TestVimFeatures(t *testing.T) {
 		Case        string
 		VimEnabled  bool
 		CursorShape bool
+		CursorBlink bool
 		ExpVimMode  bool
 		ExpCursor   bool
+		ExpBlink    bool
 	}{
 		{
 			Case:       "No vim config",
 			VimEnabled: false,
 			ExpVimMode: false,
 			ExpCursor:  false,
+			ExpBlink:   false,
 		},
 		{
 			Case:       "Vim enabled only",
 			VimEnabled: true,
 			ExpVimMode: true,
 			ExpCursor:  false,
+			ExpBlink:   false,
 		},
 		{
 			Case:        "Cursor shape implies vim mode",
@@ -96,6 +100,15 @@ func TestVimFeatures(t *testing.T) {
 			CursorShape: true,
 			ExpVimMode:  true,
 			ExpCursor:   true,
+			ExpBlink:    false,
+		},
+		{
+			Case:        "Cursor blink implies vim mode",
+			VimEnabled:  false,
+			CursorBlink: true,
+			ExpVimMode:  true,
+			ExpCursor:   true,
+			ExpBlink:    true,
 		},
 		{
 			Case:        "Both enabled",
@@ -103,6 +116,16 @@ func TestVimFeatures(t *testing.T) {
 			CursorShape: true,
 			ExpVimMode:  true,
 			ExpCursor:   true,
+			ExpBlink:    false,
+		},
+		{
+			Case:        "Shape and blink enabled",
+			VimEnabled:  true,
+			CursorShape: true,
+			CursorBlink: true,
+			ExpVimMode:  true,
+			ExpCursor:   true,
+			ExpBlink:    true,
 		},
 	}
 
@@ -111,10 +134,11 @@ func TestVimFeatures(t *testing.T) {
 		env.On("Shell").Return(shell.ZSH)
 
 		var vim *VimConfig
-		if tc.VimEnabled || tc.CursorShape {
+		if tc.VimEnabled || tc.CursorShape || tc.CursorBlink {
 			vim = &VimConfig{
 				Enabled:     tc.VimEnabled,
 				CursorShape: tc.CursorShape,
+				CursorBlink: tc.CursorBlink,
 			}
 		}
 
@@ -127,8 +151,10 @@ func TestVimFeatures(t *testing.T) {
 
 		hasVimMode := got&shell.VimMode != 0
 		hasCursor := got&shell.VimCursorShape != 0
+		hasBlink := got&shell.VimCursorBlink != 0
 
 		assert.Equal(t, tc.ExpVimMode, hasVimMode, tc.Case+" - VimMode")
 		assert.Equal(t, tc.ExpCursor, hasCursor, tc.Case+" - CursorShape")
+		assert.Equal(t, tc.ExpBlink, hasBlink, tc.Case+" - CursorBlink")
 	}
 }

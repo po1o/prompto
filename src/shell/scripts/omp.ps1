@@ -257,6 +257,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         $script:TooltipCommand = ''
 
         Set-PoshPromptType
+        Set-VimModeCursorFromState
 
         if ($script:PromptType -ne 'transient') {
             Update-PoshErrorCode
@@ -456,6 +457,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
     $script:VimMode = $false
     $script:VimModeRepaint = $false
     $script:CursorShape = $false
+    $script:CursorBlink = $false
 
     # Get current vim mode for segment template
     function Get-VimMode {
@@ -484,9 +486,26 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         if (-not $script:CursorShape -or -not (Test-ShouldChangeCursor)) {
             return
         }
+        $blockCode = 2
+        $beamCode = 6
+        if ($script:CursorBlink) {
+            $blockCode = 1
+            $beamCode = 5
+        }
         switch ($Mode) {
-            "Command" { [Console]::Write("`e[2 q") }  # Steady block for normal mode
-            "Insert" { [Console]::Write("`e[6 q") }   # Steady beam for insert mode
+            "Command" { [Console]::Write("`e[$blockCode q") }  # Block for normal mode
+            "Insert" { [Console]::Write("`e[$beamCode q") }   # Beam for insert mode
+        }
+    }
+
+    function Set-VimModeCursorFromState {
+        if (-not $script:VimMode) {
+            return
+        }
+        $currentMode = Get-VimMode
+        switch ($currentMode) {
+            "normal" { Set-VimModeCursor "Command" }
+            default { Set-VimModeCursor "Insert" }
         }
     }
 
@@ -601,7 +620,10 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         $script:DaemonProcess.EnableRaisingEvents = $true
 
         # Accumulate lines until we see a status line
-        $script:DaemonOutputBuffer = @()
+        $script:DaemonPendingPrompt = $null
+        $script:DaemonPendingRPrompt = $null
+        $script:DaemonPendingTransient = $null
+        $script:DaemonPendingSecondary = $null
 
         # Register event for async output handling
         $script:DaemonEventJob = Register-ObjectEvent -InputObject $script:DaemonProcess -EventName OutputDataReceived -SourceIdentifier "OmpDaemonOutput" -Action {
@@ -621,18 +643,34 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
 
             switch ($type) {
                 "primary" {
-                    $script:DaemonCurrentPrompt = $text
+                    $script:DaemonPendingPrompt = $text
                 }
                 "right" {
-                    $script:DaemonCurrentRPrompt = $text
+                    $script:DaemonPendingRPrompt = $text
                 }
                 "transient" {
-                    $script:DaemonCurrentTransient = $text
+                    $script:DaemonPendingTransient = $text
                 }
                 "secondary" {
-                    Set-PSReadLineOption -ContinuationPrompt $text
+                    $script:DaemonPendingSecondary = $text
                 }
                 "status" {
+                    if ($null -ne $script:DaemonPendingPrompt) {
+                        $script:DaemonCurrentPrompt = $script:DaemonPendingPrompt
+                        $script:DaemonPendingPrompt = $null
+                    }
+                    if ($null -ne $script:DaemonPendingRPrompt) {
+                        $script:DaemonCurrentRPrompt = $script:DaemonPendingRPrompt
+                        $script:DaemonPendingRPrompt = $null
+                    }
+                    if ($null -ne $script:DaemonPendingTransient) {
+                        $script:DaemonCurrentTransient = $script:DaemonPendingTransient
+                        $script:DaemonPendingTransient = $null
+                    }
+                    if ($null -ne $script:DaemonPendingSecondary) {
+                        Set-PSReadLineOption -ContinuationPrompt $script:DaemonPendingSecondary
+                        $script:DaemonPendingSecondary = $null
+                    }
                     # Batch complete - trigger repaint
                     try {
                         $previousOutputEncoding = [Console]::OutputEncoding
@@ -664,6 +702,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         $script:TooltipCommand = ''
 
         Set-PoshPromptType
+        Set-VimModeCursorFromState
 
         if ($script:PromptType -ne 'transient') {
             Update-PoshErrorCode

@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"reflect"
 	"strings"
 	"sync"
 	"syscall"
@@ -154,7 +153,8 @@ type Daemon struct {
 	lockFile      *LockFile
 	cache         *MemoryCache
 	configCache   *ConfigCache
-	activeRenders *maps.Concurrent[context.CancelFunc]
+	activeRenders *maps.Concurrent[context.CancelFunc] // Per-stream cancelers, used to stop the active RPC stream.
+	activePrompts *maps.Concurrent[*activePrompt]      // Per-prompt engines, reused across repaints; a prompt spans many renders, but only one active render/stream at a time.
 	registry      *ComputationRegistry
 	sessions      *SessionManager
 	done          chan struct{}
@@ -188,6 +188,7 @@ func New(configPath string) (*Daemon, error) {
 		configCache:   configCache,
 		configWatcher: configWatcher,
 		activeRenders: maps.NewConcurrent[context.CancelFunc](),
+		activePrompts: maps.NewConcurrent[*activePrompt](),
 		registry:      NewComputationRegistry(),
 		done:          make(chan struct{}),
 		prototypePath: configPath,
@@ -204,6 +205,7 @@ func New(configPath string) (*Daemon, error) {
 		sessionID := fmt.Sprint(pid)
 		d.cache.CleanSession(sessionID)
 		d.registry.CleanSession(sessionID)
+		d.cancelActivePrompt(sessionID)
 	}, d.startIdleTimer)
 
 	// Start initial idle timer - will shut down if no sessions register
@@ -382,14 +384,14 @@ func (d *Daemon) RenderPrompt(req *ipc.PromptRequest, stream ipc.DaemonService_R
 	d.activeRenders.Set(req.SessionId, cancel)
 	defer d.activeRenders.Delete(req.SessionId)
 
+	if req.Repaint {
+		return d.handleRepaint(ctx, req, stream)
+	}
+
 	// Setup render context (config, env, engine)
 	rc := d.setupRenderContext(req)
 
 	d.initializeTerminal(rc.env, rc.cfg, rc.flags)
-
-	if req.Repaint {
-		return d.handleRepaint(ctx, req, stream, rc)
-	}
 	return d.handleNormalRender(ctx, req, stream, rc)
 }
 
@@ -401,9 +403,21 @@ func (d *Daemon) cancelPreviousRender(sessionID string, repaint bool) {
 	}
 	if repaint {
 		d.registry.SoftCancel(sessionID)
-	} else {
-		d.registry.HardCancel(sessionID)
+		return
 	}
+
+	d.registry.HardCancel(sessionID)
+	d.cancelActivePrompt(sessionID)
+}
+
+func (d *Daemon) cancelActivePrompt(sessionID string) {
+	active, ok := d.activePrompts.Get(sessionID)
+	if !ok {
+		return
+	}
+
+	active.cancel()
+	d.activePrompts.Delete(sessionID)
 }
 
 // renderContext holds the configuration and engine for a render request.
@@ -412,6 +426,179 @@ type renderContext struct {
 	flags *runtime.Flags
 	env   *Environment
 	eng   *prompt.Engine
+}
+
+type activePrompt struct {
+	mu            sync.Mutex
+	rc            *renderContext
+	ctx           context.Context
+	cancel        context.CancelFunc
+	pendingDone   chan struct{}
+	pendingClosed bool
+	streamGen     uint64
+	updateSeq     uint64
+	lastSentSeq   uint64
+	// repaintMu guards the coalescer state so only one repaint render runs per window.
+	repaintMu sync.Mutex
+	// repaintTimer schedules the coalesced repaint window.
+	repaintTimer *time.Timer
+	// repaintDone signals completion of the most recent coalesced repaint.
+	repaintDone chan struct{}
+	// repaintSeq increments on each repaint request to invalidate prior renders.
+	repaintSeq uint64
+	// repaintResult stores the most recent coalesced repaint result.
+	repaintResult repaintResult
+	stream        ipc.DaemonService_RenderPromptServer
+	requestID     string
+}
+
+func newActivePrompt(rc *renderContext) *activePrompt {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &activePrompt{
+		rc:          rc,
+		ctx:         ctx,
+		cancel:      cancel,
+		pendingDone: make(chan struct{}),
+	}
+}
+
+func (ap *activePrompt) attachStream(stream ipc.DaemonService_RenderPromptServer, requestID string) {
+	ap.mu.Lock()
+	ap.streamGen++
+	ap.stream = stream
+	ap.requestID = requestID
+	ap.mu.Unlock()
+}
+
+func (ap *activePrompt) currentStream() (ipc.DaemonService_RenderPromptServer, string) {
+	ap.mu.Lock()
+	stream := ap.stream
+	requestID := ap.requestID
+	ap.mu.Unlock()
+	return stream, requestID
+}
+
+func (ap *activePrompt) currentStreamSnapshot() (ipc.DaemonService_RenderPromptServer, string, uint64) {
+	ap.mu.Lock()
+	stream := ap.stream
+	requestID := ap.requestID
+	gen := ap.streamGen
+	ap.mu.Unlock()
+	return stream, requestID, gen
+}
+
+func (ap *activePrompt) closePendingDone() {
+	ap.mu.Lock()
+	if ap.pendingClosed {
+		ap.mu.Unlock()
+		return
+	}
+	ap.pendingClosed = true
+	close(ap.pendingDone)
+	ap.mu.Unlock()
+}
+
+func (ap *activePrompt) bumpUpdateSeq() {
+	ap.mu.Lock()
+	ap.updateSeq++
+	ap.mu.Unlock()
+}
+
+func (ap *activePrompt) updateSeqSnapshot() uint64 {
+	ap.mu.Lock()
+	seq := ap.updateSeq
+	ap.mu.Unlock()
+	return seq
+}
+
+func (ap *activePrompt) setLastSentSeq(seq uint64) {
+	ap.mu.Lock()
+	ap.lastSentSeq = seq
+	ap.mu.Unlock()
+}
+
+func (ap *activePrompt) sentSeqSnapshot() uint64 {
+	ap.mu.Lock()
+	seq := ap.lastSentSeq
+	ap.mu.Unlock()
+	return seq
+}
+
+type repaintResult struct {
+	promptText       string
+	pendingCacheKeys []string
+	seqAfter         uint64
+	includeUpdates   bool
+}
+
+// scheduleRepaint coalesces rapid repaint requests into one render per window.
+func (ap *activePrompt) scheduleRepaint(window time.Duration) <-chan struct{} {
+	ap.repaintMu.Lock()
+	ap.repaintSeq++
+
+	if ap.repaintDone != nil {
+		if ap.repaintTimer != nil {
+			ap.repaintTimer.Reset(window)
+		}
+		done := ap.repaintDone
+		ap.repaintMu.Unlock()
+		return done
+	}
+
+	ap.repaintDone = make(chan struct{})
+	ap.repaintTimer = time.AfterFunc(window, func() {
+		ap.runRepaint(window)
+	})
+	done := ap.repaintDone
+	ap.repaintMu.Unlock()
+	return done
+}
+
+// repaintResultSnapshot returns the most recent coalesced repaint result.
+func (ap *activePrompt) repaintResultSnapshot() repaintResult {
+	ap.repaintMu.Lock()
+	result := ap.repaintResult
+	ap.repaintMu.Unlock()
+	return result
+}
+
+// runRepaint performs the coalesced repaint render and caches its result.
+// If new repaint requests arrive during the render, it reschedules itself.
+func (ap *activePrompt) runRepaint(window time.Duration) {
+	for {
+		seqStart := ap.repaintSeq
+
+		promptText, pendingCacheKeys := ap.rc.eng.PrimaryRepaint()
+
+		seqAfter := ap.updateSeqSnapshot()
+		sentBefore := ap.sentSeqSnapshot()
+		includeUpdates := seqAfter > sentBefore
+		if includeUpdates {
+			// Repaint again to pick up newly completed segments while preserving vim state.
+			promptText, pendingCacheKeys = ap.rc.eng.PrimaryRepaint()
+		}
+
+		ap.repaintMu.Lock()
+		if seqStart != ap.repaintSeq {
+			ap.repaintTimer = time.AfterFunc(window, func() {
+				ap.runRepaint(window)
+			})
+			ap.repaintMu.Unlock()
+			return
+		}
+
+		ap.repaintResult = repaintResult{
+			promptText:       promptText,
+			pendingCacheKeys: pendingCacheKeys,
+			seqAfter:         seqAfter,
+			includeUpdates:   includeUpdates,
+		}
+		close(ap.repaintDone)
+		ap.repaintDone = nil
+		ap.repaintTimer = nil
+		ap.repaintMu.Unlock()
+		return
+	}
 }
 
 // setupRenderContext creates the config, environment, and engine for a render request.
@@ -467,85 +654,83 @@ func (d *Daemon) initializeTerminal(env *Environment, cfg *config.Config, flags 
 
 // handleRepaint handles vim toggle repaints - returns cached values immediately,
 // then streams updates as pending computations complete.
-func (d *Daemon) handleRepaint(ctx context.Context, req *ipc.PromptRequest, stream ipc.DaemonService_RenderPromptServer, rc *renderContext) error {
-	promptText, pendingCacheKeys := rc.eng.PrimaryRepaint()
+func (d *Daemon) handleRepaint(ctx context.Context, req *ipc.PromptRequest, stream ipc.DaemonService_RenderPromptServer) error {
+	active, ok := d.activePrompts.Get(req.SessionId)
+	if !ok {
+		// No active prompt: repaint behaves like a one-shot render.
+		rc := d.setupRenderContext(req)
+		d.initializeTerminal(rc.env, rc.cfg, rc.flags)
+		promptText, _ := rc.eng.PrimaryRepaint()
+		response := &ipc.PromptResponse{
+			Type:      ResponseTypeComplete,
+			RequestId: req.RequestId,
+			Prompts:   d.buildPrompts(rc.eng, promptText),
+		}
+		return stream.Send(response)
+	}
+
+	// Repaint attaches to the existing prompt engine so it can reuse:
+	// - in-flight segment computations
+	// - initialized segment writers
+	// - cached render state
+	active.attachStream(stream, req.RequestId)
+	flags := ipc.ProtoToFlags(req.Flags)
+	active.rc.env.UpdateForRepaint(flags, req.Env)
+
+	// Coalesce repaint requests so rapid vim toggles do not trigger
+	// repeated prompt re-renders that would slow down async segments.
+	repaintTimeout := DefaultAsyncTimeout
+	if active.rc.cfg.DaemonTimeout > 0 {
+		repaintTimeout = time.Duration(active.rc.cfg.DaemonTimeout) * time.Millisecond
+	}
+	done := active.scheduleRepaint(repaintTimeout)
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-done:
+	}
+
+	result := active.repaintResultSnapshot()
+	promptText := result.promptText
+	pendingCacheKeys := result.pendingCacheKeys
 
 	responseType := ResponseTypeComplete
 	if len(pendingCacheKeys) > 0 {
 		responseType = ResponseTypeUpdate
 	}
 
+	seqAfter := result.seqAfter
+	includeUpdates := result.includeUpdates
+
 	response := &ipc.PromptResponse{
 		Type:      responseType,
 		RequestId: req.RequestId,
-		Prompts:   d.buildPrompts(rc.eng, promptText),
+		Prompts:   d.buildPrompts(active.rc.eng, promptText),
 	}
 	if err := stream.Send(response); err != nil {
 		return err
 	}
+	if includeUpdates {
+		active.setLastSentSeq(seqAfter)
+	}
 
 	if len(pendingCacheKeys) == 0 {
+		d.cancelActivePrompt(req.SessionId)
 		return nil
 	}
 
-	return d.waitForPendingFutures(ctx, req, stream, rc, pendingCacheKeys)
-}
-
-// waitForPendingFutures waits for pending computations and sends updates as each completes.
-func (d *Daemon) waitForPendingFutures(
-	ctx context.Context,
-	req *ipc.PromptRequest,
-	stream ipc.DaemonService_RenderPromptServer,
-	rc *renderContext,
-	pendingCacheKeys []string,
-) error {
-	var pendingFutures []*Future
-	for _, cacheKey := range pendingCacheKeys {
-		if future := d.registry.Get(req.SessionId, cacheKey); future != nil {
-			pendingFutures = append(pendingFutures, future)
-		}
-	}
-
-	remaining := len(pendingFutures)
-	cases := make([]reflect.SelectCase, remaining+1)
-	cases[0] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ctx.Done())}
-	for i, f := range pendingFutures {
-		cases[i+1] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(f.Done())}
-	}
-
-	for remaining > 0 {
-		chosen, _, _ := reflect.Select(cases)
-		if chosen == 0 {
-			return ctx.Err()
-		}
-
-		cases[chosen].Chan = reflect.ValueOf(nil)
-		remaining--
-
-		responseType := ResponseTypeUpdate
-		if remaining == 0 {
-			responseType = ResponseTypeComplete
-		}
-
-		promptText, _ := rc.eng.PrimaryRepaint()
-		resp := &ipc.PromptResponse{
-			Type:      responseType,
-			RequestId: req.RequestId,
-			Prompts:   d.buildPrompts(rc.eng, promptText),
-		}
-		if err := stream.Send(resp); err != nil {
-			return err
-		}
-	}
-	return nil
+	// Repaint stream stays open until all pending segments finish.
+	return d.waitForPromptCompletion(ctx, req, active)
 }
 
 // handleNormalRender handles standard prompt rendering with async segment updates.
 func (d *Daemon) handleNormalRender(ctx context.Context, req *ipc.PromptRequest, stream ipc.DaemonService_RenderPromptServer, rc *renderContext) error {
-	var pendingCount int
-	pendingDone := make(chan struct{})
+	active := newActivePrompt(rc)
+	active.attachStream(stream, req.RequestId)
+	d.activePrompts.Set(req.SessionId, active)
 
-	updateCallback := d.createUpdateCallback(ctx, req, stream, rc, &pendingCount, pendingDone)
+	updateCallback := d.createUpdateCallback(active)
 
 	asyncTimeout := DefaultAsyncTimeout
 	if rc.cfg.DaemonTimeout > 0 {
@@ -555,7 +740,7 @@ func (d *Daemon) handleNormalRender(ctx context.Context, req *ipc.PromptRequest,
 
 	rc.eng.StreamingMu().Lock()
 	pendingSegments := rc.eng.PendingSegments()
-	pendingCount = len(pendingSegments)
+	pendingCount := len(pendingSegments)
 	rc.eng.StreamingMu().Unlock()
 
 	// Cache all segments that completed within timeout
@@ -582,90 +767,121 @@ func (d *Daemon) handleNormalRender(ctx context.Context, req *ipc.PromptRequest,
 	}
 
 	if pendingCount > 0 {
-		return d.waitForPendingSegments(ctx, req, stream, rc, pendingDone)
+		// Keep the stream open until all pending segments complete.
+		return d.waitForPromptCompletion(ctx, req, active)
 	}
+
+	d.cancelActivePrompt(req.SessionId)
 	return nil
 }
 
 // createUpdateCallback creates the callback invoked when a segment completes after timeout.
-func (d *Daemon) createUpdateCallback(
-	ctx context.Context,
-	req *ipc.PromptRequest,
-	stream ipc.DaemonService_RenderPromptServer,
-	rc *renderContext,
-	pendingCount *int,
-	pendingDone chan struct{},
-) func(string) {
+func (d *Daemon) createUpdateCallback(active *activePrompt) func(string) {
 	return func(segmentName string) {
-		if ctx.Err() != nil {
+		if active.ctx.Err() != nil {
 			return
 		}
 
-		newPrompt := rc.eng.ReRender()
-
-		if ctx.Err() == nil {
-			for _, block := range rc.cfg.Blocks {
+		// Track updates so repaints can include completed segments immediately.
+		active.bumpUpdateSeq()
+		seq := active.updateSeqSnapshot()
+		if active.ctx.Err() == nil {
+			for _, block := range active.rc.cfg.Blocks {
 				for _, segment := range block.Segments {
 					if segment.Name() == segmentName {
-						rc.eng.CacheSegmentText(segment)
+						// Clear cached text so a completed segment re-renders with fresh colors.
+						segment.SetText("")
 						break
 					}
 				}
 			}
 		}
 
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			response := &ipc.PromptResponse{
-				Type:      "update",
-				RequestId: req.RequestId,
-				Prompts:   d.buildPrompts(rc.eng, newPrompt),
-			}
-			if err := stream.Send(response); err != nil {
-				log.Debugf("failed to send update: %v", err)
+		newPrompt := active.rc.eng.ReRender()
+
+		if active.ctx.Err() == nil {
+			for _, block := range active.rc.cfg.Blocks {
+				for _, segment := range block.Segments {
+					if segment.Name() == segmentName {
+						active.rc.eng.CacheSegmentText(segment)
+						break
+					}
+				}
 			}
 		}
 
-		*pendingCount--
-		if *pendingCount == 0 {
-			close(pendingDone)
+		active.rc.eng.StreamingMu().Lock()
+		remaining := len(active.rc.eng.PendingSegments())
+		active.rc.eng.StreamingMu().Unlock()
+
+		if remaining == 0 {
+			active.closePendingDone()
 		}
+
+		seqNow := active.sentSeqSnapshot()
+		if seq <= seqNow {
+			return
+		}
+
+		stream, requestID := active.currentStream()
+		if stream == nil {
+			return
+		}
+
+		response := &ipc.PromptResponse{
+			Type:      "update",
+			RequestId: requestID,
+			Prompts:   d.buildPrompts(active.rc.eng, newPrompt),
+		}
+		if err := stream.Send(response); err != nil {
+			return
+		}
+		active.setLastSentSeq(seq)
 	}
 }
 
 // cacheCompletedSegments caches all segments that completed within timeout.
 func (d *Daemon) cacheCompletedSegments(rc *renderContext, pendingSegments map[string]bool) {
-	for _, block := range rc.cfg.Blocks {
-		for _, segment := range block.Segments {
-			if !pendingSegments[segment.Name()] {
+	for blockIndex, block := range rc.cfg.Blocks {
+		for segmentIndex, segment := range block.Segments {
+			key := fmt.Sprintf("%d:%d:%s", blockIndex, segmentIndex, segment.Name())
+			if !pendingSegments[key] {
 				rc.eng.CacheSegmentText(segment)
 			}
 		}
 	}
 }
 
-// waitForPendingSegments waits for all pending segments to complete and sends final response.
-func (d *Daemon) waitForPendingSegments(
+// waitForPromptCompletion waits for all pending segments to complete and sends final response.
+func (d *Daemon) waitForPromptCompletion(
 	ctx context.Context,
 	req *ipc.PromptRequest,
-	stream ipc.DaemonService_RenderPromptServer,
-	rc *renderContext,
-	pendingDone chan struct{},
+	active *activePrompt,
 ) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-pendingDone:
-		finalPrompt := rc.eng.ReRender()
-		finalResponse := &ipc.PromptResponse{
-			Type:      "complete",
-			RequestId: req.RequestId,
-			Prompts:   d.buildPrompts(rc.eng, finalPrompt),
-		}
-		return stream.Send(finalResponse)
+	case <-active.pendingDone:
 	}
+
+	stream, requestID := active.currentStream()
+	if stream == nil {
+		d.cancelActivePrompt(req.SessionId)
+		return nil
+	}
+
+	finalPrompt := active.rc.eng.ReRender()
+	finalResponse := &ipc.PromptResponse{
+		Type:      "complete",
+		RequestId: requestID,
+		Prompts:   d.buildPrompts(active.rc.eng, finalPrompt),
+	}
+	if err := stream.Send(finalResponse); err != nil {
+		return err
+	}
+
+	d.cancelActivePrompt(req.SessionId)
+	return nil
 }
 
 // getOrLoadConfig retrieves a config from cache or loads and caches it.

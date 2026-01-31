@@ -39,11 +39,11 @@ func (f *Future) Result() (any, error) {
 }
 
 // ComputationRegistry manages in-flight segment computations.
-// It decouples computation lifecycle from request lifecycle, enabling:
-// - Soft Cancel: new request reuses existing computation (vim mode toggle)
-// - Hard Cancel: abort computation and prevent stale cache writes (new command)
+// It decouples computation lifecycle from request lifecycle so:
+// - Soft Cancel: new requests reuse existing computations (vim mode toggle).
+// - Hard Cancel: computations are aborted to prevent stale cache writes (new command).
 type ComputationRegistry struct {
-	// computations maps sessionID -> (cacheKey -> Future)
+	// computations maps sessionID -> (segmentName -> Future)
 	computations map[string]map[string]*Future
 	mu           sync.Mutex
 }
@@ -55,10 +55,10 @@ func NewComputationRegistry() *ComputationRegistry {
 	}
 }
 
-// GetOrCreate returns an existing Future for the key, or creates one using computeFn.
+// GetOrCreate returns an existing Future for the segment, or creates one using computeFn.
 // The computeFn receives a context that will be cancelled on Hard Cancel.
 // Returns the Future and whether it was newly created (true) or reused (false).
-func (r *ComputationRegistry) GetOrCreate(sessionID, cacheKey string, computeFn func(ctx context.Context) (any, error)) (*Future, bool) {
+func (r *ComputationRegistry) GetOrCreate(sessionID, segmentName string, computeFn func(ctx context.Context) (any, error)) (*Future, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -70,7 +70,7 @@ func (r *ComputationRegistry) GetOrCreate(sessionID, cacheKey string, computeFn 
 	}
 
 	// Check for existing computation
-	if future, ok := sessionMap[cacheKey]; ok {
+	if future, ok := sessionMap[segmentName]; ok {
 		future.mu.Lock()
 		future.refCount++
 		future.mu.Unlock()
@@ -84,7 +84,7 @@ func (r *ComputationRegistry) GetOrCreate(sessionID, cacheKey string, computeFn 
 		cancel:   cancel,
 		refCount: 1,
 	}
-	sessionMap[cacheKey] = future
+	sessionMap[segmentName] = future
 
 	// Run computation in background
 	go func() {
@@ -97,7 +97,7 @@ func (r *ComputationRegistry) GetOrCreate(sessionID, cacheKey string, computeFn 
 
 		// Clean up after completion (with delay to allow late subscribers)
 		time.AfterFunc(5*time.Second, func() {
-			r.cleanup(sessionID, cacheKey)
+			r.cleanup(sessionID, segmentName)
 		})
 	}()
 
@@ -105,12 +105,12 @@ func (r *ComputationRegistry) GetOrCreate(sessionID, cacheKey string, computeFn 
 }
 
 // Get returns an existing Future if present, nil otherwise.
-func (r *ComputationRegistry) Get(sessionID, cacheKey string) *Future {
+func (r *ComputationRegistry) Get(sessionID, segmentName string) *Future {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if sessionMap, ok := r.computations[sessionID]; ok {
-		if future, ok := sessionMap[cacheKey]; ok {
+		if future, ok := sessionMap[segmentName]; ok {
 			future.mu.Lock()
 			future.refCount++
 			future.mu.Unlock()
@@ -121,12 +121,12 @@ func (r *ComputationRegistry) Get(sessionID, cacheKey string) *Future {
 }
 
 // Release decrements the refCount for a Future.
-func (r *ComputationRegistry) Release(sessionID, cacheKey string) {
+func (r *ComputationRegistry) Release(sessionID, segmentName string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if sessionMap, ok := r.computations[sessionID]; ok {
-		if future, ok := sessionMap[cacheKey]; ok {
+		if future, ok := sessionMap[segmentName]; ok {
 			future.mu.Lock()
 			future.refCount--
 			future.mu.Unlock()
@@ -148,9 +148,8 @@ func (r *ComputationRegistry) HardCancel(sessionID string) {
 	}
 }
 
-// SoftCancel does NOT cancel computations - they continue running.
+// SoftCancel does not stop computations.
 // The RPC stream is cancelled separately; computations remain for reuse.
-// This is a no-op on the registry; exists for symmetry and documentation.
 func (r *ComputationRegistry) SoftCancel(_ string) {
 	// No-op: computations continue, will be reused by next request
 }
@@ -185,19 +184,19 @@ func (r *ComputationRegistry) CleanSession(sessionID string) {
 }
 
 // cleanup removes a completed computation after delay.
-func (r *ComputationRegistry) cleanup(sessionID, cacheKey string) {
+func (r *ComputationRegistry) cleanup(sessionID, segmentName string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	if sessionMap, ok := r.computations[sessionID]; ok {
-		if future, ok := sessionMap[cacheKey]; ok {
+		if future, ok := sessionMap[segmentName]; ok {
 			future.mu.Lock()
 			refCount := future.refCount
 			future.mu.Unlock()
 
 			// Only delete if no active references
 			if refCount <= 0 {
-				delete(sessionMap, cacheKey)
+				delete(sessionMap, segmentName)
 				if len(sessionMap) == 0 {
 					delete(r.computations, sessionID)
 				}
@@ -206,7 +205,7 @@ func (r *ComputationRegistry) cleanup(sessionID, cacheKey string) {
 	}
 }
 
-// GetPendingKeys returns all cache keys with pending computations for a session.
+// GetPendingKeys returns all segment names with pending computations for a session.
 func (r *ComputationRegistry) GetPendingKeys(sessionID string) []string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -226,7 +225,7 @@ func (r *ComputationRegistry) GetPendingKeys(sessionID string) []string {
 }
 
 // SessionComputationRegistry wraps ComputationRegistry for a specific session.
-// Implements prompt.ComputationRegistry interface.
+// It implements prompt.ComputationRegistry for use inside the prompt engine.
 type SessionComputationRegistry struct {
 	registry  *ComputationRegistry
 	sessionID string
@@ -241,8 +240,8 @@ func (r *ComputationRegistry) NewSessionRegistry(sessionID string) *SessionCompu
 }
 
 // GetOrStart implements prompt.ComputationRegistry.
-func (s *SessionComputationRegistry) GetOrStart(cacheKey string, computeFn func() prompt.SegmentResult) (<-chan struct{}, bool) {
-	future, isNew := s.registry.GetOrCreate(s.sessionID, cacheKey, func(ctx context.Context) (any, error) {
+func (s *SessionComputationRegistry) GetOrStart(segmentName string, computeFn func() prompt.SegmentResult) (<-chan struct{}, bool) {
+	future, isNew := s.registry.GetOrCreate(s.sessionID, segmentName, func(ctx context.Context) (any, error) {
 		// Check if cancelled before starting
 		if ctx.Err() != nil {
 			return prompt.SegmentResult{}, ctx.Err()
@@ -258,12 +257,12 @@ func (s *SessionComputationRegistry) GetOrStart(cacheKey string, computeFn func(
 }
 
 // GetResult implements prompt.ComputationRegistry.
-func (s *SessionComputationRegistry) GetResult(cacheKey string) (prompt.SegmentResult, bool) {
-	future := s.registry.Get(s.sessionID, cacheKey)
+func (s *SessionComputationRegistry) GetResult(segmentName string) (prompt.SegmentResult, bool) {
+	future := s.registry.Get(s.sessionID, segmentName)
 	if future == nil {
 		return prompt.SegmentResult{}, false
 	}
-	defer s.registry.Release(s.sessionID, cacheKey)
+	defer s.registry.Release(s.sessionID, segmentName)
 
 	select {
 	case <-future.Done():
@@ -282,12 +281,12 @@ func (s *SessionComputationRegistry) GetResult(cacheKey string) (prompt.SegmentR
 }
 
 // IsPending implements prompt.ComputationRegistry.
-func (s *SessionComputationRegistry) IsPending(cacheKey string) bool {
-	future := s.registry.Get(s.sessionID, cacheKey)
+func (s *SessionComputationRegistry) IsPending(segmentName string) bool {
+	future := s.registry.Get(s.sessionID, segmentName)
 	if future == nil {
 		return false
 	}
-	defer s.registry.Release(s.sessionID, cacheKey)
+	defer s.registry.Release(s.sessionID, segmentName)
 
 	select {
 	case <-future.Done():

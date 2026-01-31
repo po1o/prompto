@@ -25,8 +25,10 @@ func (f Features) Zsh() Code {
 		return enablePoshDaemon
 	case VimMode:
 		return "bindkey -v; _omp_vim_mode=1; _omp_create_widget zle-keymap-select _omp_zle-keymap-select; _omp_setup_vim_keybindings"
+	case VimCursorBlink:
+		return "_omp_cursor_blink=1"
 	case VimCursorShape:
-		return "_omp_cursor_shape=1; _omp_should_change_cursor && print -n '\\e[6 q'"
+		return "_omp_cursor_shape=1; _omp_should_change_cursor && _omp_apply_cursor_shape"
 	case PromptMark, RPrompt, PoshGit, Azure, LineError, Jobs, Async:
 		fallthrough
 	default:

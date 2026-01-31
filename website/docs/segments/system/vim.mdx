@@ -1,0 +1,57 @@
+---
+id: vim
+title: Vim Mode
+sidebar_label: Vim Mode
+---
+
+## What
+
+Show the current vim mode (insert, normal, visual, replace, command, operator).
+
+## Sample Configuration
+
+import Config from "@site/src/components/Config.js";
+
+<Config
+  data={{
+    type: "vim",
+    style: "powerline",
+    powerline_symbol: "\uE0B0",
+    foreground: "#ffffff",
+    background: "#5f5faf",
+  }}
+/>
+
+## Options
+
+The vim segment has no segment-specific options.
+
+## Template ([info][templates])
+
+:::note default template
+
+```template
+ {{ .Mode }} 
+```
+
+:::
+
+### Properties
+
+| Name        | Type      | Description                     |
+| ----------- | --------- | ------------------------------- |
+| `.Mode`     | `string`  | the current vim mode            |
+| `.Normal`   | `boolean` | true when the mode is `normal`  |
+| `.Insert`   | `boolean` | true when the mode is `insert`  |
+| `.Visual`   | `boolean` | true when the mode is `visual`  |
+| `.Replace`  | `boolean` | true when the mode is `replace` |
+| `.Command`  | `boolean` | true when the mode is `command` |
+| `.Operator` | `boolean` | true when the mode is `operator`|
+
+## Notes
+
+- Enable vim mode detection in the top-level `vim` config. See [Vim settings][vim-config].
+- Cursor shape and blink control are also configured via the top-level `vim` settings.
+
+[templates]: /docs/configuration/templates
+[vim-config]: /docs/configuration/general#vim

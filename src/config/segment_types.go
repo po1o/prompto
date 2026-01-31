@@ -509,3 +509,17 @@ func (segment *Segment) MapSegmentWithWriter(env runtime.Environment) error {
 
 	return nil
 }
+
+func (segment *Segment) HasWriter() bool {
+	return segment.writer != nil
+}
+
+func (segment *Segment) EnsureWriter(env runtime.Environment) error {
+	segment.env = env
+
+	if segment.writer != nil {
+		return nil
+	}
+
+	return segment.MapSegmentWithWriter(env)
+}

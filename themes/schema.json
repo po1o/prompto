@@ -463,6 +463,7 @@
             "unity",
             "upgrade",
             "v",
+            "vim",
             "vala",
             "wakatime",
             "winget",
@@ -4438,6 +4439,19 @@
           "if": {
             "properties": {
               "type": {
+                "const": "vim"
+              }
+            }
+          },
+          "then": {
+            "title": "Vim Segment",
+            "description": "https://ohmyposh.dev/docs/segments/system/vim"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
                 "const": "time"
               }
             }
@@ -4925,6 +4939,29 @@
       "title": "Enable Cursor Positioning",
       "description": "https://ohmyposh.dev/docs/configuration/general#general-settings",
       "default": false
+    },
+    "vim": {
+      "type": "object",
+      "title": "Vim Mode Settings",
+      "description": "https://ohmyposh.dev/docs/configuration/general#vim",
+      "default": {},
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Enable Vim Mode",
+          "default": false
+        },
+        "cursor_shape": {
+          "type": "boolean",
+          "title": "Enable Vim Cursor Shape",
+          "default": false
+        },
+        "cursor_blink": {
+          "type": "boolean",
+          "title": "Enable Vim Cursor Blink",
+          "default": false
+        }
+      }
     },
     "shell_integration": {
       "type": "boolean",

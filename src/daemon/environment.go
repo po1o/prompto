@@ -38,3 +38,24 @@ func (de *Environment) Getenv(key string) string {
 	// Fall back to daemon's environment
 	return de.Terminal.Getenv(key)
 }
+
+// UpdateForRepaint updates the environment with repaint-specific changes.
+func (de *Environment) UpdateForRepaint(flags *runtime.Flags, envVars map[string]string) {
+	if envVars != nil {
+		de.envVars = envVars
+	}
+
+	if flags == nil {
+		return
+	}
+
+	if de.Terminal == nil {
+		return
+	}
+
+	if de.Terminal.CmdFlags == nil {
+		return
+	}
+
+	de.Terminal.CmdFlags.VimMode = flags.VimMode
+}

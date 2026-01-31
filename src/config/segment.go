@@ -168,7 +168,7 @@ func (segment *Segment) Execute(env runtime.Environment) {
 
 	defer segment.evaluateNeeds()
 
-	err := segment.MapSegmentWithWriter(env)
+	err := segment.EnsureWriter(env)
 	if err != nil || !segment.shouldIncludeFolder() {
 		return
 	}

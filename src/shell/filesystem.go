@@ -66,7 +66,26 @@ func cacheKey(sh string) string {
 }
 
 func cacheValue(env runtime.Environment) string {
-	return fmt.Sprintf("%d%s%v", env.Flags().ConfigHash, build.Version, env.Flags().Daemon)
+	execPath := ""
+	if resolved, err := getExecutablePath(env); err == nil {
+		execPath = resolved
+	}
+
+	execStamp := ""
+	if exe, err := os.Executable(); err == nil {
+		if info, err := os.Stat(exe); err == nil {
+			execStamp = fmt.Sprintf("%d:%d", info.ModTime().UnixNano(), info.Size())
+		}
+	}
+
+	return fmt.Sprintf("%d%s%v%v%s%s",
+		env.Flags().ConfigHash,
+		build.Version,
+		env.Flags().Daemon,
+		env.Flags().Strict,
+		execPath,
+		execStamp,
+	)
 }
 
 func InitScriptName(flags *runtime.Flags) string {

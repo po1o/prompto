@@ -20,6 +20,7 @@ const (
 	Async
 	Daemon
 	VimMode
+	VimCursorBlink
 	VimCursorShape
 )
 

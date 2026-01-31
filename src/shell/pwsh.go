@@ -33,8 +33,10 @@ func (f Features) Pwsh() Code {
 		return "Enable-PoshDaemon"
 	case VimMode:
 		return "Set-PSReadLineOption -EditMode Vi; Enable-PoshVimMode"
+	case VimCursorBlink:
+		return "$script:CursorBlink = $true"
 	case VimCursorShape:
-		return "$script:CursorShape = $true; Set-VimModeCursor \"Insert\""
+		return "$script:CursorShape = $true; Set-VimModeCursorFromState"
 	case PromptMark, RPrompt, CursorPositioning, Async:
 		fallthrough
 	default:

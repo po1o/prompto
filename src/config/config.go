@@ -55,6 +55,7 @@ const (
 type VimConfig struct {
 	Enabled     bool `json:"enabled,omitempty" toml:"enabled,omitempty" yaml:"enabled,omitempty"`
 	CursorShape bool `json:"cursor_shape,omitempty" toml:"cursor_shape,omitempty" yaml:"cursor_shape,omitempty"`
+	CursorBlink bool `json:"cursor_blink,omitempty" toml:"cursor_blink,omitempty" yaml:"cursor_blink,omitempty"`
 }
 
 // Config holds all the theme for rendering the prompt
@@ -213,13 +214,18 @@ func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features
 
 	if cfg.Vim != nil {
 		// CursorShape implies Enabled - cursor changes require vim mode detection
-		if cfg.Vim.Enabled || cfg.Vim.CursorShape {
+		cursorControl := cfg.Vim.CursorShape || cfg.Vim.CursorBlink
+		if cfg.Vim.Enabled || cursorControl {
 			log.Debug("vim mode enabled")
 			feats |= shell.VimMode
 		}
-		if cfg.Vim.CursorShape {
+		if cursorControl {
 			log.Debug("vim cursor shape enabled")
 			feats |= shell.VimCursorShape
+		}
+		if cfg.Vim.CursorBlink {
+			log.Debug("vim cursor blink enabled")
+			feats |= shell.VimCursorBlink
 		}
 	}
 

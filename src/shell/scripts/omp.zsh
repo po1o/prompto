@@ -79,6 +79,7 @@ function _omp_precmd() {
   fi
 
   set_poshcontext
+  _omp_apply_cursor_shape
   _omp_set_cursor_position
 
   # We do this to avoid unexpected expansions in a prompt string.
@@ -175,9 +176,10 @@ function _omp_zle-line-init() {
   local -i ret=$?
   (( $+zle_bracketed_paste )) && print -r -n - $zle_bracketed_paste[2]
 
-  if [[ $_omp_daemon_mode == 1 ]] && [[ -n $_omp_transient_prompt ]]; then
-    # Use daemon-provided transient prompt
-    PS1=$_omp_transient_prompt
+  if [[ $_omp_daemon_mode == 1 ]]; then
+    # Always use daemon-provided transient prompt in daemon mode.
+    # If it's empty (e.g. first render), fall back to an empty prompt instead of CLI rendering.
+    PS1=${_omp_transient_prompt-}
   else
     # We need this workaround because when the `filler` is set,
     # there will be a redundant blank line below the transient prompt if the input is empty.
@@ -249,6 +251,7 @@ _omp_transient_prompt=
 _omp_vim_mode=0
 _omp_vim_mode_repaint=0
 _omp_cursor_shape=0
+_omp_cursor_blink=0
 
 # Check if terminal handles cursor natively (Ghostty, Kitty)
 function _omp_should_change_cursor() {
@@ -268,19 +271,29 @@ function _omp_get_vim_mode() {
   esac
 }
 
-# Vim mode keymap change handler
-function _omp_zle-keymap-select() {
+function _omp_apply_cursor_shape() {
   # Change cursor shape if enabled and terminal doesn't handle it natively
   if [[ "$_omp_cursor_shape" == "1" ]] && _omp_should_change_cursor; then
+    local block_code=2
+    local beam_code=6
+    if [[ "$_omp_cursor_blink" == "1" ]]; then
+      block_code=1
+      beam_code=5
+    fi
     case $KEYMAP in
       vicmd)
-        print -n '\e[2 q'  # Steady block for normal mode
+        print -n "\e[${block_code} q"  # Block for normal mode
         ;;
-      viins|main)
-        print -n '\e[6 q'  # Steady beam for insert mode
+      viins|main|*)
+        print -n "\e[${beam_code} q"  # Beam for insert mode
         ;;
     esac
   fi
+}
+
+# Vim mode keymap change handler
+function _omp_zle-keymap-select() {
+  _omp_apply_cursor_shape
 
   # In daemon mode, trigger async repaint with new vim mode
   if [[ $_omp_daemon_mode == 1 ]]; then
@@ -311,6 +324,7 @@ function _omp_daemon_precmd() {
   fi
 
   set_poshcontext
+  _omp_apply_cursor_shape
   _omp_set_cursor_position
 
   unsetopt PROMPT_SUBST
@@ -402,8 +416,8 @@ function _omp_daemon_handler() {
   local fd=$1
   local line batch_complete=0
 
-  # Read all available lines in this batch
-  while [[ $batch_complete -eq 0 ]] && IFS= read -r -t 0 line <&$fd; do
+  # Read until we see a status line (daemon always ends a batch with status:*).
+  while [[ $batch_complete -eq 0 ]] && IFS= read -r line <&$fd; do
     _omp_daemon_parse_line "$line"
     if [[ $line == status:* ]]; then
       batch_complete=1
@@ -415,14 +429,11 @@ function _omp_daemon_handler() {
     zle .reset-prompt
   fi
 
-  # Check if stream ended
-  if [[ $line == "status:complete" ]] || ! IFS= read -r -t 0.01 line <&$fd 2>/dev/null; then
-    # Check if fd is still valid by trying to read
-    if ! IFS= read -r -t 0.01 _ <&$fd 2>/dev/null; then
-      zle -F $fd
-      exec {fd}<&-
-      _omp_daemon_fd=
-    fi
+  # If the stream ended or we saw the final status, clean up the fd.
+  if [[ $batch_complete -eq 0 ]] || [[ $line == "status:complete" ]]; then
+    zle -F $fd
+    exec {fd}<&-
+    _omp_daemon_fd=
   fi
 }
 
@@ -470,3 +481,19 @@ function _omp_setup_vim_keybindings() {
 
 # legacy functions
 function enable_poshtransientprompt() {}
+
+_omp_custom_dir=${OMP_CUSTOM:-}
+if [[ -z $_omp_custom_dir ]]; then
+  # Avoid double-sourcing if oh-my-zsh is managing ZSH_CUSTOM.
+  if [[ -n $ZSH ]] && [[ -f $ZSH/oh-my-zsh.sh ]]; then
+    _omp_custom_dir=
+  else
+    _omp_custom_dir=$ZSH_CUSTOM
+  fi
+fi
+
+if [[ -n $_omp_custom_dir ]] && [[ -d $_omp_custom_dir ]]; then
+  for script in $_omp_custom_dir/*.zsh(N); do
+    source $script
+  done
+fi

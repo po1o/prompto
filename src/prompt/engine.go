@@ -55,15 +55,15 @@ type ComputationRegistry interface {
 	// GetOrStart returns an existing computation or starts a new one.
 	// computeFn is called in a goroutine if a new computation is started.
 	// Returns: done channel (closes when complete), isNew (true if started fresh)
-	GetOrStart(cacheKey string, computeFn func() SegmentResult) (done <-chan struct{}, isNew bool)
+	GetOrStart(segmentKey string, computeFn func() SegmentResult) (done <-chan struct{}, isNew bool)
 
 	// GetResult returns the result of a completed computation.
-	GetResult(cacheKey string) (result SegmentResult, found bool)
+	GetResult(segmentKey string) (result SegmentResult, found bool)
 
 	// IsPending returns true if a computation is in progress for this key.
-	IsPending(cacheKey string) bool
+	IsPending(segmentKey string) bool
 
-	// GetPendingKeys returns all cache keys with pending computations.
+	// GetPendingKeys returns all segment keys with pending computations.
 	GetPendingKeys() []string
 }
 
@@ -73,7 +73,7 @@ type Engine struct {
 	TextCache             TextCache
 	Registry              ComputationRegistry // Optional: nil for non-daemon mode
 	pendingSegments       map[string]bool
-	pendingCacheKeys      map[string]string // maps segment name -> cache key (for repaint)
+	segmentCacheKeys      map[string]string // maps segment key -> cache key (for repaint)
 	Config                *config.Config
 	activeSegment         *config.Segment
 	previousActiveSegment *config.Segment
@@ -88,6 +88,10 @@ type Engine struct {
 	streamingMu           sync.Mutex
 	Plain                 bool
 	forceRender           bool
+}
+
+func segmentKey(blockIndex, segmentIndex int, segment *config.Segment) string {
+	return fmt.Sprintf("%d:%d:%s", blockIndex, segmentIndex, segment.Name())
 }
 
 const (
@@ -157,18 +161,24 @@ func (e *Engine) canWriteRightBlock(length int, rprompt bool) (int, bool) {
 func (e *Engine) PrimaryStreaming(timeout time.Duration, updateCallback func(string)) string {
 	// Initialize streaming state
 	e.pendingSegments = make(map[string]bool)
-	e.pendingCacheKeys = make(map[string]string)
+	e.segmentCacheKeys = make(map[string]string)
 	e.cachedValues = make(map[string]string)
 
-	var segmentsToExecute []*config.Segment
+	type execSegment struct {
+		segment *config.Segment
+		key     string
+	}
+
+	var segmentsToExecute []execSegment
 	var segmentsSkipped []*config.Segment
 	var wg sync.WaitGroup
 
 	// Collect segments and determine which need execution
-	for _, block := range e.Config.Blocks {
-		for _, segment := range block.Segments {
-			_ = segment.MapSegmentWithWriter(e.Env)
+	for blockIndex, block := range e.Config.Blocks {
+		for segmentIndex, segment := range block.Segments {
+			_ = segment.EnsureWriter(e.Env)
 			_ = segment.Name()
+			key := segmentKey(blockIndex, segmentIndex, segment)
 
 			if e.TextCache != nil {
 				cacheKey := segment.DaemonCacheKey()
@@ -185,20 +195,29 @@ func (e *Engine) PrimaryStreaming(timeout time.Duration, updateCallback func(str
 
 				if useCacheForPending {
 					if cachedText, ok := e.TextCache.Get(cacheKey); ok {
-						e.cachedValues[segment.Name()] = cachedText
+						e.cachedValues[key] = cachedText
 					}
 				}
 
 				// Store cache key mapping for repaint
-				e.pendingCacheKeys[segment.Name()] = cacheKey
+				e.segmentCacheKeys[key] = cacheKey
 			}
 
-			segmentsToExecute = append(segmentsToExecute, segment)
+			segmentsToExecute = append(segmentsToExecute, execSegment{
+				segment: segment,
+				key:     key,
+			})
 		}
 	}
 
 	// Results channel for tracking completion
-	results := make(chan result, len(segmentsToExecute))
+	type execResult struct {
+		segment *config.Segment
+		key     string
+		index   int
+	}
+
+	results := make(chan execResult, len(segmentsToExecute))
 	completedSegments := make(map[*config.Segment]bool)
 
 	for _, s := range segmentsSkipped {
@@ -208,12 +227,12 @@ func (e *Engine) PrimaryStreaming(timeout time.Duration, updateCallback func(str
 	// Start segment execution - with or without registry
 	if e.Registry != nil {
 		// Registry mode: register computations for potential reuse
-		for i, segment := range segmentsToExecute {
-			cacheKey := segment.DaemonCacheKey()
-			seg := segment
+		for i, entry := range segmentsToExecute {
+			seg := entry.segment
 			idx := i
+			key := entry.key
 
-			done, isNew := e.Registry.GetOrStart(cacheKey, func() SegmentResult {
+			done, isNew := e.Registry.GetOrStart(key, func() SegmentResult {
 				seg.Execute(e.Env)
 				return SegmentResult{Text: seg.Text(), Enabled: seg.Enabled}
 			})
@@ -221,23 +240,23 @@ func (e *Engine) PrimaryStreaming(timeout time.Duration, updateCallback func(str
 			// Wait for computation (new or existing) and apply result
 			wg.Go(func() {
 				<-done
-				if res, ok := e.Registry.GetResult(cacheKey); ok {
+				if res, ok := e.Registry.GetResult(key); ok {
 					seg.Enabled = res.Enabled
 					seg.SetText(res.Text)
 				}
-				results <- result{seg, idx}
+				results <- execResult{segment: seg, key: key, index: idx}
 			})
 			_ = isNew // suppress unused warning
 		}
 	} else {
 		// Non-registry mode: direct execution (backward compatible)
-		for i, segment := range segmentsToExecute {
+		for i, entry := range segmentsToExecute {
 			wg.Add(1)
-			go func(s *config.Segment, idx int) {
+			go func(s *config.Segment, key string, idx int) {
 				defer wg.Done()
 				s.Execute(e.Env)
-				results <- result{s, idx}
-			}(segment, i)
+				results <- execResult{segment: s, key: key, index: idx}
+			}(entry.segment, entry.key, i)
 		}
 	}
 
@@ -272,9 +291,9 @@ func (e *Engine) PrimaryStreaming(timeout time.Duration, updateCallback func(str
 
 	// Identify pending segments
 	e.streamingMu.Lock()
-	for _, s := range segmentsToExecute {
-		if !completedSegments[s] {
-			e.pendingSegments[s.Name()] = true
+	for _, entry := range segmentsToExecute {
+		if !completedSegments[entry.segment] {
+			e.pendingSegments[entry.key] = true
 		}
 	}
 	e.streamingMu.Unlock()
@@ -287,7 +306,7 @@ func (e *Engine) PrimaryStreaming(timeout time.Duration, updateCallback func(str
 		go func() {
 			for res := range results {
 				e.streamingMu.Lock()
-				delete(e.pendingSegments, res.segment.Name())
+				delete(e.pendingSegments, res.key)
 				e.streamingMu.Unlock()
 				updateCallback(res.segment.Name())
 			}
@@ -311,7 +330,9 @@ func (e *Engine) PrimaryRepaint() (string, []string) {
 
 	// Initialize state
 	e.pendingSegments = make(map[string]bool)
-	e.pendingCacheKeys = make(map[string]string)
+	if e.segmentCacheKeys == nil {
+		e.segmentCacheKeys = make(map[string]string)
+	}
 	e.cachedValues = make(map[string]string)
 
 	// Get pending cache keys from registry
@@ -323,32 +344,38 @@ func (e *Engine) PrimaryRepaint() (string, []string) {
 	var pendingCacheKeys []string
 
 	// Process each segment
-	for _, block := range e.Config.Blocks {
-		for _, segment := range block.Segments {
-			_ = segment.MapSegmentWithWriter(e.Env)
+	for blockIndex, block := range e.Config.Blocks {
+		for segmentIndex, segment := range block.Segments {
+			_ = segment.EnsureWriter(e.Env)
 			_ = segment.Name()
+			key := segmentKey(blockIndex, segmentIndex, segment)
 
-			cacheKey := segment.DaemonCacheKey()
+			cacheKey, ok := e.segmentCacheKeys[key]
+			if !ok {
+				cacheKey = segment.DaemonCacheKey()
+				e.segmentCacheKeys[key] = cacheKey
+			}
 
 			// Vim is shell-driven state (not computed), so we always re-execute it
 			// from the fresh environment flags rather than using stale cached text.
 			// This is trivially cheap — just a flag read and string comparisons.
 			if segment.Type == config.VIM {
+				_ = segment.MapSegmentWithWriter(e.Env)
 				segment.Execute(e.Env)
 				continue
 			}
 
 			// Check if this segment has a pending computation
-			if pendingKeys[cacheKey] {
+			if pendingKeys[key] {
 				// Segment is still computing - mark as pending
-				e.pendingSegments[segment.Name()] = true
-				e.pendingCacheKeys[segment.Name()] = cacheKey
+				e.pendingSegments[key] = true
+				e.segmentCacheKeys[key] = cacheKey
 				pendingCacheKeys = append(pendingCacheKeys, cacheKey)
 
 				// Use cached value for pending display
 				if e.TextCache != nil {
 					if cachedText, ok := e.TextCache.Get(cacheKey); ok {
-						e.cachedValues[segment.Name()] = cachedText
+						e.cachedValues[key] = cachedText
 						segment.Enabled = true
 						segment.SetText(cachedText)
 					}
@@ -367,7 +394,7 @@ func (e *Engine) PrimaryRepaint() (string, []string) {
 					if bg, ok := e.TextCache.Get(cacheKey + "_bg"); ok && bg != "" {
 						segment.Background = color.Ansi(bg)
 					}
-				} else if result, ok := e.Registry.GetResult(cacheKey); ok {
+				} else if result, ok := e.Registry.GetResult(key); ok {
 					// No cached text but registry has result - segment was disabled
 					segment.Enabled = result.Enabled
 				}
@@ -456,7 +483,7 @@ func (e *Engine) writePrimaryPromptStreaming(needsPrimaryRPrompt bool) {
 		}
 
 		// Custom renderBlock logic for streaming
-		if e.renderBlockStreaming(block, cancelNewline) {
+		if e.renderBlockStreaming(block, i, cancelNewline) {
 			didRender = true
 		}
 	}
@@ -478,12 +505,12 @@ func (e *Engine) writePrimaryPromptStreaming(needsPrimaryRPrompt bool) {
 }
 
 // renderBlockStreaming renders a block, handling pending segments
-func (e *Engine) renderBlockStreaming(block *config.Block, cancelNewline bool) bool {
-	blockText, length := e.writeBlockSegmentsStreaming(block)
+func (e *Engine) renderBlockStreaming(block *config.Block, blockIndex int, cancelNewline bool) bool {
+	blockText, length := e.writeBlockSegmentsStreaming(block, blockIndex)
 	return e.renderBlockWithText(block, blockText, length, cancelNewline)
 }
 
-func (e *Engine) writeBlockSegmentsStreaming(block *config.Block) (string, int) {
+func (e *Engine) writeBlockSegmentsStreaming(block *config.Block, blockIndex int) (string, int) {
 	segmentIndex := 0
 
 	type pendingRestore struct {
@@ -496,13 +523,14 @@ func (e *Engine) writeBlockSegmentsStreaming(block *config.Block) (string, int) 
 
 	var restores []pendingRestore
 
-	for _, segment := range block.Segments {
+	for segmentPosition, segment := range block.Segments {
+		key := segmentKey(blockIndex, segmentPosition, segment)
 		// Check if pending
-		isPending := e.pendingSegments[segment.Name()]
+		isPending := e.pendingSegments[key]
 
 		if isPending {
 			// Render as pending
-			cachedVal := e.cachedValues[segment.Name()]
+			cachedVal := e.cachedValues[key]
 			enabled, text, background := segment.GetPendingText(cachedVal, e.Config)
 
 			if !enabled {
@@ -546,10 +574,14 @@ func (e *Engine) writeBlockSegmentsStreaming(block *config.Block) (string, int) 
 				// Text was set from cache, just write it
 				// Clear templates since writer has no data (Execute wasn't called)
 				// This ensures ResolveForeground/Background use configured colors
+				origForegroundTemplates := segment.ForegroundTemplates
+				origBackgroundTemplates := segment.BackgroundTemplates
 				segment.ForegroundTemplates = nil
 				segment.BackgroundTemplates = nil
 				segmentIndex++
 				e.writeSegment(block, segment)
+				segment.ForegroundTemplates = origForegroundTemplates
+				segment.BackgroundTemplates = origBackgroundTemplates
 			} else if segment.Render(segmentIndex, e.forceRender) {
 				segmentIndex++
 				e.writeSegment(block, segment)

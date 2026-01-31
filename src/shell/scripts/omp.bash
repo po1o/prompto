@@ -135,6 +135,7 @@ function _omp_hook() {
     fi
 
     set_poshcontext
+    _omp_apply_cursor_shape
     _omp_set_cursor_position
 
     PS1='$(_omp_get_primary)'
@@ -179,6 +180,7 @@ _omp_transient_prompt=''
 _omp_vim_mode=0
 _omp_vim_mode_repaint=0
 _omp_cursor_shape=0
+_omp_cursor_blink=0
 
 # Get current vim mode for segment template
 function _omp_get_vim_mode() {
@@ -203,19 +205,29 @@ function _omp_should_change_cursor() {
     return 0
 }
 
-# Vim mode change handler for ble.sh
-function _omp_ble_keymap_change() {
+function _omp_apply_cursor_shape() {
     # Change cursor shape if enabled and terminal doesn't handle it natively
     if [[ "$_omp_cursor_shape" == "1" ]] && _omp_should_change_cursor; then
-        case "$1" in
-            vi_nmap|vi_xmap|vi_omap)
-                printf '\e[2 q'  # Steady block for normal/visual mode
+        local block_code=2
+        local beam_code=6
+        if [[ "$_omp_cursor_blink" == "1" ]]; then
+            block_code=1
+            beam_code=5
+        fi
+        case "$(_omp_get_vim_mode)" in
+            normal|visual|operator|command)
+                printf '\e[%s q' "$block_code"  # Block for normal/visual/operator/command mode
                 ;;
-            vi_imap)
-                printf '\e[6 q'  # Steady beam for insert mode
+            insert|*)
+                printf '\e[%s q' "$beam_code"  # Beam for insert mode
                 ;;
         esac
     fi
+}
+
+# Vim mode change handler for ble.sh
+function _omp_ble_keymap_change() {
+    _omp_apply_cursor_shape
 
     # In daemon mode, trigger async repaint with new vim mode
     if [[ $_omp_daemon_mode == 1 ]]; then
@@ -246,10 +258,24 @@ function _omp_daemon_parse_line() {
 
 function _omp_daemon_job() {
     local line
-    while read -r line; do
-        _omp_daemon_parse_line "$line"
+    local batch_complete=0
+    while true; do
+        batch_complete=0
+        while IFS= read -r line; do
+            _omp_daemon_parse_line "$line"
+            if [[ $line == status:* ]]; then
+                batch_complete=1
+                ble/textarea#render
+                if [[ $line == "status:complete" ]]; then
+                    return
+                fi
+                break
+            fi
+        done
+        if [[ $batch_complete -eq 0 ]]; then
+            return
+        fi
     done
-    ble/textarea#render
 }
 
 # Async daemon render - used by both prompt hook and vim mode changes
@@ -304,6 +330,7 @@ function _omp_daemon_hook() {
     fi
 
     set_poshcontext
+    _omp_apply_cursor_shape
     _omp_set_cursor_position
 
     _omp_daemon_render

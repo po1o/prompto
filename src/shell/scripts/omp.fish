@@ -55,7 +55,11 @@ function fish_prompt
     # see https://github.com/fish-shell/fish-shell/issues/8418
     printf \e\[0J
     if test "$_omp_transient" = 1
-        _omp_get_prompt transient
+        if test "$_omp_daemon_mode" = "1"
+            echo -n "$_omp_current_transient"
+        else
+            _omp_get_prompt transient
+        end
         return
     end
     if test "$_omp_new_prompt" = 0
@@ -88,6 +92,7 @@ function fish_prompt
     end
 
     set_poshcontext
+    _omp_apply_cursor_shape
 
     # validate if the user cleared the screen
     set --local omp_cleared false
@@ -256,6 +261,7 @@ end
 set --global _omp_vim_mode 0
 set --global _omp_vim_mode_repaint 0
 set --global _omp_cursor_shape 0
+set --global _omp_cursor_blink 0
 
 # Get current vim mode for segment template
 function _omp_get_vim_mode
@@ -280,6 +286,32 @@ function _omp_should_change_cursor
     return 0
 end
 
+function _omp_apply_cursor_shape
+    # Change cursor shape if enabled and terminal doesn't handle it natively
+    if test "$_omp_cursor_shape" = "1" && _omp_should_change_cursor
+        set --local block_code 2
+        set --local beam_code 6
+        set --local underline_code 4
+        if test "$_omp_cursor_blink" = "1"
+            set block_code 1
+            set beam_code 5
+            set underline_code 3
+        end
+        switch $fish_bind_mode
+            case default
+                printf '\e['$block_code' q'  # Block for normal mode
+            case insert
+                printf '\e['$beam_code' q'  # Beam for insert mode
+            case replace_one replace
+                printf '\e['$underline_code' q'  # Underline for replace mode
+            case visual
+                printf '\e['$block_code' q'  # Block for visual mode
+            case '*'
+                printf '\e['$beam_code' q'  # Beam for insert mode
+        end
+    end
+end
+
 # Vim mode change handler - watches fish_bind_mode variable
 function _omp_on_bind_mode_change --on-variable fish_bind_mode
     # Only trigger if vim mode is enabled
@@ -287,19 +319,7 @@ function _omp_on_bind_mode_change --on-variable fish_bind_mode
         return
     end
 
-    # Change cursor shape if enabled and terminal doesn't handle it natively
-    if test "$_omp_cursor_shape" = "1" && _omp_should_change_cursor
-        switch $fish_bind_mode
-            case default
-                printf '\e[2 q'  # Steady block for normal mode
-            case insert
-                printf '\e[6 q'  # Steady beam for insert mode
-            case replace_one replace
-                printf '\e[4 q'  # Steady underline for replace mode
-            case visual
-                printf '\e[2 q'  # Steady block for visual mode
-        end
-    end
+    _omp_apply_cursor_shape
 
     # In daemon mode, trigger async repaint with new vim mode
     if test "$_omp_daemon_mode" = "1"
@@ -409,6 +429,8 @@ function _omp_daemon_reader
             # Clear file for next batch
             if test "$parts[2]" != "complete"
                 echo -n "" > $prompt_file
+            else
+                break
             end
         end
     end
@@ -456,6 +478,7 @@ function _omp_daemon_fish_prompt
     end
 
     set_poshcontext
+    _omp_apply_cursor_shape
 
     if test $_omp_prompt_mark = 1
         iterm2_prompt_mark
