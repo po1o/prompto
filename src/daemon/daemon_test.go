@@ -168,3 +168,41 @@ func TestDaemonStopsAfterProcessExitForTrackedPID(t *testing.T) {
 	})
 	require.Equal(t, "stopped", response.Type)
 }
+
+func TestCompleteSessionForNonNumericIDDoesNotAffectTrackedPID(t *testing.T) {
+	daemon := NewWithIdleTimeout(25*time.Millisecond, &rendererStub{})
+	trackedSessionID := strconv.Itoa(os.Getpid())
+
+	daemon.StartRender(RenderRequest{
+		SessionID: trackedSessionID,
+		Flags:     &runtime.Flags{},
+	})
+	daemon.StartRender(RenderRequest{
+		SessionID: "nonnumeric",
+		Flags:     &runtime.Flags{},
+	})
+
+	daemon.CompleteSession("nonnumeric")
+	time.Sleep(70 * time.Millisecond)
+
+	response := daemon.StartRender(RenderRequest{
+		SessionID: trackedSessionID,
+		Flags:     &runtime.Flags{},
+	})
+	require.Equal(t, "initial", response.Type)
+}
+
+func TestParseSessionPID(t *testing.T) {
+	pid, ok := parseSessionPID("1234")
+	require.True(t, ok)
+	require.Equal(t, 1234, pid)
+
+	_, ok = parseSessionPID("0")
+	require.False(t, ok)
+
+	_, ok = parseSessionPID("-1")
+	require.False(t, ok)
+
+	_, ok = parseSessionPID("not-a-pid")
+	require.False(t, ok)
+}
