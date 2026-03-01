@@ -183,3 +183,41 @@ func TestUpgradeFeatures(t *testing.T) {
 		cache.DeleteAll(cache.Device)
 	}
 }
+
+func TestFeaturesDaemon(t *testing.T) {
+	cases := []struct {
+		name     string
+		shell    string
+		daemon   bool
+		expected shell.Features
+	}{
+		{
+			name:     "daemon enabled for zsh",
+			shell:    shell.ZSH,
+			daemon:   true,
+			expected: shell.Daemon,
+		},
+		{
+			name:   "daemon disabled by flag",
+			shell:  shell.ZSH,
+			daemon: false,
+		},
+		{
+			name:   "daemon unsupported shell",
+			shell:  shell.ELVISH,
+			daemon: true,
+		},
+	}
+
+	for _, tc := range cases {
+		env := &mock.Environment{}
+		env.On("Shell").Return(tc.shell)
+
+		cfg := &Config{
+			Upgrade: &upgrade.Config{},
+		}
+
+		got := cfg.Features(env, tc.daemon)
+		assert.Equal(t, tc.expected, got, tc.name)
+	}
+}

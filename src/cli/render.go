@@ -134,7 +134,7 @@ func renderWithDaemon(
 	writePromptBundle(out, response.Bundle)
 	sequence := response.Sequence
 
-	for i := 0; i < maxUpdates; i++ {
+	for range maxUpdates {
 		ctx, cancel := context.WithTimeout(context.Background(), updateTimeout)
 		update, ok := instance.NextUpdate(ctx, sessionID, sequence)
 		cancel()

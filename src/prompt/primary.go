@@ -122,10 +122,7 @@ func (e *Engine) writeCompiledPrimaryPrompt() {
 	cycle = &e.Config.Cycle
 	var cancelNewline, didRender bool
 
-	lineCount := len(e.CompiledConfig.Prompt)
-	if len(e.CompiledConfig.RPrompt) > lineCount {
-		lineCount = len(e.CompiledConfig.RPrompt)
-	}
+	lineCount := max(len(e.CompiledConfig.RPrompt), len(e.CompiledConfig.Prompt))
 
 	for i := range lineCount {
 		if i == 0 {

@@ -19,6 +19,8 @@ func (f Features) Bash() Code {
 		return unixUpgrade
 	case Notice:
 		return unixNotice
+	case Daemon:
+		return enablePoshDaemon
 	case RPrompt:
 		if !bashBLEsession {
 			return ""

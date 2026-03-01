@@ -21,6 +21,8 @@ func (f Features) Zsh() Code {
 		return unixUpgrade
 	case Notice:
 		return unixNotice
+	case Daemon:
+		return enablePoshDaemon
 	case PromptMark, RPrompt, PoshGit, Azure, LineError, Jobs, Async:
 		fallthrough
 	default:

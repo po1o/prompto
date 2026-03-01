@@ -74,12 +74,10 @@ func TestSessionUpdateHubConcurrentPublishIncrementsSequence(t *testing.T) {
 	var wg sync.WaitGroup
 	count := 200
 
-	for i := 0; i < count; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range count {
+		wg.Go(func() {
 			hub.Publish("payload")
-		}()
+		})
 	}
 
 	wg.Wait()

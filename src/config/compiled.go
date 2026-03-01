@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"strings"
 
@@ -234,9 +235,7 @@ func decodeCompiledSegmentTable(name string, raw map[string]any, defaultType Seg
 	}
 
 	copyMap := make(map[string]any, len(raw)+1)
-	for key, value := range raw {
-		copyMap[key] = value
-	}
+	maps.Copy(copyMap, raw)
 
 	if err := normalizeSegmentSeparators(copyMap, name); err != nil {
 		return err

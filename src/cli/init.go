@@ -21,6 +21,7 @@ var (
 	printOutput bool
 	strict      bool
 	debug       bool
+	daemonMode  bool
 
 	supportedShells = []string{
 		"bash",
@@ -64,6 +65,7 @@ See the documentation to initialize your shell: https://ohmyposh.dev/docs/instal
 	initCmd.Flags().BoolVarP(&strict, "strict", "s", false, "run in strict mode")
 	initCmd.Flags().BoolVar(&debug, "debug", false, "enable/disable debug mode")
 	initCmd.Flags().BoolVar(&eval, "eval", false, "output the full init script for eval")
+	initCmd.Flags().BoolVar(&daemonMode, "daemon", false, "enable daemon mode")
 
 	_ = initCmd.MarkPersistentFlagRequired("config")
 
@@ -84,9 +86,9 @@ func runInit(sh, command string) {
 		sh = shell.PWSH
 	}
 
-	initCache(sh)
-
 	cfg := config.Load(configFlag)
+	persist := !daemonMode
+	initCache(sh, persist)
 
 	flags := &runtime.Flags{
 		Shell:      sh,
@@ -97,6 +99,7 @@ func runInit(sh, command string) {
 		Init:       true,
 		Eval:       eval,
 		Plain:      plain,
+		Daemon:     daemonMode,
 	}
 
 	env := &runtime.Terminal{}
@@ -105,7 +108,10 @@ func runInit(sh, command string) {
 	template.Init(env, cfg.Var, cfg.Maps)
 
 	defer func() {
-		cfg.Store()
+		if persist {
+			cfg.Store()
+		}
+
 		template.SaveCache()
 		if err := cache.Clear(false, shell.InitScriptName(env.Flags())); err != nil {
 			log.Error(err)
@@ -113,7 +119,7 @@ func runInit(sh, command string) {
 		cache.Close()
 	}()
 
-	feats := cfg.Features(env)
+	feats := cfg.Features(env, daemonMode)
 
 	var output string
 
@@ -174,7 +180,12 @@ func getFullCommand(cmd *cobra.Command, args []string) string {
 	return cmdPath
 }
 
-func initCache(sh string) {
+func initCache(sh string, persist bool) {
+	if !persist {
+		cache.Init(sh, cache.NoSession)
+		return
+	}
+
 	switch {
 	case !printOutput:
 		if (eval && sh == shell.PWSH) || sh == shell.ELVISH {

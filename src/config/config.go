@@ -116,7 +116,7 @@ func (cfg *Config) getPalette() color.Palette {
 	return palette
 }
 
-func (cfg *Config) Features(env runtime.Environment) shell.Features {
+func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features {
 	var feats shell.Features
 
 	asyncShells := []string{shell.BASH, shell.ZSH, shell.FISH, shell.PWSH}
@@ -124,6 +124,11 @@ func (cfg *Config) Features(env runtime.Environment) shell.Features {
 	if cfg.Async && slices.Contains(asyncShells, env.Shell()) {
 		log.Debug("async enabled")
 		feats |= shell.Async
+	}
+
+	if daemon && slices.Contains(asyncShells, env.Shell()) {
+		log.Debug("daemon enabled")
+		feats |= shell.Daemon
 	}
 
 	if cfg.TransientPrompt != nil {

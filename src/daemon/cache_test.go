@@ -67,7 +67,7 @@ func TestDeviceCacheConcurrentAccess(t *testing.T) {
 	cache := NewDeviceCache()
 	var wg sync.WaitGroup
 
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()

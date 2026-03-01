@@ -96,6 +96,7 @@ type Flags struct {
 	IsPrimary     bool
 	Plain         bool
 	Force         bool
+	Daemon        bool
 }
 
 type CommandError struct {
