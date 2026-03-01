@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"time"
 
 	daemonpkg "github.com/jandedobbeleer/oh-my-posh/src/daemon"
@@ -29,6 +30,7 @@ var (
 	renderEscape          bool
 	renderForce           bool
 	renderSessionID       string
+	renderPID             int
 	renderRepaint         bool
 	renderMaxUpdates      int
 	renderUpdateTimeoutMS int
@@ -51,13 +53,7 @@ func createRenderCmd() *cobra.Command {
 				sh = shell.GENERIC
 			}
 
-			sessionID := renderSessionID
-			if sessionID == "" {
-				sessionID = os.Getenv("POSH_SESSION_ID")
-			}
-			if sessionID == "" {
-				sessionID = "default"
-			}
+			sessionID := resolveRenderSessionID(renderSessionID, renderPID)
 
 			flags := &runtime.Flags{
 				ConfigPath:    configFlag,
@@ -106,12 +102,30 @@ func createRenderCmd() *cobra.Command {
 	renderCmd.Flags().BoolVar(&renderEscape, "escape", true, "escape ANSI sequences for the shell")
 	renderCmd.Flags().BoolVarP(&renderForce, "force", "f", false, "force rendering the segments")
 	renderCmd.Flags().StringVar(&renderSessionID, "session-id", "", "session identifier")
+	renderCmd.Flags().IntVar(&renderPID, "pid", 0, "shell process id (used as default session identifier)")
 	renderCmd.Flags().BoolVar(&renderRepaint, "repaint", false, "render as repaint request")
 	renderCmd.Flags().IntVar(&renderMaxUpdates, "max-updates", 10, "maximum streamed updates to print")
 	renderCmd.Flags().IntVar(&renderUpdateTimeoutMS, "update-timeout", 75, "update wait timeout in milliseconds")
 	renderCmd.Flags().StringVar(&renderVimMode, "vim-mode", "", "current vim mode (insert, normal, visual, replace)")
 
 	return renderCmd
+}
+
+func resolveRenderSessionID(explicitSessionID string, pid int) string {
+	if explicitSessionID != "" {
+		return explicitSessionID
+	}
+
+	if pid > 0 {
+		return strconv.Itoa(pid)
+	}
+
+	sessionID := os.Getenv("POSH_SESSION_ID")
+	if sessionID != "" {
+		return sessionID
+	}
+
+	return "default"
 }
 
 func renderWithDaemon(

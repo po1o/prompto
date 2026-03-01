@@ -88,3 +88,29 @@ func TestWritePromptBundleAlwaysPrintsPrimaryAndRight(t *testing.T) {
 
 	require.Equal(t, "primary:p\nright:\n", out.String())
 }
+
+func TestResolveRenderSessionID(t *testing.T) {
+	t.Run("explicit session id wins", func(t *testing.T) {
+		t.Setenv("POSH_SESSION_ID", "env-session")
+		got := resolveRenderSessionID("explicit-session", 1234)
+		require.Equal(t, "explicit-session", got)
+	})
+
+	t.Run("pid is used when explicit session id is empty", func(t *testing.T) {
+		t.Setenv("POSH_SESSION_ID", "env-session")
+		got := resolveRenderSessionID("", 4321)
+		require.Equal(t, "4321", got)
+	})
+
+	t.Run("env session id is used when pid is not set", func(t *testing.T) {
+		t.Setenv("POSH_SESSION_ID", "env-session")
+		got := resolveRenderSessionID("", 0)
+		require.Equal(t, "env-session", got)
+	})
+
+	t.Run("default is used when no source is available", func(t *testing.T) {
+		t.Setenv("POSH_SESSION_ID", "")
+		got := resolveRenderSessionID("", 0)
+		require.Equal(t, "default", got)
+	})
+}
