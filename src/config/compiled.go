@@ -11,10 +11,14 @@ import (
 )
 
 type PromptLayout struct {
-	Segments        []string `json:"segments,omitempty" toml:"segments,omitempty"`
-	Filler          string   `json:"filler,omitempty" toml:"filler,omitempty"`
-	LeadingDiamond  string   `json:"leading_diamond,omitempty" toml:"leading_diamond,omitempty"`
-	TrailingDiamond string   `json:"trailing_diamond,omitempty" toml:"trailing_diamond,omitempty"`
+	Segments          []string `json:"segments,omitempty" toml:"segments,omitempty"`
+	Filler            string   `json:"filler,omitempty" toml:"filler,omitempty"`
+	LeadingStyle      string   `json:"leading_style,omitempty" toml:"leading_style,omitempty"`
+	TrailingStyle     string   `json:"trailing_style,omitempty" toml:"trailing_style,omitempty"`
+	LeadingSeparator  string   `json:"leading_separator,omitempty" toml:"leading_separator,omitempty"`
+	TrailingSeparator string   `json:"trailing_separator,omitempty" toml:"trailing_separator,omitempty"`
+	LeadingDiamond    string   `json:"leading_diamond,omitempty" toml:"leading_diamond,omitempty"`
+	TrailingDiamond   string   `json:"trailing_diamond,omitempty" toml:"trailing_diamond,omitempty"`
 }
 
 type CompiledConfig struct {
@@ -84,6 +88,10 @@ func ParseCompiledTOML(data []byte) (*CompiledConfig, error) {
 		Segments:         make(map[string]*Segment),
 	}
 
+	if err := normalizePromptLayouts(compiled); err != nil {
+		return nil, err
+	}
+
 	if err := decodeCompiledSegmentTables(doc, compiled.Segments); err != nil {
 		return nil, err
 	}
@@ -93,6 +101,85 @@ func ParseCompiledTOML(data []byte) (*CompiledConfig, error) {
 	}
 
 	return compiled, nil
+}
+
+type separatorPair struct {
+	left  string
+	right string
+}
+
+var separatorAliases = map[string]separatorPair{
+	"powerline":      {left: "\uE0B2", right: "\uE0B0"},
+	"powerline_thin": {left: "\uE0B3", right: "\uE0B1"},
+	"rounded":        {left: "\uE0B6", right: "\uE0B4"},
+	"slant":          {left: "\uE0BA", right: "\uE0BC"},
+	"block":          {left: "\uE0B8", right: "\uE0BE"},
+	"flame":          {left: "\uE0C0", right: "\uE0C1"},
+	"pixel":          {left: "\uE0C6", right: "\uE0C6"},
+	"lego":           {left: "\uE0CE", right: "\uE0CF"},
+}
+
+func normalizePromptLayouts(cfg *CompiledConfig) error {
+	for i := range cfg.Prompt {
+		if err := normalizePromptLayout(&cfg.Prompt[i], false, "prompt"); err != nil {
+			return err
+		}
+	}
+
+	for i := range cfg.RPrompt {
+		if err := normalizePromptLayout(&cfg.RPrompt[i], true, "rprompt"); err != nil {
+			return err
+		}
+	}
+
+	for i := range cfg.SecondaryPrompt {
+		if err := normalizePromptLayout(&cfg.SecondaryPrompt[i], false, "secondary_prompt"); err != nil {
+			return err
+		}
+	}
+
+	for i := range cfg.TransientPrompt {
+		if err := normalizePromptLayout(&cfg.TransientPrompt[i], false, "transient_prompt"); err != nil {
+			return err
+		}
+	}
+
+	for i := range cfg.TransientRPrompt {
+		if err := normalizePromptLayout(&cfg.TransientRPrompt[i], true, "transient_rprompt"); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func normalizePromptLayout(layout *PromptLayout, rightAligned bool, table string) error {
+	if layout.LeadingDiamond != "" || layout.TrailingDiamond != "" {
+		return fmt.Errorf("%s does not allow leading_diamond/trailing_diamond", table)
+	}
+
+	if layout.LeadingStyle != "" && layout.LeadingSeparator != "" {
+		return fmt.Errorf("%s cannot define both leading_style and leading_separator", table)
+	}
+
+	if layout.TrailingStyle != "" && layout.TrailingSeparator != "" {
+		return fmt.Errorf("%s cannot define both trailing_style and trailing_separator", table)
+	}
+
+	leading, err := resolveSeparator(layout.LeadingStyle, layout.LeadingSeparator, rightAligned, true)
+	if err != nil {
+		return fmt.Errorf("%s leading separator: %w", table, err)
+	}
+
+	trailing, err := resolveSeparator(layout.TrailingStyle, layout.TrailingSeparator, rightAligned, false)
+	if err != nil {
+		return fmt.Errorf("%s trailing separator: %w", table, err)
+	}
+
+	layout.LeadingDiamond = leading
+	layout.TrailingDiamond = trailing
+
+	return nil
 }
 
 func decodeCompiledSegmentTables(doc map[string]any, segmentsByName map[string]*Segment) error {
@@ -151,6 +238,10 @@ func decodeCompiledSegmentTable(name string, raw map[string]any, defaultType Seg
 		copyMap[key] = value
 	}
 
+	if err := normalizeSegmentSeparators(copyMap, name); err != nil {
+		return err
+	}
+
 	if _, ok := copyMap["type"]; !ok {
 		if defaultType == "" {
 			if !isKnownSegmentType(SegmentType(name)) {
@@ -188,6 +279,82 @@ func decodeCompiledSegmentTable(name string, raw map[string]any, defaultType Seg
 	return nil
 }
 
+func normalizeSegmentSeparators(raw map[string]any, name string) error {
+	if val, ok := raw["leading_diamond"]; ok && val != nil {
+		return fmt.Errorf("%s does not allow leading_diamond", name)
+	}
+
+	if val, ok := raw["trailing_diamond"]; ok && val != nil {
+		return fmt.Errorf("%s does not allow trailing_diamond", name)
+	}
+
+	leadingStyle, _ := raw["leading_style"].(string)
+	leadingSeparator, _ := raw["leading_separator"].(string)
+	trailingStyle, _ := raw["trailing_style"].(string)
+	trailingSeparator, _ := raw["trailing_separator"].(string)
+
+	if leadingStyle != "" && leadingSeparator != "" {
+		return fmt.Errorf("%s cannot define both leading_style and leading_separator", name)
+	}
+
+	if trailingStyle != "" && trailingSeparator != "" {
+		return fmt.Errorf("%s cannot define both trailing_style and trailing_separator", name)
+	}
+
+	leading, err := resolveSeparator(leadingStyle, leadingSeparator, false, true)
+	if err != nil {
+		return fmt.Errorf("%s leading separator: %w", name, err)
+	}
+
+	trailing, err := resolveSeparator(trailingStyle, trailingSeparator, false, false)
+	if err != nil {
+		return fmt.Errorf("%s trailing separator: %w", name, err)
+	}
+
+	if leading != "" {
+		raw["leading_diamond"] = leading
+	}
+
+	if trailing != "" {
+		raw["trailing_diamond"] = trailing
+	}
+
+	delete(raw, "leading_style")
+	delete(raw, "leading_separator")
+	delete(raw, "trailing_style")
+	delete(raw, "trailing_separator")
+
+	return nil
+}
+
+func resolveSeparator(style, separator string, rightAligned, leading bool) (string, error) {
+	if separator != "" {
+		return separator, nil
+	}
+
+	if style == "" {
+		return "", nil
+	}
+
+	pair, ok := separatorAliases[strings.ToLower(style)]
+	if !ok {
+		return "", fmt.Errorf("unknown style alias %q", style)
+	}
+
+	leftGlyph := pair.left
+	rightGlyph := pair.right
+
+	if rightAligned {
+		leftGlyph, rightGlyph = rightGlyph, leftGlyph
+	}
+
+	if leading {
+		return leftGlyph, nil
+	}
+
+	return rightGlyph, nil
+}
+
 func hasScalarFields(table map[string]any) bool {
 	for _, value := range table {
 		if _, ok := value.(map[string]any); !ok {
@@ -213,8 +380,8 @@ func validateCompiledSegmentRefs(cfg *CompiledConfig) error {
 	}
 
 	for _, lineGroup := range lines {
-		for _, line := range lineGroup {
-			for _, segmentName := range line.Segments {
+		for i := range lineGroup {
+			for _, segmentName := range lineGroup[i].Segments {
 				if _, ok := cfg.Segments[segmentName]; ok {
 					continue
 				}
