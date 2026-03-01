@@ -55,3 +55,33 @@ func defaultSharedProviderFactories() map[config.SegmentType]sharedProviderFacto
 		},
 	}
 }
+
+func (e *Engine) resetSharedProviders() {
+	e.sharedProviderMu.Lock()
+	defer e.sharedProviderMu.Unlock()
+	e.sharedProviders = nil
+}
+
+func (e *Engine) getOrCreateSharedProvider(
+	segmentType config.SegmentType,
+	source *config.Segment,
+	factory sharedProviderFactory,
+) *onceProvider[sharedExecutionResult] {
+	e.sharedProviderMu.Lock()
+	defer e.sharedProviderMu.Unlock()
+
+	if e.sharedProviders == nil {
+		e.sharedProviders = make(map[config.SegmentType]*onceProvider[sharedExecutionResult])
+	}
+
+	if provider, ok := e.sharedProviders[segmentType]; ok {
+		return provider
+	}
+
+	provider := factory()
+	shared := newOnceProvider(func() (sharedExecutionResult, error) {
+		return provider.Execute(e, source)
+	})
+	e.sharedProviders[segmentType] = shared
+	return shared
+}

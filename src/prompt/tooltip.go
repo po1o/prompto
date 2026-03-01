@@ -11,6 +11,8 @@ import (
 )
 
 func (e *Engine) Tooltip(tip string) string {
+	e.resetSharedProviders()
+
 	tip = strings.Trim(tip, " ")
 	tooltips := make([]*config.Segment, 0, 1)
 

@@ -1,7 +1,6 @@
 package prompt
 
 import (
-	"sync"
 	"time"
 
 	"github.com/jandedobbeleer/oh-my-posh/src/config"
@@ -45,8 +44,6 @@ func (e *Engine) writeBlockSegments(block *config.Block) (string, int) {
 // writeSegmentsConcurrently uses individual goroutines for each segment
 func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan result) {
 	sources := make(map[config.SegmentType]*config.Segment)
-	sharedProviders := make(map[config.SegmentType]*onceProvider[sharedExecutionResult])
-	var sharedProviderMu sync.Mutex
 	for _, segment := range segments {
 		if _, ok := e.sharedProviderFactory[segment.Type]; !ok {
 			continue
@@ -77,17 +74,7 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 					return
 				}
 
-				sharedProviderMu.Lock()
-				sharedProvider, ok := sharedProviders[segment.Type]
-				if !ok {
-					source := sources[segment.Type]
-					provider := providerFactory()
-					sharedProvider = newOnceProvider(func() (sharedExecutionResult, error) {
-						return provider.Execute(e, source)
-					})
-					sharedProviders[segment.Type] = sharedProvider
-				}
-				sharedProviderMu.Unlock()
+				sharedProvider := e.getOrCreateSharedProvider(segment.Type, sources[segment.Type], providerFactory)
 
 				res, sharedErr := sharedProvider.Get()
 				if sharedErr == nil {

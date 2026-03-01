@@ -21,6 +21,8 @@ const (
 )
 
 func (e *Engine) ExtraPrompt(promptType ExtraPromptType) string {
+	e.resetSharedProviders()
+
 	if promptType == Secondary && e.hasCompiledSecondaryLayout() {
 		return e.renderCompiledExtra(e.CompiledConfig.SecondaryPrompt)
 	}

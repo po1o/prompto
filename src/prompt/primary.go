@@ -11,6 +11,8 @@ import (
 )
 
 func (e *Engine) Primary() string {
+	e.resetSharedProviders()
+
 	needsPrimaryRightPrompt := e.needsPrimaryRightPrompt()
 	if e.hasCompiledPrimaryLayout() {
 		needsPrimaryRightPrompt = false

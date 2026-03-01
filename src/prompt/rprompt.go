@@ -13,6 +13,8 @@ const (
 )
 
 func (e *Engine) RPrompt() string {
+	e.resetSharedProviders()
+
 	if e.CompiledConfig != nil && len(e.CompiledConfig.RPrompt) > 0 {
 		line := e.compiledLayoutBlock(&e.CompiledConfig.RPrompt[0], config.RPrompt, config.Right, false)
 		text, length := e.writeBlockSegments(line)

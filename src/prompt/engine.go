@@ -20,6 +20,7 @@ var cycle *color.Cycle = &color.Cycle{}
 type Engine struct {
 	Env                   runtime.Environment
 	segmentStates         map[string]*segmentAsyncState
+	sharedProviders       map[config.SegmentType]*onceProvider[sharedExecutionResult]
 	CompiledConfig        *config.CompiledConfig
 	sharedProviderFactory map[config.SegmentType]sharedProviderFactory
 	updateCallback        func(string)
@@ -35,6 +36,7 @@ type Engine struct {
 	Padding               int
 	currentLineLength     int
 	cacheMu               sync.Mutex
+	sharedProviderMu      sync.Mutex
 	stateMu               sync.Mutex
 	Plain                 bool
 	forceRender           bool

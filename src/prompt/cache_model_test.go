@@ -44,7 +44,9 @@ func TestExplicitSessionCacheReusesFreshRender(t *testing.T) {
 	}
 
 	block := &config.Block{Segments: []*config.Segment{segment}}
+	engine.resetSharedProviders()
 	_, _ = engine.writeBlockSegments(block)
+	engine.resetSharedProviders()
 	_, _ = engine.writeBlockSegments(block)
 
 	require.Equal(t, int32(1), atomic.LoadInt32(&count))
@@ -64,6 +66,7 @@ func TestExplicitSessionCacheExpiredRecomputes(t *testing.T) {
 	}
 
 	block := &config.Block{Segments: []*config.Segment{segment}}
+	engine.resetSharedProviders()
 	_, _ = engine.writeBlockSegments(block)
 
 	key := segment.Name()
@@ -71,6 +74,7 @@ func TestExplicitSessionCacheExpiredRecomputes(t *testing.T) {
 	entry.RenderedAt = time.Now().Add(-48 * time.Hour)
 	engine.sessionCache[key] = entry
 
+	engine.resetSharedProviders()
 	_, _ = engine.writeBlockSegments(block)
 	require.Equal(t, int32(2), atomic.LoadInt32(&count))
 }
@@ -117,7 +121,9 @@ func TestImplicitCacheAlwaysRecomputes(t *testing.T) {
 	}
 
 	block := &config.Block{Segments: []*config.Segment{segment}}
+	engine.resetSharedProviders()
 	_, _ = engine.writeBlockSegments(block)
+	engine.resetSharedProviders()
 	_, _ = engine.writeBlockSegments(block)
 
 	require.Equal(t, int32(2), atomic.LoadInt32(&count))
