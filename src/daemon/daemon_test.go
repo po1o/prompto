@@ -2,6 +2,8 @@ package daemon
 
 import (
 	"context"
+	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -12,9 +14,10 @@ import (
 
 func TestDaemonStartRenderAndNextUpdateFlow(t *testing.T) {
 	daemon := New(&rendererStub{})
+	sessionID := strconv.Itoa(os.Getpid())
 
 	initial := daemon.StartRender(RenderRequest{
-		SessionID: "session-a",
+		SessionID: sessionID,
 		Flags:     &runtime.Flags{},
 	})
 	require.Equal(t, "initial", initial.Type)
@@ -22,12 +25,12 @@ func TestDaemonStartRenderAndNextUpdateFlow(t *testing.T) {
 
 	go func() {
 		time.Sleep(20 * time.Millisecond)
-		daemon.SessionHub("session-a").Publish("path.main")
+		daemon.SessionHub(sessionID).Publish("path.main")
 	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	update, ok := daemon.NextUpdate(ctx, "session-a", 0)
+	update, ok := daemon.NextUpdate(ctx, sessionID, 0)
 	require.True(t, ok)
 	require.Equal(t, "update", update.Type)
 	require.Equal(t, uint64(1), update.Sequence)
@@ -56,7 +59,7 @@ func TestDaemonReloadBlocksNewRenderRequests(t *testing.T) {
 	renderDone := make(chan struct{})
 	go func() {
 		_ = daemon.StartRender(RenderRequest{
-			SessionID: "session-a",
+			SessionID: strconv.Itoa(os.Getpid()),
 			Flags:     &runtime.Flags{},
 		})
 		close(renderDone)
@@ -86,7 +89,7 @@ func TestDaemonStopPreventsNewOperations(t *testing.T) {
 	daemon.Stop()
 
 	initial := daemon.StartRender(RenderRequest{
-		SessionID: "session-a",
+		SessionID: strconv.Itoa(os.Getpid()),
 		Flags:     &runtime.Flags{},
 	})
 	require.Equal(t, "stopped", initial.Type)
@@ -97,41 +100,71 @@ func TestDaemonStopPreventsNewOperations(t *testing.T) {
 	require.False(t, ok)
 }
 
-func TestDaemonAutoStopsAfterIdleTimeoutWithoutSessions(t *testing.T) {
+func TestDaemonAutoStopsAfterIdleTimeoutWithoutTrackedSessions(t *testing.T) {
 	daemon := NewWithIdleTimeout(25*time.Millisecond, &rendererStub{})
 
 	time.Sleep(60 * time.Millisecond)
 
 	response := daemon.StartRender(RenderRequest{
-		SessionID: "session-a",
+		SessionID: "101",
 		Flags:     &runtime.Flags{},
 	})
 	require.Equal(t, "stopped", response.Type)
 }
 
-func TestDaemonIdleTimerStartsAfterSessionCompletion(t *testing.T) {
+func TestDaemonIdleTimerStartsAfterTrackedSessionCompletion(t *testing.T) {
 	daemon := NewWithIdleTimeout(30*time.Millisecond, &rendererStub{})
+	sessionID := strconv.Itoa(os.Getpid())
 
 	initial := daemon.StartRender(RenderRequest{
-		SessionID: "session-a",
+		SessionID: sessionID,
 		Flags:     &runtime.Flags{},
 	})
 	require.Equal(t, "initial", initial.Type)
 
 	time.Sleep(50 * time.Millisecond)
-	stillRunning := daemon.StartRender(RenderRequest{
-		SessionID: "session-b",
-		Flags:     &runtime.Flags{},
-	})
-	require.Equal(t, "initial", stillRunning.Type)
-
-	daemon.CompleteSession("session-a")
-	daemon.CompleteSession("session-b")
+	daemon.CompleteSession(sessionID)
 	time.Sleep(70 * time.Millisecond)
 
 	stopped := daemon.StartRender(RenderRequest{
-		SessionID: "session-c",
+		SessionID: "103",
 		Flags:     &runtime.Flags{},
 	})
 	require.Equal(t, "stopped", stopped.Type)
+}
+
+func TestDaemonDoesNotStopWhileTrackedPIDIsAlive(t *testing.T) {
+	daemon := NewWithIdleTimeout(25*time.Millisecond, &rendererStub{})
+	sessionID := strconv.Itoa(os.Getpid())
+
+	daemon.StartRender(RenderRequest{
+		SessionID: sessionID,
+		Flags:     &runtime.Flags{},
+	})
+
+	time.Sleep(70 * time.Millisecond)
+
+	response := daemon.StartRender(RenderRequest{
+		SessionID: sessionID,
+		Flags:     &runtime.Flags{},
+	})
+	require.Equal(t, "initial", response.Type)
+}
+
+func TestDaemonStopsAfterProcessExitForTrackedPID(t *testing.T) {
+	daemon := NewWithIdleTimeout(30*time.Millisecond, &rendererStub{})
+	sessionID := "99999999"
+
+	daemon.StartRender(RenderRequest{
+		SessionID: sessionID,
+		Flags:     &runtime.Flags{},
+	})
+
+	time.Sleep(70 * time.Millisecond)
+
+	response := daemon.StartRender(RenderRequest{
+		SessionID: "101",
+		Flags:     &runtime.Flags{},
+	})
+	require.Equal(t, "stopped", response.Type)
 }

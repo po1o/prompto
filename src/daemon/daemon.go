@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"context"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -11,6 +12,7 @@ import (
 
 type Daemon struct {
 	service     *Service
+	sessions    *SessionManager
 	idleTimeout time.Duration
 	stopped     atomic.Bool
 	idleToken   uint64
@@ -28,6 +30,7 @@ func NewWithIdleTimeout(idleTimeout time.Duration, renderer promptBundleRenderer
 		service:     NewService(registry, gate, renderer),
 		idleTimeout: idleTimeout,
 	}
+	daemon.sessions = NewSessionManager(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
 
 	daemon.mu.Lock()
 	daemon.scheduleIdleStopLocked()
@@ -41,9 +44,7 @@ func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
 		return RenderResponse{Type: "stopped"}
 	}
 
-	daemon.mu.Lock()
-	daemon.cancelIdleStopLocked()
-	daemon.mu.Unlock()
+	daemon.registerSessionPID(request)
 
 	return daemon.service.StartRender(request)
 }
@@ -63,7 +64,13 @@ func (daemon *Daemon) CompleteSession(sessionID string) {
 
 	daemon.service.CompleteSession(sessionID)
 
-	if daemon.service.SessionCount() != 0 {
+	pid, ok := parseSessionPID(sessionID)
+	if ok {
+		daemon.sessions.Unregister(pid)
+		return
+	}
+
+	if daemon.sessions.Count() != 0 {
 		return
 	}
 
@@ -123,8 +130,49 @@ func (daemon *Daemon) scheduleIdleStopLocked() {
 		}
 		daemon.mu.Unlock()
 
-		if daemon.service.SessionCount() == 0 {
+		if daemon.sessions.Count() == 0 {
 			daemon.Stop()
 		}
 	})
+}
+
+func (daemon *Daemon) registerSessionPID(request RenderRequest) {
+	pid, ok := parseSessionPID(request.SessionID)
+	if !ok {
+		return
+	}
+
+	var shellName string
+	if request.Flags != nil {
+		shellName = request.Flags.Shell
+	}
+
+	daemon.sessions.Register(pid, "", shellName)
+
+	daemon.mu.Lock()
+	daemon.cancelIdleStopLocked()
+	daemon.mu.Unlock()
+}
+
+func (daemon *Daemon) onSessionUnregister(pid int) {
+	daemon.service.CompleteSession(strconv.Itoa(pid))
+}
+
+func (daemon *Daemon) onAllSessionsEnded() {
+	daemon.mu.Lock()
+	daemon.scheduleIdleStopLocked()
+	daemon.mu.Unlock()
+}
+
+func parseSessionPID(sessionID string) (int, bool) {
+	pid, err := strconv.Atoi(sessionID)
+	if err != nil {
+		return 0, false
+	}
+
+	if pid <= 0 {
+		return 0, false
+	}
+
+	return pid, true
 }
