@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/jandedobbeleer/oh-my-posh/src/config"
 	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
 )
 
@@ -21,6 +22,11 @@ type Daemon struct {
 
 func New(renderer promptBundleRenderer) *Daemon {
 	return NewWithIdleTimeout(5*time.Minute, renderer)
+}
+
+func NewFromConfig(configPath string, renderer promptBundleRenderer) *Daemon {
+	cfg := config.Load(configPath)
+	return NewWithIdleTimeout(cfg.GetDaemonIdleTimeout(), renderer)
 }
 
 func NewWithIdleTimeout(idleTimeout time.Duration, renderer promptBundleRenderer) *Daemon {

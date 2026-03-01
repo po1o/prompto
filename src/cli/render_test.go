@@ -3,8 +3,6 @@ package cli
 import (
 	"bytes"
 	"context"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -118,23 +116,6 @@ func TestResolveRenderSessionID(t *testing.T) {
 }
 
 func TestResolveRenderUpdateTimeout(t *testing.T) {
-	t.Run("uses config daemon_timeout", func(t *testing.T) {
-		dir := t.TempDir()
-		configPath := filepath.Join(dir, "theme.omp.json")
-		err := os.WriteFile(configPath, []byte(`{"version":4,"daemon_timeout":220}`), 0o644)
-		require.NoError(t, err)
-
-		timeout := resolveRenderUpdateTimeout(configPath)
-		require.Equal(t, 220*time.Millisecond, timeout)
-	})
-
-	t.Run("falls back to default daemon timeout when unset", func(t *testing.T) {
-		dir := t.TempDir()
-		configPath := filepath.Join(dir, "theme.omp.json")
-		err := os.WriteFile(configPath, []byte(`{"version":4}`), 0o644)
-		require.NoError(t, err)
-
-		timeout := resolveRenderUpdateTimeout(configPath)
-		require.Equal(t, 100*time.Millisecond, timeout)
-	})
+	timeout := resolveRenderUpdateTimeout()
+	require.Equal(t, 100*time.Millisecond, timeout)
 }

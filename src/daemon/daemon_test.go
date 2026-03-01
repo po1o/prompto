@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"path/filepath"
 	libruntime "runtime"
 	"strconv"
 	"strings"
@@ -143,6 +144,15 @@ func TestDaemonAutoStopsAfterIdleTimeoutWithoutTrackedSessions(t *testing.T) {
 		Flags:     &runtime.Flags{},
 	})
 	require.Equal(t, "stopped", response.Type)
+}
+
+func TestDaemonNewFromConfigUsesConfiguredIdleTimeout(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "daemon.omp.json")
+	err := os.WriteFile(configPath, []byte(`{"version":4,"daemon_idle_timeout":"2"}`), 0o644)
+	require.NoError(t, err)
+
+	daemon := NewFromConfig(configPath, &rendererStub{})
+	require.Equal(t, 2*time.Minute, daemon.idleTimeout)
 }
 
 func TestDaemonIdleTimerStartsAfterTrackedSessionCompletion(t *testing.T) {

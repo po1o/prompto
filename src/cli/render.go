@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
 	daemonpkg "github.com/jandedobbeleer/oh-my-posh/src/daemon"
 	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
 	"github.com/jandedobbeleer/oh-my-posh/src/shell"
@@ -38,6 +37,8 @@ var (
 )
 
 var renderCmd = createRenderCmd()
+
+const renderUpdateTimeout = 100 * time.Millisecond
 
 func init() {
 	RootCmd.AddCommand(renderCmd)
@@ -75,7 +76,7 @@ func createRenderCmd() *cobra.Command {
 				VimMode:       renderVimMode,
 			}
 
-			updateTimeout := resolveRenderUpdateTimeout(configFlag)
+			updateTimeout := resolveRenderUpdateTimeout()
 
 			return renderWithDaemon(
 				daemonRuntime,
@@ -129,9 +130,8 @@ func resolveRenderSessionID(explicitSessionID string, pid int) string {
 	return "default"
 }
 
-func resolveRenderUpdateTimeout(configPath string) time.Duration {
-	cfg := config.Load(configPath)
-	return cfg.GetDaemonTimeout()
+func resolveRenderUpdateTimeout() time.Duration {
+	return renderUpdateTimeout
 }
 
 func renderWithDaemon(
