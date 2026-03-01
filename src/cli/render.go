@@ -112,7 +112,7 @@ func createRenderCmd() *cobra.Command {
 	cmd.Flags().IntVar(&renderPID, "pid", 0, "shell process id (used as default session identifier)")
 	cmd.Flags().BoolVar(&renderRepaint, "repaint", false, "render as repaint request")
 	cmd.Flags().IntVar(&renderMaxUpdates, "max-updates", 10, "maximum streamed updates to print")
-	cmd.Flags().IntVar(&renderUpdateTimeoutMS, "update-timeout", 75, "update wait timeout in milliseconds (overrides config daemon_timeout)")
+	cmd.Flags().IntVar(&renderUpdateTimeoutMS, "update-timeout", 100, "update wait timeout in milliseconds (overrides config daemon_timeout)")
 	cmd.Flags().StringVar(&renderVimMode, "vim-mode", "", "current vim mode (insert, normal, visual, replace)")
 
 	return cmd
