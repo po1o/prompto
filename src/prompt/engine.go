@@ -24,6 +24,9 @@ type Engine struct {
 	sharedProviderFactory map[config.SegmentType]sharedProviderFactory
 	stateMu               sync.Mutex
 	segmentStates         map[string]*segmentAsyncState
+	cacheMu               sync.Mutex
+	sessionCache          map[string]segmentRenderCache
+	folderCache           map[string]segmentRenderCache
 	activeSegment         *config.Segment
 	previousActiveSegment *config.Segment
 	rprompt               string
@@ -527,6 +530,8 @@ func New(flags *runtime.Flags) *Engine {
 		CompiledConfig:        nil,
 		sharedProviderFactory: defaultSharedProviderFactories(),
 		segmentStates:         make(map[string]*segmentAsyncState),
+		sessionCache:          make(map[string]segmentRenderCache),
+		folderCache:           make(map[string]segmentRenderCache),
 		prompt:                strings.Builder{},
 	}
 

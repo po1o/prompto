@@ -63,6 +63,11 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 		go func(segment *config.Segment, index int) {
 			e.markSegmentPending(segment)
 
+			if e.applySegmentCacheBeforeExecute(segment) {
+				out <- result{segment, index}
+				return
+			}
+
 			if providerFactory, ok := e.sharedProviderFactory[segment.Type]; ok {
 				err := segment.MapSegmentWithWriter(e.Env)
 				if err != nil {
@@ -97,7 +102,7 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 			if segment.Timeout > 0 {
 				e.executeSegmentWithTimeout(segment)
 			} else {
-				segment.Execute(e.Env)
+				e.executeWithoutLegacySegmentCache(segment)
 			}
 
 			e.markSegmentDone(segment)
@@ -159,7 +164,9 @@ func (e *Engine) writeSegments(out chan result, block *config.Block) {
 
 			if segment.Render(segmentIndex, e.forceRender) {
 				segmentIndex++
-				e.markSegmentRendered(segment, time.Now())
+				renderedAt := time.Now()
+				e.markSegmentRendered(segment, renderedAt)
+				e.storeSegmentCache(segment, renderedAt)
 			}
 
 			e.writeSegment(block, segment)
@@ -172,7 +179,9 @@ func (e *Engine) writeSegments(out chan result, block *config.Block) {
 		segment := results[current]
 		if segment.Render(segmentIndex, e.forceRender) {
 			segmentIndex++
-			e.markSegmentRendered(segment, time.Now())
+			renderedAt := time.Now()
+			e.markSegmentRendered(segment, renderedAt)
+			e.storeSegmentCache(segment, renderedAt)
 		}
 
 		e.writeSegment(block, segment)
