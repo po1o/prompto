@@ -20,6 +20,7 @@ type Engine struct {
 	Env                   runtime.Environment
 	Config                *config.Config
 	CompiledConfig        *config.CompiledConfig
+	sharedProviderFactory map[config.SegmentType]sharedProviderFactory
 	activeSegment         *config.Segment
 	previousActiveSegment *config.Segment
 	rprompt               string
@@ -516,12 +517,13 @@ func New(flags *runtime.Flags) *Engine {
 	terminal.Plain = flags.Plain
 
 	eng := &Engine{
-		Config:         cfg,
-		Env:            env,
-		Plain:          flags.Plain,
-		forceRender:    flags.Force || len(env.Getenv("POSH_FORCE_RENDER")) > 0,
-		CompiledConfig: nil,
-		prompt:         strings.Builder{},
+		Config:                cfg,
+		Env:                   env,
+		Plain:                 flags.Plain,
+		forceRender:           flags.Force || len(env.Getenv("POSH_FORCE_RENDER")) > 0,
+		CompiledConfig:        nil,
+		sharedProviderFactory: defaultSharedProviderFactories(),
+		prompt:                strings.Builder{},
 	}
 
 	if flags.ConfigPath != "" {
