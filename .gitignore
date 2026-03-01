@@ -26,6 +26,11 @@ packages/msi/Microsoft.Trusted.Signing.Client
 # Test binary, built with `go test -c`
 *.test
 
+# protobuf generated files
+*.pb.go
+*.pb.gw.go
+*.pb.validate.go
+
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 

@@ -5,9 +5,9 @@ import "sync"
 // PromptSessionStore tracks per-session update hubs and coordinates cleanup
 // of per-session prompt engine state in the registry.
 type PromptSessionStore struct {
-	mu       sync.Mutex
 	registry *EngineRegistry
 	hubs     map[string]*SessionUpdateHub
+	mu       sync.Mutex
 }
 
 func NewPromptSessionStore(registry *EngineRegistry) *PromptSessionStore {

@@ -221,3 +221,54 @@ func TestFeaturesDaemon(t *testing.T) {
 		assert.Equal(t, tc.expected, got, tc.name)
 	}
 }
+
+func TestFeaturesVim(t *testing.T) {
+	tests := []struct {
+		vim      *VimConfig
+		name     string
+		expected shell.Features
+	}{
+		{
+			name: "vim enabled",
+			vim: &VimConfig{
+				Enabled: true,
+			},
+			expected: shell.VimMode,
+		},
+		{
+			name: "cursor shape implies vim mode",
+			vim: &VimConfig{
+				CursorShape: true,
+			},
+			expected: shell.VimMode | shell.VimCursorShape,
+		},
+		{
+			name: "cursor blink implies shape and mode",
+			vim: &VimConfig{
+				CursorBlink: true,
+			},
+			expected: shell.VimMode | shell.VimCursorShape | shell.VimCursorBlink,
+		},
+		{
+			name: "shape and blink",
+			vim: &VimConfig{
+				CursorShape: true,
+				CursorBlink: true,
+			},
+			expected: shell.VimMode | shell.VimCursorShape | shell.VimCursorBlink,
+		},
+	}
+
+	for _, tc := range tests {
+		env := &mock.Environment{}
+		env.On("Shell").Return(shell.ZSH)
+
+		cfg := &Config{
+			Upgrade: &upgrade.Config{},
+			Vim:     tc.vim,
+		}
+
+		got := cfg.Features(env, false)
+		assert.Equal(t, tc.expected, got, tc.name)
+	}
+}

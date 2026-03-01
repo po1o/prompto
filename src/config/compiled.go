@@ -12,7 +12,6 @@ import (
 )
 
 type PromptLayout struct {
-	Segments          []string `json:"segments,omitempty" toml:"segments,omitempty"`
 	Filler            string   `json:"filler,omitempty" toml:"filler,omitempty"`
 	LeadingStyle      string   `json:"leading_style,omitempty" toml:"leading_style,omitempty"`
 	TrailingStyle     string   `json:"trailing_style,omitempty" toml:"trailing_style,omitempty"`
@@ -20,16 +19,17 @@ type PromptLayout struct {
 	TrailingSeparator string   `json:"trailing_separator,omitempty" toml:"trailing_separator,omitempty"`
 	LeadingDiamond    string   `json:"leading_diamond,omitempty" toml:"leading_diamond,omitempty"`
 	TrailingDiamond   string   `json:"trailing_diamond,omitempty" toml:"trailing_diamond,omitempty"`
+	Segments          []string `json:"segments,omitempty" toml:"segments,omitempty"`
 }
 
 type CompiledConfig struct {
+	Segments         map[string]*Segment `json:"-" toml:"-"`
 	Source           string              `json:"-" toml:"-"`
 	Prompt           []PromptLayout      `json:"prompt,omitempty" toml:"prompt,omitempty"`
 	RPrompt          []PromptLayout      `json:"rprompt,omitempty" toml:"rprompt,omitempty"`
 	SecondaryPrompt  []PromptLayout      `json:"secondary_prompt,omitempty" toml:"secondary_prompt,omitempty"`
 	TransientPrompt  []PromptLayout      `json:"transient_prompt,omitempty" toml:"transient_prompt,omitempty"`
 	TransientRPrompt []PromptLayout      `json:"transient_rprompt,omitempty" toml:"transient_rprompt,omitempty"`
-	Segments         map[string]*Segment `json:"-" toml:"-"`
 }
 
 type compiledRawConfig struct {

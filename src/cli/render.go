@@ -32,6 +32,7 @@ var (
 	renderRepaint         bool
 	renderMaxUpdates      int
 	renderUpdateTimeoutMS int
+	renderVimMode         string
 )
 
 var renderCmd = createRenderCmd()
@@ -75,6 +76,7 @@ func createRenderCmd() *cobra.Command {
 				JobCount:      renderJobCount,
 				Escape:        renderEscape,
 				Force:         renderForce,
+				VimMode:       renderVimMode,
 			}
 
 			return renderWithDaemon(
@@ -107,6 +109,7 @@ func createRenderCmd() *cobra.Command {
 	renderCmd.Flags().BoolVar(&renderRepaint, "repaint", false, "render as repaint request")
 	renderCmd.Flags().IntVar(&renderMaxUpdates, "max-updates", 10, "maximum streamed updates to print")
 	renderCmd.Flags().IntVar(&renderUpdateTimeoutMS, "update-timeout", 75, "update wait timeout in milliseconds")
+	renderCmd.Flags().StringVar(&renderVimMode, "vim-mode", "", "current vim mode (insert, normal, visual, replace)")
 
 	return renderCmd
 }

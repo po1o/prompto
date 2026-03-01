@@ -16,8 +16,8 @@ const (
 )
 
 type segmentAsyncState struct {
-	State      segmentExecutionState
 	RenderedAt time.Time
+	State      segmentExecutionState
 }
 
 func (e *Engine) prepareSegmentStates(segments []*config.Segment, repaint bool) {

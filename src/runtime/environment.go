@@ -76,6 +76,7 @@ type Flags struct {
 	ShellVersion  string
 	PWD           string
 	AbsolutePWD   string
+	VimMode       string
 	ErrorCode     int
 	PromptCount   int
 	Column        int

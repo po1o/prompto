@@ -18,11 +18,10 @@ type sharedSegmentProvider interface {
 type sharedProviderFactory func() sharedSegmentProvider
 
 type onceProvider[T any] struct {
-	load func() (T, error)
-
-	once sync.Once
 	out  T
 	err  error
+	load func() (T, error)
+	once sync.Once
 }
 
 func newOnceProvider[T any](load func() (T, error)) *onceProvider[T] {

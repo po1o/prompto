@@ -3,15 +3,15 @@ package daemon
 import "sync"
 
 type UpdateSnapshot struct {
-	Sequence uint64
 	Payload  string
+	Sequence uint64
 }
 
 type SessionUpdateHub struct {
-	mu       sync.Mutex
-	sequence uint64
 	last     string
 	waiters  []chan UpdateSnapshot
+	sequence uint64
+	mu       sync.Mutex
 }
 
 func NewSessionUpdateHub() *SessionUpdateHub {

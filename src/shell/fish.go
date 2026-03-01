@@ -25,6 +25,12 @@ func (f Features) Fish() Code {
 		return unixNotice
 	case Daemon:
 		return enablePoshDaemon
+	case VimMode:
+		return "fish_vi_key_bindings; enable_posh_vim_mode"
+	case VimCursorBlink:
+		return "set --global _omp_cursor_blink 1"
+	case VimCursorShape:
+		return "set --global _omp_cursor_shape 1; _omp_should_change_cursor; and _omp_apply_cursor_shape"
 	case RPrompt, PoshGit, Azure, LineError, Jobs, CursorPositioning, Async:
 		fallthrough
 	default:

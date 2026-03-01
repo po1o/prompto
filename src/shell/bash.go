@@ -21,6 +21,12 @@ func (f Features) Bash() Code {
 		return unixNotice
 	case Daemon:
 		return enablePoshDaemon
+	case VimMode:
+		return "set -o vi; enable_posh_vim_mode"
+	case VimCursorBlink:
+		return "_omp_cursor_blink=1"
+	case VimCursorShape:
+		return "_omp_cursor_shape=1; _omp_should_change_cursor && _omp_apply_cursor_shape"
 	case RPrompt:
 		if !bashBLEsession {
 			return ""

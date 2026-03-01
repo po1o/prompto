@@ -10,10 +10,10 @@ import (
 )
 
 type segmentRenderCache struct {
+	RenderedAt time.Time
 	Text       string
 	Foreground color.Ansi
 	Background color.Ansi
-	RenderedAt time.Time
 }
 
 var (

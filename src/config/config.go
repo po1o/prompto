@@ -48,6 +48,13 @@ const (
 	Extend  Action = "extend"
 )
 
+// VimConfig holds vim mode settings.
+type VimConfig struct {
+	Enabled     bool `json:"enabled,omitempty" toml:"enabled,omitempty" yaml:"enabled,omitempty"`
+	CursorShape bool `json:"cursor_shape,omitempty" toml:"cursor_shape,omitempty" yaml:"cursor_shape,omitempty"`
+	CursorBlink bool `json:"cursor_blink,omitempty" toml:"cursor_blink,omitempty" yaml:"cursor_blink,omitempty"`
+}
+
 // Config holds all the theme for rendering the prompt
 type Config struct {
 	Palette                 color.Palette          `json:"palette,omitempty" toml:"palette,omitempty" yaml:"palette,omitempty"`
@@ -60,6 +67,7 @@ type Config struct {
 	ErrorLine               *Segment               `json:"error_line,omitempty" toml:"error_line,omitempty" yaml:"error_line,omitempty"`
 	Maps                    *maps.Config           `json:"maps,omitempty" toml:"maps,omitempty" yaml:"maps,omitempty"`
 	Upgrade                 *upgrade.Config        `json:"upgrade,omitempty" toml:"upgrade,omitempty" yaml:"upgrade,omitempty"`
+	Vim                     *VimConfig             `json:"vim,omitempty" toml:"vim,omitempty" yaml:"vim,omitempty"`
 	Extends                 string                 `json:"extends,omitempty" toml:"extends,omitempty" yaml:"extends,omitempty"`
 	AccentColor             color.Ansi             `json:"accent_color,omitempty" toml:"accent_color,omitempty" yaml:"accent_color,omitempty"`
 	ConsoleTitleTemplate    string                 `json:"console_title_template,omitempty" toml:"console_title_template,omitempty" yaml:"console_title_template,omitempty"`
@@ -196,6 +204,10 @@ func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features
 		}
 	}
 
+	if cfg.Vim != nil {
+		feats |= cfg.vimFeatures()
+	}
+
 	return feats
 }
 
@@ -222,6 +234,29 @@ func (cfg *Config) upgradeFeatures() shell.Features {
 	if autoUpgrade {
 		log.Debug("auto upgrade enabled")
 		feats |= shell.Upgrade
+	}
+
+	return feats
+}
+
+func (cfg *Config) vimFeatures() shell.Features {
+	var feats shell.Features
+
+	cursorControl := cfg.Vim.CursorShape || cfg.Vim.CursorBlink
+
+	if cfg.Vim.Enabled || cursorControl {
+		log.Debug("vim mode enabled")
+		feats |= shell.VimMode
+	}
+
+	if cursorControl {
+		log.Debug("vim cursor shape enabled")
+		feats |= shell.VimCursorShape
+	}
+
+	if cfg.Vim.CursorBlink {
+		log.Debug("vim cursor blink enabled")
+		feats |= shell.VimCursorBlink
 	}
 
 	return feats

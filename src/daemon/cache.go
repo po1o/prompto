@@ -8,10 +8,10 @@ import (
 const DefaultDeviceCacheTTL = 7 * 24 * time.Hour
 
 type SegmentRenderValue struct {
+	RenderedAt time.Time
 	Text       string
 	Foreground string
 	Background string
-	RenderedAt time.Time
 }
 
 type deviceCacheEntry struct {
@@ -20,9 +20,9 @@ type deviceCacheEntry struct {
 }
 
 type DeviceCache struct {
-	mu         sync.RWMutex
 	entries    map[string]deviceCacheEntry
 	defaultTTL time.Duration
+	mu         sync.RWMutex
 }
 
 func NewDeviceCache() *DeviceCache {

@@ -19,6 +19,9 @@ const (
 	CursorPositioning
 	Async
 	Daemon
+	VimMode
+	VimCursorBlink
+	VimCursorShape
 )
 
 // getAllFeatures returns all defined feature flags by iterating through bit positions
@@ -30,7 +33,7 @@ func getAllFeatures() []Features {
 		feature := Features(1 << i)
 
 		// Stop when we reach a power of 2 greater than our highest defined feature
-		if feature > Daemon*2 {
+		if feature > VimCursorShape*2 {
 			break
 		}
 

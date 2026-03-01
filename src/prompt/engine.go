@@ -19,23 +19,23 @@ var cycle *color.Cycle = &color.Cycle{}
 
 type Engine struct {
 	Env                   runtime.Environment
-	Config                *config.Config
+	segmentStates         map[string]*segmentAsyncState
 	CompiledConfig        *config.CompiledConfig
 	sharedProviderFactory map[config.SegmentType]sharedProviderFactory
 	updateCallback        func(string)
-	stateMu               sync.Mutex
-	segmentStates         map[string]*segmentAsyncState
-	cacheMu               sync.Mutex
+	Config                *config.Config
 	sessionCache          map[string]segmentRenderCache
 	folderCache           map[string]segmentRenderCache
 	activeSegment         *config.Segment
 	previousActiveSegment *config.Segment
-	rprompt               string
 	Overflow              config.Overflow
+	rprompt               string
 	prompt                strings.Builder
 	rpromptLength         int
 	Padding               int
 	currentLineLength     int
+	cacheMu               sync.Mutex
+	stateMu               sync.Mutex
 	Plain                 bool
 	forceRender           bool
 }

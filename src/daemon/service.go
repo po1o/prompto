@@ -8,24 +8,23 @@ import (
 )
 
 type RenderRequest struct {
-	SessionID string
 	Flags     *runtimePkg.Flags
+	SessionID string
 	Repaint   bool
 }
 
 type RenderResponse struct {
-	Type     string
-	Sequence uint64
-	Segment  string
 	Bundle   PromptBundle
+	Type     string
+	Segment  string
+	Sequence uint64
 }
 
 type Service struct {
 	runtime  *SessionRenderRuntime
 	pipeline *RenderPipeline
-
-	mu      sync.Mutex
-	renders map[string]*ActiveRender
+	renders  map[string]*ActiveRender
+	mu       sync.Mutex
 }
 
 func NewService(registry *EngineRegistry, gate *ReloadGate, renderer promptBundleRenderer) *Service {

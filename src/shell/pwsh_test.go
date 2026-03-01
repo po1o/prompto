@@ -27,6 +27,19 @@ Enable-PoshDaemon`
 	assert.Equal(t, want, got)
 }
 
+func TestPwshVimFeatures(t *testing.T) {
+	features := VimMode | VimCursorBlink | VimCursorShape
+
+	got := features.Lines(PWSH).String("")
+
+	want := `
+Set-PSReadLineOption -EditMode Vi; Enable-PoshVimMode
+$script:CursorBlink = $true
+$script:CursorShape = $true; Set-VimModeCursorFromState`
+
+	assert.Equal(t, want, got)
+}
+
 func TestQuotePwshOrElvishStr(t *testing.T) {
 	tests := []struct {
 		str      string

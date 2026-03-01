@@ -57,6 +57,19 @@ enable_poshdaemon`
 	bashBLEsession = false
 }
 
+func TestBashVimFeatures(t *testing.T) {
+	features := VimMode | VimCursorBlink | VimCursorShape
+
+	got := features.Lines(BASH).String("")
+
+	want := `
+set -o vi; enable_posh_vim_mode
+_omp_cursor_blink=1
+_omp_cursor_shape=1; _omp_should_change_cursor && _omp_apply_cursor_shape`
+
+	assert.Equal(t, want, got)
+}
+
 func TestQuotePosixStr(t *testing.T) {
 	tests := []struct {
 		str      string

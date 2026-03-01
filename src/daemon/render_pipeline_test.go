@@ -13,10 +13,10 @@ import (
 )
 
 type rendererStub struct {
-	mu            sync.Mutex
-	callCount     int
-	lastRepaint   bool
 	renderedCalls []bool
+	callCount     int
+	mu            sync.Mutex
+	lastRepaint   bool
 }
 
 func (renderer *rendererStub) Render(_ *prompt.Engine, repaint bool) PromptBundle {

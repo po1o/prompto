@@ -5,9 +5,9 @@ import "sync"
 // ReloadGate coordinates prompt request admission with config reload operations.
 // During reload, new requests are queued. Reload waits for active requests to finish.
 type ReloadGate struct {
-	mu        sync.Mutex
 	cond      *sync.Cond
 	active    int
+	mu        sync.Mutex
 	reloading bool
 }
 

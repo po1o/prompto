@@ -8,13 +8,12 @@ import (
 )
 
 type RenderHandle struct {
-	Engine     *prompt.Engine
 	Context    context.Context
+	Engine     *prompt.Engine
+	registry   *EngineRegistry
+	sessionID  string
+	renderID   uint64
 	Reattached bool
-
-	sessionID string
-	renderID  uint64
-	registry  *EngineRegistry
 }
 
 func (h *RenderHandle) Complete() {

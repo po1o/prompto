@@ -22,6 +22,19 @@ enable_poshdaemon`
 	assert.Equal(t, want, got)
 }
 
+func TestFishVimFeatures(t *testing.T) {
+	features := VimMode | VimCursorBlink | VimCursorShape
+
+	got := features.Lines(FISH).String("")
+
+	want := `
+fish_vi_key_bindings; enable_posh_vim_mode
+set --global _omp_cursor_blink 1
+set --global _omp_cursor_shape 1; _omp_should_change_cursor; and _omp_apply_cursor_shape`
+
+	assert.Equal(t, want, got)
+}
+
 func TestQuoteFishStr(t *testing.T) {
 	tests := []struct {
 		str      string

@@ -21,9 +21,9 @@ type managedDaemon interface {
 type daemonFactory func() managedDaemon
 
 type daemonController struct {
-	mu       sync.Mutex
-	factory  daemonFactory
 	instance managedDaemon
+	factory  daemonFactory
+	mu       sync.Mutex
 }
 
 func newDaemonController(factory daemonFactory) *daemonController {
