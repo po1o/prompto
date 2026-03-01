@@ -3,7 +3,10 @@ package daemon
 import (
 	"context"
 	"os"
+	"os/exec"
+	libruntime "runtime"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -169,8 +172,23 @@ func TestDaemonStopsAfterProcessExitForTrackedPID(t *testing.T) {
 	require.Equal(t, "stopped", response.Type)
 }
 
+func TestDaemonStopsAfterTrackedProcessActuallyExits(t *testing.T) {
+	pid := startDetachedTestProcessPID(t)
+	daemon := NewWithIdleTimeout(30*time.Millisecond, &rendererStub{})
+
+	initial := daemon.StartRender(RenderRequest{
+		SessionID: strconv.Itoa(pid),
+		Flags:     &runtime.Flags{},
+	})
+	require.Equal(t, "initial", initial.Type)
+
+	require.Eventually(t, func() bool {
+		return daemon.stopped.Load()
+	}, 3*time.Second, 20*time.Millisecond)
+}
+
 func TestCompleteSessionForNonNumericIDDoesNotAffectTrackedPID(t *testing.T) {
-	daemon := NewWithIdleTimeout(25*time.Millisecond, &rendererStub{})
+	daemon := NewWithIdleTimeout(200*time.Millisecond, &rendererStub{})
 	trackedSessionID := strconv.Itoa(os.Getpid())
 
 	daemon.StartRender(RenderRequest{
@@ -183,13 +201,14 @@ func TestCompleteSessionForNonNumericIDDoesNotAffectTrackedPID(t *testing.T) {
 	})
 
 	daemon.CompleteSession("nonnumeric")
-	time.Sleep(70 * time.Millisecond)
 
-	response := daemon.StartRender(RenderRequest{
-		SessionID: trackedSessionID,
-		Flags:     &runtime.Flags{},
-	})
-	require.Equal(t, "initial", response.Type)
+	require.Eventually(t, func() bool {
+		response := daemon.StartRender(RenderRequest{
+			SessionID: trackedSessionID,
+			Flags:     &runtime.Flags{},
+		})
+		return response.Type == "initial"
+	}, 300*time.Millisecond, 20*time.Millisecond)
 }
 
 func TestParseSessionPID(t *testing.T) {
@@ -205,4 +224,32 @@ func TestParseSessionPID(t *testing.T) {
 
 	_, ok = parseSessionPID("not-a-pid")
 	require.False(t, ok)
+}
+
+func startDetachedTestProcessPID(t *testing.T) int {
+	t.Helper()
+
+	command, args := detachedProcessPIDCommand()
+	cmd := exec.CommandContext(context.Background(), command, args...)
+	output, err := cmd.Output()
+	require.NoError(t, err)
+
+	pidText := strings.TrimSpace(string(output))
+	pid, err := strconv.Atoi(pidText)
+	require.NoError(t, err)
+	require.Greater(t, pid, 0)
+
+	return pid
+}
+
+func detachedProcessPIDCommand() (string, []string) {
+	if libruntime.GOOS == runtime.WINDOWS {
+		return "powershell", []string{
+			"-NoProfile",
+			"-Command",
+			"$p = Start-Process -FilePath powershell -ArgumentList '-NoProfile -Command Start-Sleep -Seconds 1' -PassThru; $p.Id",
+		}
+	}
+
+	return "sh", []string{"-c", "sleep 1 & echo $!"}
 }
