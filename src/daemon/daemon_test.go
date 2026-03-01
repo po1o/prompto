@@ -87,6 +87,36 @@ func TestDaemonReloadBlocksNewRenderRequests(t *testing.T) {
 	}
 }
 
+func TestDaemonReloadWaitsForActiveRenderCompletion(t *testing.T) {
+	daemon := New(&rendererStub{})
+	sessionID := strconv.Itoa(os.Getpid())
+
+	daemon.StartRender(RenderRequest{
+		SessionID: sessionID,
+		Flags:     &runtime.Flags{},
+	})
+
+	reloadDone := make(chan struct{})
+	go func() {
+		daemon.Reload(nil)
+		close(reloadDone)
+	}()
+
+	select {
+	case <-reloadDone:
+		t.Fatal("reload should wait for active render completion")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	daemon.CompleteSession(sessionID)
+
+	select {
+	case <-reloadDone:
+	case <-time.After(250 * time.Millisecond):
+		t.Fatal("reload should complete after active render completion")
+	}
+}
+
 func TestDaemonStopPreventsNewOperations(t *testing.T) {
 	daemon := New(&rendererStub{})
 	daemon.Stop()
