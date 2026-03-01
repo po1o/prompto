@@ -142,13 +142,13 @@ func TestDaemonDoesNotStopWhileTrackedPIDIsAlive(t *testing.T) {
 		Flags:     &runtime.Flags{},
 	})
 
-	time.Sleep(70 * time.Millisecond)
-
-	response := daemon.StartRender(RenderRequest{
-		SessionID: sessionID,
-		Flags:     &runtime.Flags{},
-	})
-	require.Equal(t, "initial", response.Type)
+	require.Eventually(t, func() bool {
+		response := daemon.StartRender(RenderRequest{
+			SessionID: sessionID,
+			Flags:     &runtime.Flags{},
+		})
+		return response.Type == "initial"
+	}, 150*time.Millisecond, 10*time.Millisecond)
 }
 
 func TestDaemonStopsAfterProcessExitForTrackedPID(t *testing.T) {

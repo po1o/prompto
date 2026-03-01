@@ -179,6 +179,10 @@ func normalizePromptLayout(layout *PromptLayout, rightAligned bool, table string
 
 	layout.LeadingDiamond = leading
 	layout.TrailingDiamond = trailing
+	layout.LeadingStyle = ""
+	layout.TrailingStyle = ""
+	layout.LeadingSeparator = ""
+	layout.TrailingSeparator = ""
 
 	return nil
 }
