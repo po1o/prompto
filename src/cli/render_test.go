@@ -118,28 +118,23 @@ func TestResolveRenderSessionID(t *testing.T) {
 }
 
 func TestResolveRenderUpdateTimeout(t *testing.T) {
-	t.Run("uses cli override when flag is explicitly set", func(t *testing.T) {
-		timeout := resolveRenderUpdateTimeout(15, true, "")
-		require.Equal(t, 15*time.Millisecond, timeout)
-	})
-
-	t.Run("uses config daemon_timeout when flag is not explicitly set", func(t *testing.T) {
+	t.Run("uses config daemon_timeout", func(t *testing.T) {
 		dir := t.TempDir()
 		configPath := filepath.Join(dir, "theme.omp.json")
 		err := os.WriteFile(configPath, []byte(`{"version":4,"daemon_timeout":220}`), 0o644)
 		require.NoError(t, err)
 
-		timeout := resolveRenderUpdateTimeout(75, false, configPath)
+		timeout := resolveRenderUpdateTimeout(configPath)
 		require.Equal(t, 220*time.Millisecond, timeout)
 	})
 
-	t.Run("falls back to default daemon timeout when config has no value", func(t *testing.T) {
+	t.Run("falls back to default daemon timeout when unset", func(t *testing.T) {
 		dir := t.TempDir()
 		configPath := filepath.Join(dir, "theme.omp.json")
 		err := os.WriteFile(configPath, []byte(`{"version":4}`), 0o644)
 		require.NoError(t, err)
 
-		timeout := resolveRenderUpdateTimeout(75, false, configPath)
+		timeout := resolveRenderUpdateTimeout(configPath)
 		require.Equal(t, 100*time.Millisecond, timeout)
 	})
 }

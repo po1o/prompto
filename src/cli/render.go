@@ -16,26 +16,25 @@ import (
 )
 
 var (
-	renderPwd             string
-	renderPSwd            string
-	renderShell           string
-	renderShellVersion    string
-	renderStatus          int
-	renderPipeStatus      string
-	renderTiming          float64
-	renderStackCount      int
-	renderTerminalWidth   int
-	renderNoStatus        bool
-	renderColumn          int
-	renderJobCount        int
-	renderEscape          bool
-	renderForce           bool
-	renderSessionID       string
-	renderPID             int
-	renderRepaint         bool
-	renderMaxUpdates      int
-	renderUpdateTimeoutMS int
-	renderVimMode         string
+	renderPwd           string
+	renderPSwd          string
+	renderShell         string
+	renderShellVersion  string
+	renderStatus        int
+	renderPipeStatus    string
+	renderTiming        float64
+	renderStackCount    int
+	renderTerminalWidth int
+	renderNoStatus      bool
+	renderColumn        int
+	renderJobCount      int
+	renderEscape        bool
+	renderForce         bool
+	renderSessionID     string
+	renderPID           int
+	renderRepaint       bool
+	renderMaxUpdates    int
+	renderVimMode       string
 )
 
 var renderCmd = createRenderCmd()
@@ -76,11 +75,7 @@ func createRenderCmd() *cobra.Command {
 				VimMode:       renderVimMode,
 			}
 
-			updateTimeout := resolveRenderUpdateTimeout(
-				renderUpdateTimeoutMS,
-				c.Flags().Changed("update-timeout"),
-				configFlag,
-			)
+			updateTimeout := resolveRenderUpdateTimeout(configFlag)
 
 			return renderWithDaemon(
 				daemonRuntime,
@@ -112,7 +107,6 @@ func createRenderCmd() *cobra.Command {
 	cmd.Flags().IntVar(&renderPID, "pid", 0, "shell process id (used as default session identifier)")
 	cmd.Flags().BoolVar(&renderRepaint, "repaint", false, "render as repaint request")
 	cmd.Flags().IntVar(&renderMaxUpdates, "max-updates", 10, "maximum streamed updates to print")
-	cmd.Flags().IntVar(&renderUpdateTimeoutMS, "update-timeout", 100, "update wait timeout in milliseconds (overrides config daemon_timeout)")
 	cmd.Flags().StringVar(&renderVimMode, "vim-mode", "", "current vim mode (insert, normal, visual, replace)")
 
 	return cmd
@@ -135,11 +129,7 @@ func resolveRenderSessionID(explicitSessionID string, pid int) string {
 	return "default"
 }
 
-func resolveRenderUpdateTimeout(updateTimeoutMS int, updateTimeoutChanged bool, configPath string) time.Duration {
-	if updateTimeoutChanged {
-		return time.Duration(updateTimeoutMS) * time.Millisecond
-	}
-
+func resolveRenderUpdateTimeout(configPath string) time.Duration {
 	cfg := config.Load(configPath)
 	return cfg.GetDaemonTimeout()
 }
