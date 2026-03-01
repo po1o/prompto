@@ -96,3 +96,42 @@ func TestDaemonStopPreventsNewOperations(t *testing.T) {
 	_, ok := daemon.NextUpdate(ctx, "session-a", 0)
 	require.False(t, ok)
 }
+
+func TestDaemonAutoStopsAfterIdleTimeoutWithoutSessions(t *testing.T) {
+	daemon := NewWithIdleTimeout(25*time.Millisecond, &rendererStub{})
+
+	time.Sleep(60 * time.Millisecond)
+
+	response := daemon.StartRender(RenderRequest{
+		SessionID: "session-a",
+		Flags:     &runtime.Flags{},
+	})
+	require.Equal(t, "stopped", response.Type)
+}
+
+func TestDaemonIdleTimerStartsAfterSessionCompletion(t *testing.T) {
+	daemon := NewWithIdleTimeout(30*time.Millisecond, &rendererStub{})
+
+	initial := daemon.StartRender(RenderRequest{
+		SessionID: "session-a",
+		Flags:     &runtime.Flags{},
+	})
+	require.Equal(t, "initial", initial.Type)
+
+	time.Sleep(50 * time.Millisecond)
+	stillRunning := daemon.StartRender(RenderRequest{
+		SessionID: "session-b",
+		Flags:     &runtime.Flags{},
+	})
+	require.Equal(t, "initial", stillRunning.Type)
+
+	daemon.CompleteSession("session-a")
+	daemon.CompleteSession("session-b")
+	time.Sleep(70 * time.Millisecond)
+
+	stopped := daemon.StartRender(RenderRequest{
+		SessionID: "session-c",
+		Flags:     &runtime.Flags{},
+	})
+	require.Equal(t, "stopped", stopped.Type)
+}

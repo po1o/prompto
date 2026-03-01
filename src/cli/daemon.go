@@ -7,6 +7,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/jandedobbeleer/oh-my-posh/src/config"
 	daemonpkg "github.com/jandedobbeleer/oh-my-posh/src/daemon"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +30,8 @@ type daemonController struct {
 func newDaemonController(factory daemonFactory) *daemonController {
 	if factory == nil {
 		factory = func() managedDaemon {
-			return daemonpkg.New(nil)
+			cfg := config.Load(configFlag)
+			return daemonpkg.NewWithIdleTimeout(cfg.GetDaemonIdleTimeout(), nil)
 		}
 	}
 

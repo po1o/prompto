@@ -2,28 +2,48 @@ package daemon
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
 )
 
 type Daemon struct {
-	service *Service
-	stopped atomic.Bool
+	service     *Service
+	idleTimeout time.Duration
+	stopped     atomic.Bool
+	idleToken   uint64
+	mu          sync.Mutex
 }
 
 func New(renderer promptBundleRenderer) *Daemon {
+	return NewWithIdleTimeout(5*time.Minute, renderer)
+}
+
+func NewWithIdleTimeout(idleTimeout time.Duration, renderer promptBundleRenderer) *Daemon {
 	registry := NewEngineRegistry(prompt.New)
 	gate := NewReloadGate()
-	return &Daemon{
-		service: NewService(registry, gate, renderer),
+	daemon := &Daemon{
+		service:     NewService(registry, gate, renderer),
+		idleTimeout: idleTimeout,
 	}
+
+	daemon.mu.Lock()
+	daemon.scheduleIdleStopLocked()
+	daemon.mu.Unlock()
+
+	return daemon
 }
 
 func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
 	if daemon.stopped.Load() {
 		return RenderResponse{Type: "stopped"}
 	}
+
+	daemon.mu.Lock()
+	daemon.cancelIdleStopLocked()
+	daemon.mu.Unlock()
 
 	return daemon.service.StartRender(request)
 }
@@ -42,6 +62,14 @@ func (daemon *Daemon) CompleteSession(sessionID string) {
 	}
 
 	daemon.service.CompleteSession(sessionID)
+
+	if daemon.service.SessionCount() != 0 {
+		return
+	}
+
+	daemon.mu.Lock()
+	daemon.scheduleIdleStopLocked()
+	daemon.mu.Unlock()
 }
 
 func (daemon *Daemon) Reload(action func()) {
@@ -65,5 +93,38 @@ func (daemon *Daemon) SessionHub(sessionID string) *SessionUpdateHub {
 }
 
 func (daemon *Daemon) Stop() {
-	daemon.stopped.Store(true)
+	if !daemon.stopped.CompareAndSwap(false, true) {
+		return
+	}
+
+	daemon.mu.Lock()
+	daemon.cancelIdleStopLocked()
+	daemon.mu.Unlock()
+}
+
+func (daemon *Daemon) cancelIdleStopLocked() {
+	daemon.idleToken++
+}
+
+func (daemon *Daemon) scheduleIdleStopLocked() {
+	if daemon.idleTimeout <= 0 {
+		return
+	}
+
+	daemon.idleToken++
+	token := daemon.idleToken
+	timeout := daemon.idleTimeout
+
+	time.AfterFunc(timeout, func() {
+		daemon.mu.Lock()
+		if daemon.stopped.Load() || daemon.idleToken != token {
+			daemon.mu.Unlock()
+			return
+		}
+		daemon.mu.Unlock()
+
+		if daemon.service.SessionCount() == 0 {
+			daemon.Stop()
+		}
+	})
 }
