@@ -21,6 +21,14 @@ const (
 )
 
 func (e *Engine) ExtraPrompt(promptType ExtraPromptType) string {
+	if promptType == Secondary && e.hasCompiledSecondaryLayout() {
+		return e.renderCompiledExtra(e.CompiledConfig.SecondaryPrompt)
+	}
+
+	if promptType == Transient && e.hasCompiledTransientLayout() {
+		return e.renderCompiledExtra(e.CompiledConfig.TransientPrompt)
+	}
+
 	var prompt *config.Segment
 
 	switch promptType {
@@ -108,4 +116,21 @@ func (e *Engine) ExtraPrompt(promptType ExtraPromptType) string {
 	}
 
 	return str
+}
+
+func (e *Engine) renderCompiledExtra(layouts []config.PromptLayout) string {
+	didRender := false
+	for i := range layouts {
+		block := e.compiledLayoutBlock(&layouts[i], config.Prompt, config.Left, i != 0)
+		cancelNewline := !didRender
+		if i == 0 {
+			cancelNewline = false
+		}
+
+		if e.renderBlock(block, cancelNewline) {
+			didRender = true
+		}
+	}
+
+	return e.string()
 }

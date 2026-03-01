@@ -88,6 +88,29 @@ type segmentAux struct {
 	*segmentAlias
 }
 
+// Clone returns a copy of the segment with runtime-only state reset.
+// This allows reusing immutable segment config safely across renders.
+func (segment *Segment) Clone() *Segment {
+	if segment == nil {
+		return nil
+	}
+
+	cloned := *segment
+	cloned.writer = nil
+	cloned.env = nil
+	cloned.styleCache = ""
+	cloned.name = ""
+	cloned.Needs = nil
+	cloned.Duration = 0
+	cloned.NameLength = 0
+	cloned.Index = 0
+	cloned.Enabled = false
+	cloned.Force = false
+	cloned.restored = false
+
+	return &cloned
+}
+
 func (segment *Segment) UnmarshalJSON(data []byte) error {
 	aux := &segmentAux{
 		segmentAlias: (*segmentAlias)(segment),

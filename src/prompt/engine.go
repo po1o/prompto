@@ -19,6 +19,7 @@ var cycle *color.Cycle = &color.Cycle{}
 type Engine struct {
 	Env                   runtime.Environment
 	Config                *config.Config
+	CompiledConfig        *config.CompiledConfig
 	activeSegment         *config.Segment
 	previousActiveSegment *config.Segment
 	rprompt               string
@@ -515,11 +516,19 @@ func New(flags *runtime.Flags) *Engine {
 	terminal.Plain = flags.Plain
 
 	eng := &Engine{
-		Config:      cfg,
-		Env:         env,
-		Plain:       flags.Plain,
-		forceRender: flags.Force || len(env.Getenv("POSH_FORCE_RENDER")) > 0,
-		prompt:      strings.Builder{},
+		Config:         cfg,
+		Env:            env,
+		Plain:          flags.Plain,
+		forceRender:    flags.Force || len(env.Getenv("POSH_FORCE_RENDER")) > 0,
+		CompiledConfig: nil,
+		prompt:         strings.Builder{},
+	}
+
+	if flags.ConfigPath != "" {
+		compiled, err := config.LoadCompiled(flags.ConfigPath)
+		if err == nil {
+			eng.CompiledConfig = compiled
+		}
 	}
 
 	// Pre-allocate prompt builder capacity to reduce allocations during rendering

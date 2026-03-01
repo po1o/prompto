@@ -12,6 +12,9 @@ import (
 
 func (e *Engine) Primary() string {
 	needsPrimaryRightPrompt := e.needsPrimaryRightPrompt()
+	if e.hasCompiledPrimaryLayout() {
+		needsPrimaryRightPrompt = false
+	}
 
 	e.writePrimaryPrompt(needsPrimaryRightPrompt)
 
@@ -44,6 +47,11 @@ func (e *Engine) Primary() string {
 }
 
 func (e *Engine) writePrimaryPrompt(needsPrimaryRPrompt bool) {
+	if e.hasCompiledPrimaryLayout() {
+		e.writeCompiledPrimaryPrompt()
+		return
+	}
+
 	if e.Config.ShellIntegration {
 		exitCode, _ := e.Env.StatusCodes()
 		e.write(terminal.CommandFinished(exitCode, e.Env.Flags().NoExitCode))
@@ -80,6 +88,72 @@ func (e *Engine) writePrimaryPrompt(needsPrimaryRPrompt bool) {
 
 		cache.Set(cache.Session, RPromptKey, e.rprompt, cache.INFINITE)
 		cache.Set(cache.Session, RPromptLengthKey, e.rpromptLength, cache.INFINITE)
+	}
+
+	if len(e.Config.ConsoleTitleTemplate) > 0 && !e.Env.Flags().Plain {
+		title := e.getTitleTemplateText()
+		e.write(terminal.FormatTitle(title))
+	}
+
+	if e.Config.FinalSpace {
+		e.write(" ")
+		e.currentLineLength++
+	}
+
+	if e.Config.ITermFeatures != nil && e.isIterm() {
+		host, _ := e.Env.Host()
+		e.write(terminal.RenderItermFeatures(e.Config.ITermFeatures, e.Env.Shell(), e.Env.Pwd(), e.Env.User(), host))
+	}
+
+	if e.Config.ShellIntegration {
+		e.write(terminal.CommandStart())
+	}
+
+	e.pwd()
+}
+
+func (e *Engine) writeCompiledPrimaryPrompt() {
+	if e.Config.ShellIntegration {
+		exitCode, _ := e.Env.StatusCodes()
+		e.write(terminal.CommandFinished(exitCode, e.Env.Flags().NoExitCode))
+		e.write(terminal.PromptStart())
+	}
+
+	cycle = &e.Config.Cycle
+	var cancelNewline, didRender bool
+
+	lineCount := len(e.CompiledConfig.Prompt)
+	if len(e.CompiledConfig.RPrompt) > lineCount {
+		lineCount = len(e.CompiledConfig.RPrompt)
+	}
+
+	for i := range lineCount {
+		if i == 0 {
+			row, _ := e.Env.CursorPosition()
+			cancelNewline = e.Env.Flags().Cleared || e.Env.Flags().PromptCount == 1 || row == 1
+		}
+
+		if i != 0 {
+			cancelNewline = !didRender
+		}
+
+		if i < len(e.CompiledConfig.Prompt) {
+			left := e.compiledLayoutBlock(&e.CompiledConfig.Prompt[i], config.Prompt, config.Left, i != 0)
+			if e.renderBlock(left, cancelNewline) {
+				didRender = true
+			}
+		}
+
+		if i < len(e.CompiledConfig.RPrompt) {
+			right := e.compiledLayoutBlock(&e.CompiledConfig.RPrompt[i], config.Prompt, config.Right, false)
+			if i < len(e.CompiledConfig.Prompt) {
+				right.Filler = e.CompiledConfig.Prompt[i].Filler
+			}
+
+			if e.renderBlock(right, true) {
+				didRender = true
+			}
+		}
 	}
 
 	if len(e.Config.ConsoleTitleTemplate) > 0 && !e.Env.Flags().Plain {

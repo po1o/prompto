@@ -13,6 +13,18 @@ const (
 )
 
 func (e *Engine) RPrompt() string {
+	if e.CompiledConfig != nil && len(e.CompiledConfig.RPrompt) > 0 {
+		line := e.compiledLayoutBlock(&e.CompiledConfig.RPrompt[0], config.RPrompt, config.Right, false)
+		text, length := e.writeBlockSegments(line)
+
+		if length == 0 {
+			return ""
+		}
+
+		e.rpromptLength = length
+		return text
+	}
+
 	var rprompt *config.Block
 
 	for _, block := range e.Config.Blocks {
