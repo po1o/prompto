@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -12,6 +13,9 @@ import (
 
 type managedDaemon interface {
 	Stop()
+	StartRender(daemonpkg.RenderRequest) daemonpkg.RenderResponse
+	NextUpdate(context.Context, string, uint64) (daemonpkg.RenderResponse, bool)
+	CompleteSession(string)
 }
 
 type daemonFactory func() managedDaemon
@@ -68,6 +72,17 @@ func (controller *daemonController) Running() bool {
 	controller.mu.Lock()
 	defer controller.mu.Unlock()
 	return controller.instance != nil
+}
+
+func (controller *daemonController) EnsureStarted() managedDaemon {
+	controller.mu.Lock()
+	defer controller.mu.Unlock()
+
+	if controller.instance == nil {
+		controller.instance = controller.factory()
+	}
+
+	return controller.instance
 }
 
 var (

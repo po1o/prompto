@@ -2,8 +2,10 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
+	daemonpkg "github.com/jandedobbeleer/oh-my-posh/src/daemon"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,6 +16,16 @@ type managedDaemonStub struct {
 func (stub *managedDaemonStub) Stop() {
 	stub.stopped = true
 }
+
+func (stub *managedDaemonStub) StartRender(_ daemonpkg.RenderRequest) daemonpkg.RenderResponse {
+	return daemonpkg.RenderResponse{}
+}
+
+func (stub *managedDaemonStub) NextUpdate(_ context.Context, _ string, _ uint64) (daemonpkg.RenderResponse, bool) {
+	return daemonpkg.RenderResponse{}, false
+}
+
+func (stub *managedDaemonStub) CompleteSession(_ string) {}
 
 func TestRunDaemonActionLifecycle(t *testing.T) {
 	created := []*managedDaemonStub{}
