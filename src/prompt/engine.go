@@ -22,6 +22,7 @@ type Engine struct {
 	Config                *config.Config
 	CompiledConfig        *config.CompiledConfig
 	sharedProviderFactory map[config.SegmentType]sharedProviderFactory
+	updateCallback        func(string)
 	stateMu               sync.Mutex
 	segmentStates         map[string]*segmentAsyncState
 	cacheMu               sync.Mutex

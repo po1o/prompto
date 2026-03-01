@@ -72,6 +72,7 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 				err := segment.MapSegmentWithWriter(e.Env)
 				if err != nil {
 					e.markSegmentDone(segment)
+					e.notifySegmentUpdate(segment.Name())
 					out <- result{segment, index}
 					return
 				}
@@ -95,6 +96,7 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 				}
 
 				e.markSegmentDone(segment)
+				e.notifySegmentUpdate(segment.Name())
 				out <- result{segment, index}
 				return
 			}
@@ -106,6 +108,7 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 			}
 
 			e.markSegmentDone(segment)
+			e.notifySegmentUpdate(segment.Name())
 			out <- result{segment, index}
 		}(segment, i)
 	}
