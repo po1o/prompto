@@ -15,8 +15,8 @@ type SegmentRenderValue struct {
 }
 
 type deviceCacheEntry struct {
-	value     SegmentRenderValue
 	expiresAt time.Time
+	value     SegmentRenderValue
 }
 
 type DeviceCache struct {

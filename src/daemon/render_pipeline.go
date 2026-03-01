@@ -16,8 +16,8 @@ type PromptBundle struct {
 }
 
 type PromptUpdate struct {
-	Snapshot UpdateSnapshot
 	Bundle   PromptBundle
+	Snapshot UpdateSnapshot
 }
 
 type promptBundleRenderer interface {

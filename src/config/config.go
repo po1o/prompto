@@ -3,7 +3,9 @@ package config
 import (
 	"encoding/gob"
 	"slices"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jandedobbeleer/oh-my-posh/src/cache"
 	"github.com/jandedobbeleer/oh-my-posh/src/cli/upgrade"
@@ -70,6 +72,7 @@ type Config struct {
 	Vim                     *VimConfig             `json:"vim,omitempty" toml:"vim,omitempty" yaml:"vim,omitempty"`
 	Extends                 string                 `json:"extends,omitempty" toml:"extends,omitempty" yaml:"extends,omitempty"`
 	AccentColor             color.Ansi             `json:"accent_color,omitempty" toml:"accent_color,omitempty" yaml:"accent_color,omitempty"`
+	DaemonIdleTimeout       string                 `json:"daemon_idle_timeout,omitempty" toml:"daemon_idle_timeout,omitempty" yaml:"daemon_idle_timeout,omitempty"`
 	ConsoleTitleTemplate    string                 `json:"console_title_template,omitempty" toml:"console_title_template,omitempty" yaml:"console_title_template,omitempty"`
 	PWD                     string                 `json:"pwd,omitempty" toml:"pwd,omitempty" yaml:"pwd,omitempty"`
 	Source                  string                 `json:"-" toml:"-" yaml:"-"`
@@ -82,6 +85,7 @@ type Config struct {
 	Tooltips                []*Segment             `json:"tooltips,omitempty" toml:"tooltips,omitempty" yaml:"tooltips,omitempty"`
 	hash                    uint64
 	Version                 int  `json:"version" toml:"version" yaml:"version"`
+	DaemonTimeout           int  `json:"daemon_timeout,omitempty" toml:"daemon_timeout,omitempty" yaml:"daemon_timeout,omitempty"`
 	MigrateGlyphs           bool `json:"-" toml:"-" yaml:"-"`
 	Async                   bool `json:"async,omitempty" toml:"async,omitempty" yaml:"async,omitempty"`
 	ShellIntegration        bool `json:"shell_integration,omitempty" toml:"shell_integration,omitempty" yaml:"shell_integration,omitempty"`
@@ -264,6 +268,27 @@ func (cfg *Config) vimFeatures() shell.Features {
 
 func (cfg *Config) Hash() uint64 {
 	return cfg.hash
+}
+
+// GetDaemonIdleTimeout returns the daemon idle timeout duration.
+// Returns 0 when daemon idle shutdown should be disabled.
+// Defaults to 5 minutes when unset or invalid.
+func (cfg *Config) GetDaemonIdleTimeout() time.Duration {
+	if cfg.DaemonIdleTimeout == "" {
+		return 5 * time.Minute
+	}
+
+	if cfg.DaemonIdleTimeout == "none" {
+		return 0
+	}
+
+	minutes, err := strconv.Atoi(cfg.DaemonIdleTimeout)
+	if err != nil || minutes < 0 {
+		log.Debugf("invalid daemon_idle_timeout value %q, defaulting to 5 minutes", cfg.DaemonIdleTimeout)
+		return 5 * time.Minute
+	}
+
+	return time.Duration(minutes) * time.Minute
 }
 
 // migrateSegmentProperties migrates the deprecated Properties field to Options for all segments.

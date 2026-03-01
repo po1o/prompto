@@ -2,6 +2,7 @@ package config
 
 import (
 	"testing"
+	"time"
 
 	"github.com/jandedobbeleer/oh-my-posh/src/cache"
 	"github.com/jandedobbeleer/oh-my-posh/src/cli/upgrade"
@@ -269,6 +270,49 @@ func TestFeaturesVim(t *testing.T) {
 		}
 
 		got := cfg.Features(env, false)
+		assert.Equal(t, tc.expected, got, tc.name)
+	}
+}
+
+func TestGetDaemonIdleTimeout(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    string
+		expected time.Duration
+	}{
+		{
+			name:     "default when unset",
+			value:    "",
+			expected: 5 * time.Minute,
+		},
+		{
+			name:     "disabled when none",
+			value:    "none",
+			expected: 0,
+		},
+		{
+			name:     "valid minutes",
+			value:    "12",
+			expected: 12 * time.Minute,
+		},
+		{
+			name:     "invalid value falls back to default",
+			value:    "invalid",
+			expected: 5 * time.Minute,
+		},
+		{
+			name:     "negative value falls back to default",
+			value:    "-1",
+			expected: 5 * time.Minute,
+		},
+	}
+
+	for _, tc := range tests {
+		cfg := &Config{
+			DaemonIdleTimeout: tc.value,
+		}
+
+		got := cfg.GetDaemonIdleTimeout()
 		assert.Equal(t, tc.expected, got, tc.name)
 	}
 }
