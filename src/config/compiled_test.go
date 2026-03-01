@@ -7,44 +7,44 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseCompiledTOMLWithTypedInstances(t *testing.T) {
+func TestParseCompiledYAMLWithTypedInstances(t *testing.T) {
 	raw := `
-[[prompt]]
-segments = ["session", "path"]
-filler = " "
-leading_style = "powerline"
-trailing_style = "powerline"
+prompt:
+  - segments: ["session", "path"]
+    filler: " "
+    leading_style: "powerline"
+    trailing_style: "powerline"
 
-[[rprompt]]
-segments = ["git.main"]
-leading_style = "powerline"
-trailing_style = "powerline"
+rprompt:
+  - segments: ["git.main"]
+    leading_style: "powerline"
+    trailing_style: "powerline"
 
-[[secondary_prompt]]
-segments = ["path"]
+secondary_prompt:
+  - segments: ["path"]
 
-[[transient_prompt]]
-segments = ["session"]
+transient_prompt:
+  - segments: ["session"]
 
-[[transient_rprompt]]
-segments = ["git.main"]
+transient_rprompt:
+  - segments: ["git.main"]
 
-[session]
-type = "session"
-style = "plain"
+session:
+  type: "session"
+  style: "plain"
 
-[path]
-style = "powerline"
-leading_style = "rounded"
-trailing_separator = ">"
+path:
+  style: "powerline"
+  leading_style: "rounded"
+  trailing_separator: ">"
 
-[git.main]
-style = "powerline"
-[git.main.options]
-branch_max_length = 20
+git.main:
+  style: "powerline"
+  options:
+    branch_max_length: 20
 `
 
-	cfg, err := ParseCompiledTOML([]byte(raw))
+	cfg, err := ParseCompiledYAML([]byte(raw))
 	require.NoError(t, err)
 
 	require.Len(t, cfg.Prompt, 1)
@@ -81,106 +81,106 @@ branch_max_length = 20
 	assert.Equal(t, float64(20), cfg.Segments["git.main"].Options["branch_max_length"])
 }
 
-func TestParseCompiledTOMLReturnsErrorForUnknownSegmentReference(t *testing.T) {
+func TestParseCompiledYAMLReturnsErrorForUnknownSegmentReference(t *testing.T) {
 	raw := `
-[[prompt]]
-segments = ["missing"]
+prompt:
+  - segments: ["missing"]
 
-[session]
-type = "session"
+session:
+  type: "session"
 `
 
-	_, err := ParseCompiledTOML([]byte(raw))
+	_, err := ParseCompiledYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "unknown segment")
 }
 
-func TestParseCompiledTOMLReturnsErrorForInvalidSegmentType(t *testing.T) {
+func TestParseCompiledYAMLReturnsErrorForInvalidSegmentType(t *testing.T) {
 	raw := `
-[[prompt]]
-segments = ["custom"]
+prompt:
+  - segments: ["custom"]
 
-[custom]
-type = "not-real"
+custom:
+  type: "not-real"
 `
 
-	_, err := ParseCompiledTOML([]byte(raw))
+	_, err := ParseCompiledYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "unsupported segment type")
 }
 
-func TestParseCompiledTOMLReturnsErrorWhenTypeCannotBeInferred(t *testing.T) {
+func TestParseCompiledYAMLReturnsErrorWhenTypeCannotBeInferred(t *testing.T) {
 	raw := `
-[[prompt]]
-segments = ["main"]
+prompt:
+  - segments: ["main"]
 
-[main]
-style = "powerline"
+main:
+  style: "powerline"
 `
 
-	_, err := ParseCompiledTOML([]byte(raw))
+	_, err := ParseCompiledYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "missing type")
 }
 
-func TestParseCompiledTOMLReturnsErrorForDirectPromptDiamonds(t *testing.T) {
+func TestParseCompiledYAMLReturnsErrorForDirectPromptDiamonds(t *testing.T) {
 	raw := `
-[[prompt]]
-segments = ["session"]
-leading_diamond = "<"
+prompt:
+  - segments: ["session"]
+    leading_diamond: "<"
 
-[session]
-type = "session"
+session:
+  type: "session"
 `
 
-	_, err := ParseCompiledTOML([]byte(raw))
+	_, err := ParseCompiledYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "does not allow leading_diamond/trailing_diamond")
 }
 
-func TestParseCompiledTOMLReturnsErrorForMutuallyExclusiveLineSeparatorConfig(t *testing.T) {
+func TestParseCompiledYAMLReturnsErrorForMutuallyExclusiveLineSeparatorConfig(t *testing.T) {
 	raw := `
-[[prompt]]
-segments = ["session"]
-leading_style = "powerline"
-leading_separator = "<"
+prompt:
+  - segments: ["session"]
+    leading_style: "powerline"
+    leading_separator: "<"
 
-[session]
-type = "session"
+session:
+  type: "session"
 `
 
-	_, err := ParseCompiledTOML([]byte(raw))
+	_, err := ParseCompiledYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "cannot define both leading_style and leading_separator")
 }
 
-func TestParseCompiledTOMLReturnsErrorForDirectSegmentDiamonds(t *testing.T) {
+func TestParseCompiledYAMLReturnsErrorForDirectSegmentDiamonds(t *testing.T) {
 	raw := `
-[[prompt]]
-segments = ["session"]
+prompt:
+  - segments: ["session"]
 
-[session]
-type = "session"
-leading_diamond = "<"
+session:
+  type: "session"
+  leading_diamond: "<"
 `
 
-	_, err := ParseCompiledTOML([]byte(raw))
+	_, err := ParseCompiledYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "does not allow leading_diamond")
 }
 
-func TestParseCompiledTOMLReturnsErrorForMutuallyExclusiveSegmentSeparatorConfig(t *testing.T) {
+func TestParseCompiledYAMLReturnsErrorForMutuallyExclusiveSegmentSeparatorConfig(t *testing.T) {
 	raw := `
-[[prompt]]
-segments = ["session"]
+prompt:
+  - segments: ["session"]
 
-[session]
-type = "session"
-leading_style = "powerline"
-leading_separator = "<"
+session:
+  type: "session"
+  leading_style: "powerline"
+  leading_separator: "<"
 `
 
-	_, err := ParseCompiledTOML([]byte(raw))
+	_, err := ParseCompiledYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "cannot define both leading_style and leading_separator")
 }

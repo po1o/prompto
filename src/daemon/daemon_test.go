@@ -90,7 +90,7 @@ func TestDaemonReloadBlocksNewRenderRequests(t *testing.T) {
 
 func TestDaemonReloadWaitsForActiveRenderCompletion(t *testing.T) {
 	daemon := New(&rendererStub{})
-	sessionID := strconv.Itoa(os.Getpid())
+	sessionID := "session-a"
 
 	daemon.StartRender(RenderRequest{
 		SessionID: sessionID,

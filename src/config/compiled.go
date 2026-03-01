@@ -8,36 +8,36 @@ import (
 	"path/filepath"
 	"strings"
 
-	toml "github.com/pelletier/go-toml/v2"
+	yaml "go.yaml.in/yaml/v3"
 )
 
 type PromptLayout struct {
-	Filler            string   `json:"filler,omitempty" toml:"filler,omitempty"`
-	LeadingStyle      string   `json:"leading_style,omitempty" toml:"leading_style,omitempty"`
-	TrailingStyle     string   `json:"trailing_style,omitempty" toml:"trailing_style,omitempty"`
-	LeadingSeparator  string   `json:"leading_separator,omitempty" toml:"leading_separator,omitempty"`
-	TrailingSeparator string   `json:"trailing_separator,omitempty" toml:"trailing_separator,omitempty"`
-	LeadingDiamond    string   `json:"leading_diamond,omitempty" toml:"leading_diamond,omitempty"`
-	TrailingDiamond   string   `json:"trailing_diamond,omitempty" toml:"trailing_diamond,omitempty"`
-	Segments          []string `json:"segments,omitempty" toml:"segments,omitempty"`
+	Filler            string   `json:"filler,omitempty" yaml:"filler,omitempty"`
+	LeadingStyle      string   `json:"leading_style,omitempty" yaml:"leading_style,omitempty"`
+	TrailingStyle     string   `json:"trailing_style,omitempty" yaml:"trailing_style,omitempty"`
+	LeadingSeparator  string   `json:"leading_separator,omitempty" yaml:"leading_separator,omitempty"`
+	TrailingSeparator string   `json:"trailing_separator,omitempty" yaml:"trailing_separator,omitempty"`
+	LeadingDiamond    string   `json:"leading_diamond,omitempty" yaml:"leading_diamond,omitempty"`
+	TrailingDiamond   string   `json:"trailing_diamond,omitempty" yaml:"trailing_diamond,omitempty"`
+	Segments          []string `json:"segments,omitempty" yaml:"segments,omitempty"`
 }
 
 type CompiledConfig struct {
-	Segments         map[string]*Segment `json:"-" toml:"-"`
-	Source           string              `json:"-" toml:"-"`
-	Prompt           []PromptLayout      `json:"prompt,omitempty" toml:"prompt,omitempty"`
-	RPrompt          []PromptLayout      `json:"rprompt,omitempty" toml:"rprompt,omitempty"`
-	SecondaryPrompt  []PromptLayout      `json:"secondary_prompt,omitempty" toml:"secondary_prompt,omitempty"`
-	TransientPrompt  []PromptLayout      `json:"transient_prompt,omitempty" toml:"transient_prompt,omitempty"`
-	TransientRPrompt []PromptLayout      `json:"transient_rprompt,omitempty" toml:"transient_rprompt,omitempty"`
+	Segments         map[string]*Segment `json:"-" yaml:"-"`
+	Source           string              `json:"-" yaml:"-"`
+	Prompt           []PromptLayout      `json:"prompt,omitempty" yaml:"prompt,omitempty"`
+	RPrompt          []PromptLayout      `json:"rprompt,omitempty" yaml:"rprompt,omitempty"`
+	SecondaryPrompt  []PromptLayout      `json:"secondary_prompt,omitempty" yaml:"secondary_prompt,omitempty"`
+	TransientPrompt  []PromptLayout      `json:"transient_prompt,omitempty" yaml:"transient_prompt,omitempty"`
+	TransientRPrompt []PromptLayout      `json:"transient_rprompt,omitempty" yaml:"transient_rprompt,omitempty"`
 }
 
 type compiledRawConfig struct {
-	Prompt           []PromptLayout `toml:"prompt"`
-	RPrompt          []PromptLayout `toml:"rprompt"`
-	SecondaryPrompt  []PromptLayout `toml:"secondary_prompt"`
-	TransientPrompt  []PromptLayout `toml:"transient_prompt"`
-	TransientRPrompt []PromptLayout `toml:"transient_rprompt"`
+	Prompt           []PromptLayout `yaml:"prompt"`
+	RPrompt          []PromptLayout `yaml:"rprompt"`
+	SecondaryPrompt  []PromptLayout `yaml:"secondary_prompt"`
+	TransientPrompt  []PromptLayout `yaml:"transient_prompt"`
+	TransientRPrompt []PromptLayout `yaml:"transient_rprompt"`
 }
 
 func LoadCompiled(configFile string) (*CompiledConfig, error) {
@@ -47,7 +47,7 @@ func LoadCompiled(configFile string) (*CompiledConfig, error) {
 
 	configFile = resolveConfigLocation(configFile)
 	format := strings.TrimPrefix(filepath.Ext(configFile), ".")
-	if format != TOML && format != TML {
+	if format != YAML && format != YML {
 		return nil, ErrInvalidExtension
 	}
 
@@ -59,7 +59,7 @@ func LoadCompiled(configFile string) (*CompiledConfig, error) {
 		return nil, ErrFileNotFound
 	}
 
-	cfg, err := ParseCompiledTOML(data)
+	cfg, err := ParseCompiledYAML(data)
 	if err != nil {
 		return nil, err
 	}
@@ -69,14 +69,14 @@ func LoadCompiled(configFile string) (*CompiledConfig, error) {
 	return cfg, nil
 }
 
-func ParseCompiledTOML(data []byte) (*CompiledConfig, error) {
+func ParseCompiledYAML(data []byte) (*CompiledConfig, error) {
 	var raw compiledRawConfig
-	if err := toml.Unmarshal(data, &raw); err != nil {
+	if err := yaml.Unmarshal(data, &raw); err != nil {
 		return nil, ErrParse
 	}
 
 	var doc map[string]any
-	if err := toml.Unmarshal(data, &doc); err != nil {
+	if err := yaml.Unmarshal(data, &doc); err != nil {
 		return nil, ErrParse
 	}
 
@@ -246,15 +246,25 @@ func decodeCompiledSegmentTable(name string, raw map[string]any, defaultType Seg
 	}
 
 	if _, ok := copyMap["type"]; !ok {
-		if defaultType == "" {
-			if !isKnownSegmentType(SegmentType(name)) {
-				return fmt.Errorf("segment %s is missing type", name)
-			}
-			copyMap["type"] = name
-		}
-
 		if defaultType != "" {
 			copyMap["type"] = string(defaultType)
+		} else {
+			if isKnownSegmentType(SegmentType(name)) {
+				copyMap["type"] = name
+			}
+
+			if _, exists := copyMap["type"]; !exists {
+				if idx := strings.Index(name, "."); idx > 0 {
+					candidateType := SegmentType(name[:idx])
+					if isKnownSegmentType(candidateType) {
+						copyMap["type"] = string(candidateType)
+					}
+				}
+			}
+
+			if _, exists := copyMap["type"]; !exists {
+				return fmt.Errorf("segment %s is missing type", name)
+			}
 		}
 	}
 
