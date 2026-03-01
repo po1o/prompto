@@ -75,6 +75,38 @@ func TestExplicitSessionCacheExpiredRecomputes(t *testing.T) {
 	require.Equal(t, int32(2), atomic.LoadInt32(&count))
 }
 
+func TestExplicitSessionCacheExpiredUsesStaleValueForPendingRender(t *testing.T) {
+	var count int32
+	engine := newCacheTestEngine(&count)
+	segment := &config.Segment{
+		Type:     config.TEXT,
+		Alias:    "cached.pending",
+		Template: "A",
+		Cache: &config.Cache{
+			Strategy: config.Session,
+			Duration: cache.ONEDAY,
+		},
+	}
+
+	key := segment.Name()
+	block := &config.Block{Segments: []*config.Segment{segment}}
+	_, _ = engine.writeBlockSegments(block)
+
+	engine.sessionCache[key] = segmentRenderCache{
+		Text:       "stale",
+		Foreground: color.Ansi("red"),
+		Background: color.Ansi("blue"),
+		RenderedAt: time.Now().Add(-48 * time.Hour),
+	}
+
+	reused := engine.applySegmentCacheBeforeExecute(segment)
+
+	require.False(t, reused)
+	require.Equal(t, "stale", segment.Text())
+	require.Equal(t, color.Ansi("red"), segment.Foreground)
+	require.Equal(t, color.Ansi("blue"), segment.Background)
+}
+
 func TestImplicitCacheAlwaysRecomputes(t *testing.T) {
 	var count int32
 	engine := newCacheTestEngine(&count)

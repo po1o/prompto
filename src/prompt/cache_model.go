@@ -63,6 +63,9 @@ func (e *Engine) applySegmentCacheBeforeExecute(segment *config.Segment) (reused
 		return true
 	}
 
+	// Keep stale cache visible while recomputing so pending renders have content.
+	e.applySegmentCacheEntry(segment, entry)
+
 	return false
 }
 
