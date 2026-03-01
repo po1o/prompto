@@ -85,6 +85,7 @@ type Config struct {
 	Tooltips                []*Segment             `json:"tooltips,omitempty" toml:"tooltips,omitempty" yaml:"tooltips,omitempty"`
 	hash                    uint64
 	Version                 int  `json:"version" toml:"version" yaml:"version"`
+	DaemonTimeout           int  `json:"daemon_timeout,omitempty" toml:"daemon_timeout,omitempty" yaml:"daemon_timeout,omitempty"`
 	MigrateGlyphs           bool `json:"-" toml:"-" yaml:"-"`
 	Async                   bool `json:"async,omitempty" toml:"async,omitempty" yaml:"async,omitempty"`
 	ShellIntegration        bool `json:"shell_integration,omitempty" toml:"shell_integration,omitempty" yaml:"shell_integration,omitempty"`
@@ -288,6 +289,16 @@ func (cfg *Config) GetDaemonIdleTimeout() time.Duration {
 	}
 
 	return time.Duration(minutes) * time.Minute
+}
+
+// GetDaemonTimeout returns the timeout for switching from initial to streamed daemon updates.
+// Defaults to 100 milliseconds when unset or invalid.
+func (cfg *Config) GetDaemonTimeout() time.Duration {
+	if cfg == nil || cfg.DaemonTimeout <= 0 {
+		return 100 * time.Millisecond
+	}
+
+	return time.Duration(cfg.DaemonTimeout) * time.Millisecond
 }
 
 // migrateSegmentProperties migrates the deprecated Properties field to Options for all segments.

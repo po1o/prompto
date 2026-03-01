@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jandedobbeleer/oh-my-posh/src/config"
 	daemonpkg "github.com/jandedobbeleer/oh-my-posh/src/daemon"
 	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
 	"github.com/jandedobbeleer/oh-my-posh/src/shell"
@@ -44,10 +45,10 @@ func init() {
 }
 
 func createRenderCmd() *cobra.Command {
-	renderCmd := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "render",
 		Short: "Render prompts via the daemon service",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		RunE: func(c *cobra.Command, _ []string) error {
 			sh := renderShell
 			if sh == "" {
 				sh = shell.GENERIC
@@ -75,40 +76,46 @@ func createRenderCmd() *cobra.Command {
 				VimMode:       renderVimMode,
 			}
 
+			updateTimeout := resolveRenderUpdateTimeout(
+				renderUpdateTimeoutMS,
+				c.Flags().Changed("update-timeout"),
+				configFlag,
+			)
+
 			return renderWithDaemon(
 				daemonRuntime,
 				flags,
 				sessionID,
 				renderRepaint,
 				renderMaxUpdates,
-				time.Duration(renderUpdateTimeoutMS)*time.Millisecond,
+				updateTimeout,
 				os.Stdout,
 			)
 		},
 	}
 
-	renderCmd.Flags().StringVar(&renderPwd, "pwd", "", "current working directory")
-	renderCmd.Flags().StringVar(&renderPSwd, "pswd", "", "current working directory (according to pwsh)")
-	renderCmd.Flags().StringVar(&renderShell, "shell", "", "the shell to render for")
-	renderCmd.Flags().StringVar(&renderShellVersion, "shell-version", "", "the shell version")
-	renderCmd.Flags().IntVar(&renderStatus, "status", 0, "last known status code")
-	renderCmd.Flags().BoolVar(&renderNoStatus, "no-status", false, "no valid status code")
-	renderCmd.Flags().StringVar(&renderPipeStatus, "pipestatus", "", "the PIPESTATUS array")
-	renderCmd.Flags().Float64Var(&renderTiming, "execution-time", 0, "timing of the last command")
-	renderCmd.Flags().IntVarP(&renderStackCount, "stack-count", "s", 0, "number of locations on the stack")
-	renderCmd.Flags().IntVarP(&renderTerminalWidth, "terminal-width", "w", 0, "width of the terminal")
-	renderCmd.Flags().IntVar(&renderColumn, "column", 0, "the column position of the cursor")
-	renderCmd.Flags().IntVar(&renderJobCount, "job-count", 0, "number of background jobs")
-	renderCmd.Flags().BoolVar(&renderEscape, "escape", true, "escape ANSI sequences for the shell")
-	renderCmd.Flags().BoolVarP(&renderForce, "force", "f", false, "force rendering the segments")
-	renderCmd.Flags().StringVar(&renderSessionID, "session-id", "", "session identifier")
-	renderCmd.Flags().IntVar(&renderPID, "pid", 0, "shell process id (used as default session identifier)")
-	renderCmd.Flags().BoolVar(&renderRepaint, "repaint", false, "render as repaint request")
-	renderCmd.Flags().IntVar(&renderMaxUpdates, "max-updates", 10, "maximum streamed updates to print")
-	renderCmd.Flags().IntVar(&renderUpdateTimeoutMS, "update-timeout", 75, "update wait timeout in milliseconds")
-	renderCmd.Flags().StringVar(&renderVimMode, "vim-mode", "", "current vim mode (insert, normal, visual, replace)")
+	cmd.Flags().StringVar(&renderPwd, "pwd", "", "current working directory")
+	cmd.Flags().StringVar(&renderPSwd, "pswd", "", "current working directory (according to pwsh)")
+	cmd.Flags().StringVar(&renderShell, "shell", "", "the shell to render for")
+	cmd.Flags().StringVar(&renderShellVersion, "shell-version", "", "the shell version")
+	cmd.Flags().IntVar(&renderStatus, "status", 0, "last known status code")
+	cmd.Flags().BoolVar(&renderNoStatus, "no-status", false, "no valid status code")
+	cmd.Flags().StringVar(&renderPipeStatus, "pipestatus", "", "the PIPESTATUS array")
+	cmd.Flags().Float64Var(&renderTiming, "execution-time", 0, "timing of the last command")
+	cmd.Flags().IntVarP(&renderStackCount, "stack-count", "s", 0, "number of locations on the stack")
+	cmd.Flags().IntVarP(&renderTerminalWidth, "terminal-width", "w", 0, "width of the terminal")
+	cmd.Flags().IntVar(&renderColumn, "column", 0, "the column position of the cursor")
+	cmd.Flags().IntVar(&renderJobCount, "job-count", 0, "number of background jobs")
+	cmd.Flags().BoolVar(&renderEscape, "escape", true, "escape ANSI sequences for the shell")
+	cmd.Flags().BoolVarP(&renderForce, "force", "f", false, "force rendering the segments")
+	cmd.Flags().StringVar(&renderSessionID, "session-id", "", "session identifier")
+	cmd.Flags().IntVar(&renderPID, "pid", 0, "shell process id (used as default session identifier)")
+	cmd.Flags().BoolVar(&renderRepaint, "repaint", false, "render as repaint request")
+	cmd.Flags().IntVar(&renderMaxUpdates, "max-updates", 10, "maximum streamed updates to print")
+	cmd.Flags().IntVar(&renderUpdateTimeoutMS, "update-timeout", 75, "update wait timeout in milliseconds (overrides config daemon_timeout)")
+	cmd.Flags().StringVar(&renderVimMode, "vim-mode", "", "current vim mode (insert, normal, visual, replace)")
 
-	return renderCmd
+	return cmd
 }
 
 func resolveRenderSessionID(explicitSessionID string, pid int) string {
@@ -126,6 +133,15 @@ func resolveRenderSessionID(explicitSessionID string, pid int) string {
 	}
 
 	return "default"
+}
+
+func resolveRenderUpdateTimeout(updateTimeoutMS int, updateTimeoutChanged bool, configPath string) time.Duration {
+	if updateTimeoutChanged {
+		return time.Duration(updateTimeoutMS) * time.Millisecond
+	}
+
+	cfg := config.Load(configPath)
+	return cfg.GetDaemonTimeout()
 }
 
 func renderWithDaemon(

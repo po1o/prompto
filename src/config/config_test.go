@@ -316,3 +316,39 @@ func TestGetDaemonIdleTimeout(t *testing.T) {
 		assert.Equal(t, tc.expected, got, tc.name)
 	}
 }
+
+func TestGetDaemonTimeout(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    int
+		expected time.Duration
+	}{
+		{
+			name:     "default when unset",
+			value:    0,
+			expected: 100 * time.Millisecond,
+		},
+		{
+			name:     "default when negative",
+			value:    -1,
+			expected: 100 * time.Millisecond,
+		},
+		{
+			name:     "valid milliseconds",
+			value:    250,
+			expected: 250 * time.Millisecond,
+		},
+	}
+
+	for _, tc := range tests {
+		cfg := &Config{
+			DaemonTimeout: tc.value,
+		}
+
+		got := cfg.GetDaemonTimeout()
+		assert.Equal(t, tc.expected, got, tc.name)
+	}
+
+	var nilCfg *Config
+	assert.Equal(t, 100*time.Millisecond, nilCfg.GetDaemonTimeout())
+}
