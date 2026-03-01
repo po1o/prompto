@@ -7,6 +7,7 @@ set --global _omp_tooltip_command ''
 set --global _omp_current_rprompt ''
 set --global _omp_transient 0
 set --global _omp_executable ::OMP::
+set --global _omp_config ::CONFIG::
 set --global _omp_ftcs_marks 0
 set --global _omp_transient_prompt 0
 set --global _omp_prompt_mark 0
@@ -27,6 +28,10 @@ function _omp_get_prompt
     if test (count $argv) -eq 0
         return
     end
+    set --local vim_mode_arg
+    if test "$_omp_vim_mode" = "1"
+        set vim_mode_arg "--vim-mode="(_omp_get_vim_mode)
+    end
     $_omp_executable print $argv[1] \
         --save-cache \
         --shell=fish \
@@ -36,6 +41,7 @@ function _omp_get_prompt
         --no-status=$_omp_no_status \
         --execution-time=$_omp_execution_time \
         --stack-count=$_omp_stack_count \
+        $vim_mode_arg \
         $argv[2..]
 end
 
@@ -49,7 +55,11 @@ function fish_prompt
     # see https://github.com/fish-shell/fish-shell/issues/8418
     printf \e\[0J
     if test "$_omp_transient" = 1
-        _omp_get_prompt transient
+        if test "$_omp_daemon_mode" = "1"
+            echo -n "$_omp_current_transient"
+        else
+            _omp_get_prompt transient
+        end
         return
     end
     if test "$_omp_new_prompt" = 0
@@ -82,6 +92,7 @@ function fish_prompt
     end
 
     set_poshcontext
+    _omp_apply_cursor_shape
 
     # validate if the user cleared the screen
     set --local omp_cleared false
@@ -244,4 +255,252 @@ end
 function omp_repaint_prompt
     set --global _omp_new_prompt 1
     commandline --function repaint
+end
+
+# Vim mode variables
+set --global _omp_vim_mode 0
+set --global _omp_vim_mode_repaint 0
+set --global _omp_cursor_shape 0
+set --global _omp_cursor_blink 0
+
+# Get current vim mode for segment template
+function _omp_get_vim_mode
+    switch $fish_bind_mode
+        case default
+            echo "normal"
+        case insert
+            echo "insert"
+        case replace replace_one
+            echo "replace"
+        case visual
+            echo "visual"
+        case '*'
+            echo "insert"
+    end
+end
+
+# Check if terminal handles cursor natively (Ghostty, Kitty)
+function _omp_should_change_cursor
+    test -n "$GHOSTTY_RESOURCES_DIR" && return 1
+    test -n "$KITTY_WINDOW_ID" && return 1
+    return 0
+end
+
+function _omp_apply_cursor_shape
+    # Change cursor shape if enabled and terminal doesn't handle it natively
+    if test "$_omp_cursor_shape" = "1" && _omp_should_change_cursor
+        set --local block_code 2
+        set --local beam_code 6
+        set --local underline_code 4
+        if test "$_omp_cursor_blink" = "1"
+            set block_code 1
+            set beam_code 5
+            set underline_code 3
+        end
+        switch $fish_bind_mode
+            case default
+                printf '\e['$block_code' q'  # Block for normal mode
+            case insert
+                printf '\e['$beam_code' q'  # Beam for insert mode
+            case replace_one replace
+                printf '\e['$underline_code' q'  # Underline for replace mode
+            case visual
+                printf '\e['$block_code' q'  # Block for visual mode
+            case '*'
+                printf '\e['$beam_code' q'  # Beam for insert mode
+        end
+    end
+end
+
+# Vim mode change handler - watches fish_bind_mode variable
+function _omp_on_bind_mode_change --on-variable fish_bind_mode
+    # Only trigger if vim mode is enabled
+    if test "$_omp_vim_mode" != "1"
+        return
+    end
+
+    _omp_apply_cursor_shape
+
+    # In daemon mode, trigger async repaint with new vim mode
+    if test "$_omp_daemon_mode" = "1"
+        _omp_daemon_render --repaint
+    end
+
+    # Trigger prompt repaint
+    commandline -f repaint
+end
+
+function enable_posh_vim_mode
+    set --global _omp_vim_mode 1
+end
+
+# Daemon mode functions
+set --global _omp_daemon_mode 0
+set --global _omp_daemon_prompt_file ""
+set --global _omp_current_transient ""
+set --global _omp_current_secondary ""
+
+# Signal handler for async prompt updates
+function _omp_daemon_repaint --on-signal USR1
+    if test -n "$_omp_daemon_prompt_file" && test -f "$_omp_daemon_prompt_file"
+        # Read updated prompts from temp file
+        while read -l line
+            set --local parts (string split -m1 ':' -- $line)
+            set --local type $parts[1]
+            set --local text $parts[2]
+            switch $type
+                case primary
+                    set --global _omp_current_prompt $text
+                case right
+                    set --global _omp_current_rprompt $text
+                case transient
+                    set --global _omp_current_transient $text
+                case secondary
+                    set --global _omp_current_secondary $text
+            end
+        end < $_omp_daemon_prompt_file
+    end
+    # Small delay for stability (per fish-async-prompt)
+    sleep 0.02
+    commandline -f repaint >/dev/null 2>/dev/null
+end
+
+function enable_poshdaemon
+    # Start daemon if not running
+    $_omp_executable daemon start --config=$_omp_config --silent &>/dev/null &
+    disown
+    set --global _omp_daemon_mode 1
+    set --global _omp_daemon_prompt_file /tmp/omp_fish_prompt_$fish_pid
+
+    # Replace prompt functions with daemon versions
+    functions --erase fish_prompt
+    functions --copy _omp_daemon_fish_prompt fish_prompt
+    functions --erase fish_right_prompt
+    functions --copy _omp_daemon_fish_right_prompt fish_right_prompt
+end
+
+# Async daemon render - used by both prompt and vim mode changes
+# Pass --repaint for vim mode toggles (soft cancel, reuse computations)
+function _omp_daemon_render
+    set --local repaint_flag $argv[1]
+
+    set --local vim_mode_arg ""
+    if test "$_omp_vim_mode" = "1"
+        set vim_mode_arg "--vim-mode="(_omp_get_vim_mode)
+    end
+
+    # Clear temp file and start background reader
+    echo -n "" > $_omp_daemon_prompt_file
+    _omp_daemon_reader $_omp_daemon_prompt_file $fish_pid $repaint_flag $vim_mode_arg &
+    disown
+end
+
+# Background reader that streams daemon output
+function _omp_daemon_reader
+    set --local prompt_file $argv[1]
+    set --local parent_pid $argv[2]
+    set --local repaint_flag $argv[3]
+    set --local vim_mode_arg $argv[4]
+
+    $_omp_executable render \
+        --config=$_omp_config \
+        --shell=fish \
+        --shell-version=$FISH_VERSION \
+        --pid=$parent_pid \
+        --status=$_omp_status \
+        --pipestatus="$_omp_pipestatus" \
+        --no-status=$_omp_no_status \
+        --execution-time=$_omp_execution_time \
+        --stack-count=$_omp_stack_count \
+        $vim_mode_arg \
+        $repaint_flag \
+        2>/dev/null | while read -l line
+        set --local parts (string split -m1 ':' -- $line)
+        set --local type $parts[1]
+
+        # Write prompt lines to temp file
+        if test "$type" = "primary" || test "$type" = "right" || test "$type" = "transient" || test "$type" = "secondary"
+            echo $line >> $prompt_file
+        end
+
+        # Signal parent on each status line (batch complete)
+        if test "$type" = "status"
+            kill -USR1 $parent_pid 2>/dev/null
+            # Clear file for next batch
+            if test "$parts[2]" != "complete"
+                echo -n "" > $prompt_file
+            else
+                break
+            end
+        end
+    end
+
+    # Cleanup
+    rm -f $prompt_file 2>/dev/null
+end
+
+function _omp_daemon_fish_prompt
+    set --local omp_status_temp $status
+    set --local omp_pipestatus_temp $pipestatus
+    # clear from cursor to end of screen
+    printf \e\[0J
+
+    if test "$_omp_transient" = 1
+        echo -n "$_omp_current_transient"
+        return
+    end
+
+    if test "$_omp_new_prompt" = 0
+        echo -n "$_omp_current_prompt"
+        return
+    end
+
+    set --global _omp_status $omp_status_temp
+    set --global _omp_pipestatus $omp_pipestatus_temp
+    set --global _omp_no_status false
+    set --global _omp_execution_time "$CMD_DURATION$cmd_duration"
+    set --global _omp_stack_count (count $dirstack)
+
+    if set --query _omp_last_command && test -z "$_omp_last_command"
+        set _omp_execution_time 0
+        set _omp_no_status true
+    end
+
+    if set --query _omp_last_status_generation && test "$_omp_last_status_generation" = "$status_generation"
+        set _omp_execution_time 0
+        set _omp_no_status true
+    else if test -z "$_omp_last_status_generation"
+        set _omp_no_status true
+    end
+
+    if set --query status_generation
+        set --global _omp_last_status_generation $status_generation
+    end
+
+    set_poshcontext
+    _omp_apply_cursor_shape
+
+    if test $_omp_prompt_mark = 1
+        iterm2_prompt_mark
+    end
+
+    _omp_daemon_render
+
+    # Return cached prompt immediately (will be updated via signal)
+    echo -n "$_omp_current_prompt"
+end
+
+function _omp_daemon_fish_right_prompt
+    if test "$_omp_transient" = 1
+        set --global _omp_transient 0
+        return
+    end
+
+    if test "$_omp_new_prompt" = 0
+        echo -n "$_omp_current_rprompt"
+        return
+    end
+
+    set --global _omp_new_prompt 0
+    echo -n "$_omp_current_rprompt"
 end
