@@ -22,6 +22,8 @@ func (e *Engine) writeBlockSegments(block *config.Block) (string, int) {
 		return "", 0
 	}
 
+	e.prepareSegmentStates(block.Segments, false)
+
 	out := make(chan result, length)
 
 	e.writeSegmentsConcurrently(block.Segments, out)
@@ -59,9 +61,12 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 
 	for i, segment := range segments {
 		go func(segment *config.Segment, index int) {
+			e.markSegmentPending(segment)
+
 			if providerFactory, ok := e.sharedProviderFactory[segment.Type]; ok {
 				err := segment.MapSegmentWithWriter(e.Env)
 				if err != nil {
+					e.markSegmentDone(segment)
 					out <- result{segment, index}
 					return
 				}
@@ -84,6 +89,7 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 					segment.SetText(res.Text)
 				}
 
+				e.markSegmentDone(segment)
 				out <- result{segment, index}
 				return
 			}
@@ -94,6 +100,7 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 				segment.Execute(e.Env)
 			}
 
+			e.markSegmentDone(segment)
 			out <- result{segment, index}
 		}(segment, i)
 	}
@@ -152,6 +159,7 @@ func (e *Engine) writeSegments(out chan result, block *config.Block) {
 
 			if segment.Render(segmentIndex, e.forceRender) {
 				segmentIndex++
+				e.markSegmentRendered(segment, time.Now())
 			}
 
 			e.writeSegment(block, segment)
@@ -164,6 +172,7 @@ func (e *Engine) writeSegments(out chan result, block *config.Block) {
 		segment := results[current]
 		if segment.Render(segmentIndex, e.forceRender) {
 			segmentIndex++
+			e.markSegmentRendered(segment, time.Now())
 		}
 
 		e.writeSegment(block, segment)

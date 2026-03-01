@@ -2,6 +2,7 @@ package prompt
 
 import (
 	"strings"
+	"sync"
 
 	"github.com/jandedobbeleer/oh-my-posh/src/cache"
 	"github.com/jandedobbeleer/oh-my-posh/src/color"
@@ -21,6 +22,8 @@ type Engine struct {
 	Config                *config.Config
 	CompiledConfig        *config.CompiledConfig
 	sharedProviderFactory map[config.SegmentType]sharedProviderFactory
+	stateMu               sync.Mutex
+	segmentStates         map[string]*segmentAsyncState
 	activeSegment         *config.Segment
 	previousActiveSegment *config.Segment
 	rprompt               string
@@ -523,6 +526,7 @@ func New(flags *runtime.Flags) *Engine {
 		forceRender:           flags.Force || len(env.Getenv("POSH_FORCE_RENDER")) > 0,
 		CompiledConfig:        nil,
 		sharedProviderFactory: defaultSharedProviderFactories(),
+		segmentStates:         make(map[string]*segmentAsyncState),
 		prompt:                strings.Builder{},
 	}
 
