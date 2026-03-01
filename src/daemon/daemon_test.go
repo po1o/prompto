@@ -109,38 +109,7 @@ func TestDaemonAutoStopsAfterIdleTimeoutWithoutSessions(t *testing.T) {
 	require.Equal(t, "stopped", response.Type)
 }
 
-func TestDaemonIdleTimerResetsOnRenderActivity(t *testing.T) {
-	daemon := NewWithIdleTimeout(60*time.Millisecond, &rendererStub{})
-
-	first := daemon.StartRender(RenderRequest{
-		SessionID: "session-a",
-		Flags:     &runtime.Flags{},
-	})
-	require.Equal(t, "initial", first.Type)
-
-	time.Sleep(25 * time.Millisecond)
-	second := daemon.StartRender(RenderRequest{
-		SessionID: "session-b",
-		Flags:     &runtime.Flags{},
-	})
-	require.Equal(t, "initial", second.Type)
-
-	time.Sleep(25 * time.Millisecond)
-	third := daemon.StartRender(RenderRequest{
-		SessionID: "session-c",
-		Flags:     &runtime.Flags{},
-	})
-	require.Equal(t, "initial", third.Type)
-
-	time.Sleep(90 * time.Millisecond)
-	stopped := daemon.StartRender(RenderRequest{
-		SessionID: "session-d",
-		Flags:     &runtime.Flags{},
-	})
-	require.Equal(t, "stopped", stopped.Type)
-}
-
-func TestDaemonAutoStopsAfterRenderInactivityWithoutSessionCompletion(t *testing.T) {
+func TestDaemonIdleTimerStartsAfterSessionCompletion(t *testing.T) {
 	daemon := NewWithIdleTimeout(30*time.Millisecond, &rendererStub{})
 
 	initial := daemon.StartRender(RenderRequest{
@@ -149,10 +118,19 @@ func TestDaemonAutoStopsAfterRenderInactivityWithoutSessionCompletion(t *testing
 	})
 	require.Equal(t, "initial", initial.Type)
 
-	time.Sleep(80 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
+	stillRunning := daemon.StartRender(RenderRequest{
+		SessionID: "session-b",
+		Flags:     &runtime.Flags{},
+	})
+	require.Equal(t, "initial", stillRunning.Type)
+
+	daemon.CompleteSession("session-a")
+	daemon.CompleteSession("session-b")
+	time.Sleep(70 * time.Millisecond)
 
 	stopped := daemon.StartRender(RenderRequest{
-		SessionID: "session-a",
+		SessionID: "session-c",
 		Flags:     &runtime.Flags{},
 	})
 	require.Equal(t, "stopped", stopped.Type)

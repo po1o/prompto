@@ -43,7 +43,6 @@ func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
 
 	daemon.mu.Lock()
 	daemon.cancelIdleStopLocked()
-	daemon.scheduleIdleStopLocked()
 	daemon.mu.Unlock()
 
 	return daemon.service.StartRender(request)
@@ -63,6 +62,10 @@ func (daemon *Daemon) CompleteSession(sessionID string) {
 	}
 
 	daemon.service.CompleteSession(sessionID)
+
+	if daemon.service.SessionCount() != 0 {
+		return
+	}
 
 	daemon.mu.Lock()
 	daemon.scheduleIdleStopLocked()
@@ -120,6 +123,8 @@ func (daemon *Daemon) scheduleIdleStopLocked() {
 		}
 		daemon.mu.Unlock()
 
-		daemon.Stop()
+		if daemon.service.SessionCount() == 0 {
+			daemon.Stop()
+		}
 	})
 }
