@@ -1,0 +1,52 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+final_space: true
+git:
+    background: '#95ffa4'
+    foreground: '#193549'
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .HEAD }} '
+path:
+    background: '#91ddff'
+    foreground: '#100e23'
+    options:
+        folder_icon: 
+        folder_separator_icon: '  '
+        home_icon: 
+        style: agnoster
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - root
+        - session
+        - path
+        - git
+        - python
+        - status
+python:
+    background: '#906cff'
+    foreground: '#100e23'
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
+root:
+    background: '#ffe9aa'
+    foreground: '#100e23'
+    powerline_symbol: 
+    style: powerline
+    template: '  '
+session:
+    background: '#ffffff'
+    foreground: '#100e23'
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .UserName }}@{{ .HostName }} '
+status:
+    background: '#ff8080'
+    foreground: '#ffffff'
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ reason .Code }} '
+version: 4

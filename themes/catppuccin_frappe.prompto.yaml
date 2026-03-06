@@ -1,0 +1,51 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+final_space: true
+git:
+    foreground: p:lavender
+    options:
+        branch_icon: ' '
+        cherry_pick_icon: ' '
+        commit_icon: ' '
+        fetch_status: false
+        fetch_upstream_icon: false
+        merge_icon: ' '
+        no_commits_icon: ' '
+        rebase_icon: ' '
+        revert_icon: ' '
+        tag_icon: ' '
+    style: plain
+    template: '{{ .HEAD }} '
+os:
+    foreground: p:os
+    style: plain
+    template: '{{.Icon}} '
+palette:
+    blue: '#8CAAEE'
+    closer: p:os
+    lavender: '#BABBF1'
+    os: '#ACB0BE'
+    pink: '#F4B8E4'
+path:
+    foreground: p:pink
+    options:
+        folder_icon: ....
+        home_icon: "~"
+        style: agnoster_short
+    style: plain
+    template: '{{ .Path }} '
+prompt:
+    - segments:
+        - os
+        - session
+        - path
+        - git
+        - text
+session:
+    foreground: p:blue
+    style: plain
+    template: '{{ .UserName }}@{{ .HostName }} '
+text:
+    foreground: p:closer
+    style: plain
+    template: 
+version: 4

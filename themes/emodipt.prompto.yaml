@@ -1,0 +1,41 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+git:
+    foreground: '#F3C267'
+    options:
+        branch_gone_icon: ❎
+        branch_identical_icon: 
+    style: plain
+    template: ' {{ .HEAD }} '
+path:
+    foreground: '#61AFEF'
+    options:
+        style: agnoster
+    style: plain
+    template: ' {{ .Path }} on'
+prompt:
+    - segments:
+        - time
+        - root
+        - path
+        - git
+        - status
+        - text
+root:
+    foreground: '#B5B50D'
+    style: plain
+    template: '  '
+status:
+    foreground: '#C94A16'
+    style: plain
+    template: 'x{{ reason .Code }} '
+text:
+    foreground: '#E06C75'
+    style: plain
+    template: '❯ '
+time:
+    foreground: '#E5C07B'
+    options:
+        time_format: "15:04:05"
+    style: plain
+    template: '[{{ .CurrentDate | date .Format }}]'
+version: 4

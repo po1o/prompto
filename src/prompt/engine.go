@@ -441,6 +441,15 @@ func New(flags *runtime.Flags) *Engine {
 	reload, _ := cache.Get[bool](cache.Device, config.RELOAD)
 	cfg := config.Get(flags.ConfigPath, reload)
 
+	var compiledCfg *config.CompiledConfig
+	if flags.ConfigPath != "" {
+		compiled, err := config.LoadCompiled(flags.ConfigPath)
+		if err == nil {
+			compiledCfg = compiled
+			compiledCfg.ApplyMetadata(cfg)
+		}
+	}
+
 	template.Init(env, cfg.Var, cfg.Maps)
 
 	flags.HasExtra = cfg.DebugPrompt != nil ||
@@ -465,19 +474,12 @@ func New(flags *runtime.Flags) *Engine {
 		Env:                   env,
 		Plain:                 flags.Plain,
 		forceRender:           flags.Force || len(env.Getenv("PROMPTO_FORCE_RENDER")) > 0,
-		CompiledConfig:        nil,
+		CompiledConfig:        compiledCfg,
 		sharedProviderFactory: defaultSharedProviderFactories(),
 		segmentStates:         make(map[string]*segmentAsyncState),
 		sessionCache:          make(map[string]segmentRenderCache),
 		folderCache:           make(map[string]segmentRenderCache),
 		prompt:                strings.Builder{},
-	}
-
-	if flags.ConfigPath != "" {
-		compiled, err := config.LoadCompiled(flags.ConfigPath)
-		if err == nil {
-			eng.CompiledConfig = compiled
-		}
 	}
 
 	// Pre-allocate prompt builder capacity to reduce allocations during rendering

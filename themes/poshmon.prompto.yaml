@@ -1,0 +1,92 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+console_title_template: '{{ .Folder }}'
+final_space: true
+git:
+    background: '#c19c00'
+    background_templates:
+        - '{{ if or (.Working.Changed) (.Staging.Changed) }}#FFEB3B{{ end }}'
+        - '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#FFA300{{ end }}'
+        - '{{ if gt .Ahead 0 }}#FF7070{{ end }}'
+        - '{{ if gt .Behind 0 }}#90F090{{ end }}'
+    foreground: '#000000'
+    options:
+        fetch_status: true
+        fetch_upstream_icon: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+go:
+    background: '#ffffff'
+    foreground: '#06aad5'
+    leading_separator: 
+    style: diamond
+    template:  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
+    trailing_separator: ' '
+node:
+    background: '#303030'
+    foreground: '#3C873A'
+    leading_separator: 
+    options:
+        fetch_package_manager: true
+        npm_icon: ' <#cc3a3a></> '
+        yarn_icon: ' <#348cba></>'
+    style: diamond
+    template:  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}
+    trailing_separator: ' '
+osc99: true
+path:
+    background: '#D51111'
+    foreground: '#ffffff'
+    options:
+        folder_icon: 
+        folder_separator_icon: ' <transparent></> '
+        home_icon: 
+        style: agnoster
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ path .Path .Location }} '
+prompt:
+    - segments:
+        - session
+        - path
+        - git
+    - segments:
+        - text
+python:
+    background: '#306998'
+    foreground: '#FFE873'
+    leading_separator: 
+    style: diamond
+    template:  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}
+    trailing_separator: ' '
+rprompt:
+    - segments:
+        - node
+        - python
+        - go
+        - time
+session:
+    background: '#2e9599'
+    foreground: '#ffffff'
+    leading_separator: 
+    powerline_symbol: 
+    style: diamond
+    template: "\U000F041D {{ .HostName }} "
+text:
+    foreground: '#FFF'
+    foreground_templates:
+        - '{{ if gt .Code 0 }}#D51111{{ end }}'
+    style: plain
+    template: '  '
+time:
+    background: '#2e9599'
+    background_templates:
+        - '{{ if gt .Code 0 }}#D51111{{ end }}'
+    foreground: '#fff'
+    leading_separator: 
+    options:
+        time_format: _2, 15:04:05
+    style: diamond
+    template: '  {{ .CurrentDate | date .Format }} '
+    trailing_separator: 
+version: 4

@@ -62,7 +62,6 @@ type Config struct {
 	ErrorLine               *Segment               `json:"error_line,omitempty" toml:"error_line,omitempty" yaml:"error_line,omitempty"`
 	Maps                    *maps.Config           `json:"maps,omitempty" toml:"maps,omitempty" yaml:"maps,omitempty"`
 	Upgrade                 *upgrade.Config        `json:"upgrade,omitempty" toml:"upgrade,omitempty" yaml:"upgrade,omitempty"`
-	Vim                     *VimConfig             `json:"vim,omitempty" toml:"vim,omitempty" yaml:"vim,omitempty"`
 	VimMode                 *VimConfig             `json:"vim-mode,omitempty" toml:"vim-mode,omitempty" yaml:"vim-mode,omitempty"`
 	Extends                 string                 `json:"extends,omitempty" toml:"extends,omitempty" yaml:"extends,omitempty"`
 	FilePaths               []string               `json:"-" toml:"-" yaml:"-"`
@@ -203,14 +202,8 @@ func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features
 		}
 	}
 
-	vimConfig := cfg.Vim
-	vimConfigured := vimConfig != nil && (vimConfig.Enabled || vimConfig.CursorShape || vimConfig.CursorBlink)
-	if !vimConfigured {
-		vimConfig = cfg.VimMode
-	}
-
-	if vimConfig != nil {
-		feats |= cfg.vimFeatures(vimConfig)
+	if cfg.VimMode != nil {
+		feats |= cfg.vimFeatures(cfg.VimMode)
 	}
 
 	return feats

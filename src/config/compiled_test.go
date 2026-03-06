@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	"github.com/po1o/prompto/src/color"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,13 +21,13 @@ rprompt:
     leading_style: "powerline"
     trailing_style: "powerline"
 
-secondary_prompt:
+secondary:
   - segments: ["path"]
 
-transient_prompt:
+transient:
   - segments: ["session"]
 
-transient_rprompt:
+rtransient:
   - segments: ["git.main"]
 
 session:
@@ -302,4 +303,158 @@ vim:
 	require.NoError(t, err)
 	require.Contains(t, cfg.Segments, "vim")
 	assert.Equal(t, VIM, cfg.Segments["vim"].Type)
+}
+
+func TestParseCompiledYAMLAllowsTopLevelMetadataTables(t *testing.T) {
+	raw := `
+palette:
+  bg: "#101010"
+  fg: "#f0f0f0"
+
+upgrade:
+  source: "github"
+  auto: false
+  notice: true
+
+maps:
+  shell_name:
+    zsh: "z"
+
+var:
+  app: "prompto"
+
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	cfg, err := ParseCompiledYAML([]byte(raw))
+	require.NoError(t, err)
+	require.Len(t, cfg.Prompt, 1)
+	require.Contains(t, cfg.Segments, "session")
+	assert.Equal(t, "#101010", string(cfg.Palette["bg"]))
+	require.NotNil(t, cfg.Upgrade)
+	assert.Equal(t, "github", string(cfg.Upgrade.Source))
+	require.NotNil(t, cfg.Maps)
+	assert.Equal(t, "z", cfg.Maps.GetShellName("zsh"))
+	assert.Equal(t, "prompto", cfg.Var["app"])
+}
+
+func TestParseCompiledYAMLSupportsSecondaryAndTransient(t *testing.T) {
+	raw := `
+secondary:
+  - segments: ["session"]
+
+transient:
+  - segments: ["session"]
+
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	cfg, err := ParseCompiledYAML([]byte(raw))
+	require.NoError(t, err)
+	require.Len(t, cfg.SecondaryPrompt, 1)
+	require.Len(t, cfg.TransientPrompt, 1)
+	assert.Equal(t, []string{"session"}, cfg.SecondaryPrompt[0].Segments)
+	assert.Equal(t, []string{"session"}, cfg.TransientPrompt[0].Segments)
+}
+
+func TestParseCompiledYAMLRejectsSecondaryPromptTopLevelConfig(t *testing.T) {
+	raw := `
+secondary_prompt:
+  - segments: ["session"]
+
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	_, err := ParseCompiledYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "use secondary")
+}
+
+func TestParseCompiledYAMLRejectsTransientPromptTopLevelConfig(t *testing.T) {
+	raw := `
+transient_prompt:
+  - segments: ["session"]
+
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	_, err := ParseCompiledYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "use transient")
+}
+
+func TestParseCompiledYAMLRejectsTransientRPromptTopLevelConfig(t *testing.T) {
+	raw := `
+transient_rprompt:
+  - segments: ["session"]
+
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	_, err := ParseCompiledYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "use rtransient")
+}
+
+func TestParseCompiledYAMLRejectsTopLevelVimConfig(t *testing.T) {
+	raw := `
+vim:
+  enabled: true
+
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	_, err := ParseCompiledYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "use vim-mode")
+}
+
+func TestCompiledConfigApplyMetadata(t *testing.T) {
+	compiled := &CompiledConfig{
+		Palette: color.Palette{
+			"bg": "#000000",
+		},
+		Var: map[string]any{
+			"key": "value",
+		},
+		VimMode: &VimConfig{
+			Enabled: true,
+		},
+		SecondaryPrompt: []PromptLayout{{Segments: []string{"session"}}},
+		TransientPrompt: []PromptLayout{{Segments: []string{"session"}}},
+	}
+
+	target := &Config{}
+	compiled.ApplyMetadata(target)
+
+	assert.Equal(t, color.Ansi("#000000"), target.Palette["bg"])
+	assert.Equal(t, "value", target.Var["key"])
+	require.NotNil(t, target.VimMode)
+	assert.True(t, target.VimMode.Enabled)
+	require.NotNil(t, target.SecondaryPrompt)
+	require.NotNil(t, target.TransientPrompt)
 }

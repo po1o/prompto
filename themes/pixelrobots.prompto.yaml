@@ -1,0 +1,117 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+aws:
+    background: '#FFA400'
+    foreground: '#000000'
+    options:
+        display_default: true
+    powerline_symbol: 
+    style: powerline
+    template: " \U000F0E0F {{.Profile}}{{if .Region}}@{{.Region}}{{end}}"
+az:
+    background: '#008AD7'
+    foreground: '#000000'
+    options:
+        source: cli
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .Name }} [ {{ .Origin }} ] '
+az.2:
+    background: '#012456'
+    foreground: '#FFFFFF'
+    options:
+        source: pwsh
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .Name }} [ {{ .Origin }} ] '
+console_title_template: '{{if .Root}}root :: {{end}}{{.Shell}} :: {{.Folder}}'
+final_space: true
+git:
+    background: '#2f2f2f'
+    foreground: '#ffea00'
+    foreground_templates:
+        - '{{ if or (.Working.Changed) (.Staging.Changed) }}#ffea00{{ end }}'
+        - '{{ if gt .Ahead 0 }}#2EC4B6{{ end }}'
+        - '{{ if gt .Behind 0 }}#8A4FFF{{ end }}'
+    options:
+        fetch_status: true
+        fetch_upstream_icon: true
+    style: diamond
+    template: '<#ffea00> </>{{ .UpstreamIcon }}{{ .HEAD }}{{ .BranchStatus }}{{ if .Working.Changed }}<#E84855>  {{ .Working.String }}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}<#2FDA4E>  {{ .Staging.String }}</>{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+kubectl:
+    background: '#ffea00'
+    foreground: '#000000'
+    style: powerline
+    template: " \U000F10FE {{.Context}}{{if .Namespace}} :: {{.Namespace}}{{end}} "
+os:
+    background: '#2f2f2f'
+    foreground: '#26C6DA'
+    leading_separator: ▓
+    options:
+        alpine: 
+        arch: 
+        centos: 
+        debian: 
+        elementary: 
+        fedora: 
+        gentoo: 
+        linux: 
+        macos: 
+        manjaro: 
+        mint: 
+        opensuse: 
+        raspbian: 
+        ubuntu: 
+        windows: 
+    style: diamond
+    template: ' {{ if .WSL }}{{ .Icon }} on {{ end }} <#ffea00></>'
+path:
+    background: '#2f2f2f'
+    foreground: '#fafafa'
+    options:
+        folder_icon: <#B5B2C2> </>
+        folder_separator_icon: <#ffea00> </>
+        home_icon: '  '
+        style: agnoster_short
+    style: diamond
+    template: '<#f2f200>  </>{{ .Path }} '
+prompt:
+    - segments:
+        - text
+        - kubectl
+        - az
+        - az.2
+        - aws
+    - segments:
+        - os
+        - session
+        - root
+        - path
+        - git
+        - text.2
+    - segments:
+        - text.3
+root:
+    background: '#2f2f2f'
+    foreground: '#ffea00'
+    style: diamond
+    template: ' <#ffea00> </>'
+session:
+    background: '#2f2f2f'
+    foreground: '#ffea00'
+    style: diamond
+    template: ' {{ if ne .Env.PROMPTO_SESSION_DEFAULT_USER .UserName }}{{ .UserName }}{{ end }}<#ffea00> </>'
+text:
+    background: '#ffea00'
+    foreground: '#000000'
+    leading_separator: ▓
+    style: diamond
+text.2:
+    background: '#2f2f2f'
+    foreground: '#fafafa'
+    style: diamond
+    trailing_separator: 
+text.3:
+    foreground: '#ffea00'
+    style: plain
+    template: ' ❯ '
+version: 4

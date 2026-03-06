@@ -1,0 +1,106 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+aws:
+    background_templates:
+        - '{{if contains "default" .Profile}}#FFA400{{end}}'
+        - '{{if contains "jan" .Profile}}#f1184c{{end}}'
+    foreground: '#ffffff'
+    options:
+        display_default: false
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} '
+azfunc:
+    background: '#FEAC19'
+    foreground: '#ffffff'
+    options:
+        display_mode: files
+        fetch_version: false
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+console_title_template: '{{ .Folder }}'
+final_space: true
+git:
+    background: '#98971A'
+    background_templates:
+        - '{{ if or (.Working.Changed) (.Staging.Changed) }}#FF9248{{ end }}'
+        - '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#ff4500{{ end }}'
+        - '{{ if gt .Ahead 0 }}#B388FF{{ end }}'
+        - '{{ if gt .Behind 0 }}#B388FF{{ end }}'
+    foreground: '#282828'
+    leading_separator: 
+    options:
+        branch_icon: ' '
+        branch_identical_icon: ●
+        branch_template: '{{ trunc 25 .Branch }}'
+        fetch_status: true
+    powerline_symbol: 
+    style: diamond
+    template: ' {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+    trailing_separator: 
+go:
+    background: '#8ED1F7'
+    foreground: '#111111'
+    options:
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+julia:
+    background: '#4063D8'
+    foreground: '#111111'
+    options:
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+os:
+    background: '#3A3A3A'
+    foreground: '#ffffff'
+    style: powerline
+    template: '{{ if .WSL }}WSL at{{ end }} {{.Icon}} '
+path:
+    background: '#458588'
+    foreground: '#282828'
+    options:
+        style: full
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - os
+        - path
+        - git
+        - go
+        - julia
+        - python
+        - ruby
+        - azfunc
+        - aws
+        - root
+python:
+    background: '#FFDE57'
+    foreground: '#111111'
+    options:
+        display_mode: files
+        fetch_virtual_env: false
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+root:
+    background: '#ffff66'
+    foreground: '#111111'
+    powerline_symbol: 
+    style: powerline
+    template: '  '
+ruby:
+    background: '#AE1401'
+    foreground: '#ffffff'
+    options:
+        display_mode: files
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+version: 4

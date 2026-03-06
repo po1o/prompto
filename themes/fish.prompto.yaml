@@ -1,0 +1,40 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+git:
+    background: '#007ACC'
+    foreground: '#ffffff'
+    style: plain
+    template: '<#ffffff></> {{ .HEAD }} '
+path:
+    background: '#007ACC'
+    foreground: '#ffffff'
+    options:
+        folder_icon: 
+        folder_separator_icon: '  '
+        style: full
+    style: plain
+    template: '<transparent></> {{ .Path }} '
+prompt:
+    - segments:
+        - status
+        - root
+        - session
+        - path
+        - git
+        - text
+root:
+    foreground: '#100e23'
+    style: plain
+    template: '  '
+session:
+    foreground: '#ffffff'
+    style: plain
+    template: ' {{ .UserName }}@{{ .HostName }} '
+status:
+    foreground: '#ffffff'
+    style: plain
+    template: ' {{ reason .Code }}'
+text:
+    foreground: '#007ACC'
+    style: plain
+    template: ' '
+version: 4

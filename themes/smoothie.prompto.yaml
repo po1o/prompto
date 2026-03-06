@@ -1,0 +1,63 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+executiontime:
+    foreground: '#9966ff'
+    options:
+        style: austin
+        threshold: 0
+    style: plain
+    template: ⟨{{ .FormattedMs }}⟩ <#eaeaea>⎫</>
+git:
+    foreground: '#62beff'
+    options:
+        branch_icon: 
+        branch_identical_icon: ≡
+        fetch_status: true
+    style: plain
+    template: ⟨{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} ∆{{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}⟩
+node:
+    foreground: '#98C379'
+    options:
+        fetch_version: true
+    style: plain
+    template: '<#ffffff>◦</> ☢{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
+path:
+    foreground: '#ffaed8'
+    options:
+        folder_separator_icon: ' | '
+        home_icon: 
+        style: letter
+    style: plain
+    template: '<#eaeaea>⎧</> ⟨{{ .Path }}⟩ '
+prompt:
+    - segments:
+        - python
+        - path
+        - git
+        - node
+    - segments:
+        - text
+python:
+    foreground: '#b1ff4f'
+    style: powerline
+    template: "[\U0001F40D {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}] "
+rprompt:
+    - segments:
+        - status
+        - executiontime
+    - segments:
+        - time
+status:
+    foreground: '#fb0207'
+    style: plain
+    template: ' ××× '
+text:
+    foreground: '#3ce6bf'
+    style: plain
+    template: '<#eaeaea>⎩</>⟩⟩⟩⟩⟩⟩ '
+time:
+    foreground: '#f5f5a6'
+    options:
+        time_format: "15:04:05"
+    style: plain
+    template: ⟨{{ .CurrentDate | date .Format }}⟩ <#eaeaea>⎭</>
+version: 4

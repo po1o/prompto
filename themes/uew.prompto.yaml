@@ -1,0 +1,86 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+console_title_template: '{{ .Folder }}'
+executiontime:
+    foreground: '#fff'
+    options:
+        style: dallas
+        threshold: 0
+    style: diamond
+    template: " <#BBC4B9>{{ .FormattedMs }}s</> <#fff>\U000F01DD</>"
+git:
+    foreground: '#BFA8BF'
+    options:
+        branch_icon: ' '
+        fetch_status: true
+        fetch_upstream_icon: true
+    style: diamond
+    template: <#fff>{{ .UpstreamIcon }}</>{{ .HEAD }}
+node:
+    foreground: '#BBC4B9'
+    style: diamond
+    template: ' <#fff></> {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
+path:
+    foreground: '#B6D6F2'
+    leading_separator: <#BFA8BF>~</>
+    options:
+        folder_icon: /
+        folder_separator_icon: ' / '
+        home_icon: home
+        style: agnoster_full
+    style: diamond
+    template: '  {{ .Path }}'
+    trailing_separator: ""
+prompt:
+    - segments:
+        - session
+        - git
+        - shell
+    - segments:
+        - path
+        - status
+root:
+    options:
+        root_icon: ' '
+    style: diamond
+    template: ' '
+rprompt:
+    - segments:
+        - text
+        - executiontime
+        - time
+        - root
+        - node
+session:
+    foreground: '#BBC4B9'
+    leading_separator: '<#BFA8BF>~</> '
+    style: diamond
+    template: '{{ .UserName }} '
+shell:
+    foreground: '#BFA8BF'
+    style: powerline
+    template: ' <#fff></> {{ .Name }} '
+status:
+    foreground: '#BFA8BF'
+    foreground_templates:
+        - '{{ if gt .Code 0 }}#fff{{ end }}'
+    options:
+        always_enabled: true
+    style: plain
+    template: ' ~ '
+text:
+    foreground: '#fff'
+    style: plain
+time:
+    foreground: '#BBC4B9'
+    options:
+        time_format: Monday <#fff>at</> 3:04 PM
+    style: diamond
+    template: ' {{ .CurrentDate | date .Format }} '
+transient:
+    - segments:
+        - text.transient
+text.transient:
+    background: transparent
+    foreground: '#FEF5ED'
+    template: ' '
+version: 4

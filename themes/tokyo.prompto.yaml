@@ -1,0 +1,120 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+aws:
+    foreground: '#7eb8da'
+    style: diamond
+    template: '[<#ffffff></> <#ffff00>{{ .Profile }}</>{{if .Region}}@<#ffff00>{{ .Region }}</>{{ end }}]'
+az:
+    foreground: '#7eb8da'
+    style: diamond
+    template: '[<#ffffff></> Subscription: <#ffff00>{{ .Name }}</>]'
+azd:
+    foreground: '#7eb8da'
+    style: diamond
+    template: '[<#ffffff></> Azure Developer CLI Environment: <#ffff00>{{ .DefaultEnvironment  }}</> :: <#ffff00>{{ .Version }}</>]'
+battery:
+    foreground: '#f36943'
+    foreground_templates:
+        - '{{if eq "Charging" .State.String}}#40c4ff{{end}}'
+        - '{{if eq "Discharging" .State.String}}#ff5722{{end}}'
+        - '{{if eq "Full" .State.String}}#4caf50{{end}}'
+    options:
+        charged_icon: '<#ffffff></> '
+        charging_icon: ' '
+        discharging_icon: '<#ffff00></> '
+    style: plain
+    template: '[{{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}]'
+error_line:
+    background: transparent
+    template: '<#ff0000></> '
+executiontime:
+    foreground: '#be9ddf'
+    options:
+        style: dallas
+        threshold: 0
+    style: diamond
+    template: '[<#ffffff></> {{ .FormattedMs }}s]'
+final_space: true
+gcp:
+    foreground: '#7eb8da'
+    style: diamond
+    template: '[{{ if .Error }}{{ .Error }}{{ else }}<#ffffff></> <#ffff00>{{ .Project }}</> :: <#ffff00>{{.Account}}</>{{ end }}]'
+git:
+    foreground: '#ffa5d8'
+    options:
+        fetch_status: true
+        fetch_upstream_icon: true
+    style: plain
+    template: '[<#ffffff>{{ .UpstreamIcon }} </>{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} <#ffffff></> {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} <#ffffff></> {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} <#ffffff></> {{ .StashCount }}{{ end }}]'
+kubectl:
+    foreground: '#ffa5d8'
+    style: diamond
+    template: "[<#ffffff>\U000F10FE</> <#ffff00>{{.Context}}</>{{if .Namespace}} :: <#ffff00>{{.Namespace}}</>{{end}}]"
+path:
+    foreground: '#7eb8da'
+    options:
+        style: full
+    style: diamond
+    template: '[<#ffffff></> <#98bfad>{{ .Path }}</>]'
+project:
+    foreground: '#ffa5d8'
+    style: diamond
+    template: '[{{ if .Error }}{{ .Error }}{{ else }}{{ if .Name }}<#ffffff></> {{ .Name }}{{ end }}{{ if .Target }} {{ .Target }}{{ end }}{{ end }}]'
+prompt:
+    - leading_separator: <#7eb8da>┏</>
+      segments:
+        - time
+        - session
+        - sysinfo
+        - battery
+        - executiontime
+    - leading_separator: <#7eb8da>┣</>
+      segments:
+        - az
+        - azd
+        - aws
+        - gcp
+        - kubectl
+        - project
+    - leading_separator: <#7eb8da>┣</>
+      segments:
+        - path
+        - git
+    - leading_separator: <#7eb8da>└─</>
+      segments:
+        - root
+        - status
+        - text
+root:
+    style: diamond
+    template: <#ffff00>[#]</>
+secondary:
+    - segments:
+        - text.secondary
+text.secondary:
+    background: transparent
+    template: ' '
+session:
+    foreground: '#7eb8da'
+    style: plain
+    template: '[<#ffffff></> {{ .UserName }} :: <#ffffff></> {{ .HostName }}]'
+status:
+    foreground: '#ffa5d8'
+    style: diamond
+    template: '[<#ffffff></> Error, check your command]'
+sysinfo:
+    foreground: '#be9ddf'
+    style: diamond
+    template: '[<#ffffff></> RAM: {{ (div ((sub .PhysicalTotalMemory .PhysicalAvailableMemory)|float64) 1073741824.0) }}/{{ (div .PhysicalTotalMemory 1073741824.0) }}GB]'
+text:
+    style: diamond
+    template: '>'
+time:
+    foreground: '#7eb8da'
+    options:
+        time_format: 01/02/2006 @ 3:04:05 PM MST
+    style: diamond
+    template: '[<#ffffff></> {{ .CurrentDate | date .Format }}]'
+valid_line:
+    background: transparent
+    template: '> '
+version: 4

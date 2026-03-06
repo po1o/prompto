@@ -1,0 +1,48 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+console_title_template: "{{if .Root}} ⚡ {{end}}{{.UserName}} ➔ \U0001F4C1{{.Folder}}"
+executiontime:
+    background: '#83769c'
+    foreground: '#ffffff'
+    options:
+        always_enabled: true
+    style: plain
+    template: '  {{ .FormattedMs }} '
+final_space: true
+git:
+    background: '#95ffa4'
+    foreground: '#193549'
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .HEAD }} '
+path:
+    background: '#C678DD'
+    foreground: '#ffffff'
+    options:
+        folder_icon: 
+        folder_separator_icon: '  '
+        max_depth: 2
+        style: agnoster_short
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - session
+        - path
+        - git
+rprompt:
+    - segments:
+        - time
+        - executiontime
+session:
+    background: '#61AFEF'
+    foreground: '#ffffff'
+    style: diamond
+    template: '{{if .Root}}  {{.UserName}} {{else}} {{.UserName}} {{end}}'
+    trailing_separator: 
+time:
+    background: '#003543'
+    foreground: '#ffffff'
+    style: plain
+    template: '  {{ .CurrentDate | date .Format }} '
+version: 4

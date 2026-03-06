@@ -1,0 +1,80 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+console_title_template: '{{if .Root}}(Admin) {{end}}{{.Folder}}'
+dotnet:
+    background: '#0184bc'
+    foreground: '#ffffff'
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Unsupported }}{{ else }}{{ .Full }}{{ end }} '
+executiontime:
+    background: '#8800dd'
+    foreground: '#ffffff'
+    options:
+        style: austin
+        threshold: 1
+    powerline_symbol: 
+    style: powerline
+    template: ' <#fefefe></> {{ .FormattedMs }} '
+git:
+    background: '#242424'
+    foreground: '#3A86FF'
+    options:
+        fetch_status: true
+        fetch_upstream_icon: true
+    powerline_symbol: 
+    style: powerline
+    template: '{{ .UpstreamIcon }}{{ .HEAD }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+os:
+    background: '#282c34'
+    foreground: '#3A86FF'
+    leading_separator: ' '
+    style: diamond
+    template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
+path:
+    background: '#242424'
+    foreground: '#33DD2D'
+    options:
+        folder_separator_icon: /
+        style: folder
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - root
+        - os
+        - time
+        - path
+        - git
+        - dotnet
+        - executiontime
+        - status
+    - segments:
+        - text
+root:
+    background: '#f1184c'
+    foreground: '#242424'
+    powerline_symbol: 
+    style: powerline
+    template: 
+status:
+    background: '#33DD2D'
+    background_templates:
+        - '{{ if gt .Code 0 }}#f1184c{{ end }}'
+    foreground: '#242424'
+    powerline_symbol: 
+    style: powerline
+    template: '  '
+text:
+    foreground: '#f1184c'
+    style: plain
+    template: '➜ '
+time:
+    background: '#242424'
+    foreground: '#FFBB00'
+    options:
+        time_format: "15:04:05"
+    powerline_symbol: 
+    style: powerline
+    template: '{{ .CurrentDate | date .Format }} '
+version: 4

@@ -1,0 +1,63 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+git:
+    background: '#546E7A'
+    foreground: '#D4E157'
+    style: plain
+    template: '<#26C6DA> </>{{ .HEAD }} '
+os:
+    background: '#546E7A'
+    foreground: '#26C6DA'
+    style: plain
+    template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
+path:
+    background: '#546E7A'
+    foreground: '#26C6DA'
+    options:
+        style: full
+    style: plain
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - os
+        - root
+        - path
+        - git
+        - text
+    - segments:
+        - status
+root:
+    background: '#546E7A'
+    foreground: '#26C6DA'
+    style: plain
+    template: '  '
+rprompt:
+    - segments:
+        - session
+        - time
+session:
+    background: '#546E7A'
+    foreground: '#D4E157'
+    leading_separator: 
+    style: diamond
+    template: ' {{ .UserName }}@{{ .HostName }} <#26C6DA></> '
+status:
+    foreground: '#D4E157'
+    foreground_templates:
+        - '{{ if gt .Code 0 }}#FF5252{{ end }}'
+    options:
+        always_enabled: true
+    style: plain
+    template: '❯ '
+text:
+    background: transparent
+    foreground: '#546E7A'
+    style: plain
+    template: 
+time:
+    background: '#546E7A'
+    foreground: '#D4E157'
+    options:
+        time_format: "15:04:05"
+    style: plain
+    template: ' {{ .CurrentDate | date .Format }}  '
+version: 4

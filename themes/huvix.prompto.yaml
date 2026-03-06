@@ -1,0 +1,57 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+battery:
+    foreground: '#193549'
+    foreground_templates:
+        - '{{if eq "Charging" .State.String}}#64B5F6{{end}}'
+        - '{{if eq "Discharging" .State.String}}#E36464{{end}}'
+        - '{{if eq "Full" .State.String}}#66BB6A{{end}}'
+    options:
+        charged_icon: ' '
+        charging_icon: ' '
+        discharging_icon: ' '
+    style: powerline
+    template: '[{{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}]'
+executiontime:
+    foreground: '#FFAB91'
+    options:
+        always_enabled: false
+        style: austin
+        threshold: 100
+    style: powerline
+    template: '{{ .FormattedMs }}'
+final_space: true
+git:
+    foreground: '#56B6C2'
+    options:
+        branch_icon: ""
+    style: plain
+    template: <#E8CC97>git(</>{{ .HEAD }}<#E8CC97>) </>
+go:
+    foreground: '#7FD5EA'
+    style: powerline
+    template: '({{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}) '
+path:
+    foreground: '#56B6C2'
+    options:
+        style: agnoster_short
+    style: plain
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - session
+        - path
+        - go
+        - python
+        - git
+        - executiontime
+    - segments:
+        - battery
+python:
+    foreground: '#9e7eff'
+    style: powerline
+    template: '( {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}) '
+session:
+    foreground: '#FFE082'
+    style: plain
+    template: '@{{ .UserName }} ➜'
+version: 4

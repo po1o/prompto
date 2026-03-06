@@ -1,0 +1,130 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+battery:
+    background: '#29315A'
+    foreground: '#9B6BDF'
+    foreground_templates:
+        - '{{if eq "Charging" .State.String}}#40c4ff{{end}}'
+        - '{{if eq "Discharging" .State.String}}#ff5722{{end}}'
+        - '{{if eq "Full" .State.String}}#4caf50{{end}}'
+    leading_separator: ' '
+    options:
+        charged_icon: "\x95 "
+        charging_icon: '⇡ '
+        discharging_icon: '⇣ '
+    style: diamond
+    template: '{{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}'
+    trailing_separator: 
+executiontime:
+    background: '#29315A'
+    foreground: '#AEA4BF'
+    leading_separator: 
+    options:
+        style: austin
+        threshold: 150
+    style: diamond
+    template: '{{ .FormattedMs }}'
+    trailing_separator: ' '
+final_space: true
+git:
+    background: '#29315A'
+    foreground: '#43CCEA'
+    leading_separator: ' '
+    options:
+        branch_icon: ""
+    style: diamond
+    template: '{{ .HEAD }}'
+    trailing_separator: 
+go:
+    background: '#29315A'
+    foreground: '#7FD5EA'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
+    trailing_separator: 
+java:
+    background: '#29315A'
+    foreground: '#E64747'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
+    trailing_separator: 
+julia:
+    background: '#29315A'
+    foreground: '#9B6BDF'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: '{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+    trailing_separator: 
+node:
+    background: '#29315A'
+    foreground: '#42E66C'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}
+    trailing_separator: 
+path:
+    background: '#29315A'
+    foreground: '#3EC669'
+    leading_separator: 
+    options:
+        style: folder
+    style: diamond
+    template:  {{ .Path }}
+    trailing_separator: 
+prompt:
+    - segments:
+        - executiontime
+        - text
+python:
+    background: '#29315A'
+    foreground: '#E4F34A'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}
+    trailing_separator: 
+rprompt:
+    - segments:
+        - session
+        - path
+        - git
+        - python
+        - go
+        - node
+        - ruby
+        - java
+        - julia
+        - battery
+ruby:
+    background: '#29315A'
+    foreground: '#E64747'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
+    trailing_separator: 
+session:
+    background: '#29315A'
+    foreground: '#E64747'
+    leading_separator: 
+    style: diamond
+    template: '{{ .UserName }}'
+    trailing_separator: ' '
+text:
+    background: '#29315A'
+    foreground: '#7FD5EA'
+    leading_separator: 
+    style: diamond
+    template: ❯
+    trailing_separator: 
+version: 4

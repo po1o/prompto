@@ -1,0 +1,75 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+executiontime:
+    background: '#49404f'
+    foreground: '#ffffff'
+    options:
+        style: dallas
+        threshold: 0
+    style: plain
+    template: ' {{ .FormattedMs }}s '
+final_space: true
+git:
+    background: '#25AFF3'
+    foreground: '#ffffff'
+    options:
+        fetch_status: true
+    style: plain
+    template: ' branch ({{ .HEAD }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}) '
+path:
+    background: lightYellow
+    foreground: '#3f3f3f'
+    options:
+        style: full
+    style: plain
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - session
+        - path
+        - git
+        - spotify
+        - time
+        - executiontime
+        - status
+    - segments:
+        - status.2
+session:
+    background: '#EB9654'
+    foreground: '#ffffff'
+    leading_separator: 
+    style: diamond
+    template: '{{ if .SSHSession }} {{ end }}{{ .UserName }} '
+spotify:
+    background: '#1BD760'
+    foreground: '#ffffff'
+    options:
+        paused_icon: ""
+        playing_icon: ""
+        stopped_icon: ""
+    style: plain
+    template: ' {{ .Icon }}{{ if ne .Status "stopped" }}{{ .Artist }} - {{ .Track }}{{ end }} '
+status:
+    background: '#00897b'
+    background_templates:
+        - '{{ if .Error }}#e91e63{{ end }}'
+    foreground: '#ffffff'
+    options:
+        always_enabled: true
+    style: diamond
+    trailing_separator: 
+status.2:
+    foreground: '#ffffff'
+    foreground_templates:
+        - '{{ if gt .Code 0 }}#ff0000{{ end }}'
+    options:
+        always_enabled: true
+    style: plain
+    template: '❯ '
+time:
+    background: '#cc00ff'
+    foreground: '#ffffff'
+    options:
+        time_format: "15:04:05"
+    style: plain
+    template: ' {{ .CurrentDate | date .Format }} '
+version: 4

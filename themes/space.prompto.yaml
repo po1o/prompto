@@ -1,0 +1,64 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+git:
+    options:
+        branch_icon: ""
+    style: plain
+    template: '<#ffffff>on</> {{ .HEAD }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+go:
+    foreground: '#7FD5EA'
+    style: powerline
+    template: '[ {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}] '
+java:
+    foreground: '#ea2d2e'
+    style: powerline
+    template: '[ {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}] '
+julia:
+    foreground: '#4063D8'
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+node:
+    foreground: '#76b367'
+    style: powerline
+    template: '[ {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}] '
+os:
+    foreground: '#26C6DA'
+    options:
+        macos: mac
+    style: plain
+    template: '{{ if .WSL }}WSL at {{ end }}{{.Icon}}'
+path:
+    foreground: lightGreen
+    options:
+        style: folder
+    style: plain
+    template: '{{ .Path }} '
+prompt:
+    - segments:
+        - os
+        - session
+        - path
+        - git
+        - python
+        - go
+        - node
+        - ruby
+        - java
+        - julia
+        - text
+python:
+    foreground: '#906cff'
+    style: powerline
+    template: '[ {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}] '
+ruby:
+    foreground: '#f44336'
+    style: powerline
+    template: '[{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}] '
+session:
+    foreground: '#26C6DA'
+    style: plain
+    template: ' {{ .UserName }}: '
+text:
+    foreground: '#FFD54F'
+    style: plain
+    template: '❯ '
+version: 4

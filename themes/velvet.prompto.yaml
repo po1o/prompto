@@ -1,0 +1,128 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+console_title_template: '{{ .Shell }} - {{ .Folder }}'
+executiontime:
+    background: '#4c1f5e'
+    foreground: '#EFDCF9'
+    options:
+        always_enabled: true
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .FormattedMs }} '
+final_space: true
+git:
+    background: '#341948'
+    foreground: '#EFDCF9'
+    options:
+        branch_template: '{{ trunc 25 .Branch }}'
+        fetch_status: true
+        fetch_upstream_icon: true
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+go:
+    background: '#4c1f5e'
+    foreground: '#7FD5EA'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
+    trailing_separator: 
+java:
+    background: '#4c1f5e'
+    foreground: '#E64747'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
+    trailing_separator: 
+node:
+    background: '#4c1f5e'
+    foreground: '#42E66C'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}
+    trailing_separator: 
+os:
+    background: '#0E050F'
+    foreground: '#EFDCF9'
+    options:
+        arch: 
+        debian: 
+        fedora: 
+        linux: 
+        macos: 
+        manjaro: 
+        opensuse: 
+        ubuntu: 
+        windows: 
+    style: diamond
+    template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
+path:
+    background: '#170B3B'
+    foreground: '#EFDCF9'
+    options:
+        folder_icon: '...'
+        folder_separator_icon: /
+        home_icon: "~"
+        max_depth: 3
+        style: agnoster_short
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - os
+        - path
+        - git
+        - executiontime
+        - status
+    - segments:
+        - time
+python:
+    background: '#4c1f5e'
+    foreground: '#E4F34A'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}
+    trailing_separator: 
+rprompt:
+    - segments:
+        - python
+        - go
+        - node
+        - ruby
+        - java
+ruby:
+    background: '#4c1f5e'
+    foreground: '#E64747'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
+    trailing_separator: 
+status:
+    background: '#69307A'
+    foreground: '#EFDCF9'
+    foreground_templates:
+        - '{{ if gt .Code 0 }}#FF3C3C{{ end }}'
+    options:
+        always_enabled: true
+    style: diamond
+    template: ' {{ if gt .Code 0 }} {{.Code}}{{ end }} '
+    trailing_separator: 
+time:
+    background: '#4c1f5e'
+    foreground: '#EFDCF9'
+    options:
+        time_format: "15:04:05"
+    style: diamond
+    template: ' {{ .CurrentDate | date .Format }} '
+    trailing_separator: 
+version: 4

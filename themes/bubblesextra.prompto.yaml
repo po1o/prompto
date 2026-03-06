@@ -1,0 +1,139 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+battery:
+    background: '#29315A'
+    foreground: '#9B6BDF'
+    foreground_templates:
+        - '{{if eq "Charging" .State.String}}#40c4ff{{end}}'
+        - '{{if eq "Discharging" .State.String}}#ff5722{{end}}'
+        - '{{if eq "Full" .State.String}}#4caf50{{end}}'
+    leading_separator: ' '
+    options:
+        charged_icon: "\x95 "
+        charging_icon: '⇡ '
+        discharging_icon: '⇣ '
+    style: diamond
+    template: '{{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}'
+    trailing_separator: 
+executiontime:
+    background: '#29315A'
+    foreground: '#AEA4BF'
+    leading_separator: 
+    options:
+        style: austin
+        threshold: 150
+    style: diamond
+    template: '{{ .FormattedMs }}'
+    trailing_separator: ' '
+final_space: true
+git:
+    background: '#29315A'
+    foreground: '#43CCEA'
+    foreground_templates:
+        - '{{ if or (.Working.Changed) (.Staging.Changed) }}#FF9248{{ end }}'
+        - '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#ff4500{{ end }}'
+        - '{{ if gt .Ahead 0 }}#B388FF{{ end }}'
+        - '{{ if gt .Behind 0 }}#B388FF{{ end }}'
+    leading_separator: ' '
+    options:
+        branch_template: '{{ trunc 25 .Branch }}'
+        fetch_status: true
+        fetch_upstream_icon: true
+    style: diamond
+    template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+    trailing_separator: 
+go:
+    background: '#29315A'
+    foreground: '#7FD5EA'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
+    trailing_separator: 
+java:
+    background: '#29315A'
+    foreground: '#E64747'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
+    trailing_separator: 
+julia:
+    background: '#29315A'
+    foreground: '#9B6BDF'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: '{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+    trailing_separator: 
+node:
+    background: '#29315A'
+    foreground: '#42E66C'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}
+    trailing_separator: 
+path:
+    background: '#29315A'
+    foreground: '#3EC669'
+    leading_separator: 
+    options:
+        style: folder
+    style: diamond
+    template:  {{ .Path }}
+    trailing_separator: 
+php:
+    background: '#4063D8'
+    foreground: '#ffffff'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: ' {{ .Full }} '
+    trailing_separator: 
+prompt:
+    - segments:
+        - executiontime
+        - text
+python:
+    background: '#29315A'
+    foreground: '#E4F34A'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template:  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}
+    trailing_separator: 
+rprompt:
+    - segments:
+        - path
+        - git
+        - python
+        - go
+        - node
+        - ruby
+        - java
+        - julia
+        - php
+        - battery
+ruby:
+    background: '#29315A'
+    foreground: '#E64747'
+    leading_separator: ' '
+    options:
+        fetch_version: false
+    style: diamond
+    template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
+    trailing_separator: 
+text:
+    background: '#29315A'
+    foreground: '#E64747'
+    leading_separator: 
+    style: diamond
+    template: '{{ .UserName }} ❯'
+    trailing_separator: 
+version: 4

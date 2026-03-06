@@ -1,0 +1,43 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+git:
+    foreground: '#D0666F'
+    options:
+        branch_icon: ""
+        fetch_status: false
+    style: plain
+    template: <#5FAAE8>git:(</>{{ .HEAD }}<#5FAAE8>)</>
+path:
+    foreground: '#56B6C2'
+    options:
+        style: folder
+    style: plain
+    template: "\U0001F3E1 {{ .Path }} "
+prompt:
+    - segments:
+        - text
+    - segments:
+        - text.3
+rprompt:
+    - segments:
+        - path
+        - git
+        - text.2
+        - time
+text:
+    style: plain
+    template: "\U0001F63A\U0001F4AC<#FF8000> Meow! What should I do next? ...</>"
+text.2:
+    foreground: '#1a415d'
+    style: plain
+    template: ⌚
+text.3:
+    foreground: '#FF8000'
+    style: plain
+    template: "\U0001F600\U0001F4AC<#FF8000> ~ </>"
+time:
+    foreground: '#1a415d'
+    options:
+        time_format: "15:04"
+    style: plain
+    template: ' {{ .CurrentDate | date .Format }} '
+version: 4

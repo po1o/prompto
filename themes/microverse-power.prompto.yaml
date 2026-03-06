@@ -1,0 +1,68 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+git:
+    background: '#242424'
+    foreground: '#3A86FF'
+    options:
+        fetch_upstream_icon: true
+    powerline_symbol: 
+    style: powerline
+    template: '{{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+os:
+    foreground: '#3A86FF'
+    style: plain
+    template: '{{ if .WSL }}WSL at {{ end }}{{.Icon}} '
+path:
+    background: '#242424'
+    foreground: '#33DD2D'
+    options:
+        folder_separator_icon: /
+        style: full
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - os
+        - session
+        - root
+        - time
+        - path
+        - git
+        - status
+    - segments:
+        - text
+root:
+    background: '#242424'
+    foreground: '#f1184c'
+    powerline_symbol: 
+    style: powerline
+    template: '- root '
+session:
+    background: '#242424'
+    foreground: '#f1184c'
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .UserName }}'
+status:
+    background: '#33DD2D'
+    background_templates:
+        - '{{ if gt .Code 0 }}#f1184c{{ end }}'
+    foreground: '#242424'
+    options:
+        always_enabled: true
+    powerline_symbol: 
+    style: powerline
+    template: '  '
+text:
+    foreground: '#f1184c'
+    style: plain
+    template: '➜ '
+time:
+    background: '#242424'
+    foreground: '#FFBB00'
+    options:
+        time_format: "2006-01-02 15:04:05"
+    powerline_symbol: 
+    style: powerline
+    template: '{{ .CurrentDate | date .Format }} '
+version: 4

@@ -1,0 +1,33 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+final_space: true
+git:
+    foreground: '#ffffff'
+    style: plain
+    template: <#CB4B16>[</>{{ .HEAD }}<#CB4B16>]</>
+path:
+    foreground: '#ffffff'
+    options:
+        style: full
+    style: plain
+    template: <#CB4B16>┖[</>{{ .Path }}<#CB4B16>]></>
+prompt:
+    - segments:
+        - session
+        - git
+        - root
+        - status
+    - segments:
+        - path
+root:
+    foreground: '#ffffff'
+    style: plain
+    template: <#CB4B16>[</><#CB4B16>]</>
+session:
+    foreground: '#ffffff'
+    style: plain
+    template: <#CB4B16>┏[</>{{ .UserName }}<#CB4B16>]</>
+status:
+    foreground: '#ffffff'
+    style: plain
+    template: <#CB4B16>[x</>{{ reason .Code }}<#CB4B16>]</>
+version: 4

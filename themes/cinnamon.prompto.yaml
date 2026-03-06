@@ -1,0 +1,50 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+final_space: true
+git:
+    background: '#de076f'
+    foreground: '#ffffff'
+    options:
+        branch_icon: ""
+        fetch_upstream_icon: true
+    style: plain
+    template: ' {{ .UpstreamIcon }}{{ .HEAD }} '
+path:
+    background: '#3e9022'
+    foreground: '#ffffff'
+    options:
+        style: folder
+    style: plain
+    template: '  {{ .Path }} '
+prompt:
+    - segments:
+        - session
+        - path
+        - git
+        - spotify
+        - status
+session:
+    background: '#07585c'
+    foreground: '#ffffff'
+    leading_separator: 
+    style: diamond
+    template: ' {{ .UserName }}@{{ .HostName }} '
+spotify:
+    background: '#491545'
+    foreground: '#ffffff'
+    options:
+        paused_icon: ' '
+        playing_icon: ' '
+        stopped_icon: ' '
+    style: plain
+    template: '  {{ .Icon }}{{ if ne .Status "stopped" }}{{ .Artist }} - {{ .Track }}{{ end }} '
+status:
+    background: '#491515'
+    background_templates:
+        - '{{ if gt .Code 0 }}#f1184c{{ end }}'
+    foreground: '#ffffff'
+    options:
+        always_enabled: true
+    style: diamond
+    template: '  '
+    trailing_separator: 
+version: 4

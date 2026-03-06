@@ -1,0 +1,37 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+final_space: true
+git:
+    background: lightCyan
+    foreground: '#ffffff'
+    options:
+        branch_icon: ""
+    style: plain
+    template: ' git({{ .HEAD }}) '
+path:
+    background: lightYellow
+    foreground: '#3f3f3f'
+    options:
+        style: folder
+    style: plain
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - session
+        - path
+        - git
+        - time
+session:
+    background: lightMagenta
+    foreground: '#ffffff'
+    leading_separator: 
+    style: diamond
+    template: '{{ .UserName }} '
+time:
+    background: lightGreen
+    foreground: '#ffffff'
+    options:
+        time_format: "15:04"
+    style: diamond
+    template: ' {{ .CurrentDate | date .Format }} '
+    trailing_separator: 
+version: 4

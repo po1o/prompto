@@ -1,0 +1,80 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+final_space: true
+git:
+    background: p:salmon
+    foreground: p:white
+    options:
+        branch_icon: ""
+        fetch_status: false
+        fetch_upstream_icon: true
+    powerline_symbol: 
+    style: powerline
+    template: ' ➜ ({{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }}) '
+node:
+    background: p:sky
+    foreground: p:white
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
+palette:
+    blush: '#DA627D'
+    plum: '#9A348E'
+    salmon: '#FCA17D'
+    sky: '#86BBD8'
+    tan: '#CC3802'
+    teal: '#047E84'
+    teal_blue: '#33658A'
+    white: '#FFFFFF'
+path:
+    background: p:blush
+    foreground: p:white
+    options:
+        style: folder
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - session
+        - path
+        - git
+        - node
+        - time
+rprompt:
+    - segments:
+        - text
+        - text.2
+        - text.3
+session:
+    background: p:plum
+    foreground: p:white
+    leading_separator: 
+    style: diamond
+    template: '{{ .UserName }} '
+text:
+    background: p:tan
+    foreground: p:white
+    leading_separator: 
+    style: diamond
+    template: '{{ if .Env.PNPPSHOST }}  {{ .Env.PNPPSHOST }} {{ end }}'
+text.2:
+    background: p:teal
+    foreground: p:white
+    powerline_symbol: 
+    style: powerline
+    template: '{{ if .Env.PNPPSSITE }}  {{ .Env.PNPPSSITE }}{{ end }}'
+text.3:
+    background: p:teal
+    foreground: p:white
+    style: diamond
+    template: '{{ if .Env.PNPPSSITE }} {{ end }}'
+    trailing_separator: 
+time:
+    background: p:teal_blue
+    foreground: p:white
+    options:
+        time_format: "15:04"
+    style: diamond
+    template: ' ♥ {{ .CurrentDate | date .Format }} '
+    trailing_separator: 
+version: 4

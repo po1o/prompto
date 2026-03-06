@@ -1,0 +1,116 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+console_title_template: '{{if .Root}}Admin: {{end}} {{.Folder}}'
+executiontime:
+    background: '#2B2B2B'
+    foreground: '#ffffff'
+    invert_powerline: true
+    leading_separator: 
+    options:
+        always_enabled: true
+    style: diamond
+    template: ' {{ .FormattedMs }}<#ffffff>  </>'
+    trailing_separator: 
+final_space: true
+git:
+    background: '#6f42c1'
+    foreground: '#ffffff'
+    options:
+        fetch_status: true
+        fetch_upstream_icon: true
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+os:
+    background: '#2B2B2B'
+    foreground: '#1CA6A3'
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
+path:
+    background: '#185F7B'
+    foreground: '#ffffff'
+    options:
+        home_icon: '  '
+        style: mixed
+    style: diamond
+    template: '{{ .Path }} '
+    trailing_separator: 
+prompt:
+    - segments:
+        - text
+    - segments:
+        - text.2
+        - text.3
+        - path
+        - git
+        - text.4
+        - status
+    - segments:
+        - text.5
+        - os
+        - root
+        - session
+root:
+    background: '#2B2B2B'
+    foreground: '#FBD951'
+    powerline_symbol: 
+    style: powerline
+    template: ' '
+rprompt:
+    - segments:
+        - time
+        - executiontime
+    - segments:
+        - shell
+session:
+    background: '#DC291E'
+    foreground: '#ffffff'
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .UserName }} '
+shell:
+    background: '#000000'
+    foreground: '#666666'
+    style: plain
+    template:  {{ .Name }}
+status:
+    background: '#4caf50'
+    background_templates:
+        - '{{ if gt .Code 0 }}red{{ end }}'
+    foreground: '#ffffff'
+    options:
+        always_enabled: true
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ if gt .Code 0 }}{{ else }} ♥{{ end }} '
+text:
+    foreground: '#ffffff'
+    style: plain
+text.2:
+    foreground: '#185F7B'
+    style: plain
+    template: 
+text.3:
+    background: '#185F7B'
+    foreground: '#185F7B'
+    powerline_symbol: 
+    style: powerline
+text.4:
+    leading_separator: <transparent,#49404f></>
+    style: plain
+    trailing_separator: 
+text.5:
+    foreground: '#2B2B2B'
+    style: plain
+    template: 
+time:
+    background: '#2B2B2B'
+    foreground: '#ffffff'
+    invert_powerline: true
+    leading_separator: 
+    options:
+        time_format: 3:04:05 PM
+    style: diamond
+    template: ' {{ .CurrentDate | date .Format }}<#ffffff>  </>'
+    trailing_separator: 
+version: 4

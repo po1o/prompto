@@ -1,0 +1,108 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+battery:
+    background: '#f36943'
+    background_templates:
+        - '{{if eq "Charging" .State.String}}#33DD2D{{end}}'
+        - '{{if eq "Discharging" .State.String}}#FFCD58{{end}}'
+        - '{{if eq "Full" .State.String}}#0476d0{{end}}'
+    foreground: '#242424'
+    invert_powerline: true
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}  '
+console_title_template: '{{ .Shell }} in {{ .Folder }}'
+final_space: true
+git:
+    background: '#d2ff5e'
+    background_templates:
+        - '{{ if or (.Working.Changed) (.Staging.Changed) }}#ff9248{{ end }}'
+        - '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#f26d50{{ end }}'
+        - '{{ if gt .Ahead 0 }}#89d1dc{{ end }}'
+        - '{{ if gt .Behind 0 }}#f17c37{{ end }}'
+    foreground: '#193549'
+    options:
+        fetch_status: true
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .HEAD }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+os:
+    background: '#003543'
+    foreground: '#fff'
+    options:
+        windows: 
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}}'
+path:
+    background: '#0087D8'
+    foreground: '#003544'
+    options:
+        folder_separator_icon: /
+        style: full
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .Path }} '
+prompt:
+    - segments:
+        - os
+        - session
+        - path
+        - git
+        - status
+    - segments:
+        - root
+        - text
+python:
+    background: '#0087D8'
+    foreground: '#003544'
+    invert_powerline: true
+    options:
+        display_mode: context
+        fetch_virtual_env: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .Venv }} '
+root:
+    foreground: '#FFD700'
+    style: plain
+    template: ' ⚡ '
+rprompt:
+    - segments:
+        - battery
+        - python
+        - time
+session:
+    background: '#003543'
+    foreground: '#d2ff5e'
+    powerline_symbol: 
+    style: powerline
+    template: '{{ .UserName }} '
+status:
+    background: '#33DD2D'
+    background_templates:
+        - '{{ if gt .Code 0 }}#f1184c{{ end }}'
+    foreground: '#242424'
+    options:
+        always_enabled: true
+    powerline_symbol: 
+    style: powerline
+    template: '  '
+text:
+    foreground: '#f1184c'
+    style: plain
+    template: "\U0001F680 "
+time:
+    background: '#003543'
+    foreground: '#fff'
+    invert_powerline: true
+    powerline_symbol: 
+    style: powerline
+    template: '<#fff>  </>{{ .CurrentDate | date .Format }} '
+transient:
+    - segments:
+        - text.transient
+text.transient:
+    background: transparent
+    foreground: '#FFD700'
+    template: "{{if .Root}}⚡ {{end}}\U0001F680 "
+version: 4

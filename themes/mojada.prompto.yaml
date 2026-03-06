@@ -1,0 +1,111 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+battery:
+    background: '#f36943'
+    background_templates:
+        - '{{if eq "Charging" .State.String}}#40c4ff{{end}}'
+        - '{{if eq "Discharging" .State.String}}#ff5722{{end}}'
+        - '{{if eq "Full" .State.String}}#4caf50{{end}}'
+    foreground: '#ffffff'
+    invert_powerline: true
+    options:
+        charged_icon: ' '
+        charging_icon: ' '
+        discharging_icon: ' '
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}% '
+console_title_template: '{{.UserName}}@{{.HostName}} : {{.Folder}}'
+executiontime:
+    foreground: '#ffffff'
+    options:
+        always_enabled: true
+    style: plain
+    template: '{{ .FormattedMs }} '
+final_space: true
+git:
+    background: '#fffb38'
+    background_templates:
+        - '{{ if or (.Working.Changed) (.Staging.Changed) }}#ff9248{{ end }}'
+        - '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#f26d50{{ end }}'
+        - '{{ if gt .Ahead 0 }}#f17c37{{ end }}'
+        - '{{ if gt .Behind 0 }}#89d1dc{{ end }}'
+    foreground: '#193549'
+    options:
+        fetch_status: true
+        fetch_upstream_icon: true
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+os:
+    background: '#fbfbfb'
+    foreground: '#0077c2'
+    leading_separator: 
+    options:
+        arch: 
+        debian: 
+        fedora: 
+        linux: 
+        macos: 
+        manjaro: 
+        opensuse: 
+        ubuntu: 
+        windows: 
+    style: diamond
+    template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
+path:
+    background: '#0077c2'
+    foreground: '#ffffff'
+    options:
+        folder_separator_icon: /
+        home_icon: "~"
+        max_depth: 2
+        style: letter
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .Path }} '
+prompt:
+    - segments:
+        - os
+        - session
+        - root
+        - path
+        - git
+        - text
+root:
+    background: '#e06c75'
+    foreground: '#ffffff'
+    powerline_symbol: 
+    style: powerline
+    template: ' ⠀'
+rprompt:
+    - segments:
+        - status
+        - executiontime
+        - battery
+        - time
+session:
+    background: '#fbfbfb'
+    foreground: '#0077c2'
+    powerline_symbol: 
+    style: powerline
+    template: '{{ .UserName }}<#000000>@</><#e06c75>{{ .HostName }}</> '
+status:
+    foreground: '#ffffff'
+    options:
+        always_enabled: true
+    style: plain
+    template: " {{ if gt .Code 0 }}\U000F0030{{ else }}{{ end }} "
+text:
+    foreground: '#FFD54F'
+    style: plain
+    template: ' {{if .Root}}#{{else}}${{end}}'
+time:
+    background: '#61afef'
+    foreground: '#ffffff'
+    invert_powerline: true
+    options:
+        time_format: 15:04 (Mon)
+    style: diamond
+    template: ' {{ .CurrentDate | date .Format }} '
+    trailing_separator: 
+version: 4

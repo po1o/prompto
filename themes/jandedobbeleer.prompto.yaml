@@ -1,0 +1,181 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+aws:
+    background_templates:
+        - '{{if contains "default" .Profile}}#FFA400{{end}}'
+        - '{{if contains "jan" .Profile}}#f1184c{{end}}'
+    foreground: '#ffffff'
+    options:
+        display_default: false
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} '
+azfunc:
+    background: '#FEAC19'
+    foreground: '#ffffff'
+    options:
+        display_mode: files
+        fetch_version: false
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+battery:
+    background: '#f36943'
+    background_templates:
+        - '{{if eq "Charging" .State.String}}#40c4ff{{end}}'
+        - '{{if eq "Discharging" .State.String}}#ff5722{{end}}'
+        - '{{if eq "Full" .State.String}}#4caf50{{end}}'
+    foreground: '#ffffff'
+    invert_powerline: true
+    options:
+        charged_icon: ' '
+        charging_icon: ' '
+        discharging_icon: ' '
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }} '
+console_title_template: '{{ .Shell }} in {{ .Folder }}'
+executiontime:
+    background: '#83769c'
+    foreground: '#ffffff'
+    options:
+        always_enabled: true
+    style: plain
+    template: <transparent></>  {{ .FormattedMs }}⠀
+final_space: true
+git:
+    background: '#fffb38'
+    background_templates:
+        - '{{ if or (.Working.Changed) (.Staging.Changed) }}#FF9248{{ end }}'
+        - '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#ff4500{{ end }}'
+        - '{{ if gt .Ahead 0 }}#B388FF{{ end }}'
+        - '{{ if gt .Behind 0 }}#B388FF{{ end }}'
+    foreground: '#193549'
+    leading_separator: 
+    options:
+        branch_template: '{{ trunc 25 .Branch }}'
+        fetch_status: true
+        fetch_upstream_icon: true
+    powerline_symbol: 
+    style: diamond
+    template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+    trailing_separator: 
+go:
+    background: '#8ED1F7'
+    foreground: '#111111'
+    options:
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+julia:
+    background: '#4063D8'
+    foreground: '#111111'
+    options:
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+node:
+    background: '#6CA35E'
+    foreground: '#ffffff'
+    options:
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
+path:
+    background: '#ff479c'
+    foreground: '#ffffff'
+    options:
+        folder_separator_icon: '  '
+        home_icon: "~"
+        style: folder
+    powerline_symbol: 
+    style: powerline
+    template: '   {{ .Path }} '
+prompt:
+    - segments:
+        - session
+        - path
+        - git
+        - node
+        - go
+        - julia
+        - python
+        - ruby
+        - azfunc
+        - aws
+        - root
+        - executiontime
+        - status
+python:
+    background: '#FFDE57'
+    foreground: '#111111'
+    options:
+        display_mode: files
+        fetch_virtual_env: false
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+root:
+    background: '#ffff66'
+    foreground: '#111111'
+    powerline_symbol: 
+    style: powerline
+    template: '  '
+rprompt:
+    - segments:
+        - shell
+        - ytm
+        - battery
+        - time
+ruby:
+    background: '#AE1401'
+    foreground: '#ffffff'
+    options:
+        display_mode: files
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+session:
+    background: '#c386f1'
+    foreground: '#ffffff'
+    leading_separator: 
+    style: diamond
+    template: ' {{ .UserName }} '
+    trailing_separator: 
+shell:
+    background: '#0077c2'
+    foreground: '#ffffff'
+    style: plain
+    template: <#0077c2,transparent></>  {{ .Name }} <transparent,#0077c2></>
+status:
+    background: '#00897b'
+    background_templates:
+        - '{{ if gt .Code 0 }}#e91e63{{ end }}'
+    foreground: '#ffffff'
+    options:
+        always_enabled: true
+    style: diamond
+    template: '<parentBackground></>  '
+    trailing_separator: 
+time:
+    background: '#2e9599'
+    foreground: '#111111'
+    invert_powerline: true
+    leading_separator: 
+    style: diamond
+    template: ' {{ .CurrentDate | date .Format }} '
+    trailing_separator: 
+version: 4
+ytm:
+    background: '#1BD760'
+    foreground: '#111111'
+    invert_powerline: true
+    options:
+        paused_icon: ' '
+        playing_icon: ' '
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .Icon }}{{ if ne .Status "stopped" }}{{ .Artist }} - {{ .Track }}{{ end }} '

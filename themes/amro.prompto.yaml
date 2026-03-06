@@ -1,0 +1,36 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+git:
+    foreground: '#14A5AE'
+    options:
+        fetch_upstream_icon: true
+    powerline_symbol: 
+    style: plain
+    template: '{{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+path:
+    foreground: '#0CA0D8'
+    options:
+        folder_separator_icon: /
+        style: full
+    style: plain
+    template: '  {{ .Path }} '
+prompt:
+    - segments:
+        - session
+        - path
+        - git
+    - segments:
+        - root
+        - text
+root:
+    foreground: '#cd5e42'
+    style: plain
+    template: ' '
+session:
+    foreground: '#45F1C2'
+    style: plain
+    template:  {{ .UserName }} on
+text:
+    foreground: '#CD4277'
+    style: plain
+    template: '# '
+version: 4

@@ -1,0 +1,118 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+angular:
+    background: '#000000'
+    foreground: '#ffffff'
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}<#FE4A49>?</>{{ else }}{{ .Full }}{{ end }} '
+aurelia:
+    background: '#000000'
+    foreground: '#ffffff'
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}<#DE1F84>?</>{{ else }}{{ .Full }}{{ end }} '
+console_title_template: "{{if .Root}} ⚡ {{end}}{{.Folder | replace \"~\" \"\U0001F3DA\" }} @ {{.HostName}}"
+dotnet:
+    background: '#00ffff'
+    foreground: '#000000'
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .Full }} '
+executiontime:
+    background: '#29315A'
+    foreground: '#ffffff'
+    leading_separator: 
+    options:
+        style: dallas
+        threshold: 0
+    style: diamond
+    template: ' {{ .FormattedMs }}s '
+git:
+    background: '#00C853'
+    background_templates:
+        - '{{ if or (.Working.Changed) (.Staging.Changed) }}#FFEB3B{{ end }}'
+        - '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#FFCC80{{ end }}'
+        - '{{ if gt .Ahead 0 }}#B388FF{{ end }}'
+        - '{{ if gt .Behind 0 }}#B388FF{{ end }}'
+    foreground: '#000000'
+    options:
+        fetch_status: true
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .HEAD }}{{ if .Staging.Changed }}<#FF6F00>  {{ .Staging.String }}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+node:
+    background: '#000000'
+    foreground: '#45bf17'
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .Full }} '
+npm:
+    background: '#000000'
+    foreground: '#FE4A49'
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .Full }} '
+os:
+    background: '#40189c'
+    foreground: '#ffffff'
+    leading_separator: 
+    style: diamond
+    template: '{{ if .WSL }}WSL at {{ end }}{{.Icon}} '
+path:
+    background: '#01579B'
+    foreground: '#ffffff'
+    leading_separator: <transparent,#01579B></>
+    options:
+        folder_icon: '...'
+        folder_separator_icon: <transparent>  </>
+        home_icon: 
+        style: agnoster_short
+    style: diamond
+    template: ' {{ .Path }} '
+    trailing_separator: 
+prompt:
+    - segments:
+        - os
+        - session
+        - path
+        - git
+        - dotnet
+        - angular
+        - aurelia
+        - node
+        - npm
+        - status
+    - segments:
+        - status.2
+rprompt:
+    - segments:
+        - executiontime
+        - time
+session:
+    background: '#40189c'
+    foreground: '#ffffff'
+    style: diamond
+    template: '| {{ .UserName }}@{{ .HostName }} '
+    trailing_separator: 
+status:
+    background: '#910000'
+    foreground: '#ffffff'
+    powerline_symbol: 
+    style: powerline
+    template: '<transparent> </> {{ reason .Code }} '
+status.2:
+    foreground: '#ffffff'
+    foreground_templates:
+        - '{{ if gt .Code 0 }}#ff0000{{ end }}'
+    options:
+        always_enabled: true
+    style: plain
+    template: '❯ '
+time:
+    background: '#29315A'
+    foreground: '#3EC669'
+    options:
+        time_format: 15:04:05 | Monday
+    style: plain
+    template: '<transparent>  </>{{ .CurrentDate | date .Format }} '
+version: 4

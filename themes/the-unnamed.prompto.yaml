@@ -1,0 +1,41 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+git:
+    foreground: '#F141A8'
+    options:
+        branch_icon: ' '
+    style: plain
+    template: '<#F3EFF5>on</> {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }} '
+node:
+    foreground: '#44FFD2'
+    options:
+        fetch_version: true
+    style: plain
+    template: '<#F3EFF5>via</>  {{ .Full }} '
+npm:
+    foreground: '#FE4A49'
+    style: plain
+    template: '<#F3EFF5>and</>  {{.Full}} '
+path:
+    foreground: '#15C2CB'
+    options:
+        style: folder
+    style: plain
+    template: '{{ .Path }} '
+project:
+    foreground: '#5EADF2'
+    style: plain
+    template: '{{if .Version}}<#F3EFF5>is</>  {{.Version}} {{end}}'
+prompt:
+    - segments:
+        - path
+        - git
+        - project
+        - node
+        - npm
+    - segments:
+        - text
+text:
+    foreground: '#FFE45E'
+    style: plain
+    template: '❯ '
+version: 4

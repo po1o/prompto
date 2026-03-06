@@ -1,0 +1,79 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+console_title_template: '{{if .Segments.Git.RepoName}} {{.Segments.Git.RepoName}} {{else}} {{.Folder}} {{end}}'
+final_space: true
+git:
+    background: '#95ffa4'
+    background_templates:
+        - '{{ if or (.Working.Changed) (.Staging.Changed) }}#ff9248{{ end }}'
+        - '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#f26d50{{ end }}'
+        - '{{ if gt .Ahead 0 }}#89d1dc{{ end }}'
+        - '{{ if gt .Behind 0 }}#c5b6ad{{ end }}'
+    foreground: '#100e23'
+    options:
+        branch_ahead_icon: ↑
+        branch_behind_icon: ↓
+        branch_gone_icon: ≢
+        branch_icon: ' '
+        branch_identical_icon: ≡
+        cherry_pick_icon: '✓ '
+        commit_icon: '▷ '
+        fetch_status: true
+        merge_icon: '◴ '
+        no_commits_icon: '[no commits]'
+        rebase_icon: 'Ɫ '
+        tag_icon: '▶ '
+        untracked_modes:
+            /Users/user/Projects/prompto/: "no"
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} │{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
+path:
+    background: '#91ddff'
+    foreground: '#100e23'
+    options:
+        style: agnoster_full
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - session
+        - path
+        - git
+        - terraform
+        - status
+        - time
+    - segments:
+        - text
+        - text.2
+session:
+    foreground: '#757575'
+    style: plain
+    template: '┌ {{ if .SSHSession }} {{ end }}{{ .UserName }}@{{ .HostName }} '
+status:
+    background: '#ff8080'
+    foreground: '#ffffff'
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ if gt .Code 0 }}error{{ else }}{{ end }} '
+terraform:
+    background: '#ffee58'
+    foreground: '#100e23'
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .WorkspaceName }}{{ if .Version }} {{ .Version }}{{ end }} '
+text:
+    foreground: '#757575'
+    style: plain
+    template: └
+text.2:
+    foreground: '#ffffff'
+    style: plain
+    template: $
+time:
+    foreground: '#689f38'
+    options:
+        time_format: "15:04:05"
+    style: plain
+    template: ' <#757575,>|</> {{ .CurrentDate | date .Format }}'
+version: 4

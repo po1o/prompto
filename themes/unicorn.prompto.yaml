@@ -1,0 +1,67 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+console_title_template: '{{.UserName}}@{{.HostName}} in {{ .PWD }}'
+executiontime:
+    background: '#83769c'
+    foreground: '#ffffff'
+    options:
+        always_enabled: true
+    style: diamond
+    template: '  {{ .FormattedMs }}⠀'
+    trailing_separator: 
+final_space: true
+git:
+    background: '#d2ff5e'
+    background_templates:
+        - '{{ if or (.Working.Changed) (.Staging.Changed) }}#ff9248{{ end }}'
+        - '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#f26d50{{ end }}'
+        - '{{ if gt .Ahead 0 }}#89d1dc{{ end }}'
+        - '{{ if gt .Behind 0 }}#f17c37{{ end }}'
+    foreground: '#193549'
+    options:
+        fetch_status: true
+        fetch_upstream_icon: true
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+os:
+    background: '#003543'
+    foreground: '#fff'
+    options:
+        windows: ' '
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}}'
+path:
+    background: '#0087D8'
+    foreground: '#003544'
+    options:
+        folder_separator_icon: /
+        style: full
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .Path }} '
+prompt:
+    - segments:
+        - os
+        - path
+        - git
+        - time
+        - executiontime
+    - segments:
+        - root
+        - text
+root:
+    foreground: '#fff'
+    style: plain
+    template: ' ⚡ '
+text:
+    foreground: '#f1184c'
+    style: plain
+    template: "\U0001F984 "
+time:
+    background: '#003543'
+    foreground: '#fff'
+    powerline_symbol: 
+    style: powerline
+    template: '<#fff>  </>{{ .CurrentDate | date .Format }} '
+version: 4

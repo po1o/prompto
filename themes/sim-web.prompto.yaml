@@ -1,0 +1,57 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+console_title_template: '{{ .Folder }}'
+executiontime:
+    foreground: '#a9ffb4'
+    options:
+        style: dallas
+        threshold: 0
+    style: powerline
+    template: ' {{ .FormattedMs }}s <#ffffff></>'
+git:
+    foreground: '#f14e32'
+    options:
+        branch_icon: ' '
+    style: powerline
+    template: ({{ .HEAD }})
+node:
+    foreground: '#45bf17'
+    style: powerline
+    template: '  {{ .Full }} '
+npm:
+    foreground: '#FE4A49'
+    style: powerline
+    template: '<#F3EFF5>and</>  {{ .Full }} '
+path:
+    foreground: '#ffafd2'
+    options:
+        folder_icon: 
+        folder_separator_icon: ' ❯ '
+        home_icon: home
+        style: agnoster_full
+    style: powerline
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - path
+        - git
+    - segments:
+        - status
+rprompt:
+    - segments:
+        - executiontime
+        - node
+        - npm
+status:
+    foreground: '#00c7fc'
+    options:
+        always_enabled: true
+    style: diamond
+    template: '<#00c7fc>❯</>_: '
+transient:
+    - segments:
+        - text.transient
+text.transient:
+    background: transparent
+    foreground: '#FEF5ED'
+    template: '{{ .Shell }}'
+version: 4

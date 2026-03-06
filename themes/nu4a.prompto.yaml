@@ -1,0 +1,70 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+console_title_template: "{{if .Root}} ⚡ {{end}}{{.UserName}} ➔ \U0001F4C1{{.Folder}}"
+executiontime:
+    background: '#2f2f2f'
+    foreground: '#fafafa'
+    leading_separator: 
+    options:
+        style: austin
+    style: diamond
+    template: ' {{ .FormattedMs }} '
+final_space: true
+git:
+    background: '#3feb56'
+    foreground: '#193549'
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .HEAD }} '
+path:
+    background: '#ec9706'
+    foreground: '#100e23'
+    options:
+        folder_icon: 
+        folder_separator_icon: 
+        home_icon: 
+        mapped_locations:
+            C:\Users: 
+            C:\Windows: 
+        mixed_threshold: 8
+        style: mixed
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ path .Path .Location }} '
+prompt:
+    - segments:
+        - session
+        - path
+        - git
+        - python
+python:
+    background: '#906cff'
+    foreground: '#100e23'
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
+rprompt:
+    - segments:
+        - status
+        - executiontime
+secondary:
+    - segments:
+        - text.secondary
+text.secondary:
+    background: '#ec9706'
+    foreground: '#100e23'
+    template: '  '
+session:
+    background: '#cfcfc4'
+    background_templates:
+        - '{{if .Root}}#ff3026{{else}}#cfcfc4{{end}}'
+    foreground: '#100e23'
+    style: powerline
+    template: '{{if .Root}}  {{.UserName}} {{else}} {{.UserName}} {{end}}'
+status:
+    background: '#ff4040'
+    foreground: '#ffffff'
+    leading_separator: 
+    style: diamond
+    template: '  '
+    trailing_separator: 
+version: 4

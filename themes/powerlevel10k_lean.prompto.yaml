@@ -1,0 +1,30 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+git:
+    foreground: '#FFE700'
+    style: plain
+    template: '{{ .HEAD }} '
+path:
+    foreground: '#77E4F7'
+    options:
+        style: full
+    style: plain
+    template: '{{ .Path }} '
+prompt:
+    - segments:
+        - path
+        - git
+        - text
+rprompt:
+    - segments:
+        - time
+text:
+    foreground: '#43D426'
+    style: plain
+    template: '❯ '
+time:
+    foreground: '#00C5C7'
+    options:
+        time_format: "15:04:05"
+    style: plain
+    template: ' {{ .CurrentDate | date .Format }} '
+version: 4

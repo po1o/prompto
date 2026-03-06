@@ -8,6 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/po1o/prompto/src/cli/upgrade"
+	"github.com/po1o/prompto/src/color"
+	configmaps "github.com/po1o/prompto/src/maps"
+	"github.com/po1o/prompto/src/terminal"
 	yaml "go.yaml.in/yaml/v3"
 )
 
@@ -24,21 +28,37 @@ type PromptLayout struct {
 }
 
 type CompiledConfig struct {
-	Segments         map[string]*Segment `json:"-" yaml:"-"`
-	Source           string              `json:"-" yaml:"-"`
-	Prompt           []PromptLayout      `json:"prompt,omitempty" yaml:"prompt,omitempty"`
-	RPrompt          []PromptLayout      `json:"rprompt,omitempty" yaml:"rprompt,omitempty"`
-	SecondaryPrompt  []PromptLayout      `json:"secondary_prompt,omitempty" yaml:"secondary_prompt,omitempty"`
-	TransientPrompt  []PromptLayout      `json:"transient_prompt,omitempty" yaml:"transient_prompt,omitempty"`
-	TransientRPrompt []PromptLayout      `json:"transient_rprompt,omitempty" yaml:"transient_rprompt,omitempty"`
+	Palette          color.Palette          `json:"palette,omitempty" yaml:"palette,omitempty"`
+	Var              map[string]any         `json:"var,omitempty" yaml:"var,omitempty"`
+	Palettes         *color.Palettes        `json:"palettes,omitempty" yaml:"palettes,omitempty"`
+	Maps             *configmaps.Config     `json:"maps,omitempty" yaml:"maps,omitempty"`
+	Upgrade          *upgrade.Config        `json:"upgrade,omitempty" yaml:"upgrade,omitempty"`
+	Cycle            color.Cycle            `json:"cycle,omitempty" yaml:"cycle,omitempty"`
+	ITermFeatures    terminal.ITermFeatures `json:"iterm_features,omitempty" yaml:"iterm_features,omitempty"`
+	VimMode          *VimConfig             `json:"vim-mode,omitempty" yaml:"vim-mode,omitempty"`
+	Segments         map[string]*Segment    `json:"-" yaml:"-"`
+	Source           string                 `json:"-" yaml:"-"`
+	Prompt           []PromptLayout         `json:"prompt,omitempty" yaml:"prompt,omitempty"`
+	RPrompt          []PromptLayout         `json:"rprompt,omitempty" yaml:"rprompt,omitempty"`
+	SecondaryPrompt  []PromptLayout         `json:"secondary,omitempty" yaml:"secondary,omitempty"`
+	TransientPrompt  []PromptLayout         `json:"transient,omitempty" yaml:"transient,omitempty"`
+	TransientRPrompt []PromptLayout         `json:"rtransient,omitempty" yaml:"rtransient,omitempty"`
 }
 
 type compiledRawConfig struct {
-	Prompt           []PromptLayout `yaml:"prompt"`
-	RPrompt          []PromptLayout `yaml:"rprompt"`
-	SecondaryPrompt  []PromptLayout `yaml:"secondary_prompt"`
-	TransientPrompt  []PromptLayout `yaml:"transient_prompt"`
-	TransientRPrompt []PromptLayout `yaml:"transient_rprompt"`
+	Palette       color.Palette          `yaml:"palette"`
+	Var           map[string]any         `yaml:"var"`
+	Palettes      *color.Palettes        `yaml:"palettes"`
+	Maps          *configmaps.Config     `yaml:"maps"`
+	Upgrade       *upgrade.Config        `yaml:"upgrade"`
+	Cycle         color.Cycle            `yaml:"cycle"`
+	ITermFeatures terminal.ITermFeatures `yaml:"iterm_features"`
+	VimMode       *VimConfig             `yaml:"vim-mode"`
+	Prompt        []PromptLayout         `yaml:"prompt"`
+	RPrompt       []PromptLayout         `yaml:"rprompt"`
+	Secondary     []PromptLayout         `yaml:"secondary"`
+	Transient     []PromptLayout         `yaml:"transient"`
+	RTransient    []PromptLayout         `yaml:"rtransient"`
 }
 
 func LoadCompiled(configFile string) (*CompiledConfig, error) {
@@ -79,15 +99,27 @@ func ParseCompiledYAML(data []byte) (*CompiledConfig, error) {
 	}
 
 	compiled := &CompiledConfig{
+		Palette:          raw.Palette,
+		Var:              raw.Var,
+		Palettes:         raw.Palettes,
+		Maps:             raw.Maps,
+		Upgrade:          raw.Upgrade,
+		Cycle:            raw.Cycle,
+		ITermFeatures:    raw.ITermFeatures,
+		VimMode:          raw.VimMode,
 		Prompt:           raw.Prompt,
 		RPrompt:          raw.RPrompt,
-		SecondaryPrompt:  raw.SecondaryPrompt,
-		TransientPrompt:  raw.TransientPrompt,
-		TransientRPrompt: raw.TransientRPrompt,
+		SecondaryPrompt:  raw.Secondary,
+		TransientPrompt:  raw.Transient,
+		TransientRPrompt: raw.RTransient,
 		Segments:         make(map[string]*Segment),
 	}
 
 	if err := normalizePromptLayouts(compiled); err != nil {
+		return nil, err
+	}
+
+	if err := validateCompiledTopLevelTables(doc); err != nil {
 		return nil, err
 	}
 
@@ -100,6 +132,67 @@ func ParseCompiledYAML(data []byte) (*CompiledConfig, error) {
 	}
 
 	return compiled, nil
+}
+
+func (cfg *CompiledConfig) ApplyMetadata(target *Config) {
+	if target == nil || cfg == nil {
+		return
+	}
+
+	target.Palette = cfg.Palette
+	target.Var = cfg.Var
+	target.Palettes = cfg.Palettes
+	target.Maps = cfg.Maps
+	target.Upgrade = cfg.Upgrade
+	target.Cycle = cfg.Cycle
+	target.ITermFeatures = cfg.ITermFeatures
+	target.VimMode = cfg.VimMode
+
+	if len(cfg.SecondaryPrompt) > 0 {
+		target.SecondaryPrompt = &Segment{}
+	}
+
+	if len(cfg.TransientPrompt) > 0 {
+		target.TransientPrompt = &Segment{}
+	}
+}
+
+func validateCompiledTopLevelTables(doc map[string]any) error {
+	if _, hasSecondaryPrompt := doc["secondary_prompt"]; hasSecondaryPrompt {
+		return errors.New("top-level secondary_prompt is not supported; use secondary")
+	}
+
+	if _, hasTransientPrompt := doc["transient_prompt"]; hasTransientPrompt {
+		return errors.New("top-level transient_prompt is not supported; use transient")
+	}
+
+	if _, hasTransientRPrompt := doc["transient_rprompt"]; hasTransientRPrompt {
+		return errors.New("top-level transient_rprompt is not supported; use rtransient")
+	}
+
+	rawVim, ok := doc["vim"]
+	if !ok {
+		return nil
+	}
+
+	vimTable, ok := rawVim.(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	if _, hasEnabled := vimTable["enabled"]; hasEnabled {
+		return errors.New("top-level vim is not supported; use vim-mode")
+	}
+
+	if _, hasCursorShape := vimTable["cursor_shape"]; hasCursorShape {
+		return errors.New("top-level vim is not supported; use vim-mode")
+	}
+
+	if _, hasCursorBlink := vimTable["cursor_blink"]; hasCursorBlink {
+		return errors.New("top-level vim is not supported; use vim-mode")
+	}
+
+	return nil
 }
 
 type separatorPair struct {
@@ -132,19 +225,19 @@ func normalizePromptLayouts(cfg *CompiledConfig) error {
 	}
 
 	for i := range cfg.SecondaryPrompt {
-		if err := normalizePromptLayout(&cfg.SecondaryPrompt[i], false, "secondary_prompt"); err != nil {
+		if err := normalizePromptLayout(&cfg.SecondaryPrompt[i], false, "secondary"); err != nil {
 			return err
 		}
 	}
 
 	for i := range cfg.TransientPrompt {
-		if err := normalizePromptLayout(&cfg.TransientPrompt[i], false, "transient_prompt"); err != nil {
+		if err := normalizePromptLayout(&cfg.TransientPrompt[i], false, "transient"); err != nil {
 			return err
 		}
 	}
 
 	for i := range cfg.TransientRPrompt {
-		if err := normalizePromptLayout(&cfg.TransientRPrompt[i], true, "transient_rprompt"); err != nil {
+		if err := normalizePromptLayout(&cfg.TransientRPrompt[i], true, "rtransient"); err != nil {
 			return err
 		}
 	}
@@ -207,11 +300,11 @@ func normalizePromptLayout(layout *PromptLayout, rightAligned bool, table string
 
 func decodeCompiledSegmentTables(doc map[string]any, segmentsByName map[string]*Segment) error {
 	lineTables := map[string]bool{
-		"prompt":            true,
-		"rprompt":           true,
-		"secondary_prompt":  true,
-		"transient_prompt":  true,
-		"transient_rprompt": true,
+		"prompt":     true,
+		"rprompt":    true,
+		"secondary":  true,
+		"transient":  true,
+		"rtransient": true,
 	}
 	reservedTables := map[string]bool{
 		"vim-mode": true,
@@ -232,6 +325,10 @@ func decodeCompiledSegmentTables(doc map[string]any, segmentsByName map[string]*
 		}
 
 		if hasScalarFields(table) {
+			if shouldSkipCompiledTable(key, table) {
+				continue
+			}
+
 			if err := decodeCompiledSegmentTable(key, table, "", segmentsByName); err != nil {
 				return err
 			}
@@ -418,6 +515,41 @@ func hasScalarFields(table map[string]any) bool {
 	}
 
 	return false
+}
+
+func shouldSkipCompiledTable(name string, table map[string]any) bool {
+	if _, explicitType := table["type"]; explicitType {
+		return false
+	}
+
+	if isKnownSegmentType(SegmentType(name)) {
+		return false
+	}
+
+	if idx := strings.Index(name, "."); idx > 0 {
+		prefix := SegmentType(name[:idx])
+		if isKnownSegmentType(prefix) {
+			return false
+		}
+	}
+
+	metadataTables := map[string]bool{
+		"palette":        true,
+		"palettes":       true,
+		"maps":           true,
+		"upgrade":        true,
+		"cache":          true,
+		"var":            true,
+		"cycle":          true,
+		"iterm_features": true,
+		"secondary":      true,
+		"transient":      true,
+		"valid_line":     true,
+		"error_line":     true,
+		"debug_prompt":   true,
+	}
+
+	return metadataTables[name]
 }
 
 func isKnownSegmentType(segmentType SegmentType) bool {

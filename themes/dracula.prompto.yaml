@@ -1,0 +1,59 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+aws:
+    background: '#f1fa8c'
+    foreground: '#282a36'
+    invert_powerline: true
+    leading_separator: 
+    style: diamond
+    template: '  {{.Profile}}{{if .Region}}@{{.Region}}{{end}}'
+    trailing_separator: 
+final_space: true
+git:
+    background: '#ffb86c'
+    foreground: '#f8f8f2'
+    options:
+        branch_icon: ""
+        fetch_status: false
+        fetch_upstream_icon: true
+    powerline_symbol: 
+    style: powerline
+    template: '  ({{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }}) '
+node:
+    background: '#8be9fd'
+    foreground: '#f8f8f2'
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
+path:
+    background: '#bd93f9'
+    foreground: '#f8f8f2'
+    options:
+        style: folder
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - session
+        - path
+        - git
+        - node
+        - time
+rprompt:
+    - segments:
+        - aws
+session:
+    background: '#6272a4'
+    foreground: '#f8f8f2'
+    leading_separator: 
+    style: diamond
+    template: '{{ .UserName }} '
+time:
+    background: '#ff79c6'
+    foreground: '#f8f8f2'
+    options:
+        time_format: "15:04"
+    style: diamond
+    template: ' ♥ {{ .CurrentDate | date .Format }} '
+    trailing_separator: 
+version: 4

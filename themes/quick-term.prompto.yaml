@@ -1,0 +1,95 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+executiontime:
+    background: '#e4e4e4'
+    foreground: '#585858'
+    invert_powerline: true
+    options:
+        always_enabled: true
+        style: austin
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .FormattedMs }} '
+final_space: true
+git:
+    background: '#378504'
+    background_templates:
+        - '{{ if or (.Working.Changed) (.Staging.Changed) }}#a97400{{ end }}'
+        - '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#54433a{{ end }}'
+        - '{{ if gt .Ahead 0 }}#744d89{{ end }}'
+        - '{{ if gt .Behind 0 }}#744d89{{ end }}'
+    foreground: '#f2f3f8'
+    leading_separator: <transparent,background></>
+    options:
+        branch_gone_icon: 
+        branch_icon: ' '
+        branch_identical_icon: 
+        branch_template: '{{ trunc 25 .Branch }}'
+        fetch_status: true
+    style: diamond
+    template: ' {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} <transparent></> <#121318> {{ .Working.String }}</>{{ end }}{{ if .Staging.Changed }} <transparent></> <#121318> {{ .Staging.String }}</>{{ end }}{{ if gt .StashCount 0 }} <transparent></> <#121318> {{ .StashCount }}</>{{ end }} '
+    trailing_separator: 
+os:
+    background: '#d75f00'
+    foreground: '#f2f3f8'
+    leading_separator: ╭─
+    options:
+        alpine: 
+        arch: 
+        centos: 
+        debian: 
+        elementary: 
+        fedora: 
+        gentoo: 
+        linux: 
+        macos: 
+        manjaro: 
+        mint: 
+        opensuse: 
+        raspbian: 
+        ubuntu: 
+        windows: 
+    style: diamond
+    template: ' {{ .Icon }} '
+path:
+    background: '#0087af'
+    foreground: '#f2f3f8'
+    options:
+        folder_icon: …
+        folder_separator_icon: ' <transparent></> '
+        max_depth: 3
+        style: agnoster_short
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - os
+        - session
+        - path
+        - git
+    - segments:
+        - text
+rprompt:
+    - segments:
+        - executiontime
+        - time
+session:
+    background: '#e4e4e4'
+    foreground: '#4e4e4e'
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .UserName }} '
+text:
+    foreground: '#d75f00'
+    style: plain
+    template: ╰─ {{ if .Root }}#{{else}}${{end}}
+time:
+    background: '#d75f00'
+    foreground: '#f2f3f8'
+    invert_powerline: true
+    options:
+        time_format: "15:04:05"
+    style: diamond
+    template: '  {{ .CurrentDate | date .Format }} '
+    trailing_separator: 
+version: 4

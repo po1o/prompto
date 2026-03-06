@@ -266,7 +266,7 @@ func TestFeaturesVim(t *testing.T) {
 
 		cfg := &Config{
 			Upgrade: &upgrade.Config{},
-			Vim:     tc.vim,
+			VimMode: tc.vim,
 		}
 
 		got := cfg.Features(env, false)
@@ -290,13 +290,12 @@ func TestFeaturesVimModeAlias(t *testing.T) {
 	assert.Equal(t, shell.VimMode|shell.VimCursorShape, got)
 }
 
-func TestFeaturesVimModeAliasWinsWhenVimSectionIsEmpty(t *testing.T) {
+func TestFeaturesVimModeUsesOnlyVimModeKey(t *testing.T) {
 	env := &mock.Environment{}
 	env.On("Shell").Return(shell.ZSH)
 
 	cfg := &Config{
 		Upgrade: &upgrade.Config{},
-		Vim:     &VimConfig{},
 		VimMode: &VimConfig{
 			Enabled: true,
 		},

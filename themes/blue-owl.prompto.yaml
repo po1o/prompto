@@ -1,0 +1,91 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+console_title_template: "{{if .Root}} ⚡ {{end}}{{.Folder | replace \"~\" \"\U0001F3DA\" }} @ {{.HostName}}"
+executiontime:
+    background: '#49404f'
+    foreground: '#ffffff'
+    leading_separator: <transparent,#49404f></>
+    options:
+        style: dallas
+        threshold: 0
+    style: diamond
+    template: ' {{ .FormattedMs }}s '
+    trailing_separator: 
+git:
+    background: '#00C853'
+    background_templates:
+        - '{{ if or (.Working.Changed) (.Staging.Changed) }}#FFEB3B{{ end }}'
+        - '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#FFCC80{{ end }}'
+        - '{{ if gt .Ahead 0 }}#B388FF{{ end }}'
+        - '{{ if gt .Behind 0 }}#B388FF{{ end }}'
+    foreground: '#000000'
+    options:
+        fetch_status: true
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .HEAD }}{{ if .Staging.Changed }}<#FF6F00>  {{ .Staging.String }}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+os:
+    background: transparent
+    foreground: '#ffffff'
+    style: plain
+    template: '{{ if .WSL }}WSL at {{ end }}{{.Icon}} '
+path:
+    background: '#01579B'
+    foreground: '#ffffff'
+    leading_separator: <transparent,#01579B></>
+    options:
+        folder_icon: '...'
+        folder_separator_icon: <transparent>  </>
+        home_icon: 
+        style: agnoster_short
+    style: diamond
+    template: ' {{ .Path }} '
+    trailing_separator: 
+prompt:
+    - segments:
+        - root
+        - os
+        - path
+        - git
+        - executiontime
+        - status
+    - segments:
+        - status.2
+root:
+    background: '#a313a8'
+    foreground: '#FFEB3B'
+    style: plain
+    template: '⚡ '
+rprompt:
+    - segments:
+        - session
+        - time
+session:
+    background: '#29315A'
+    foreground: '#43CCEA'
+    leading_separator: 
+    style: diamond
+    template: '  {{ .UserName }}<transparent> / </>{{ .HostName }} '
+    trailing_separator: 
+status:
+    background: '#910000'
+    foreground: '#ffffff'
+    powerline_symbol: 
+    style: powerline
+    template: '<transparent> </> {{ reason .Code }} '
+status.2:
+    foreground: '#ffffff'
+    foreground_templates:
+        - '{{ if gt .Code 0 }}#ff0000{{ end }}'
+    options:
+        always_enabled: true
+    style: plain
+    template: '❯ '
+time:
+    background: '#29315A'
+    foreground: '#3EC669'
+    leading_separator: 
+    options:
+        time_format: "15:04:05"
+    style: diamond
+    template: ' {{ .CurrentDate | date .Format }} '
+version: 4

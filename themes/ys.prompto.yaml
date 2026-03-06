@@ -1,0 +1,56 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+final_space: true
+git:
+    options:
+        fetch_status: true
+    style: plain
+    template: '<darkGray>on</> <white>git:</><cyan>{{ .HEAD }}</>{{ if .Working.Changed }}<red> x</>{{ end }} '
+path:
+    foreground: lightYellow
+    options:
+        style: full
+    style: plain
+    template: '<darkGray>in </>{{ .Path }} '
+prompt:
+    - segments:
+        - python
+    - segments:
+        - text
+        - root
+        - session
+        - path
+        - git
+        - time
+        - status
+    - segments:
+        - text.2
+python:
+    foreground: white
+    options:
+        fetch_version: false
+    style: plain
+    template: ({{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }})
+root:
+    foreground: red
+    style: plain
+    template: ' % '
+session:
+    style: plain
+    template: '<cyan>{{ .UserName }}</> <darkGray>@</> <green>{{ .HostName }}</> '
+status:
+    foreground: red
+    style: plain
+    template: ' C:{{ if gt .Code 0 }}{{ .Code }}{{ end }} '
+text:
+    foreground: lightBlue
+    style: plain
+    template: '# '
+text.2:
+    foreground: lightRed
+    style: plain
+    template: $
+time:
+    foreground: darkGray
+    style: plain
+    template: '[{{ .CurrentDate | date .Format }}]'
+version: 4

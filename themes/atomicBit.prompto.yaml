@@ -1,0 +1,151 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+angular:
+    foreground: '#ce092f'
+    style: plain
+    template: <#ffffff>(</>{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<#ffffff>)</>
+aurelia:
+    foreground: '#de1f84'
+    style: plain
+    template: <#ffffff>(</>{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<#ffffff>)</>
+aws:
+    foreground: '#faa029'
+    style: plain
+    template: <#ffffff>(</>{{.Profile}}{{if .Region}}@{{.Region}}{{end}}<#ffffff>)</>
+azfunc:
+    foreground: '#5398c2'
+    style: plain
+    template: <#ffffff>(</>{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<#ffffff>)</>
+battery:
+    foreground: '#ffffff'
+    foreground_templates:
+        - '{{if eq "Charging" .State.String}}#40c4ff{{end}}'
+        - '{{if eq "Discharging" .State.String}}#FFFB38{{end}}'
+        - '{{if eq "Full" .State.String}}#33DD2D{{end}}'
+    options:
+        charged_icon: ' '
+        charging_icon: ' '
+        discharging_icon: ' '
+    style: plain
+    template: <#ffffff>[</>{{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}%<#ffffff>]─</>
+dart:
+    foreground: '#055b9c'
+    style: plain
+    template: <#ffffff>(</>{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<#ffffff>)</>
+dotnet:
+    foreground: '#0d6da8'
+    style: plain
+    template: <#ffffff>(</>{{ if .Unsupported }}{{ else }}{{ .Full }}{{ end }}<#ffffff>)</>
+git:
+    foreground: '#e0f8ff'
+    options:
+        branch_icon: ' '
+        fetch_status: true
+        fetch_upstream_icon: true
+    style: plain
+    template: <#ffffff>[</>{{ .HEAD }}{{ if .Staging.Changed }}<#00AA00> ● {{ .Staging.String }}</>{{ end }}{{ if .Working.Changed }}<#D75F00> ● {{ .Working.String }}</>{{ end }}<#ffffff>]-</>
+go:
+    foreground: '#06aad5'
+    style: plain
+    template: <#ffffff>(</>{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<#ffffff>)</>
+java:
+    foreground: '#ec2729'
+    style: plain
+    template: <#ffffff>(</>{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<#ffffff>)</>
+julia:
+    foreground: '#359a25'
+    style: plain
+    template: <#ffffff>(</>{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<#ffffff>)</>
+kubectl:
+    foreground: '#316ce4'
+    style: plain
+    template: '<#ffffff>(</>{{.Context}}{{if .Namespace}} :: {{.Namespace}}{{end}}<#ffffff>)</>'
+node:
+    foreground: '#3C873A'
+    options:
+        fetch_package_manager: true
+        npm_icon: ' <#cc3a3a></> '
+        yarn_icon: ' <#348cba></>'
+    style: plain
+    template: <#ffffff>(</>{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}<#ffffff>)</>
+nx:
+    foreground: '#ffffff'
+    style: plain
+    template: <#1e293b>(</>{{ if .Error }}{{ .Error }}{{ else }}Nx {{ .Full }}{{ end }}<#1e293b>)</>
+os:
+    foreground: '#ffffff'
+    options:
+        linux: <#ffffff></>
+        macos: <#ffffff></>
+        windows: <#ffffff></>
+    style: plain
+    template: <#ffffff>(</>{{ if .WSL }}WSL at {{ end }}{{.Icon}}<#ffffff>)─</>
+path:
+    foreground: '#ff5555'
+    style: plain
+    template: <#ffffff>[</>{{ .Path }}<#ffffff>]</>
+prompt:
+    - segments:
+        - session
+        - path
+        - root
+    - segments:
+        - text
+        - git
+        - status
+python:
+    foreground: '#FFE873'
+    style: plain
+    template: <#ffffff>(</>{{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}<#ffffff>)</>
+root:
+    foreground: '#FF9248'
+    style: plain
+    template: <#ffffff>─(</>#<#ffffff>)</>
+rprompt:
+    - segments:
+        - node
+        - python
+        - java
+        - dotnet
+        - go
+        - rust
+        - dart
+        - angular
+        - aurelia
+        - nx
+        - julia
+        - ruby
+        - azfunc
+        - aws
+        - kubectl
+        - os
+        - battery
+        - time
+ruby:
+    foreground: '#9c1006'
+    style: plain
+    template: <#ffffff>(</>{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<#ffffff>)</>
+rust:
+    foreground: '#925837'
+    style: plain
+    template: <#ffffff>(</>{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}<#ffffff>)</>
+session:
+    style: plain
+    template: ╭─[<#ffff55>{{ .UserName }}</><#ff5555>@</><#55ff55>{{ .HostName }}</>]─
+status:
+    foreground: '#ecf7fa'
+    foreground_templates:
+        - '{{ if gt .Code 0 }}#ef5350{{ end }}'
+    options:
+        always_enabled: true
+    style: plain
+    template: ' '
+text:
+    style: plain
+    template: ╰─
+time:
+    foreground: '#55ffff'
+    options:
+        time_format: _2,15:04
+    style: plain
+    template: <#ffffff>[</>{{ .CurrentDate | date .Format }}<#ffffff>]</>
+version: 4

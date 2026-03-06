@@ -1,0 +1,90 @@
+$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
+executiontime:
+    background: '#272727'
+    foreground: '#ffffff'
+    options:
+        style: dallas
+        threshold: 0
+    style: diamond
+    template: '<#000000> </>{{ .FormattedMs }}s '
+    trailing_separator: 
+final_space: true
+git:
+    background: '#272727'
+    foreground: '#00ff0d'
+    options:
+        fetch_status: true
+    style: plain
+    template: '<#000000> </>{{ .HEAD }}{{ if .Staging.Changed }}<#FF6F00>  {{ .Staging.String }}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
+os:
+    background: '#000000'
+    foreground: '#ffffff'
+    options:
+        alpine: 
+        arch: 
+        centos: 
+        debian: 
+        elementary: 
+        fedora: 
+        gentoo: 
+        linux: 
+        macos: 
+        manjaro: 
+        mint: 
+        opensuse: 
+        raspbian: 
+        ubuntu: 
+        windows: 
+    style: plain
+    template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
+path:
+    background: '#272727'
+    foreground: '#43CCEA'
+    options:
+        folder_icon: 
+        folder_separator_icon: ' <#000000> </>'
+        home_icon: 
+        style: agnoster_short
+    style: plain
+    template: ' {{ .Path }} '
+prompt:
+    - segments:
+        - root
+        - os
+        - path
+        - git
+        - executiontime
+    - segments:
+        - status
+root:
+    background: '#000000'
+    foreground: '#dd1e1e'
+    style: plain
+    template: ' ⚡'
+rprompt:
+    - segments:
+        - session
+        - time
+session:
+    background: '#272727'
+    foreground: '#43CCEA'
+    leading_separator: 
+    style: diamond
+    template: ' {{ if .SSHSession }} {{ end }}{{ .UserName }}<transparent> / </>{{ .HostName }}'
+status:
+    foreground: '#00ff0d'
+    foreground_templates:
+        - '{{ if gt .Code 0 }}#ff0000{{ end }}'
+    options:
+        always_enabled: true
+    style: plain
+    template: ' '
+time:
+    background: '#272727'
+    foreground: '#43CCEA'
+    options:
+        time_format: 3:04:05 PM
+    style: diamond
+    template: '<#000000>  </>{{ .CurrentDate | date .Format }} '
+    trailing_separator: 
+version: 4
