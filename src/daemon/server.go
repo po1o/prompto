@@ -3,11 +3,11 @@ package daemon
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -22,23 +22,22 @@ import (
 	"google.golang.org/grpc"
 )
 
-const defaultConfigReloadPollInterval = 250 * time.Millisecond
-
 type Server struct {
 	ipc.UnimplementedDaemonServiceServer
-	core           *Daemon
-	configPath     string
-	lockFile       *LockFile
 	listener       net.Listener
-	grpcServer     *grpc.Server
 	done           chan struct{}
-	shutdownOnce   sync.Once
+	lockFile       *LockFile
+	grpcServer     *grpc.Server
+	core           *Daemon
 	configCache    *ConfigCache
 	configWatcher  *ConfigWatcher
 	binaryWatcher  *BinaryWatcher
 	deviceCache    *DeviceCache
+	configReloadCh chan struct{}
 	segmentToggles map[string]map[string]bool
+	configPath     string
 	toggleMu       sync.RWMutex
+	shutdownOnce   sync.Once
 }
 
 func NewServer(configPath string) (*Server, error) {
@@ -55,17 +54,18 @@ func NewServer(configPath string) (*Server, error) {
 		lockFile:       lockFile,
 		done:           make(chan struct{}),
 		deviceCache:    NewDeviceCache(),
+		configReloadCh: make(chan struct{}, 1),
 		segmentToggles: make(map[string]map[string]bool),
 	}
 	server.core = NewFromConfigWithDeviceCache(resolvedPath, nil, server.deviceCache)
 
 	configCache := NewConfigCache()
-	configWatcher, err := NewConfigWatcher(configCache)
+	configWatcher, err := NewConfigWatcher(configCache, server.requestConfigReload)
 	if err == nil {
 		server.configCache = configCache
 		server.configWatcher = configWatcher
 		server.refreshConfigWatches()
-		go server.configReloadLoop()
+		go server.configReloadWorker()
 	}
 
 	binaryPath, err := os.Executable()
@@ -284,64 +284,60 @@ func (server *Server) SetLogging(_ context.Context, request *ipc.SetLoggingReque
 	return &ipc.SetLoggingResponse{Success: true}, nil
 }
 
-func (server *Server) configReloadLoop() {
-	missing := false
-	ticker := time.NewTicker(defaultConfigReloadPollInterval)
-	defer ticker.Stop()
-
+func (server *Server) configReloadWorker() {
 	for {
 		select {
 		case <-server.done:
 			return
-		case <-ticker.C:
+		case <-server.configReloadCh:
 			if server.configCache == nil || server.configPath == "" {
 				continue
 			}
 
-			_, ok := server.configCache.Get(server.configPath)
-			if ok {
-				missing = false
-				continue
-			}
-
-			if missing {
-				continue
-			}
-
-			missing = true
 			server.core.Reload(func() {
 				cache.Set(cache.Device, config.RELOAD, true, cache.INFINITE)
 				server.core.Reset()
 			})
 
-			if server.refreshConfigWatches() {
-				missing = false
-			}
+			server.refreshConfigWatches()
 		}
 	}
 }
 
-func (server *Server) refreshConfigWatches() bool {
+func (server *Server) requestConfigReload(configPath string) {
+	if configPath == "" || configPath != server.configPath {
+		return
+	}
+
+	select {
+	case <-server.done:
+		return
+	default:
+	}
+
+	select {
+	case server.configReloadCh <- struct{}{}:
+	default:
+	}
+}
+
+func (server *Server) refreshConfigWatches() {
 	if server.configWatcher == nil || server.configCache == nil || server.configPath == "" {
-		return false
+		return
 	}
 
 	cfg, err := config.Parse(server.configPath)
 	if err != nil {
-		return false
+		return
 	}
 
 	server.configCache.Set(server.configPath, cfg, cfg.FilePaths)
-	return server.configWatcher.Watch(server.configPath, cfg.FilePaths) == nil
+	_ = server.configWatcher.Watch(server.configPath, cfg.FilePaths)
 }
 
 func resolveServerConfigPath(configPath string) string {
 	if configPath == "" {
 		return ""
-	}
-
-	if strings.HasPrefix(configPath, "https://") || strings.HasPrefix(configPath, "http://") {
-		return configPath
 	}
 
 	resolved := pathRuntime.ReplaceTildePrefixWithHomeDir(configPath)
@@ -402,9 +398,7 @@ func cloneToggleMap(source map[string]bool) map[string]bool {
 	}
 
 	cloned := make(map[string]bool, len(source))
-	for key, value := range source {
-		cloned[key] = value
-	}
+	maps.Copy(cloned, source)
 
 	return cloned
 }

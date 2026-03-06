@@ -68,6 +68,7 @@ type Environment interface {
 }
 
 type Flags struct {
+	SegmentToggles map[string]bool
 	Type           string
 	PipeStatus     string
 	ConfigPath     string
@@ -78,19 +79,18 @@ type Flags struct {
 	PWD            string
 	AbsolutePWD    string
 	VimMode        string
-	ErrorCode      int
-	PromptCount    int
+	ConfigHash     uint64
 	Column         int
 	TerminalWidth  int
 	ExecutionTime  float64
 	StackCount     int
-	ConfigHash     uint64
+	PromptCount    int
 	JobCount       int
-	HasExtra       bool
-	Strict         bool
+	ErrorCode      int
+	NoExitCode     bool
 	Debug          bool
 	Cleared        bool
-	NoExitCode     bool
+	Strict         bool
 	Init           bool
 	Migrate        bool
 	Eval           bool
@@ -99,7 +99,7 @@ type Flags struct {
 	Plain          bool
 	Force          bool
 	Daemon         bool
-	SegmentToggles map[string]bool
+	HasExtra       bool
 }
 
 type CommandError struct {

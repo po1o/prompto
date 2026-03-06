@@ -35,8 +35,6 @@ const (
 	AUTOUPGRADE   = "upgrade"
 	UPGRADENOTICE = "notice"
 	RELOAD        = "reload"
-
-	Version = 4
 )
 
 type Action string
@@ -88,7 +86,6 @@ type Config struct {
 	ITermFeatures           terminal.ITermFeatures `json:"iterm_features,omitempty" toml:"iterm_features,omitempty" yaml:"iterm_features,omitempty"`
 	Tooltips                []*Segment             `json:"tooltips,omitempty" toml:"tooltips,omitempty" yaml:"tooltips,omitempty"`
 	hash                    uint64
-	Version                 int  `json:"version" toml:"version" yaml:"version"`
 	DaemonTimeout           int  `json:"daemon_timeout,omitempty" toml:"daemon_timeout,omitempty" yaml:"daemon_timeout,omitempty"`
 	MigrateGlyphs           bool `json:"-" toml:"-" yaml:"-"`
 	Async                   bool `json:"async,omitempty" toml:"async,omitempty" yaml:"async,omitempty"`

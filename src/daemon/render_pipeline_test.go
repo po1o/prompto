@@ -13,10 +13,10 @@ import (
 )
 
 type rendererStub struct {
+	lastPrimary   string
 	renderedCalls []string
 	callCount     int
 	mu            sync.Mutex
-	lastPrimary   string
 }
 
 func (renderer *rendererStub) Bundle(_ *prompt.Engine, primary string) PromptBundle {

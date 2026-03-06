@@ -9,11 +9,11 @@ import (
 )
 
 type PromptBundle struct {
+	Extras    map[string]string
 	Primary   string
 	RPrompt   string
 	Secondary string
 	Transient string
-	Extras    map[string]string
 }
 
 type PromptUpdate struct {

@@ -262,7 +262,6 @@ session:
 
 func TestParseCompiledYAMLAllowsVimModeTopLevelConfig(t *testing.T) {
 	raw := `
-version: 4
 vim-mode:
   enabled: true
   cursor_shape: true

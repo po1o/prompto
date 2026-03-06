@@ -54,9 +54,6 @@ func LoadCompiled(configFile string) (*CompiledConfig, error) {
 
 	data, err := getData(configFile)
 	if err != nil {
-		if strings.HasPrefix(configFile, "https://") {
-			return nil, ErrURLFetch
-		}
 		return nil, ErrFileNotFound
 	}
 

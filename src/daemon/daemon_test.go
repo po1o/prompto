@@ -153,8 +153,8 @@ func TestDaemonAutoStopsAfterIdleTimeoutWithoutTrackedSessions(t *testing.T) {
 }
 
 func TestDaemonNewFromConfigUsesConfiguredIdleTimeout(t *testing.T) {
-	configPath := filepath.Join(t.TempDir(), "daemon.omp.json")
-	err := os.WriteFile(configPath, []byte(`{"version":4,"daemon_idle_timeout":"2"}`), 0o644)
+	configPath := filepath.Join(t.TempDir(), "daemon.omp.yaml")
+	err := os.WriteFile(configPath, []byte("daemon_idle_timeout: \"2\"\n"), 0o644)
 	require.NoError(t, err)
 
 	daemon := NewFromConfig(configPath, &rendererStub{})

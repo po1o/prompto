@@ -16,8 +16,8 @@ type SegmentRenderValue struct {
 
 type deviceCacheEntry struct {
 	expiresAt time.Time
-	infinite  bool
 	value     SegmentRenderValue
+	infinite  bool
 }
 
 type DeviceCache struct {

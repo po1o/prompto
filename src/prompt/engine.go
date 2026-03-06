@@ -18,34 +18,34 @@ import (
 var cycle *color.Cycle = &color.Cycle{}
 
 type Engine struct {
+	deviceCache           DeviceCache
 	Env                   runtime.Environment
-	segmentStates         map[string]*segmentAsyncState
-	sharedProviders       map[config.SegmentType]*onceProvider[sharedExecutionResult]
-	CompiledConfig        *config.CompiledConfig
+	folderCache           map[string]segmentRenderCache
+	activeSegment         *config.Segment
 	sharedProviderFactory map[config.SegmentType]sharedProviderFactory
 	updateCallback        func(string)
 	Config                *config.Config
 	sessionCache          map[string]segmentRenderCache
-	folderCache           map[string]segmentRenderCache
-	activeSegment         *config.Segment
+	sharedProviders       map[config.SegmentType]*onceProvider[sharedExecutionResult]
+	CompiledConfig        *config.CompiledConfig
 	previousActiveSegment *config.Segment
 	pendingSegments       map[string]bool
 	cachedValues          map[string]string
 	segmentCacheKeys      map[string]string
-	streamingBlocks       []*config.Block
+	segmentStates         map[string]*segmentAsyncState
 	Overflow              config.Overflow
 	rprompt               string
 	prompt                strings.Builder
-	rpromptLength         int
+	streamingBlocks       []*config.Block
 	Padding               int
 	currentLineLength     int
+	rpromptLength         int
 	cacheMu               sync.Mutex
 	sharedProviderMu      sync.Mutex
 	streamingMu           sync.Mutex
 	stateMu               sync.Mutex
 	Plain                 bool
 	forceRender           bool
-	deviceCache           DeviceCache
 }
 
 const (

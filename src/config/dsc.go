@@ -28,15 +28,15 @@ func DSC() *Resource {
 }
 
 type Configuration struct {
-	Format string `json:"format,omitempty" jsonschema:"title=Format,description=The format of the configuration file,enum=json,enum=jsonc,enum=yaml,enum=yml,enum=toml,enum=tml"`
+	Format string `json:"format,omitempty" jsonschema:"title=Format,description=The format of the configuration file,enum=yaml,enum=yml"`
 	Source string `json:"source,omitempty" jsonschema:"title=Source,description=The source of the configuration file"`
 	Config
 	resolved bool `json:"-"`
 }
 
 func (s *Resource) Add(configPath string) {
-	if configPath == "" || strings.HasPrefix(configPath, "http") {
-		log.Debug("local configuration not provided or remote configuration, skipping")
+	if configPath == "" {
+		log.Debug("local configuration not provided, skipping")
 		return
 	}
 
@@ -60,9 +60,7 @@ func (c *Configuration) Apply() error {
 	}
 
 	formats := map[string][]string{
-		JSON: {".json", ".jsonc"},
 		YAML: {".yaml", ".yml"},
-		TOML: {".toml", ".tml"},
 	}
 
 	if !slices.Contains(formats[c.Format], filepath.Ext(c.Source)) {
@@ -119,9 +117,9 @@ func (c *Configuration) Resolve() (*Configuration, bool) {
 	c.Config = *data
 	c.Format = data.Format
 
-	// Skip if no extends, http URL
-	if data.Extends == "" || strings.HasPrefix(data.Extends, "http") {
-		log.Debug("No extends found or remote configuration")
+	// Skip if no extends.
+	if data.Extends == "" {
+		log.Debug("No extends found")
 		return c, false
 	}
 

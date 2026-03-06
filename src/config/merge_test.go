@@ -20,18 +20,15 @@ func TestConfigMerge(t *testing.T) {
 		{
 			name: "merge basic options",
 			baseConfig: &Config{
-				Version:     3,
 				FinalSpace:  true,
 				Async:       false,
 				AccentColor: "red",
 			},
 			overrideConfig: &Config{
-				Version:    3,
 				FinalSpace: false,
 				Async:      true,
 			},
 			expectedResult: &Config{
-				Version:     3,
 				FinalSpace:  false,
 				Async:       true,
 				AccentColor: "red",
@@ -42,12 +39,10 @@ func TestConfigMerge(t *testing.T) {
 		{
 			name: "merge with nil override",
 			baseConfig: &Config{
-				Version:    3,
 				FinalSpace: true,
 			},
 			overrideConfig: nil,
 			expectedResult: &Config{
-				Version:    3,
 				FinalSpace: true,
 			},
 			expectError: true,
@@ -56,15 +51,12 @@ func TestConfigMerge(t *testing.T) {
 			name: "merge console title template",
 			baseConfig: &Config{
 				ConsoleTitleTemplate: "Base Title",
-				Version:              3,
 			},
 			overrideConfig: &Config{
 				ConsoleTitleTemplate: "Override Title",
-				Version:              3,
 			},
 			expectedResult: &Config{
 				ConsoleTitleTemplate: "Override Title",
-				Version:              3,
 				extended:             true,
 			},
 			expectError: false,
@@ -76,14 +68,12 @@ func TestConfigMerge(t *testing.T) {
 					"base_var":   "base_value",
 					"shared_var": "base_shared",
 				},
-				Version: 3,
 			},
 			overrideConfig: &Config{
 				Var: map[string]any{
 					"added_var":  "added_value",
 					"shared_var": "override_shared",
 				},
-				Version: 3,
 			},
 			expectedResult: &Config{
 				Var: map[string]any{
@@ -91,7 +81,6 @@ func TestConfigMerge(t *testing.T) {
 					"added_var":  "added_value",
 					"shared_var": "override_shared",
 				},
-				Version:  3,
 				extended: true,
 			},
 			expectError: false,
@@ -108,7 +97,6 @@ func TestConfigMerge(t *testing.T) {
 						},
 					},
 				},
-				Version: 3,
 			},
 			overrideConfig: &Config{
 				Blocks: []*Block{
@@ -120,7 +108,6 @@ func TestConfigMerge(t *testing.T) {
 						},
 					},
 				},
-				Version: 3,
 			},
 			expectedResult: &Config{
 				Blocks: []*Block{
@@ -132,7 +119,6 @@ func TestConfigMerge(t *testing.T) {
 						},
 					},
 				},
-				Version:  3,
 				extended: true,
 			},
 			expectError: false,
@@ -149,7 +135,6 @@ func TestConfigMerge(t *testing.T) {
 						},
 					},
 				},
-				Version: 3,
 			},
 			overrideConfig: &Config{
 				Blocks: []*Block{
@@ -161,7 +146,6 @@ func TestConfigMerge(t *testing.T) {
 						},
 					},
 				},
-				Version: 3,
 			},
 			expectedResult: &Config{
 				Blocks: []*Block{
@@ -173,7 +157,6 @@ func TestConfigMerge(t *testing.T) {
 						},
 					},
 				},
-				Version:  3,
 				extended: true,
 			},
 			expectError: false,
@@ -191,7 +174,6 @@ func TestConfigMerge(t *testing.T) {
 						},
 					},
 				},
-				Version: 3,
 			},
 			overrideConfig: &Config{
 				Blocks: []*Block{
@@ -203,7 +185,6 @@ func TestConfigMerge(t *testing.T) {
 						},
 					},
 				},
-				Version: 3,
 			},
 			expectedResult: &Config{
 				Blocks: []*Block{
@@ -216,7 +197,6 @@ func TestConfigMerge(t *testing.T) {
 						},
 					},
 				},
-				Version:  3,
 				extended: true,
 			},
 			expectError: false,
@@ -234,7 +214,6 @@ func TestConfigMerge(t *testing.T) {
 						},
 					},
 				},
-				Version: 3,
 			},
 			overrideConfig: &Config{
 				Blocks: []*Block{
@@ -245,7 +224,6 @@ func TestConfigMerge(t *testing.T) {
 						},
 					},
 				},
-				Version: 3,
 			},
 			expectedResult: &Config{
 				Blocks: []*Block{
@@ -259,7 +237,6 @@ func TestConfigMerge(t *testing.T) {
 						},
 					},
 				},
-				Version:  3,
 				extended: true,
 			},
 			expectError: false,
@@ -271,14 +248,12 @@ func TestConfigMerge(t *testing.T) {
 					"primary":   "blue",
 					"secondary": "green",
 				},
-				Version: 3,
 			},
 			overrideConfig: &Config{
 				Palette: color.Palette{
 					"primary": "red",
 					"accent":  "yellow",
 				},
-				Version: 3,
 			},
 			expectedResult: &Config{
 				Palette: color.Palette{
@@ -286,7 +261,6 @@ func TestConfigMerge(t *testing.T) {
 					"secondary": "green",
 					"accent":    "yellow",
 				},
-				Version:  3,
 				extended: true,
 			},
 			expectError: false,
@@ -295,15 +269,12 @@ func TestConfigMerge(t *testing.T) {
 			name: "preserve extends field",
 			baseConfig: &Config{
 				Extends: "/path/to/base.json",
-				Version: 3,
 			},
 			overrideConfig: &Config{
 				Extends: "/path/to/override.json",
-				Version: 3,
 			},
 			expectedResult: &Config{
 				Extends:  "/path/to/base.json",
-				Version:  3,
 				extended: true,
 			},
 			expectError: false,
@@ -314,20 +285,17 @@ func TestConfigMerge(t *testing.T) {
 				Tooltips: []*Segment{
 					{Type: "git", Tips: []string{"git"}},
 				},
-				Version: 3,
 			},
 			overrideConfig: &Config{
 				Tooltips: []*Segment{
 					{Type: "path", Tips: []string{"pwd"}},
 				},
-				Version: 3,
 			},
 			expectedResult: &Config{
 				Tooltips: []*Segment{
 					{Type: "git", Tips: []string{"git"}},
 					{Type: "path", Tips: []string{"pwd"}},
 				},
-				Version:  3,
 				extended: true,
 			},
 			expectError: false,
@@ -359,7 +327,7 @@ func TestConfigMergeEdgeCases(t *testing.T) {
 		{
 			name:           "nil base config",
 			baseConfig:     nil,
-			overrideConfig: &Config{Version: 3},
+			overrideConfig: &Config{},
 			expectError:    true,
 		},
 		{
@@ -374,11 +342,9 @@ func TestConfigMergeEdgeCases(t *testing.T) {
 				Blocks: []*Block{
 					{Alignment: "left", Type: "prompt"},
 				},
-				Version: 3,
 			},
 			overrideConfig: &Config{
-				Blocks:  []*Block{},
-				Version: 3,
+				Blocks: []*Block{},
 			},
 			expectError: false,
 		},

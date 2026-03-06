@@ -16,8 +16,8 @@ type SessionUpdateHub struct {
 }
 
 type updateWaiter struct {
-	after uint64
 	ch    chan UpdateSnapshot
+	after uint64
 }
 
 func NewSessionUpdateHub() *SessionUpdateHub {

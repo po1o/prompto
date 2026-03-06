@@ -29,13 +29,13 @@ You can choose to print the output to stdout, or export your config in the forma
 
 Example usage:
 
-> oh-my-posh config export --config ~/myconfig.omp.json --format toml
+> oh-my-posh config export --config ~/myconfig.omp.yaml --format yaml
 
-Exports the config file "~/myconfig.omp.json" in TOML format and prints the result to stdout.
+Exports the config file "~/myconfig.omp.yaml" in YAML format and prints the result to stdout.
 
-> oh-my-posh config export --output ~/new_config.omp.json
+> oh-my-posh config export --output ~/new_config.omp.yaml
 
-Exports the current config to "~/new_config.omp.json" (in JSON format).`,
+Exports the current config to "~/new_config.omp.yaml" (in YAML format).`,
 	Args: cobra.NoArgs,
 	Run: func(_ *cobra.Command, _ []string) {
 		if output == "" && format == "" {
@@ -59,14 +59,10 @@ Exports the current config to "~/new_config.omp.json" (in JSON format).`,
 		validateExportFormat := func() error {
 			format = strings.ToLower(format)
 			switch format {
-			case config.JSON, config.JSONC:
-				format = config.JSON
-			case config.TOML, config.TML:
-				format = config.TOML
 			case config.YAML, config.YML:
 				format = config.YAML
 			default:
-				formats := []string{config.JSON, config.JSONC, config.TOML, config.TML, config.YAML, config.YML}
+				formats := []string{config.YAML, config.YML}
 				// usage error
 				fmt.Printf("export format must be one of these: %s\n", strings.Join(formats, ", "))
 				exitcode = 2
@@ -113,7 +109,7 @@ func cleanOutputPath(output string) string {
 }
 
 func init() {
-	exportCmd.Flags().StringVarP(&format, "format", "f", "json", "config format to migrate to")
+	exportCmd.Flags().StringVarP(&format, "format", "f", "yaml", "config format to migrate to")
 	exportCmd.Flags().StringVarP(&output, "output", "o", "", "config file to export to")
 	configCmd.AddCommand(exportCmd)
 }

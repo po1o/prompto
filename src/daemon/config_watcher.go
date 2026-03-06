@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/jandedobbeleer/oh-my-posh/src/log"
@@ -20,6 +19,7 @@ import (
 type ConfigWatcher struct {
 	watcher     *fsnotify.Watcher
 	cache       *ConfigCache
+	onChange    func(string)
 	files       map[string]string
 	watchedDirs map[string]bool
 	done        chan struct{}
@@ -27,7 +27,7 @@ type ConfigWatcher struct {
 }
 
 // NewConfigWatcher creates a new config watcher.
-func NewConfigWatcher(cache *ConfigCache) (*ConfigWatcher, error) {
+func NewConfigWatcher(cache *ConfigCache, onChange func(string)) (*ConfigWatcher, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -36,6 +36,7 @@ func NewConfigWatcher(cache *ConfigCache) (*ConfigWatcher, error) {
 	cw := &ConfigWatcher{
 		watcher:     watcher,
 		cache:       cache,
+		onChange:    onChange,
 		files:       make(map[string]string),
 		watchedDirs: make(map[string]bool),
 		done:        make(chan struct{}),
@@ -66,11 +67,6 @@ func (cw *ConfigWatcher) Watch(configPath string, filePaths []string) error {
 	defer cw.mu.Unlock()
 
 	for _, filePath := range filePaths {
-		// Skip remote files
-		if strings.HasPrefix(filePath, "https://") || strings.HasPrefix(filePath, "http://") {
-			continue
-		}
-
 		// Helper to add a file to watch
 		addWatch := func(path string) {
 			// Skip if already tracking this file
@@ -161,5 +157,8 @@ func (cw *ConfigWatcher) handleEvent(event fsnotify.Event) {
 	if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Remove|fsnotify.Rename) != 0 {
 		log.Debugf("config file changed (%s): %s", event.Op, event.Name)
 		cw.cache.Invalidate(configPath)
+		if cw.onChange != nil {
+			cw.onChange(configPath)
+		}
 	}
 }

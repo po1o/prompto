@@ -19,7 +19,6 @@ func Default(configError error) *Config {
 
 	cfg := &Config{
 		hash:       1234567890, // placeholder hash value
-		Version:    4,
 		FinalSpace: true,
 		Blocks: []*Block{
 			{

@@ -20,19 +20,18 @@ func TestServerToggleSegmentIsSessionScoped(t *testing.T) {
 	t.Setenv("XDG_STATE_HOME", socketDir)
 	t.Setenv("XDG_RUNTIME_DIR", socketDir)
 
-	configPath := filepath.Join(t.TempDir(), "daemon-toggle.omp.json")
-	config := `{
-  "version": 4,
-  "blocks": [
-    {
-      "type": "prompt",
-      "segments": [
-        { "type": "text", "alias": "left", "template": "A" },
-        { "type": "text", "alias": "right", "template": "B" }
-      ]
-    }
-  ]
-}`
+	configPath := filepath.Join(t.TempDir(), "daemon-toggle.omp.yaml")
+	config := `
+blocks:
+  - type: prompt
+    segments:
+      - type: text
+        alias: left
+        template: A
+      - type: text
+        alias: right
+        template: B
+`
 
 	require.NoError(t, os.WriteFile(configPath, []byte(config), 0o644))
 
@@ -68,18 +67,14 @@ func TestServerSetLoggingWritesFile(t *testing.T) {
 	t.Setenv("XDG_STATE_HOME", socketDir)
 	t.Setenv("XDG_RUNTIME_DIR", socketDir)
 
-	configPath := filepath.Join(t.TempDir(), "daemon-log.omp.json")
-	config := `{
-  "version": 4,
-  "blocks": [
-    {
-      "type": "prompt",
-      "segments": [
-        { "type": "text", "template": "LOG" }
-      ]
-    }
-  ]
-}`
+	configPath := filepath.Join(t.TempDir(), "daemon-log.omp.yaml")
+	config := `
+blocks:
+  - type: prompt
+    segments:
+      - type: text
+        template: LOG
+`
 
 	require.NoError(t, os.WriteFile(configPath, []byte(config), 0o644))
 

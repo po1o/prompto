@@ -1,24 +1,18 @@
 package daemon
 
 import (
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/jandedobbeleer/oh-my-posh/src/config"
 )
 
-// remoteTTL is the cache expiration time for remote (https://) configs.
-const remoteTTL = 5 * time.Minute
-
 // CachedConfig holds a parsed config with metadata.
 type CachedConfig struct {
 	LoadedAt  time.Time
-	ExpiresAt time.Time
 	Config    *config.Config
 	FilePaths []string
 	Hash      uint64
-	IsRemote  bool
 }
 
 // ConfigCache manages cached configs by path.
@@ -36,7 +30,7 @@ func NewConfigCache() *ConfigCache {
 }
 
 // Get retrieves a cached config by path.
-// Returns nil and false if not found or expired.
+// Returns nil and false if not found.
 func (c *ConfigCache) Get(configPath string) (*CachedConfig, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -46,28 +40,16 @@ func (c *ConfigCache) Get(configPath string) (*CachedConfig, bool) {
 		return nil, false
 	}
 
-	// Check TTL for remote configs
-	if cached.IsRemote && time.Now().After(cached.ExpiresAt) {
-		return nil, false
-	}
-
 	return cached, true
 }
 
 // Set stores a config in the cache.
 func (c *ConfigCache) Set(configPath string, cfg *config.Config, filePaths []string) *CachedConfig {
-	isRemote := strings.HasPrefix(configPath, "https://") || strings.HasPrefix(configPath, "http://")
-
 	cached := &CachedConfig{
 		Config:    cfg,
 		Hash:      cfg.Hash(),
 		LoadedAt:  time.Now(),
 		FilePaths: filePaths,
-		IsRemote:  isRemote,
-	}
-
-	if isRemote {
-		cached.ExpiresAt = time.Now().Add(remoteTTL)
 	}
 
 	c.mu.Lock()

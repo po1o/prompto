@@ -17,8 +17,8 @@ import (
 )
 
 type slowWriter struct {
-	delay time.Duration
 	text  string
+	delay time.Duration
 }
 
 func (w *slowWriter) Enabled() bool {
@@ -61,26 +61,19 @@ func TestPrimaryStreamingLongSegmentReturnsPendingThenUpdates(t *testing.T) {
 		delete(config.Segments, segmentType)
 	})
 
-	configPath := filepath.Join(t.TempDir(), "slow-streaming.omp.json")
-	cfg := `{
-  "version": 4,
-  "daemon_timeout": 50,
-  "blocks": [
-    {
-      "type": "prompt",
-      "segments": [
-        {
-          "type": "slow_test",
-          "alias": "slow.main",
-          "template": "SLOW",
-          "style": "plain",
-          "foreground": "#ffffff",
-          "background": "#000000"
-        }
-      ]
-    }
-  ]
-}`
+	configPath := filepath.Join(t.TempDir(), "slow-streaming.omp.yaml")
+	cfg := `
+daemon_timeout: 50
+blocks:
+  - type: prompt
+    segments:
+      - type: slow_test
+        alias: slow.main
+        template: SLOW
+        style: plain
+        foreground: "#ffffff"
+        background: "#000000"
+`
 	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
 
 	flags := &runtime.Flags{
@@ -138,7 +131,6 @@ func TestPrimaryStreamingCompiledLayoutReturnsPendingThenUpdates(t *testing.T) {
 
 	configPath := filepath.Join(t.TempDir(), "slow-streaming.omp.yaml")
 	cfg := `
-version: 4
 daemon_timeout: 50
 prompt:
   - segments: ["slow.main"]
@@ -188,7 +180,6 @@ slow.main:
 func TestPrimaryRepaintCompiledLayoutReEvaluatesVimSegment(t *testing.T) {
 	configPath := filepath.Join(t.TempDir(), "vim-repaint.omp.yaml")
 	cfg := `
-version: 4
 prompt:
   - segments: ["session"]
 rprompt:
