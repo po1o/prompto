@@ -161,7 +161,11 @@ func read(configFile string, h hash.Hash64) (*Config, error) {
 
 	var cfg Config
 	cfg.Source = configFile
-	cfg.Format = strings.TrimPrefix(filepath.Ext(configFile), ".")
+	format := strings.TrimPrefix(filepath.Ext(configFile), ".")
+	if format == YML {
+		format = YAML
+	}
+	cfg.Format = format
 
 	data, err := getData(configFile)
 	if err != nil {
@@ -173,16 +177,12 @@ func read(configFile string, h hash.Hash64) (*Config, error) {
 		return nil, ErrFileNotFound
 	}
 
-	var parseErr error
-	switch cfg.Format {
-	case YAML, YML:
-		cfg.Format = YAML
-		parseErr = yaml.Unmarshal(data, &cfg)
-	default:
+	if cfg.Format != YAML {
 		log.Errorf("unsupported config file format: %s", cfg.Format)
 		return nil, ErrInvalidExtension
 	}
 
+	parseErr := yaml.Unmarshal(data, &cfg)
 	if parseErr != nil {
 		log.Errorf("failed to parse config: %v", parseErr)
 		return nil, ErrParse

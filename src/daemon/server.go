@@ -101,12 +101,7 @@ func (server *Server) Start() error {
 		server.Stop()
 	}()
 
-	err = grpcServer.Serve(listener)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return grpcServer.Serve(listener)
 }
 
 func (server *Server) Done() <-chan struct{} {
@@ -154,14 +149,7 @@ func (server *Server) RenderPrompt(
 		flags.ConfigPath = server.configPath
 	}
 
-	sessionID := request.SessionId
-	if request.Pid > 0 {
-		sessionID = fmt.Sprint(request.Pid)
-	}
-
-	if sessionID == "" {
-		sessionID = "default"
-	}
+	sessionID := resolveServerSessionID(request.Pid, request.SessionId)
 
 	flags.SegmentToggles = server.sessionToggles(sessionID)
 
@@ -206,10 +194,7 @@ func (server *Server) ToggleSegment(
 	_ context.Context,
 	request *ipc.ToggleSegmentRequest,
 ) (*ipc.ToggleSegmentResponse, error) {
-	sessionID := request.SessionId
-	if sessionID == "" {
-		sessionID = "default"
-	}
+	sessionID := resolveServerSessionID(0, request.SessionId)
 
 	currentToggleSet := server.sessionToggles(sessionID)
 
@@ -267,17 +252,12 @@ func (server *Server) CacheGetTTL(_ context.Context, _ *ipc.CacheGetTTLRequest) 
 
 func (server *Server) SetLogging(_ context.Context, request *ipc.SetLoggingRequest) (*ipc.SetLoggingResponse, error) {
 	if request.Path == "" {
-		err := log.SetOutputPath("")
-		if err != nil {
-			return &ipc.SetLoggingResponse{Success: false, Error: err.Error()}, nil
-		}
-
-		return &ipc.SetLoggingResponse{Success: true}, nil
+		return loggingResponse(log.SetOutputPath(""))
 	}
 
 	log.Enable(true)
 	if err := log.SetOutputPath(request.Path); err != nil {
-		return &ipc.SetLoggingResponse{Success: false, Error: err.Error()}, nil
+		return loggingResponse(err)
 	}
 	log.Debug("daemon logging to file")
 
@@ -408,4 +388,24 @@ func cloneToggleMap(source map[string]bool) map[string]bool {
 	maps.Copy(cloned, source)
 
 	return cloned
+}
+
+func resolveServerSessionID(pid int32, sessionID string) string {
+	if pid > 0 {
+		return fmt.Sprint(pid)
+	}
+
+	if sessionID == "" {
+		return "default"
+	}
+
+	return sessionID
+}
+
+func loggingResponse(err error) (*ipc.SetLoggingResponse, error) {
+	if err != nil {
+		return &ipc.SetLoggingResponse{Success: false, Error: err.Error()}, nil
+	}
+
+	return &ipc.SetLoggingResponse{Success: true}, nil
 }

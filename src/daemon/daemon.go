@@ -106,13 +106,7 @@ func (daemon *Daemon) CompleteSession(sessionID string) {
 		return
 	}
 
-	if daemon.sessions.Count() != 0 {
-		return
-	}
-
-	daemon.mu.Lock()
-	daemon.scheduleIdleStopLocked()
-	daemon.mu.Unlock()
+	daemon.scheduleIdleIfNoSessions()
 }
 
 func (daemon *Daemon) Reload(action func()) {
@@ -205,6 +199,17 @@ func (daemon *Daemon) onSessionUnregister(pid int) {
 }
 
 func (daemon *Daemon) onAllSessionsEnded() {
+	// Called from SessionManager while its lock is held; avoid re-entering sessions locks here.
+	daemon.mu.Lock()
+	daemon.scheduleIdleStopLocked()
+	daemon.mu.Unlock()
+}
+
+func (daemon *Daemon) scheduleIdleIfNoSessions() {
+	if daemon.sessions.Count() != 0 {
+		return
+	}
+
 	daemon.mu.Lock()
 	daemon.scheduleIdleStopLocked()
 	daemon.mu.Unlock()
