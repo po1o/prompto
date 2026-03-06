@@ -176,9 +176,11 @@ function _prompto_zle-line-init() {
   (( $+zle_bracketed_paste )) && print -r -n - $zle_bracketed_paste[2]
 
   if [[ $_prompto_daemon_mode == 1 ]]; then
-    # Always use daemon-provided transient prompt in daemon mode.
-    # If it's empty (e.g. first render), fall back to an empty prompt instead of CLI rendering.
-    PS1=${_prompto_transient_prompt-}
+    # Only apply transient prompt when configured and non-empty.
+    # If no transient segment is configured, keep the current primary prompt.
+    if [[ $_prompto_transient_enabled == 1 ]] && [[ -n ${_prompto_transient_prompt-} ]]; then
+      PS1=$_prompto_transient_prompt
+    fi
   else
     # We need this workaround because when the `filler` is set,
     # there will be a redundant blank line below the transient prompt if the input is empty.
@@ -245,6 +247,7 @@ function _prompto_create_widget() {
 _prompto_daemon_mode=0
 _prompto_daemon_fd=
 _prompto_transient_prompt=
+_prompto_transient_enabled=0
 
 # Vim mode variables
 _prompto_vim_mode=0
@@ -340,6 +343,10 @@ function _prompto_daemon_precmd() {
 # Pass --repaint for vim mode toggles (soft cancel, reuse computations)
 function _prompto_daemon_render() {
   local repaint_flag=$1
+  local config_arg=""
+  if [[ -n $_prompto_config ]]; then
+    config_arg="--config=$_prompto_config"
+  fi
 
   # Clean up any existing fd handler from previous render
   if [[ -n $_prompto_daemon_fd ]]; then
@@ -355,7 +362,7 @@ function _prompto_daemon_render() {
 
   local fd
   exec {fd}< <($_prompto_executable render \
-    --config=$_prompto_config \
+    $config_arg \
     --shell=zsh \
     --shell-version=$ZSH_VERSION \
     --pwd="$PWD" \
@@ -437,8 +444,13 @@ function _prompto_daemon_handler() {
 }
 
 function enable_prompto_daemon() {
+  local config_arg=""
+  if [[ -n $_prompto_config ]]; then
+    config_arg="--config=$_prompto_config"
+  fi
+
   # Start daemon if not running
-  $_prompto_executable daemon start --config=$_prompto_config --silent >/dev/null 2>&1 &!
+  $_prompto_executable daemon start $config_arg --silent >/dev/null 2>&1 &!
 
   # Replace precmd with daemon version
   _prompto_daemon_mode=1

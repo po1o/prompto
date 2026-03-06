@@ -11,7 +11,7 @@ func TestZshFeatures(t *testing.T) {
 
 	want := `// these are the features
 enable_prompto_tooltips
-_prompto_create_widget zle-line-init _prompto_zle-line-init
+_prompto_transient_enabled=1; _prompto_create_widget zle-line-init _prompto_zle-line-init
 _prompto_ftcs_marks=1
 "$_prompto_executable" upgrade --auto
 "$_prompto_executable" notice

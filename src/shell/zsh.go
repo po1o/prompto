@@ -14,7 +14,7 @@ func (f Features) Zsh() Code {
 	case Tooltips:
 		return "enable_prompto_tooltips"
 	case Transient:
-		return "_prompto_create_widget zle-line-init _prompto_zle-line-init"
+		return "_prompto_transient_enabled=1; _prompto_create_widget zle-line-init _prompto_zle-line-init"
 	case FTCSMarks:
 		return unixFTCSMarks
 	case Upgrade:

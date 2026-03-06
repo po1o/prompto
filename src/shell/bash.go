@@ -49,7 +49,8 @@ func (f Features) Bash() Code {
 			return ""
 		}
 
-		return `bleopt prompt_ps1_transient=always
+		return `_prompto_transient_enabled=1
+bleopt prompt_ps1_transient=always
 bleopt prompt_ps1_final='$(
     "$_prompto_executable" render transient \
         --shell=bash \

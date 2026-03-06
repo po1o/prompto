@@ -174,6 +174,7 @@ _prompto_install_hook
 _prompto_daemon_mode=0
 _prompto_config=::CONFIG::
 _prompto_transient_prompt=''
+_prompto_transient_enabled=0
 
 # Vim mode variables
 _prompto_vim_mode=0
@@ -250,7 +251,9 @@ function _prompto_daemon_parse_line() {
             PS2="$text"
             ;;
         transient)
-            _prompto_transient_prompt="$text"
+            if [[ $_prompto_transient_enabled == 1 ]]; then
+                _prompto_transient_prompt="$text"
+            fi
             ;;
     esac
 }
@@ -281,6 +284,10 @@ function _prompto_daemon_job() {
 # Pass --repaint for vim mode toggles (soft cancel, reuse computations)
 function _prompto_daemon_render() {
     local repaint_flag="$1"
+    local config_arg=""
+    if [[ -n "$_prompto_config" ]]; then
+        config_arg="--config=$_prompto_config"
+    fi
 
     local vim_mode_arg=""
     if [[ $_prompto_vim_mode == 1 ]]; then
@@ -290,7 +297,7 @@ function _prompto_daemon_render() {
     # Run the render command in the background using ble.sh job system
     ble/util/job.start \
         "$_prompto_executable" render \
-            --config=$_prompto_config \
+            $config_arg \
             --shell=bash \
             --shell-version=$BASH_VERSION \
             --pwd=$PWD \
@@ -341,8 +348,13 @@ function enable_prompto_daemon() {
         return
     fi
 
+    local config_args=()
+    if [[ -n "$_prompto_config" ]]; then
+        config_args=(--config="$_prompto_config")
+    fi
+
     # Start daemon
-    "$_prompto_executable" daemon start --config="$_prompto_config" --silent >/dev/null 2>&1 &
+    "$_prompto_executable" daemon start "${config_args[@]}" --silent >/dev/null 2>&1 &
 
     _prompto_daemon_mode=1
 
@@ -354,7 +366,7 @@ function enable_prompto_daemon() {
     blehook keymap_vi_load+=_prompto_register_vim_hooks
 
     # Transient prompt configuration
-    if [[ -n "$_prompto_transient_prompt" ]]; then
+    if [[ $_prompto_transient_enabled == 1 ]] && [[ -n "$_prompto_transient_prompt" ]]; then
         bleopt prompt_ps1_transient=always
         bleopt prompt_ps1_final='$_prompto_transient_prompt'
     fi

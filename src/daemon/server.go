@@ -324,7 +324,7 @@ func (server *Server) refreshConfigWatches() {
 
 func resolveServerConfigPath(configPath string) string {
 	if configPath == "" {
-		return ""
+		return filepath.Clean(defaultServerConfigPath())
 	}
 
 	resolved := pathRuntime.ReplaceTildePrefixWithHomeDir(configPath)
@@ -334,6 +334,10 @@ func resolveServerConfigPath(configPath string) string {
 	}
 
 	return filepath.Clean(absolutePath)
+}
+
+func defaultServerConfigPath() string {
+	return config.DefaultPath()
 }
 
 func makePromptResponse(responseType, requestID string, bundle PromptBundle) *ipc.PromptResponse {

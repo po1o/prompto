@@ -353,7 +353,9 @@ function _prompto_daemon_repaint --on-signal USR1
                 case right
                     set --global _prompto_current_rprompt $text
                 case transient
-                    set --global _prompto_current_transient $text
+                    if test $_prompto_transient_prompt = 1
+                        set --global _prompto_current_transient $text
+                    end
                 case secondary
                     set --global _prompto_current_secondary $text
             end
@@ -365,8 +367,13 @@ function _prompto_daemon_repaint --on-signal USR1
 end
 
 function enable_prompto_daemon
+    set --local config_arg
+    if test -n "$_prompto_config"
+        set config_arg "--config=$_prompto_config"
+    end
+
     # Start daemon if not running
-    $_prompto_executable daemon start --config=$_prompto_config --silent &>/dev/null &
+    $_prompto_executable daemon start $config_arg --silent &>/dev/null &
     disown
     set --global _prompto_daemon_mode 1
     set --global _prompto_daemon_prompt_file /tmp/prompto_fish_prompt_$fish_pid
@@ -401,8 +408,13 @@ function _prompto_daemon_reader
     set --local repaint_flag $argv[3]
     set --local vim_mode_arg $argv[4]
 
+    set --local config_arg
+    if test -n "$_prompto_config"
+        set config_arg "--config=$_prompto_config"
+    end
+
     $_prompto_executable render \
-        --config=$_prompto_config \
+        $config_arg \
         --shell=fish \
         --shell-version=$FISH_VERSION \
         --pid=$parent_pid \
@@ -418,7 +430,9 @@ function _prompto_daemon_reader
         set --local type $parts[1]
 
         # Write prompt lines to temp file
-        if test "$type" = "primary" || test "$type" = "right" || test "$type" = "transient" || test "$type" = "secondary"
+        if test "$type" = "primary" || test "$type" = "right" || test "$type" = "secondary"
+            echo $line >> $prompt_file
+        else if test "$type" = "transient" && test $_prompto_transient_prompt = 1
             echo $line >> $prompt_file
         end
 

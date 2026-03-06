@@ -102,6 +102,34 @@ blocks:
 	stopTestServer(t, server)
 }
 
+func TestResolveServerConfigPathUsesXDGConfigHomeByDefault(t *testing.T) {
+	if libruntime.GOOS == windowsOS {
+		t.Skip("XDG config home is not used on windows")
+	}
+
+	xdgConfigHome := filepath.Join(t.TempDir(), "xdg-config")
+	t.Setenv("XDG_CONFIG_HOME", xdgConfigHome)
+	t.Setenv("HOME", "")
+
+	resolved := resolveServerConfigPath("")
+	expected := filepath.Join(xdgConfigHome, "prompto", "config.yaml")
+	require.Equal(t, filepath.Clean(expected), filepath.Clean(resolved))
+}
+
+func TestResolveServerConfigPathFallsBackToHomeDotConfig(t *testing.T) {
+	if libruntime.GOOS == windowsOS {
+		t.Skip("home fallback path differs on windows")
+	}
+
+	home := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", "")
+	t.Setenv("HOME", home)
+
+	resolved := resolveServerConfigPath("")
+	expected := filepath.Join(home, ".config", "prompto", "config.yaml")
+	require.Equal(t, filepath.Clean(expected), filepath.Clean(resolved))
+}
+
 func startTestServer(t *testing.T, configPath string) *Server {
 	t.Helper()
 

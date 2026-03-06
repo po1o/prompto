@@ -26,6 +26,7 @@ func TestBashFeaturesWithBLE(t *testing.T) {
 	got := allFeatures.Lines(BASH).String("// these are the features")
 
 	want := `// these are the features
+_prompto_transient_enabled=1
 bleopt prompt_ps1_transient=always
 bleopt prompt_ps1_final='$(
     "$_prompto_executable" render transient \

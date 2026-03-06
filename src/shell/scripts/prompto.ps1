@@ -571,8 +571,13 @@ New-Module -Name "prompto-core" -ScriptBlock {
             return
         }
 
+        $daemonArgs = @("daemon", "start")
+        if ($global:_promptoConfig) {
+            $daemonArgs += @("--config", "`"$global:_promptoConfig`"")
+        }
+
         # Start daemon if not running
-        Start-Process -FilePath $global:_promptoExecutable -ArgumentList "daemon", "start", "--config", "`"$global:_promptoConfig`"" -WindowStyle Hidden -ErrorAction SilentlyContinue
+        Start-Process -FilePath $global:_promptoExecutable -ArgumentList $daemonArgs -WindowStyle Hidden -ErrorAction SilentlyContinue
 
         $script:DaemonMode = $true
 
@@ -609,7 +614,11 @@ New-Module -Name "prompto-core" -ScriptBlock {
         $script:DaemonProcess = New-Object System.Diagnostics.Process
         $startInfo = $script:DaemonProcess.StartInfo
         $startInfo.FileName = $global:_promptoExecutable
-        $startInfo.Arguments = "render --config=`"$global:_promptoConfig`" --shell=$script:ShellName --shell-version=$script:PSVersion --pid=$PID --status=$script:ErrorCode --no-status=$script:NoExitCode --execution-time=$script:ExecutionTime --pswd=`"$nonFSWD`" --stack-count=$stackCount --terminal-width=$terminalWidth --job-count=$script:JobCount$vimModeArg$repaintFlag"
+        $configArg = ""
+        if ($global:_promptoConfig) {
+            $configArg = " --config=`"$global:_promptoConfig`""
+        }
+        $startInfo.Arguments = "render$configArg --shell=$script:ShellName --shell-version=$script:PSVersion --pid=$PID --status=$script:ErrorCode --no-status=$script:NoExitCode --execution-time=$script:ExecutionTime --pswd=`"$nonFSWD`" --stack-count=$stackCount --terminal-width=$terminalWidth --job-count=$script:JobCount$vimModeArg$repaintFlag"
         $startInfo.StandardOutputEncoding = [System.Text.Encoding]::UTF8
         $startInfo.RedirectStandardOutput = $true
         $startInfo.RedirectStandardError = $true

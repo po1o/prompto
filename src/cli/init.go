@@ -21,7 +21,6 @@ var (
 	printOutput bool
 	strict      bool
 	debug       bool
-	daemonMode  bool
 
 	initCmd = createInitCmd()
 )
@@ -53,7 +52,6 @@ See the documentation to initialize your shell: https://prompto.dev/docs/install
 	initCmd.Flags().BoolVarP(&strict, "strict", "s", false, "run in strict mode")
 	initCmd.Flags().BoolVar(&debug, "debug", false, "enable/disable debug mode")
 	initCmd.Flags().BoolVar(&eval, "eval", false, "output the full init script for eval")
-	initCmd.Flags().BoolVar(&daemonMode, "daemon", false, "enable daemon mode")
 
 	_ = initCmd.MarkPersistentFlagRequired("config")
 
@@ -78,9 +76,12 @@ func runInit(sh, command string) {
 	}
 	sh = normalizedShell
 
+	if configFlag == "" {
+		configFlag = config.DefaultPath()
+	}
+
 	cfg := config.Load(configFlag)
-	persist := !daemonMode
-	initCache(sh, persist)
+	initCache(sh)
 
 	flags := &runtime.Flags{
 		Shell:      sh,
@@ -91,7 +92,7 @@ func runInit(sh, command string) {
 		Init:       true,
 		Eval:       eval,
 		Plain:      plain,
-		Daemon:     daemonMode,
+		Daemon:     true,
 	}
 
 	env := &runtime.Terminal{}
@@ -100,10 +101,7 @@ func runInit(sh, command string) {
 	template.Init(env, cfg.Var, cfg.Maps)
 
 	defer func() {
-		if persist {
-			cfg.Store()
-		}
-
+		cfg.Store()
 		template.SaveCache()
 		if err := cache.Clear(false, shell.InitScriptName(env.Flags())); err != nil {
 			log.Error(err)
@@ -111,7 +109,7 @@ func runInit(sh, command string) {
 		cache.Close()
 	}()
 
-	feats := cfg.Features(env, daemonMode)
+	feats := cfg.Features(env, true)
 
 	var output string
 
@@ -172,7 +170,6 @@ func getFullCommand(cmd *cobra.Command, args []string) string {
 	return cmdPath
 }
 
-func initCache(sh string, persist bool) {
-	_ = persist
+func initCache(sh string) {
 	cache.Init(sh, cache.NoSession)
 }

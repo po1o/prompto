@@ -34,6 +34,8 @@ var (
 	ErrNoConfig         = Error{"NO CONFIG"}
 )
 
+const windowsOS = "windows"
+
 func Load(configFile string) *Config {
 	defer log.Trace(time.Now())
 
@@ -43,6 +45,25 @@ func Load(configFile string) *Config {
 	}
 
 	return cfg
+}
+
+func DefaultPath() string {
+	if runtimelib.GOOS == windowsOS {
+		if userConfigDir, err := os.UserConfigDir(); err == nil && userConfigDir != "" {
+			return filepath.Join(userConfigDir, "prompto", "config.yaml")
+		}
+	}
+
+	if xdgConfigHome := os.Getenv("XDG_CONFIG_HOME"); xdgConfigHome != "" {
+		return filepath.Join(xdgConfigHome, "prompto", "config.yaml")
+	}
+
+	home := path.Home()
+	if home == "" {
+		return filepath.Join(".config", "prompto", "config.yaml")
+	}
+
+	return filepath.Join(home, ".config", "prompto", "config.yaml")
 }
 
 func resolveConfigLocation(config string) string {
