@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/mock"
+	"github.com/po1o/prompto/src/segments/options"
 	"gopkg.in/ini.v1"
 
 	"github.com/stretchr/testify/assert"
@@ -121,10 +121,10 @@ func TestEnabledInWorktree(t *testing.T) {
 		{
 			Case:                  "separate git dir",
 			ExpectedEnabled:       true,
-			WorkingFolder:         TestRootPath + "dev/separate/.git/posh",
+			WorkingFolder:         TestRootPath + "dev/separate/.git/prompto",
 			ExpectedWorkingFolder: TestRootPath + "dev/",
 			ExpectedRealFolder:    TestRootPath + "dev/",
-			ExpectedRootFolder:    TestRootPath + "dev/separate/.git/posh",
+			ExpectedRootFolder:    TestRootPath + "dev/separate/.git/prompto",
 		},
 		{
 			Case:                  "worktree with relative gitdir path",
@@ -669,10 +669,10 @@ func TestGitCleanSSHURL(t *testing.T) {
 		{Case: "rsync no port, no user", Expected: "https://host.xz/path/to/repo", Upstream: "rsync://host.xz/path/to/repo.git/"},
 		{Case: "git no port, no user", Expected: "https://host.xz/path/to/repo", Upstream: "git://host.xz/path/to/repo.git"},
 		{Case: "gitea no port, no user", Expected: "https://src.example.com/user/repo", Upstream: "_gitea@src.example.com:user/repo.git"},
-		{Case: "git@ with user", Expected: "https://github.com/JanDeDobbeleer/oh-my-posh", Upstream: "git@github.com:JanDeDobbeleer/oh-my-posh"},
+		{Case: "git@ with user", Expected: "https://github.com/po1o/prompto", Upstream: "git@github.com:JanDeDobbeleer/prompto"},
 		{Case: "unsupported", Upstream: "\\test\\repo.git"},
-		{Case: "Azure DevOps, https", Expected: "https://dev.azure.com/posh/oh-my-posh/_git/website", Upstream: "https://posh@dev.azure.com/posh/oh-my-posh/_git/website"},
-		{Case: "Azure DevOps, ssh", Expected: "https://dev.azure.com/posh/oh-my-posh/_git/website", Upstream: "git@ssh.dev.azure.com:v3/posh/oh-my-posh/website"},
+		{Case: "Azure DevOps, https", Expected: "https://dev.azure.com/prompto/prompto/_git/website", Upstream: "https://prompto@dev.azure.com/prompto/prompto/_git/website"},
+		{Case: "Azure DevOps, ssh", Expected: "https://dev.azure.com/prompto/prompto/_git/website", Upstream: "git@ssh.dev.azure.com:v3/prompto/prompto/website"},
 	}
 	for _, tc := range cases {
 		g := &Git{}
@@ -1019,9 +1019,9 @@ func TestGitCommit(t *testing.T) {
 			Case: "Clean commit",
 			Output: `
 			an:Jan De Dobbeleer
-			ae:jan@ohmyposh.dev
+			ae:jan@prompto.dev
 			cn:Jan De Dobbeleer
-			ce:jan@ohmyposh.dev
+			ce:jan@prompto.dev
 			at:1673176335
 			su:docs(error): you can't use cross segment properties
 			ha:1234567891011121314
@@ -1030,11 +1030,11 @@ func TestGitCommit(t *testing.T) {
 			Expected: &Commit{
 				Author: &User{
 					Name:  "Jan De Dobbeleer",
-					Email: "jan@ohmyposh.dev",
+					Email: "jan@prompto.dev",
 				},
 				Committer: &User{
 					Name:  "Jan De Dobbeleer",
-					Email: "jan@ohmyposh.dev",
+					Email: "jan@prompto.dev",
 				},
 				Subject:   "docs(error): you can't use cross segment properties",
 				Timestamp: time.Unix(1673176335, 0),
@@ -1060,7 +1060,7 @@ func TestGitCommit(t *testing.T) {
 			an:
 			ae:
 			cn:Jan De Dobbeleer
-			ce:jan@ohmyposh.dev
+			ce:jan@prompto.dev
 			at:1673176335
 			su:docs(error): you can't use cross segment properties
 			`,
@@ -1068,7 +1068,7 @@ func TestGitCommit(t *testing.T) {
 				Author: &User{},
 				Committer: &User{
 					Name:  "Jan De Dobbeleer",
-					Email: "jan@ohmyposh.dev",
+					Email: "jan@prompto.dev",
 				},
 				Subject:   "docs(error): you can't use cross segment properties",
 				Timestamp: time.Unix(1673176335, 0),
@@ -1246,21 +1246,21 @@ func TestGitRepoName(t *testing.T) {
 	}{
 		{
 			Case:       "In worktree",
-			Expected:   "oh-my-posh",
+			Expected:   "prompto",
 			IsWorkTree: true,
-			WorkingDir: "/Users/jan/Code/oh-my-posh/.git/worktrees/oh-my-posh2",
+			WorkingDir: "/Users/jan/Code/prompto/.git/worktrees/prompto2",
 		},
 		{
 			Case:       "Not in worktree",
-			Expected:   "oh-my-posh",
+			Expected:   "prompto",
 			IsWorkTree: false,
-			RealDir:    "/Users/jan/Code/oh-my-posh",
+			RealDir:    "/Users/jan/Code/prompto",
 		},
 		{
 			Case:       "In worktree, unexpected dir",
 			Expected:   "",
 			IsWorkTree: true,
-			WorkingDir: "/Users/jan/Code/oh-my-posh2",
+			WorkingDir: "/Users/jan/Code/prompto2",
 		},
 	}
 

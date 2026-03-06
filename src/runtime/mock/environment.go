@@ -4,9 +4,9 @@ import (
 	"io"
 	"io/fs"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/battery"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/http"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/battery"
+	"github.com/po1o/prompto/src/runtime/http"
 
 	mock "github.com/stretchr/testify/mock"
 )

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/log"
 )
 
 const (
-	poshGitEnv = "POSH_GIT_STATUS"
+	poshGitEnv = "PROMPTO_GIT_STATUS"
 )
 
 type poshGit struct {
@@ -48,28 +48,28 @@ func (s *GitStatus) parsePoshGitStatus(p *poshGitStatus) {
 func (g *Git) hasPoshGitStatus() bool {
 	envStatus := g.env.Getenv(poshGitEnv)
 	if envStatus == "" {
-		log.Error(fmt.Errorf("%s environment variable not set, do you have the posh-git module installed?", poshGitEnv))
+		log.Error(fmt.Errorf("%s environment variable not set, do you have the prompto-git module installed?", poshGitEnv))
 		return false
 	}
 
-	var posh poshGit
-	err := json.Unmarshal([]byte(envStatus), &posh)
+	var prompto poshGit
+	err := json.Unmarshal([]byte(envStatus), &prompto)
 	if err != nil {
 		log.Error(err)
 		return false
 	}
 
-	g.setDir(posh.GitDir)
+	g.setDir(prompto.GitDir)
 	g.Working = &GitStatus{}
-	g.Working.parsePoshGitStatus(posh.Working)
+	g.Working.parsePoshGitStatus(prompto.Working)
 	g.Staging = &GitStatus{}
-	g.Staging.parsePoshGitStatus(posh.Index)
-	g.HEAD = g.parsePoshGitHEAD(posh.Branch)
-	g.stashCount = posh.StashCount
-	g.Ahead = posh.AheadBy
-	g.Behind = posh.BehindBy
-	g.UpstreamGone = posh.Upstream == ""
-	g.Upstream = posh.Upstream
+	g.Staging.parsePoshGitStatus(prompto.Index)
+	g.HEAD = g.parsePoshGitHEAD(prompto.Branch)
+	g.stashCount = prompto.StashCount
+	g.Ahead = prompto.AheadBy
+	g.Behind = prompto.BehindBy
+	g.UpstreamGone = prompto.Upstream == ""
+	g.Upstream = prompto.Upstream
 
 	g.setBranchStatus()
 

@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/prompt"
 )
 
 type Daemon struct {

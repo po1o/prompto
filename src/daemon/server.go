@@ -12,12 +12,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/daemon/ipc"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	pathRuntime "github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/daemon/ipc"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime"
+	pathRuntime "github.com/po1o/prompto/src/runtime/path"
 
 	"google.golang.org/grpc"
 )

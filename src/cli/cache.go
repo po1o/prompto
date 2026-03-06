@@ -6,9 +6,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/daemon"
-	"github.com/jandedobbeleer/oh-my-posh/src/daemon/ipc"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/daemon"
+	"github.com/po1o/prompto/src/daemon/ipc"
 
 	"github.com/spf13/cobra"
 )
@@ -20,8 +20,8 @@ var (
 // cacheCmd represents the cache command
 var cacheCmd = &cobra.Command{
 	Use:   "cache [path|clear|ttl|show]",
-	Short: "Interact with the oh-my-posh cache",
-	Long: `Interact with the oh-my-posh cache.
+	Short: "Interact with the prompto cache",
+	Long: `Interact with the prompto cache.
 
 You can do the following:
 
@@ -88,12 +88,12 @@ You can do the following:
 				}
 			}
 			// Fallback to CLI mode
-			cache.Init(os.Getenv("POSH_SHELL"), cache.Persist)
+			cache.Init(os.Getenv("PROMPTO_SHELL"), cache.Persist)
 			cache.Set(cache.Device, cache.TTL, ttl, cache.INFINITE)
 			cache.Close()
 			fmt.Printf("TTL set to %d days\n", ttl)
 		case "show":
-			cache.Init(os.Getenv("POSH_SHELL"))
+			cache.Init(os.Getenv("PROMPTO_SHELL"))
 			store := cache.Device
 			if session {
 				store = cache.Session

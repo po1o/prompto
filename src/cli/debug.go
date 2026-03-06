@@ -5,15 +5,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/build"
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
-	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
+	"github.com/po1o/prompto/src/build"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/prompt"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/shell"
+	"github.com/po1o/prompto/src/template"
+	"github.com/po1o/prompto/src/terminal"
 
 	"github.com/spf13/cobra"
 )
@@ -48,7 +48,7 @@ func createDebugCmd() *cobra.Command {
 			env := &runtime.Terminal{}
 			env.Init(flags)
 
-			cache.Init(os.Getenv("POSH_SHELL"))
+			cache.Init(os.Getenv("PROMPTO_SHELL"))
 
 			cfg := getDebugConfig(configFlag)
 

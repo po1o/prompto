@@ -5,8 +5,8 @@ import (
 )
 
 // SocketPath returns the platform-specific socket path.
-// Unix: $XDG_RUNTIME_DIR/oh-my-posh-<uid>.sock or <state>/oh-my-posh/oh-my-posh-<uid>.sock
-// Windows: \\.\pipe\oh-my-posh-<username>
+// Unix: $XDG_RUNTIME_DIR/prompto-<uid>.sock or <state>/prompto/prompto-<uid>.sock
+// Windows: \\.\pipe\prompto-<username>
 func SocketPath() string {
 	return socketPath()
 }

@@ -8,11 +8,11 @@ import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
 :::tip
-If you have no idea which shell you're currently using, Oh My Posh has a utility switch that can tell that to you.
+If you have no idea which shell you're currently using, Prompto has a utility switch that can tell that to you.
 :::
 
 ```bash
-oh-my-posh get shell
+prompto get shell
 ```
 
 <Tabs
@@ -36,7 +36,7 @@ oh-my-posh get shell
 Add the following snippet as the last line to `~/.bashrc` (could be `~/.profile` or `~/.bash_profile` depending on your environment):
 
 ```bash
-eval "$(oh-my-posh init bash)"
+eval "$(prompto init bash)"
 ```
 
 Once added, reload your profile for the changes to take effect.
@@ -54,7 +54,7 @@ Or, when using `~/.profile`.
 </TabItem>
 <TabItem value="claude">
 
-To enable Claude Code integration with Oh My Posh, configure Claude Code to use Oh My Posh as the statusline command.
+To enable Claude Code integration with Prompto, configure Claude Code to use Prompto as the statusline command.
 
 Add the following to your Claude Code settings:
 
@@ -62,7 +62,7 @@ Add the following to your Claude Code settings:
 {
   "statusLine": {
     "type": "command",
-    "command": "oh-my-posh claude",
+    "command": "prompto claude",
     "padding": 0
   }
 }
@@ -77,26 +77,26 @@ There's no out-of-the-box support for Windows CMD when it comes to custom prompt
 There is however a way to do it using [Clink][clink], which at the same time supercharges
 your cmd experience. Follow the installation instructions and make sure you select autostart.
 
-Integrating Oh My Posh with Clink is easy: create a new file called oh-my-posh.lua in your Clink
+Integrating Prompto with Clink is easy: create a new file called prompto.lua in your Clink
 scripts directory (run `clink info` inside cmd to find that file's location).
 
-```lua title="oh-my-posh.lua"
-load(io.popen('oh-my-posh init cmd'):read("*a"))()
+```lua title="prompto.lua"
+load(io.popen('prompto init cmd'):read("*a"))()
 ```
 
 Once added, restart cmd for the changes to take effect.
 
 :::info
-Clink has builtin support for Oh My Posh. It allows you to set the prompt using the `clink` command.
+Clink has builtin support for Prompto. It allows you to set the prompt using the `clink` command.
 
 ```bash
-clink config prompt use oh-my-posh
+clink config prompt use prompto
 ```
 
 To set the configuration file, use the following command:
 
 ```bash
-clink set ohmyposh.theme <path>
+clink set prompto.theme <path>
 ```
 :::
 
@@ -106,7 +106,7 @@ clink set ohmyposh.theme <path>
 Add the following snippet as the last line to `~/.elvish/rc.elv`:
 
 ```bash
-eval (oh-my-posh init elvish)
+eval (prompto init elvish)
 ```
 
 Once added, reload your profile for the changes to take effect.
@@ -125,7 +125,7 @@ It is recommended to use the latest version of Fish. Versions below 4.1.0 have i
 Add the following snippet as the last line to `~/.config/fish/config.fish`:
 
 ```bash
-oh-my-posh init fish | source
+prompto init fish | source
 ```
 
 Once added, reload your config for the changes to take effect.
@@ -138,13 +138,13 @@ exec fish
 <TabItem value="nu">
 
 :::caution
-Oh My Posh requires Nushell `v0.104.0` or higher.
+Prompto requires Nushell `v0.104.0` or higher.
 :::
 
 Add the following snippet as the last line to the Nushell config file (`$nu.config-path`):
 
 ```bash
-oh-my-posh init nu
+prompto init nu
 ```
 
 Once added, restart Nushell for the changes to take effect.
@@ -172,7 +172,7 @@ to only require remote scripts to be signed using `Set-ExecutionPolicy -Executio
 Add the following snippet as the last line to your PowerShell profile script:
 
 ```powershell
-oh-my-posh init pwsh | Invoke-Expression
+prompto init pwsh | Invoke-Expression
 ```
 
 :::tip Execution policy
@@ -180,7 +180,7 @@ In case the execution policy disables executing unsigned scripts on your system,
 the script instead. Use the `--eval` flag to do so:
 
 ```powershell
-oh-my-posh init pwsh --eval | Invoke-Expression
+prompto init pwsh --eval | Invoke-Expression
 ```
 
 Be aware this will make initializing the shell slower.
@@ -198,7 +198,7 @@ Once added, reload your profile for the changes to take effect.
 Add the following snippet as the last line to `~/.xonshrc`:
 
 ```bash
-execx($(oh-my-posh init xonsh))
+execx($(prompto init xonsh))
 ```
 
 Once added, reload your profile for the changes to take effect.
@@ -213,7 +213,7 @@ exec xonsh
 Add the following snippet as the last line to `~/.zshrc`:
 
 ```bash
-eval "$(oh-my-posh init zsh)"
+eval "$(prompto init zsh)"
 ```
 
 :::tip
@@ -221,11 +221,11 @@ As the standard terminal has issues displaying the ANSI characters correctly, yo
 
 ```bash
 if [ "$TERM_PROGRAM" != "Apple_Terminal" ]; then
-  eval "$(oh-my-posh init zsh)"
+  eval "$(prompto init zsh)"
 fi
 ```
 
-Note this will still load Oh My Posh for [iTerm2][iterm2] or any other modern day macOS terminal that supports ANSI characters.
+Note this will still load Prompto for [iTerm2][iterm2] or any other modern day macOS terminal that supports ANSI characters.
 :::
 
 Once added, reload your profile for the changes to take effect.

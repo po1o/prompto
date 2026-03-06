@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	runtimePkg "github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	runtimePkg "github.com/po1o/prompto/src/runtime"
 )
 
 type RenderRequest struct {
@@ -13,7 +13,7 @@ type RenderRequest struct {
 	Repaint   bool
 }
 
-const renderCompletePayload = "__omp_render_complete__"
+const renderCompletePayload = "__prompto_render_complete__"
 
 type RenderResponse struct {
 	Bundle   PromptBundle

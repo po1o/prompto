@@ -14,16 +14,16 @@ module.exports = async function (context, req) {
         'Content-Type': 'application/json'
       },
       body: {
-        name: 'oh-my-posh-validator',
+        name: 'prompto-validator',
         version: '1.0.0',
-        description: 'MCP server for validating oh-my-posh configurations',
+        description: 'MCP server for validating prompto configurations',
         capabilities: {
           tools: {}
         },
         tools: [
           {
             name: 'validate_config',
-            description: 'Validate an oh-my-posh configuration against the schema',
+            description: 'Validate an prompto configuration against the schema',
             inputSchema: {
               type: 'object',
               properties: {
@@ -43,7 +43,7 @@ module.exports = async function (context, req) {
           },
           {
             name: 'validate_segment',
-            description: 'Validate a segment snippet against the oh-my-posh schema',
+            description: 'Validate a segment snippet against the prompto schema',
             inputSchema: {
               type: 'object',
               properties: {
@@ -134,7 +134,7 @@ module.exports = async function (context, req) {
             tools: [
               {
                 name: 'validate_config',
-                description: 'Validate an oh-my-posh configuration against the schema. Supports JSON, YAML, and TOML formats.',
+                description: 'Validate an prompto configuration against the schema. Supports JSON, YAML, and TOML formats.',
                 inputSchema: {
                   type: 'object',
                   properties: {
@@ -154,7 +154,7 @@ module.exports = async function (context, req) {
               },
               {
                 name: 'validate_segment',
-                description: 'Validate a segment snippet against the oh-my-posh schema. Useful for validating individual prompt segments before adding them to a configuration.',
+                description: 'Validate a segment snippet against the prompto schema. Useful for validating individual prompt segments before adding them to a configuration.',
                 inputSchema: {
                   type: 'object',
                   properties: {
@@ -244,7 +244,7 @@ module.exports = async function (context, req) {
               tools: {}
             },
             serverInfo: {
-              name: 'oh-my-posh-validator',
+              name: 'prompto-validator',
               version: '1.0.0'
             }
           },

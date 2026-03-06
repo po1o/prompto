@@ -61,7 +61,7 @@ func TestDirMatchesOneOfRegexInverted(t *testing.T) {
 			assert.Equal(t, "regexp: Compile(`^(?!Projects[\\/]).*$`): error parsing regexp: invalid or unsupported Perl syntax: `(?!`", err)
 		}
 	}()
-	_ = dirMatchesOneOf("Projects/oh-my-posh", "", LINUX, []string{"(?!Projects[\\/]).*"})
+	_ = dirMatchesOneOf("Projects/prompto", "", LINUX, []string{"(?!Projects[\\/]).*"})
 }
 
 func TestDirMatchesOneOfRegexInvertedNonEscaped(t *testing.T) {
@@ -72,5 +72,5 @@ func TestDirMatchesOneOfRegexInvertedNonEscaped(t *testing.T) {
 			assert.Equal(t, "regexp: Compile(`^(?!Projects/).*$`): error parsing regexp: invalid or unsupported Perl syntax: `(?!`", err)
 		}
 	}()
-	_ = dirMatchesOneOf("Projects/oh-my-posh", "", LINUX, []string{"(?!Projects/).*"})
+	_ = dirMatchesOneOf("Projects/prompto", "", LINUX, []string{"(?!Projects/).*"})
 }

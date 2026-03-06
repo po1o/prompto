@@ -165,7 +165,7 @@ dist
 # End of https://www.toptal.com/developers/gitignore/api/node,go,visualstudiocode
 
 # linux binary
-/src/oh-my-posh
+/src/prompto
 package/
 bin/
 Output/

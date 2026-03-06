@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
+	"github.com/po1o/prompto/src/shell"
 )
 
 var supportedShells = []string{

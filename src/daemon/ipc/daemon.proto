@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package ipc;
 
-option go_package = "github.com/jandedobbeleer/oh-my-posh/src/daemon/ipc";
+option go_package = "github.com/po1o/prompto/src/daemon/ipc";
 
 // DaemonService handles prompt rendering requests.
 service DaemonService {

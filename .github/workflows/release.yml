@@ -71,7 +71,7 @@ jobs:
         with:
           name: build-artifacts
           path: |
-            src/dist/posh-*
+            src/dist/prompto-*
             src/dist/themes.*
             src/dist/checksums.*
   msi:
@@ -170,10 +170,10 @@ jobs:
         $version = $version.TrimStart('v')
 
         $urls = @(
-            "https://github.com/JanDeDobbeleer/oh-my-posh/releases/download/v$version/install-x64.msi|x64",
-            "https://github.com/JanDeDobbeleer/oh-my-posh/releases/download/v$version/install-x64.msix|x64",
-            "https://github.com/JanDeDobbeleer/oh-my-posh/releases/download/v$version/install-arm64.msi|arm64",
-            "https://github.com/JanDeDobbeleer/oh-my-posh/releases/download/v$version/install-arm64.msix|arm64"
+            "https://github.com/po1o/prompto/releases/download/v$version/install-x64.msi|x64",
+            "https://github.com/po1o/prompto/releases/download/v$version/install-x64.msix|x64",
+            "https://github.com/po1o/prompto/releases/download/v$version/install-arm64.msi|arm64",
+            "https://github.com/po1o/prompto/releases/download/v$version/install-arm64.msix|arm64"
         )
 
         wingetcreate update JanDeDobbeleer.OhMyPosh --version $version --token $env:WINGETCREATE_TOKEN --submit --urls $urls

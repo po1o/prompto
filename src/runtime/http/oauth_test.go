@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
+	"github.com/po1o/prompto/src/cache"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -122,7 +122,7 @@ func TestOauthResult(t *testing.T) {
 
 	for _, tc := range cases {
 		url := "https://www.strava.com/api/v3/athlete/activities?page=1&per_page=1"
-		tokenURL := fmt.Sprintf("https://ohmyposh.dev/api/refresh?segment=test&token=%s", tc.RefreshToken)
+		tokenURL := fmt.Sprintf("https://prompto.dev/api/refresh?segment=test&token=%s", tc.RefreshToken)
 
 		if tc.AccessTokenFromCache {
 			cache.Set(cache.Device, accessTokenKey, tc.AccessToken, cache.INFINITE)

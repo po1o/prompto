@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/segments/options"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -55,7 +55,7 @@ func TestRuby(t *testing.T) {
 			FetchVersion:   true,
 			HasRubyFiles:   true,
 			HasAsdf:        true,
-			Version:        "ruby            2.6.3           /Users/jan/Projects/oh-my-posh/.tool-versions",
+			Version:        "ruby            2.6.3           /Users/jan/Projects/prompto/.tool-versions",
 		},
 		{
 			Case:           "Version with asdf not set",

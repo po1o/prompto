@@ -1,6 +1,6 @@
 package template
 
-import "github.com/jandedobbeleer/oh-my-posh/src/generics"
+import "github.com/po1o/prompto/src/generics"
 
 func toIntOrZero(e any) int {
 	if value, err := generics.TryParseInt[int](e); err == nil {

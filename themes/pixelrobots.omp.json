@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json",
   "blocks": [
     {
       "alignment": "left",
@@ -87,7 +87,7 @@
           "background": "#2f2f2f",
           "foreground": "#ffea00",
           "style": "diamond",
-          "template": " {{ if ne .Env.POSH_SESSION_DEFAULT_USER .UserName }}{{ .UserName }}{{ end }}<#ffea00> \ue0b1</>",
+          "template": " {{ if ne .Env.PROMPTO_SESSION_DEFAULT_USER .UserName }}{{ .UserName }}{{ end }}<#ffea00> \ue0b1</>",
           "type": "session"
         },
         {

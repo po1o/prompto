@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
+	"github.com/po1o/prompto/src/config"
 	"github.com/stretchr/testify/require"
 )
 

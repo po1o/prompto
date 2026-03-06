@@ -1,6 +1,6 @@
 # remove any existing dynamic module of OMP
-if ($null -ne (Get-Module -Name "oh-my-posh-core")) {
-    Remove-Module -Name "oh-my-posh-core" -Force
+if ($null -ne (Get-Module -Name "prompto-core")) {
+    Remove-Module -Name "prompto-core" -Force
 }
 
 # disable all known python virtual environment prompts
@@ -8,8 +8,8 @@ $env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 $env:PYENV_VIRTUALENV_DISABLE_PROMPT = 1
 
 # Helper functions which need to be defined before the module is loaded
-# See https://github.com/JanDeDobbeleer/oh-my-posh/discussions/2300
-function global:Get-PoshStackCount {
+# See https://github.com/po1o/prompto/discussions/2300
+function global:Get-PromptoStackCount {
     $locations = Get-Location -Stack
     if ($locations) {
         return $locations.Count
@@ -18,14 +18,14 @@ function global:Get-PoshStackCount {
 }
 
 # global enablers
-$global:_ompJobCount = $false
-$global:_ompFTCSMarks = $false
-$global:_ompPoshGit = $false
-$global:_ompAzure = $false
-$global:_ompExecutable = ::OMP::
-$global:_ompConfig = ::CONFIG::
+$global:_promptoJobCount = $false
+$global:_promptoFTCSMarks = $false
+$global:_promptoPoshGit = $false
+$global:_promptoAzure = $false
+$global:_promptoExecutable = ::PROMPTO::
+$global:_promptoConfig = ::CONFIG::
 
-New-Module -Name "oh-my-posh-core" -ScriptBlock {
+New-Module -Name "prompto-core" -ScriptBlock {
     # Check `ConstrainedLanguage` mode.
     $script:ConstrainedLanguageMode = $ExecutionContext.SessionState.LanguageMode -eq "ConstrainedLanguage"
 
@@ -44,23 +44,23 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
     $script:JobCount = 0
     $script:SecondaryPromptSet = $false
 
-    $env:POWERLINE_COMMAND = "oh-my-posh"
-    $env:POSH_SHELL = "pwsh"
-    $env:POSH_SHELL_VERSION = $script:PSVersion
+    $env:POWERLINE_COMMAND = "prompto"
+    $env:PROMPTO_SHELL = "pwsh"
+    $env:PROMPTO_SHELL_VERSION = $script:PSVersion
     $env:CONDA_PROMPT_MODIFIER = $false
 
-    function Invoke-Utf8Posh {
+    function Invoke-Utf8Prompto {
         param([string[]]$Arguments = @())
 
         if ($script:ConstrainedLanguageMode) {
-            $output = Invoke-Expression "& `$global:_ompExecutable `$Arguments 2>&1"
+            $output = Invoke-Expression "& `$global:_promptoExecutable `$Arguments 2>&1"
             $output -join "`n"
             return
         }
 
         $Process = New-Object System.Diagnostics.Process
         $StartInfo = $Process.StartInfo
-        $StartInfo.FileName = $global:_ompExecutable
+        $StartInfo.FileName = $global:_promptoExecutable
         if ($StartInfo.ArgumentList.Add) {
             # ArgumentList is supported in PowerShell 6.1 and later (built on .NET Core 2.1+)
             # ref-1: https://docs.microsoft.com/en-us/dotnet/api/system.diagnostics.processstartinfo.argumentlist?view=net-6.0
@@ -140,7 +140,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         }
     }
 
-    function Set-PoshPromptType {
+    function Set-PromptoPromptType {
         if ($script:TransientPrompt -eq $true) {
             $script:PromptType = "transient"
             $script:TransientPrompt = $false
@@ -148,9 +148,9 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         }
 
         # for details about the trick to detect a debugging context, see these comments:
-        # 1) https://github.com/JanDeDobbeleer/oh-my-posh/issues/2483#issuecomment-1175761456
-        # 2) https://github.com/JanDeDobbeleer/oh-my-posh/issues/2502#issuecomment-1179968052
-        # 3) https://github.com/JanDeDobbeleer/oh-my-posh/issues/5153
+        # 1) https://github.com/po1o/prompto/issues/2483#issuecomment-1175761456
+        # 2) https://github.com/po1o/prompto/issues/2502#issuecomment-1179968052
+        # 3) https://github.com/po1o/prompto/issues/5153
         if ($Host.Runspace.Debugger.InBreakpoint) {
             $script:PromptType = "debug"
             return
@@ -158,27 +158,27 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
 
         $script:PromptType = "primary"
 
-        if ($global:_ompJobCount) {
+        if ($global:_promptoJobCount) {
             $script:JobCount = (Get-Job -State Running).Count
         }
 
-        if ($global:_ompAzure) {
+        if ($global:_promptoAzure) {
             try {
-                $env:POSH_AZURE_SUBSCRIPTION = Get-AzContext | ConvertTo-Json
+                $env:PROMPTO_AZURE_SUBSCRIPTION = Get-AzContext | ConvertTo-Json
             }
             catch {}
         }
 
-        if ($global:_ompPoshGit) {
+        if ($global:_promptoPoshGit) {
             try {
                 $global:GitStatus = Get-GitStatus
-                $env:POSH_GIT_STATUS = $global:GitStatus | ConvertTo-Json
+                $env:PROMPTO_GIT_STATUS = $global:GitStatus | ConvertTo-Json
             }
             catch {}
         }
     }
 
-    function Update-PoshErrorCode {
+    function Update-PromptoErrorCode {
         $lastHistory = Get-History -ErrorAction Ignore -Count 1
 
         # error code should be updated only when a non-empty command is run
@@ -216,15 +216,15 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         }
     }
 
-    function Get-PoshPrompt {
+    function Get-PromptoPrompt {
         param(
             [string]$Type,
             [string[]]$Arguments
         )
         $nonFSWD = Get-NonFSWD
-        $stackCount = Get-PoshStackCount
+        $stackCount = Get-PromptoStackCount
         $terminalWidth = Get-TerminalWidth
-        Invoke-Utf8Posh @(
+        Invoke-Utf8Prompto @(
             "render", $Type
             "--shell=$script:ShellName"
             "--shell-version=$script:PSVersion"
@@ -255,26 +255,26 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         # Reset tooltip command.
         $script:TooltipCommand = ''
 
-        Set-PoshPromptType
+        Set-PromptoPromptType
         Set-VimModeCursorFromState
 
         if ($script:PromptType -ne 'transient') {
-            Update-PoshErrorCode
+            Update-PromptoErrorCode
         }
 
-        Set-PoshContext $script:ErrorCode
+        Set-PromptoContext $script:ErrorCode
 
         if (-not $script:SecondaryPromptSet) {
-            $sec = (Invoke-Utf8Posh @("render", "secondary", "--shell=$script:ShellName")) -join "`n"
+            $sec = (Invoke-Utf8Prompto @("render", "secondary", "--shell=$script:ShellName")) -join "`n"
             Set-PSReadLineOption -ContinuationPrompt $sec
             $script:SecondaryPromptSet = $true
         }
 
         # set the cursor positions, they are zero based so align with other platforms
-        $env:POSH_CURSOR_LINE = $Host.UI.RawUI.CursorPosition.Y + 1
-        $env:POSH_CURSOR_COLUMN = $Host.UI.RawUI.CursorPosition.X + 1
+        $env:PROMPTO_CURSOR_LINE = $Host.UI.RawUI.CursorPosition.Y + 1
+        $env:PROMPTO_CURSOR_COLUMN = $Host.UI.RawUI.CursorPosition.X + 1
 
-        $output = Get-PoshPrompt $script:PromptType
+        $output = Get-PromptoPrompt $script:PromptType
         # make sure PSReadLine knows if we have a multiline prompt
         Set-PSReadLineOption -ExtraPromptLineCount (($output | Measure-Object -Line).Lines - 1)
 
@@ -293,7 +293,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         $output
 
         # remove any posh-git status
-        $env:POSH_GIT_STATUS = $null
+        $env:PROMPTO_GIT_STATUS = $null
 
         # restore the original last exit code
         $global:LASTEXITCODE = $script:OriginalLastExitCode
@@ -303,14 +303,14 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
 
     ### Exported Functions ###
 
-    function Set-PoshContext([bool]$originalStatus) {}
+    function Set-PromptoContext([bool]$originalStatus) {}
 
-    function Enable-PoshTooltips {
+    function Enable-PromptoTooltips {
         if ($script:ConstrainedLanguageMode) {
             return
         }
 
-        Set-PSReadLineKeyHandler -Key Spacebar -BriefDescription 'OhMyPoshSpaceKeyHandler' -ScriptBlock {
+        Set-PSReadLineKeyHandler -Key Spacebar -BriefDescription 'PromptoSpaceKeyHandler' -ScriptBlock {
             param([ConsoleKeyInfo]$key)
             [Microsoft.PowerShell.PSConsoleReadLine]::SelfInsert($key)
             try {
@@ -326,7 +326,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
 
                 $script:TooltipCommand = $command
 
-                $output = (Get-PoshPrompt "tooltip" @(
+                $output = (Get-PromptoPrompt "tooltip" @(
                         "--column=$($Host.UI.RawUI.CursorPosition.X)"
                         "--command=$command"
                     )) -join ''
@@ -344,7 +344,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         }
     }
 
-    function Enable-PoshTransientPrompt {
+    function Enable-PromptoTransientPrompt {
         if ($script:ConstrainedLanguageMode) {
             return
         }
@@ -365,7 +365,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
                 }
                 finally {
                     & $AcceptLineFunction
-                    if ($global:_ompFTCSMarks -and $executingCommand) {
+                    if ($global:_promptoFTCSMarks -and $executingCommand) {
                         # Write FTCS_COMMAND_EXECUTED after accepting the input - it should still happen before execution
                         Write-Host "$([char]27)]133;C$([char]7)" -NoNewline
                     }
@@ -394,48 +394,48 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         }
 
         # Register Enter key handlers
-        Set-PSReadLineKeyHandler -Key Enter -BriefDescription 'OhMyPoshEnterKeyHandler' -ScriptBlock (New-EnterKeyHandler { [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine() })
+        Set-PSReadLineKeyHandler -Key Enter -BriefDescription 'PromptoEnterKeyHandler' -ScriptBlock (New-EnterKeyHandler { [Microsoft.PowerShell.PSConsoleReadLine]::AcceptLine() })
 
         if ((Get-PSReadLineOption).EditMode -eq "Vi") {
-            Set-PSReadLineKeyHandler -ViMode Command -Key Enter -BriefDescription 'OhMyPoshViEnterKeyHandler' -ScriptBlock (New-EnterKeyHandler { [Microsoft.PowerShell.PSConsoleReadLine]::ViAcceptLine() })
+            Set-PSReadLineKeyHandler -ViMode Command -Key Enter -BriefDescription 'PromptoViEnterKeyHandler' -ScriptBlock (New-EnterKeyHandler { [Microsoft.PowerShell.PSConsoleReadLine]::ViAcceptLine() })
         }
 
         # Register Ctrl+C key handlers
-        Set-PSReadLineKeyHandler -Key Ctrl+c -BriefDescription 'OhMyPoshCtrlCKeyHandler' -ScriptBlock (New-CtrlCKeyHandler { [Microsoft.PowerShell.PSConsoleReadLine]::CopyOrCancelLine() })
+        Set-PSReadLineKeyHandler -Key Ctrl+c -BriefDescription 'PromptoCtrlCKeyHandler' -ScriptBlock (New-CtrlCKeyHandler { [Microsoft.PowerShell.PSConsoleReadLine]::CopyOrCancelLine() })
 
         if ((Get-PSReadLineOption).EditMode -eq "Vi") {
-            Set-PSReadLineKeyHandler -ViMode Command -Key Ctrl+c -BriefDescription 'OhMyPoshViCtrlCKeyHandler' -ScriptBlock (New-CtrlCKeyHandler { [Microsoft.PowerShell.PSConsoleReadLine]::CancelLine() })
+            Set-PSReadLineKeyHandler -ViMode Command -Key Ctrl+c -BriefDescription 'PromptoViCtrlCKeyHandler' -ScriptBlock (New-CtrlCKeyHandler { [Microsoft.PowerShell.PSConsoleReadLine]::CancelLine() })
         }
     }
 
-    function Enable-PoshLineError {
-        $validLine = (Invoke-Utf8Posh @("render", "valid", "--shell=$script:ShellName")) -join "`n"
-        $errorLine = (Invoke-Utf8Posh @("render", "error", "--shell=$script:ShellName")) -join "`n"
+    function Enable-PromptoLineError {
+        $validLine = (Invoke-Utf8Prompto @("render", "valid", "--shell=$script:ShellName")) -join "`n"
+        $errorLine = (Invoke-Utf8Prompto @("render", "error", "--shell=$script:ShellName")) -join "`n"
         Set-PSReadLineOption -PromptText $validLine, $errorLine
     }
 
     # perform cleanup on removal so a new initialization in current session works
     if (!$script:ConstrainedLanguageMode) {
         $ExecutionContext.SessionState.Module.OnRemove += {
-            Remove-Item Function:Get-PoshStackCount -ErrorAction SilentlyContinue
+            Remove-Item Function:Get-PromptoStackCount -ErrorAction SilentlyContinue
 
             $Function:prompt = $script:OriginalPromptFunction
 
             (Get-PSReadLineOption).ContinuationPrompt = $script:OriginalContinuationPrompt
             (Get-PSReadLineOption).PromptText = $script:OriginalPromptText
 
-            if ((Get-PSReadLineKeyHandler Spacebar).Function -eq 'OhMyPoshSpaceKeyHandler') {
+            if ((Get-PSReadLineKeyHandler Spacebar).Function -eq 'PromptoSpaceKeyHandler') {
                 Remove-PSReadLineKeyHandler Spacebar
             }
 
-            if ((Get-PSReadLineKeyHandler Enter).Function -eq 'OhMyPoshEnterKeyHandler') {
+            if ((Get-PSReadLineKeyHandler Enter).Function -eq 'PromptoEnterKeyHandler') {
                 Set-PSReadLineKeyHandler Enter -Function AcceptLine
                 if ((Get-PSReadLineOption).EditMode -eq "Vi") {
                     Set-PSReadLineKeyHandler -ViMode Command -Key Enter -Function ViAcceptLine
                 }
             }
 
-            if ((Get-PSReadLineKeyHandler Ctrl+c).Function -eq 'OhMyPoshCtrlCKeyHandler') {
+            if ((Get-PSReadLineKeyHandler Ctrl+c).Function -eq 'PromptoCtrlCKeyHandler') {
                 Set-PSReadLineKeyHandler Ctrl+c -Function CopyOrCancelLine
                 if ((Get-PSReadLineOption).EditMode -eq "Vi") {
                     Set-PSReadLineKeyHandler -ViMode Command -Key Ctrl+c -Function CancelLine
@@ -508,7 +508,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         }
     }
 
-    function Enable-PoshVimMode {
+    function Enable-PromptoVimMode {
         if ($script:ConstrainedLanguageMode) {
             return
         }
@@ -520,7 +520,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         $script:VimMode = $true
 
         # Escape key -> Command mode
-        Set-PSReadLineKeyHandler -Key Escape -ViMode Insert -BriefDescription 'OhMyPoshViEscapeHandler' -ScriptBlock {
+        Set-PSReadLineKeyHandler -Key Escape -ViMode Insert -BriefDescription 'PromptoViEscapeHandler' -ScriptBlock {
             $script:VimModeRepaint = $true
             Set-VimModeCursor "Command"
             [Microsoft.PowerShell.PSConsoleReadLine]::ViCommandMode()
@@ -539,7 +539,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
 
         # Insert keys -> Insert mode
         foreach ($key in @('i', 'I', 'a', 'A', 'o', 'O')) {
-            Set-PSReadLineKeyHandler -Key $key -ViMode Command -BriefDescription "OhMyPoshVi${key}Handler" -ScriptBlock {
+            Set-PSReadLineKeyHandler -Key $key -ViMode Command -BriefDescription "PromptoVi${key}Handler" -ScriptBlock {
                 param($key)
                 $script:VimModeRepaint = $true
                 Set-VimModeCursor "Insert"
@@ -566,13 +566,13 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         }
     }
 
-    function Enable-PoshDaemon {
+    function Enable-PromptoDaemon {
         if ($script:ConstrainedLanguageMode) {
             return
         }
 
         # Start daemon if not running
-        Start-Process -FilePath $global:_ompExecutable -ArgumentList "daemon", "start", "--config", "`"$global:_ompConfig`"" -WindowStyle Hidden -ErrorAction SilentlyContinue
+        Start-Process -FilePath $global:_promptoExecutable -ArgumentList "daemon", "start", "--config", "`"$global:_promptoConfig`"" -WindowStyle Hidden -ErrorAction SilentlyContinue
 
         $script:DaemonMode = $true
 
@@ -591,7 +591,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         }
 
         $nonFSWD = Get-NonFSWD
-        $stackCount = Get-PoshStackCount
+        $stackCount = Get-PromptoStackCount
         $terminalWidth = Get-TerminalWidth
 
         # Include --repaint for vim mode toggles (soft cancel, reuse computations)
@@ -608,8 +608,8 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
 
         $script:DaemonProcess = New-Object System.Diagnostics.Process
         $startInfo = $script:DaemonProcess.StartInfo
-        $startInfo.FileName = $global:_ompExecutable
-        $startInfo.Arguments = "render --config=`"$global:_ompConfig`" --shell=$script:ShellName --shell-version=$script:PSVersion --pid=$PID --status=$script:ErrorCode --no-status=$script:NoExitCode --execution-time=$script:ExecutionTime --pswd=`"$nonFSWD`" --stack-count=$stackCount --terminal-width=$terminalWidth --job-count=$script:JobCount$vimModeArg$repaintFlag"
+        $startInfo.FileName = $global:_promptoExecutable
+        $startInfo.Arguments = "render --config=`"$global:_promptoConfig`" --shell=$script:ShellName --shell-version=$script:PSVersion --pid=$PID --status=$script:ErrorCode --no-status=$script:NoExitCode --execution-time=$script:ExecutionTime --pswd=`"$nonFSWD`" --stack-count=$stackCount --terminal-width=$terminalWidth --job-count=$script:JobCount$vimModeArg$repaintFlag"
         $startInfo.StandardOutputEncoding = [System.Text.Encoding]::UTF8
         $startInfo.RedirectStandardOutput = $true
         $startInfo.RedirectStandardError = $true
@@ -700,21 +700,21 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
 
         $script:TooltipCommand = ''
 
-        Set-PoshPromptType
+        Set-PromptoPromptType
         Set-VimModeCursorFromState
 
         if ($script:PromptType -ne 'transient') {
-            Update-PoshErrorCode
+            Update-PromptoErrorCode
         }
 
-        Set-PoshContext $script:ErrorCode
+        Set-PromptoContext $script:ErrorCode
 
-        $env:POSH_CURSOR_LINE = $Host.UI.RawUI.CursorPosition.Y + 1
-        $env:POSH_CURSOR_COLUMN = $Host.UI.RawUI.CursorPosition.X + 1
+        $env:PROMPTO_CURSOR_LINE = $Host.UI.RawUI.CursorPosition.Y + 1
+        $env:PROMPTO_CURSOR_COLUMN = $Host.UI.RawUI.CursorPosition.X + 1
 
         # For debug prompts, use regular rendering
         if ($script:PromptType -eq 'debug') {
-            $output = Get-PoshPrompt $script:PromptType
+            $output = Get-PromptoPrompt $script:PromptType
             Set-PSReadLineOption -ExtraPromptLineCount (($output | Measure-Object -Line).Lines - 1)
             $output = $output -join "`n"
 
@@ -747,19 +747,19 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
             Set-PSReadLineOption -ExtraPromptLineCount (($output | Measure-Object -Line).Lines - 1)
         }
 
-        $env:POSH_GIT_STATUS = $null
+        $env:PROMPTO_GIT_STATUS = $null
         $global:LASTEXITCODE = $script:OriginalLastExitCode
 
         $output
     }
 
     Export-ModuleMember -Function @(
-        "Set-PoshContext"
-        "Enable-PoshTooltips"
-        "Enable-PoshTransientPrompt"
-        "Enable-PoshLineError"
-        "Enable-PoshDaemon"
-        "Enable-PoshVimMode"
+        "Set-PromptoContext"
+        "Enable-PromptoTooltips"
+        "Enable-PromptoTransientPrompt"
+        "Enable-PromptoLineError"
+        "Enable-PromptoDaemon"
+        "Enable-PromptoVimMode"
         "Set-TransientPrompt"
         "prompt"
     )

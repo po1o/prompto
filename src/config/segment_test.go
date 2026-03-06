@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/mock"
+	"github.com/po1o/prompto/src/segments"
+	"github.com/po1o/prompto/src/segments/options"
 
 	toml "github.com/pelletier/go-toml/v2"
 	"github.com/stretchr/testify/assert"
@@ -32,7 +32,7 @@ func (panicCacheKeyWriter) Init(options.Provider, runtime.Environment) {}
 func (panicCacheKeyWriter) CacheKey() (string, bool) { panic("cache key should not be called") }
 
 const (
-	cwd = "Projects/oh-my-posh"
+	cwd = "Projects/prompto"
 )
 
 func TestMapSegmentWriterCanMap(t *testing.T) {
@@ -198,10 +198,10 @@ func TestShouldIncludeFolder(t *testing.T) {
 		env.On("GOOS").Return(runtime.LINUX)
 		env.On("Home").Return("")
 		env.On("Pwd").Return(cwd)
-		env.On("DirMatchesOneOf", cwd, []string{"Projects/oh-my-posh"}).Return(tc.Included)
+		env.On("DirMatchesOneOf", cwd, []string{"Projects/prompto"}).Return(tc.Included)
 		env.On("DirMatchesOneOf", cwd, []string{"Projects/nope"}).Return(tc.Excluded)
 		segment := &Segment{
-			IncludeFolders: []string{"Projects/oh-my-posh"},
+			IncludeFolders: []string{"Projects/prompto"},
 			ExcludeFolders: []string{"Projects/nope"},
 			env:            env,
 		}

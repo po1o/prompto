@@ -3,9 +3,9 @@ package template
 import (
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/maps"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/maps"
+	"github.com/po1o/prompto/src/runtime/mock"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -71,13 +71,13 @@ func TestRenderTemplate(t *testing.T) {
 		},
 		{
 			Case:     "duplicate property",
-			Expected: "hello jan posh",
+			Expected: "hello jan prompto",
 			Template: "hello {{ .Me.Name }} {{ .Name }}",
 			Context: struct {
 				Name string
 				Me   Me
 			}{
-				Name: "posh",
+				Name: "prompto",
 				Me: Me{
 					Name: "jan",
 				},
@@ -198,9 +198,9 @@ func TestRenderTemplateEnvVar(t *testing.T) {
 		},
 		{
 			Case:     "struct with env var",
-			Expected: "hello world posh",
+			Expected: "hello world prompto",
 			Template: "{{.Env.HELLO}} world {{ .Text }}",
-			Context:  struct{ Text string }{Text: "posh"},
+			Context:  struct{ Text string }{Text: "prompto"},
 			Env:      map[string]string{"HELLO": "hello"},
 		},
 		{Case: "no env var", Expected: "hello world", Template: "{{.Text}} world", Context: struct{ Text string }{Text: "hello"}},
@@ -208,23 +208,23 @@ func TestRenderTemplateEnvVar(t *testing.T) {
 		{Case: "empty map", Expected: " world", Template: "{{.Text}} world", Context: map[string]string{}, ShouldError: true},
 		{
 			Case:     "Struct with duplicate property",
-			Expected: "posh",
+			Expected: "prompto",
 			Template: "{{ .OS }}",
-			Context:  struct{ OS string }{OS: "posh"},
+			Context:  struct{ OS string }{OS: "prompto"},
 			Env:      map[string]string{"HELLO": "hello"},
 		},
 		{
 			Case:     "Struct with duplicate property, but global override",
 			Expected: "darwin",
 			Template: "{{ .$.OS }}",
-			Context:  struct{ OS string }{OS: "posh"},
+			Context:  struct{ OS string }{OS: "prompto"},
 			Env:      map[string]string{"HELLO": "hello"},
 		},
 		{
 			Case:     "Map with duplicate property",
-			Expected: "posh",
+			Expected: "prompto",
 			Template: "{{ .OS }}",
-			Context:  map[string]any{"OS": "posh"},
+			Context:  map[string]any{"OS": "prompto"},
 			Env:      map[string]string{"HELLO": "hello"},
 		},
 		{

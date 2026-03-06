@@ -22,7 +22,7 @@ understand how to configure a segment.
             foreground: "#ffffff",
             background: "#61AFEF",
             template: " {{ .Path }} ",
-            include_folders: ["/Users/posh/Projects"],
+            include_folders: ["/Users/prompto/Projects"],
           },
         ],
       },
@@ -37,7 +37,7 @@ understand how to configure a segment.
 | `type`                     | `string`     |         | takes the `string` value referencing which segment logic it needs to run (see [segments][segments] for possible values)                                                                                                                                                                                                                                                                   |
 | `style`                    | `string`     | `plain` | see [Style][style] below. Possible values:<ul><li>`powerline`</li><li>`plain`</li><li>`diamond`</li><li>`accordion`</li><li>a go [text/template][go-text-template] [template][templates] resolving to the above values</li></ul>                                                                                                                                                          |
 | `powerline_symbol`         | `string`     |         | character to use at the end of the segment when `"style": "powerline"` (e.g., `\uE0B0`)                                                                                                                                                                                                                                                                                                   |
-| `leading_powerline_symbol` | `string`     |         | character to use at the start of the segment when `"style": "powerline"`. By default, Oh My Posh uses an ANSI hack to invert the `powerline_symbol`, which provides the best alignment but may not work in all terminals. If you see black artifacts at segment starts, set this to the corresponding opening glyph (e.g., `\uE0D6` when using `\uE0B0`, or `\uE0D7` when using `\uE0B1`) |
+| `leading_powerline_symbol` | `string`     |         | character to use at the start of the segment when `"style": "powerline"`. By default, Prompto uses an ANSI hack to invert the `powerline_symbol`, which provides the best alignment but may not work in all terminals. If you see black artifacts at segment starts, set this to the corresponding opening glyph (e.g., `\uE0D6` when using `\uE0B0`, or `\uE0D7` when using `\uE0B1`) |
 | `invert_powerline`         | `boolean`    | `false` | if `true` swaps the foreground and background colors. Can be useful when the character you want does not exist in the perfectly mirrored variant for example - defaults to `false`                                                                                                                                                                                                        |
 | `leading_diamond`          | `string`     |         | character to use at the start of the segment. Will take the background color of the segment as its foreground color                                                                                                                                                                                                                                                                       |
 | `trailing_diamond`         | `string`     |         | character to use at the end of the segment. Will take the background color of the segment as its foreground color                                                                                                                                                                                                                                                                         |
@@ -51,8 +51,8 @@ understand how to configure a segment.
 | `options`                  | `[]Option`   |         | see [Options][options] below                                                                                                                                                                                                                                                                                                                                                              |
 | `interactive`              | `boolean`    | `false` | when true, the segment text is not escaped to allow the use of interactive prompt escape sequences in Bash/Zsh - defaults to `false`                                                                                                                                                                                                                                                      |
 | `alias`                    | `string`     |         | for use with [cross segment template properties][cstp]                                                                                                                                                                                                                                                                                                                                    |
-| `min_width`                | `int`        |   `0`   | if the terminal width is smaller than this value, the segment will be hidden. For your terminal width, see `oh-my-posh get width`. Defaults to `0` (disable)                                                                                                                                                                                                                              |
-| `max_width`                | `int`        |   `0`   | if the terminal width exceeds this value, the segment will be hidden. For your terminal width, see `oh-my-posh get width`. Defaults to `0` (disable)                                                                                                                                                                                                                                      |
+| `min_width`                | `int`        |   `0`   | if the terminal width is smaller than this value, the segment will be hidden. For your terminal width, see `prompto get width`. Defaults to `0` (disable)                                                                                                                                                                                                                              |
+| `max_width`                | `int`        |   `0`   | if the terminal width exceeds this value, the segment will be hidden. For your terminal width, see `prompto get width`. Defaults to `0` (disable)                                                                                                                                                                                                                                      |
 | `cache`                    | `Cache`      |         | how to cache the segment to avoid fetching information too much, see [below][cache]                                                                                                                                                                                                                                                                                                       |
 | `include_folders`          | `[]string`   |         | define which folders to include to enable the segment, see [below][include-exclude]                                                                                                                                                                                                                                                                                                       |
 | `exclude_folders`          | `[]string`   |         | define which folders to exclude to disable the segment, see [below][include-exclude]                                                                                                                                                                                                                                                                                                      |
@@ -65,7 +65,7 @@ In Bash/Zsh, when the property `interactive` is `true` for a segment, the prompt
 because of possible string expansions (e.g., `\w` in Bash and `%d` in Zsh which both expand to the current working
 directory), thus a right-aligned block is not being properly right-aligned.
 
-Unfortunately, it's not possible for Oh My Posh to know the final prompt length since the string expansion is done
+Unfortunately, it's not possible for Prompto to know the final prompt length since the string expansion is done
 by your shell, so use this at your own risk.
 :::
 
@@ -167,23 +167,23 @@ will not be rendered when in one of the excluded locations.
 
 <Config
   data={{
-    include_folders: ["/Users/posh/Projects"],
+    include_folders: ["/Users/prompto/Projects"],
   }}
 />
 
 <Config
   data={{
-    exclude_folders: ["/Users/posh/Projects"],
+    exclude_folders: ["/Users/prompto/Projects"],
   }}
 />
 
 The strings specified in these properties are evaluated as [regular expressions][regex]. You
 can use any valid regular expression construct, but the regular expression must match the **ENTIRE** directory
-name. The following will match `/Users/posh/Projects/Foo` but not `/home/Users/posh/Projects/Foo`.
+name. The following will match `/Users/prompto/Projects/Foo` but not `/home/Users/prompto/Projects/Foo`.
 
 <Config
   data={{
-    include_folders: ["/Users/posh/Projects/.*"],
+    include_folders: ["/Users/prompto/Projects/.*"],
   }}
 />
 
@@ -191,14 +191,14 @@ You can also combine these properties:
 
 <Config
   data={{
-    include_folders: ["/Users/posh/Projects/.*"],
-    exclude_folders: ["/Users/posh/Projects/secret-project.*"],
+    include_folders: ["/Users/prompto/Projects/.*"],
+    exclude_folders: ["/Users/prompto/Projects/secret-project.*"],
   }}
 />
 
 :::info
 
-- Oh My Posh will accept both `/` and `\` as path separators for a folder and will match regardless of which
+- Prompto will accept both `/` and `\` as path separators for a folder and will match regardless of which
   is used by the current operating system.
 - Because the strings are evaluated as regular expressions, if you want to use a backslash (`\`) in a Windows
   directory name, you need to specify it as double backslashes, and if using JSON format you should escape it as `\\\\`.
@@ -220,7 +220,7 @@ This is a 1-based index, so the first segment has an index of `1`.
 
 To hide a whole segment including the leading and trailing symbol based on a [template][templates], the template must
 **evaluate to an empty string**. This can be achieved with conditional statements (`if`). The example below will render
-a diamond segment, only if the environment variable `POSH_ENV` is not empty.
+a diamond segment, only if the environment variable `PROMPTO_ENV` is not empty.
 
 Only spaces are excluded, meaning you can still add line breaks and tabs if that is something you're after.
 
@@ -232,18 +232,18 @@ Only spaces are excluded, meaning you can still add line breaks and tabs if that
     trailing_diamond: "\ue0b4",
     foreground: "#ffffff",
     background: "#d53c14",
-    template: "{{ if .Env.POSH_ENV }} \uf8c5 {{ .Env.POSH_ENV }} {{ end }}",
+    template: "{{ if .Env.PROMPTO_ENV }} \uf8c5 {{ .Env.PROMPTO_ENV }} {{ end }}",
   }}
 />
 
 ### On the fly
 
 Sometimes, you run into a situation where you don't want to see a specific segment but the use-case does not justify
-using a conditional template. In this case you can use the `oh-my-posh toggle <type>` command to toggle the
+using a conditional template. In this case you can use the `prompto toggle <type>` command to toggle the
 segment on or off. This works on a **per shell session basis**, meaning that if you toggle a segment off in one instance
 of a shell, it will not disable in the others.
 
-To list the currently toggled segments, use `oh-my-posh get toggles`.
+To list the currently toggled segments, use `prompto get toggles`.
 
 [segments]: /docs/segments/cli/angular
 [options]: #options

@@ -10,7 +10,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/segments/options"
 )
 
 // segment struct, makes templating easier

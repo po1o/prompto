@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/http"
-	"github.com/jandedobbeleer/oh-my-posh/src/text"
+	"github.com/po1o/prompto/src/runtime/http"
+	"github.com/po1o/prompto/src/text"
 )
 
 type ConnectionError struct {
@@ -22,7 +22,7 @@ type codePoints map[uint64]uint64
 func getGlyphCodePoints() (codePoints, error) {
 	var codePoints = make(codePoints)
 
-	bytes, err := http.Download("https://ohmyposh.dev/codepoints.csv", false)
+	bytes, err := http.Download("https://prompto.dev/codepoints.csv", false)
 	if err != nil {
 		return codePoints, &ConnectionError{reason: err.Error()}
 	}

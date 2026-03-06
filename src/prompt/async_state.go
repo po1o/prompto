@@ -3,7 +3,7 @@ package prompt
 import (
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
+	"github.com/po1o/prompto/src/config"
 )
 
 type segmentExecutionState string

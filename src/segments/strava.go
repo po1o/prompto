@@ -5,8 +5,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/http"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/runtime/http"
+	"github.com/po1o/prompto/src/segments/options"
 )
 
 // StravaAPI is a wrapper around http.Oauth

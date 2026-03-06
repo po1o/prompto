@@ -23,7 +23,7 @@ jobs:
             It helps our maintainers focus on the active issues.
 
             If you have found a problem that seems similar, please open a
-            [discussion](https://github.com/JanDeDobbeleer/oh-my-posh/discussions/new?category=troubleshoot)
+            [discussion](https://github.com/po1o/prompto/discussions/new?category=troubleshoot)
             first, complete the body with all the details necessary to reproduce,
             and mention this issue as reference.
           process-only: 'issues'

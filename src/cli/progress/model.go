@@ -3,7 +3,7 @@ package progress
 import (
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
+	"github.com/po1o/prompto/src/terminal"
 )
 
 type Message float64

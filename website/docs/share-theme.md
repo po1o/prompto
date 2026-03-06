@@ -12,11 +12,11 @@ Some glyphs aren't rendered correctly, that's not you but the limitations of the
 Depending on your config, you might have to tweak the output a little bit.
 :::
 
-The oh-my-posh executable has the `config export image` command to export your current theme configuration
+The prompto executable has the `config export image` command to export your current theme configuration
 to a PNG image file (if no other options are specified this will be the name of the config file, or `prompt.png`).
 
 ```powershell
-oh-my-posh config export image
+prompto config export image
 ```
 
 ## Settings File
@@ -62,7 +62,7 @@ override colors, set the author name, and specify the background color.
 ### Usage
 
 ```powershell
-oh-my-posh config export image --settings ~/.image.settings.json
+prompto config export image --settings ~/.image.settings.json
 ```
 
 This will export your prompt image using the custom colors and settings from the file.

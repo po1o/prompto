@@ -4,11 +4,11 @@ import (
 	"encoding/gob"
 	"fmt"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/generics"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/regex"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/generics"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/regex"
+	"github.com/po1o/prompto/src/template"
 )
 
 func init() {

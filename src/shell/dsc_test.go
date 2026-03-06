@@ -19,7 +19,7 @@ func TestWhitespacePrefix(t *testing.T) {
 		},
 		{
 			name:     "bash initialization line",
-			input:    `eval "$(oh-my-posh init bash)"`,
+			input:    `eval "$(prompto init bash)"`,
 			expected: "",
 		},
 		{
@@ -29,7 +29,7 @@ func TestWhitespacePrefix(t *testing.T) {
 		},
 		{
 			name:     "indented bash initialization",
-			input:    `    eval "$(oh-my-posh init bash)"`,
+			input:    `    eval "$(prompto init bash)"`,
 			expected: "    ",
 		},
 		{
@@ -39,7 +39,7 @@ func TestWhitespacePrefix(t *testing.T) {
 		},
 		{
 			name:     "tab indented initialization",
-			input:    "\teval \"$(oh-my-posh init bash)\"",
+			input:    "\teval \"$(prompto init bash)\"",
 			expected: "\t",
 		},
 		{
@@ -54,7 +54,7 @@ func TestWhitespacePrefix(t *testing.T) {
 		},
 		{
 			name:     "commented out initialization",
-			input:    "# eval \"$(oh-my-posh init bash)\"",
+			input:    "# eval \"$(prompto init bash)\"",
 			expected: "",
 		},
 		{
@@ -64,7 +64,7 @@ func TestWhitespacePrefix(t *testing.T) {
 		},
 		{
 			name:     "indented comment",
-			input:    "    # eval \"$(oh-my-posh init bash)\"",
+			input:    "    # eval \"$(prompto init bash)\"",
 			expected: "    ",
 		},
 		{
@@ -74,7 +74,7 @@ func TestWhitespacePrefix(t *testing.T) {
 		},
 		{
 			name:     "powershell initialization",
-			input:    "oh-my-posh init pwsh | Invoke-Expression",
+			input:    "prompto init pwsh | Invoke-Expression",
 			expected: "",
 		},
 		{
@@ -84,7 +84,7 @@ func TestWhitespacePrefix(t *testing.T) {
 		},
 		{
 			name:     "fish initialization",
-			input:    "oh-my-posh init fish | source",
+			input:    "prompto init fish | source",
 			expected: "",
 		},
 		{
@@ -129,120 +129,120 @@ func TestUpdateShellConfig(t *testing.T) {
 			name: "bash - add initialization when not present",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash",
+				Command: "prompto init bash",
 			},
 			content:        "# Some existing config\necho 'hello world'\n",
-			expectedOutput: "# Some existing config\necho 'hello world'\neval \"$(oh-my-posh init bash)\"\n",
+			expectedOutput: "# Some existing config\necho 'hello world'\neval \"$(prompto init bash)\"\n",
 			expectedUpdate: true,
 		},
 		{
 			name: "bash - update existing initialization",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash --config theme.json",
+				Command: "prompto init bash --config theme.json",
 			},
-			content:        "# Some config\neval \"$(oh-my-posh init bash)\"\necho 'done'\n",
-			expectedOutput: "# Some config\neval \"$(oh-my-posh init bash --config theme.json)\"\necho 'done'\n",
+			content:        "# Some config\neval \"$(prompto init bash)\"\necho 'done'\n",
+			expectedOutput: "# Some config\neval \"$(prompto init bash --config theme.json)\"\necho 'done'\n",
 			expectedUpdate: true,
 		},
 		{
 			name: "bash - no update when already correct",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash",
+				Command: "prompto init bash",
 			},
-			content:        "# Some config\neval \"$(oh-my-posh init bash)\"\necho 'done'\n",
-			expectedOutput: "# Some config\neval \"$(oh-my-posh init bash)\"\necho 'done'\n",
+			content:        "# Some config\neval \"$(prompto init bash)\"\necho 'done'\n",
+			expectedOutput: "# Some config\neval \"$(prompto init bash)\"\necho 'done'\n",
 			expectedUpdate: false,
 		},
 		{
 			name: "zsh - add initialization when not present",
 			shell: &Shell{
 				Name:    "zsh",
-				Command: "oh-my-posh init zsh",
+				Command: "prompto init zsh",
 			},
 			content:        "# ZSH config\nexport PATH=$PATH:/usr/local/bin\n",
-			expectedOutput: "# ZSH config\nexport PATH=$PATH:/usr/local/bin\neval \"$(oh-my-posh init zsh)\"\n",
+			expectedOutput: "# ZSH config\nexport PATH=$PATH:/usr/local/bin\neval \"$(prompto init zsh)\"\n",
 			expectedUpdate: true,
 		},
 		{
 			name: "fish - add initialization when not present",
 			shell: &Shell{
 				Name:    "fish",
-				Command: "oh-my-posh init fish",
+				Command: "prompto init fish",
 			},
 			content:        "# Fish config\nset -x PATH $PATH /usr/local/bin\n",
-			expectedOutput: "# Fish config\nset -x PATH $PATH /usr/local/bin\noh-my-posh init fish | source\n",
+			expectedOutput: "# Fish config\nset -x PATH $PATH /usr/local/bin\nprompto init fish | source\n",
 			expectedUpdate: true,
 		},
 		{
 			name: "pwsh - add initialization when not present",
 			shell: &Shell{
 				Name:    "pwsh",
-				Command: "oh-my-posh init pwsh",
+				Command: "prompto init pwsh",
 			},
 			content:        "# PowerShell config\n$env:PATH += ';C:\\Program Files'\n",
-			expectedOutput: "# PowerShell config\n$env:PATH += ';C:\\Program Files'\noh-my-posh init pwsh | Invoke-Expression\n",
+			expectedOutput: "# PowerShell config\n$env:PATH += ';C:\\Program Files'\nprompto init pwsh | Invoke-Expression\n",
 			expectedUpdate: true,
 		},
 		{
 			name: "preserve indentation when updating",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash --config new.json",
+				Command: "prompto init bash --config new.json",
 			},
-			content:        "if [ -f ~/.bashrc ]; then\n    eval \"$(oh-my-posh init bash)\"\nfi\n",
-			expectedOutput: "if [ -f ~/.bashrc ]; then\n    eval \"$(oh-my-posh init bash --config new.json)\"\nfi\n",
+			content:        "if [ -f ~/.bashrc ]; then\n    eval \"$(prompto init bash)\"\nfi\n",
+			expectedOutput: "if [ -f ~/.bashrc ]; then\n    eval \"$(prompto init bash --config new.json)\"\nfi\n",
 			expectedUpdate: true,
 		},
 		{
-			name: "ignore commented oh-my-posh lines",
+			name: "ignore commented prompto lines",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash",
+				Command: "prompto init bash",
 			},
-			content:        "# eval \"$(oh-my-posh init bash)\"\necho 'commented out'\n",
-			expectedOutput: "# eval \"$(oh-my-posh init bash)\"\necho 'commented out'\neval \"$(oh-my-posh init bash)\"\n",
+			content:        "# eval \"$(prompto init bash)\"\necho 'commented out'\n",
+			expectedOutput: "# eval \"$(prompto init bash)\"\necho 'commented out'\neval \"$(prompto init bash)\"\n",
 			expectedUpdate: true,
 		},
 		{
 			name: "handle empty content",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash",
+				Command: "prompto init bash",
 			},
 			content:        "",
-			expectedOutput: "\neval \"$(oh-my-posh init bash)\"\n",
+			expectedOutput: "\neval \"$(prompto init bash)\"\n",
 			expectedUpdate: true,
 		},
 		{
 			name: "handle content without trailing newline",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash",
+				Command: "prompto init bash",
 			},
 			content:        "echo 'no newline'",
-			expectedOutput: "echo 'no newline'\neval \"$(oh-my-posh init bash)\"\n",
+			expectedOutput: "echo 'no newline'\neval \"$(prompto init bash)\"\n",
 			expectedUpdate: true,
 		},
 		{
-			name: "update oh-my-posh.exe reference",
+			name: "update prompto.exe reference",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash --config theme.json",
+				Command: "prompto init bash --config theme.json",
 			},
-			content:        "eval \"$(oh-my-posh.exe init bash)\"\n",
-			expectedOutput: "eval \"$(oh-my-posh init bash --config theme.json)\"\n",
+			content:        "eval \"$(prompto.exe init bash)\"\n",
+			expectedOutput: "eval \"$(prompto init bash --config theme.json)\"\n",
 			expectedUpdate: true,
 		},
 		{
 			name: "mixed whitespace indentation preservation",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash --config theme.json",
+				Command: "prompto init bash --config theme.json",
 			},
-			content:        "if command -v oh-my-posh >/dev/null 2>&1; then\n \t  eval \"$(oh-my-posh init bash)\"\nfi\n",
-			expectedOutput: "if command -v oh-my-posh >/dev/null 2>&1; then\n \t  eval \"$(oh-my-posh init bash --config theme.json)\"\nfi\n",
+			content:        "if command -v prompto >/dev/null 2>&1; then\n \t  eval \"$(prompto init bash)\"\nfi\n",
+			expectedOutput: "if command -v prompto >/dev/null 2>&1; then\n \t  eval \"$(prompto init bash --config theme.json)\"\nfi\n",
 			expectedUpdate: true,
 		},
 	}
@@ -263,19 +263,19 @@ func TestGetInitLinePosition(t *testing.T) {
 		expected int
 	}{
 		{
-			name: "find oh-my-posh init line",
+			name: "find prompto init line",
 			lines: []string{
 				"# Some config",
-				"eval \"$(oh-my-posh init bash)\"",
+				"eval \"$(prompto init bash)\"",
 				"echo 'done'",
 			},
 			expected: 1,
 		},
 		{
-			name: "find oh-my-posh.exe init line",
+			name: "find prompto.exe init line",
 			lines: []string{
 				"# Some config",
-				"oh-my-posh.exe init pwsh | Invoke-Expression",
+				"prompto.exe init pwsh | Invoke-Expression",
 				"echo 'done'",
 			},
 			expected: 1,
@@ -283,22 +283,22 @@ func TestGetInitLinePosition(t *testing.T) {
 		{
 			name: "ignore commented lines",
 			lines: []string{
-				"# eval \"$(oh-my-posh init bash)\"",
+				"# eval \"$(prompto init bash)\"",
 				"echo 'test'",
-				"eval \"$(oh-my-posh init bash)\"",
+				"eval \"$(prompto init bash)\"",
 			},
 			expected: 2,
 		},
 		{
 			name: "ignore indented commented lines",
 			lines: []string{
-				"    # eval \"$(oh-my-posh init bash)\"",
-				"eval \"$(oh-my-posh init bash)\"",
+				"    # eval \"$(prompto init bash)\"",
+				"eval \"$(prompto init bash)\"",
 			},
 			expected: 1,
 		},
 		{
-			name: "no oh-my-posh init line found",
+			name: "no prompto init line found",
 			lines: []string{
 				"# Some config",
 				"echo 'hello'",
@@ -309,9 +309,9 @@ func TestGetInitLinePosition(t *testing.T) {
 		{
 			name: "find last occurrence",
 			lines: []string{
-				"eval \"$(oh-my-posh init bash)\"",
+				"eval \"$(prompto init bash)\"",
 				"# another line",
-				"eval \"$(oh-my-posh init bash --config theme.json)\"",
+				"eval \"$(prompto init bash --config theme.json)\"",
 			},
 			expected: 2,
 		},
@@ -319,7 +319,7 @@ func TestGetInitLinePosition(t *testing.T) {
 			name: "find with extra spaces",
 			lines: []string{
 				"# config",
-				"oh-my-posh   init   fish | source",
+				"prompto   init   fish | source",
 			},
 			expected: 1,
 		},
@@ -349,49 +349,49 @@ func TestShellCommand(t *testing.T) {
 			name: "bash shell command",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash",
+				Command: "prompto init bash",
 			},
-			expected: `eval "$(oh-my-posh init bash)"`,
+			expected: `eval "$(prompto init bash)"`,
 		},
 		{
 			name: "zsh shell command",
 			shell: &Shell{
 				Name:    "zsh",
-				Command: "oh-my-posh init zsh",
+				Command: "prompto init zsh",
 			},
-			expected: `eval "$(oh-my-posh init zsh)"`,
+			expected: `eval "$(prompto init zsh)"`,
 		},
 		{
 			name: "fish shell command",
 			shell: &Shell{
 				Name:    "fish",
-				Command: "oh-my-posh init fish",
+				Command: "prompto init fish",
 			},
-			expected: "oh-my-posh init fish | source",
+			expected: "prompto init fish | source",
 		},
 		{
 			name: "pwsh shell command",
 			shell: &Shell{
 				Name:    "pwsh",
-				Command: "oh-my-posh init pwsh",
+				Command: "prompto init pwsh",
 			},
-			expected: "oh-my-posh init pwsh | Invoke-Expression",
+			expected: "prompto init pwsh | Invoke-Expression",
 		},
 		{
 			name: "unknown shell command",
 			shell: &Shell{
 				Name:    "unknown",
-				Command: "oh-my-posh init unknown",
+				Command: "prompto init unknown",
 			},
-			expected: "oh-my-posh init unknown",
+			expected: "prompto init unknown",
 		},
 		{
 			name: "bash with config",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash --config theme.json",
+				Command: "prompto init bash --config theme.json",
 			},
-			expected: `eval "$(oh-my-posh init bash --config theme.json)"`,
+			expected: `eval "$(prompto init bash --config theme.json)"`,
 		},
 	}
 
@@ -414,46 +414,46 @@ func TestAddInitLine(t *testing.T) {
 			name: "add to content with trailing newline",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash",
+				Command: "prompto init bash",
 			},
 			content:  "# Some config\necho 'hello'\n",
-			expected: "# Some config\necho 'hello'\neval \"$(oh-my-posh init bash)\"\n",
+			expected: "# Some config\necho 'hello'\neval \"$(prompto init bash)\"\n",
 		},
 		{
 			name: "add to content without trailing newline",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash",
+				Command: "prompto init bash",
 			},
 			content:  "# Some config\necho 'hello'",
-			expected: "# Some config\necho 'hello'\neval \"$(oh-my-posh init bash)\"\n",
+			expected: "# Some config\necho 'hello'\neval \"$(prompto init bash)\"\n",
 		},
 		{
 			name: "add to empty content",
 			shell: &Shell{
 				Name:    "bash",
-				Command: "oh-my-posh init bash",
+				Command: "prompto init bash",
 			},
 			content:  "",
-			expected: "\neval \"$(oh-my-posh init bash)\"\n",
+			expected: "\neval \"$(prompto init bash)\"\n",
 		},
 		{
 			name: "add fish init line",
 			shell: &Shell{
 				Name:    "fish",
-				Command: "oh-my-posh init fish",
+				Command: "prompto init fish",
 			},
 			content:  "set -x PATH $PATH /usr/local/bin\n",
-			expected: "set -x PATH $PATH /usr/local/bin\noh-my-posh init fish | source\n",
+			expected: "set -x PATH $PATH /usr/local/bin\nprompto init fish | source\n",
 		},
 		{
 			name: "add pwsh init line",
 			shell: &Shell{
 				Name:    "pwsh",
-				Command: "oh-my-posh init pwsh",
+				Command: "prompto init pwsh",
 			},
 			content:  "$env:PATH += ';C:\\\\Program Files'\n",
-			expected: "$env:PATH += ';C:\\\\Program Files'\noh-my-posh init pwsh | Invoke-Expression\n",
+			expected: "$env:PATH += ';C:\\\\Program Files'\nprompto init pwsh | Invoke-Expression\n",
 		},
 	}
 

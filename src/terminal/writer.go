@@ -5,12 +5,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/regex"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
-	"github.com/jandedobbeleer/oh-my-posh/src/text"
 	"github.com/mattn/go-runewidth"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/regex"
+	"github.com/po1o/prompto/src/shell"
+	"github.com/po1o/prompto/src/text"
 )
 
 func init() {

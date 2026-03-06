@@ -1,8 +1,8 @@
 {
   "$schema": "https://aka.ms/dsc/schemas/v3/bundled/resource/manifest.vscode.json",
-  "description": "Allows configuring the Oh My Posh shell integration.",
+  "description": "Allows configuring the Prompto shell integration.",
   "export": {
-    "executable": "oh-my-posh",
+    "executable": "prompto",
     "input": "stdin",
     "args": [
       "shell",
@@ -11,7 +11,7 @@
     ]
   },
   "get": {
-    "executable": "oh-my-posh",
+    "executable": "prompto",
     "input": "stdin",
     "args": [
       "shell",
@@ -21,7 +21,7 @@
   },
   "schema": {
     "command": {
-      "executable": "oh-my-posh",
+      "executable": "prompto",
       "args": [
         "shell",
         "dsc",
@@ -30,7 +30,7 @@
     }
   },
   "set": {
-    "executable": "oh-my-posh",
+    "executable": "prompto",
     "implementsPretest": true,
     "args": [
       "shell",

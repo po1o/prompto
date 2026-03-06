@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/log"
 
 	"github.com/fsnotify/fsnotify"
 )

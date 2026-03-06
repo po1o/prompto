@@ -32,10 +32,10 @@
           "0409": {
             "CompanyName": "github.com/jandedobbeleer",
             "FileDescription": "A prompt theme engine for any shell.",
-            "InternalName": "oh-my-posh",
+            "InternalName": "prompto",
             "LegalCopyright": "© Jan De Dobbeleer. Licensed under MIT.",
-            "OriginalFilename": "oh-my-posh.exe",
-            "ProductName": "Oh My Posh"
+            "OriginalFilename": "prompto.exe",
+            "ProductName": "Prompto"
           }
         }
       }

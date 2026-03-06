@@ -1,6 +1,6 @@
 package config
 
-import "github.com/jandedobbeleer/oh-my-posh/src/cache"
+import "github.com/po1o/prompto/src/cache"
 
 type Cache struct {
 	Duration cache.Duration `json:"duration,omitempty" toml:"duration,omitempty" yaml:"duration,omitempty"`

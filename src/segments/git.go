@@ -9,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/regex"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/regex"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/path"
+	"github.com/po1o/prompto/src/segments/options"
 
 	"gopkg.in/ini.v1"
 )

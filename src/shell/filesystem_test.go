@@ -3,7 +3,7 @@ package shell
 import (
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/runtime"
 )
 
 func TestCacheValueChangesWhenDaemonModeChanges(t *testing.T) {

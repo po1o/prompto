@@ -3,8 +3,8 @@ package daemon
 import (
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/prompt"
 )
 
 type promptDeviceCacheBridge struct {

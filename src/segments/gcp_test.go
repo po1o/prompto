@@ -4,9 +4,9 @@ import (
 	"path"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/mock"
+	"github.com/po1o/prompto/src/segments/options"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -106,14 +106,14 @@ func TestGetConfigDirectory(t *testing.T) {
 	}{
 		{
 			Case:           "CLOUDSDK_CONFIG",
-			CloudSDKConfig: "/Users/posh/.config/gcloud",
-			Expected:       "/Users/posh/.config/gcloud",
+			CloudSDKConfig: "/Users/prompto/.config/gcloud",
+			Expected:       "/Users/prompto/.config/gcloud",
 		},
 		{
 			Case:     "Windows",
 			GOOS:     runtime.WINDOWS,
-			AppData:  "/Users/posh/.config",
-			Expected: "/Users/posh/.config/gcloud",
+			AppData:  "/Users/prompto/.config",
+			Expected: "/Users/prompto/.config/gcloud",
 		},
 		{
 			Case:     "default",

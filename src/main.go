@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/jandedobbeleer/oh-my-posh/src/cli"
+	"github.com/po1o/prompto/src/cli"
 )
 
 func main() {

@@ -1,10 +1,10 @@
 package prompt
 
 import (
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/shell"
 )
 
 const (

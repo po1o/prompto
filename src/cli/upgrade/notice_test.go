@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/build"
+	"github.com/po1o/prompto/src/build"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,12 +30,12 @@ func TestCanUpgrade(t *testing.T) {
 		build.Version = tc.CurrentVersion
 
 		if len(tc.Installer) > 0 {
-			os.Setenv("POSH_INSTALLER", tc.Installer)
+			os.Setenv("PROMPTO_INSTALLER", tc.Installer)
 		}
 
 		_, canUpgrade := ugc.Notice()
 		assert.Equal(t, tc.Expected, canUpgrade, tc.Case)
 
-		os.Setenv("POSH_INSTALLER", "")
+		os.Setenv("PROMPTO_INSTALLER", "")
 	}
 }

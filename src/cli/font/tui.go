@@ -11,9 +11,9 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/progress"
-	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
-	"github.com/jandedobbeleer/oh-my-posh/src/text"
+	"github.com/po1o/prompto/src/cli/progress"
+	"github.com/po1o/prompto/src/terminal"
+	"github.com/po1o/prompto/src/text"
 )
 
 var (

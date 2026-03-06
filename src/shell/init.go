@@ -6,15 +6,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
-	"github.com/jandedobbeleer/oh-my-posh/src/text"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/path"
+	"github.com/po1o/prompto/src/text"
 )
 
 const (
-	noExe = "echo \"Unable to find Oh My Posh executable\""
+	noExe = "echo \"Unable to find Prompto executable\""
 )
 
 var (
@@ -43,11 +43,11 @@ func getExecutablePath(env runtime.Environment) (string, error) {
 	return executable, nil
 }
 
-// Init returns the command to initialize oh-my-posh for the shell.
+// Init returns the command to initialize prompto for the shell.
 // It writes the init script to the appropriate location and returns
 // a source command or wrapper command depending on the shell.
 // For Nu shell, it writes to the autoload directory and returns empty.
-// For PWSH, it returns a wrapper command that re-invokes oh-my-posh.
+// For PWSH, it returns a wrapper command that re-invokes prompto.
 func Init(env runtime.Environment, feats Features) string {
 	switch env.Flags().Shell {
 	case PWSH:
@@ -61,7 +61,7 @@ func Init(env runtime.Environment, feats Features) string {
 	case ZSH, BASH, FISH:
 		return generateAndSourceScript(env, feats)
 	default:
-		return fmt.Sprintf(`echo "%s is not supported by Oh My Posh"`, env.Flags().Shell)
+		return fmt.Sprintf(`echo "%s is not supported by Prompto"`, env.Flags().Shell)
 	}
 }
 
@@ -86,7 +86,7 @@ func Debug(env runtime.Environment, feats Features, startTime *time.Time) string
 	return printDebugInfo(env, startTime)
 }
 
-// recurseInitCommand returns a wrapper command that re-invokes oh-my-posh
+// recurseInitCommand returns a wrapper command that re-invokes prompto
 // with --print. This is used by PWSH which evals the script.
 func recurseInitCommand(env runtime.Environment) string {
 	executable, err := getExecutablePath(env)
@@ -184,7 +184,7 @@ func generateScript(env runtime.Environment, feats Features) string {
 	}
 
 	init := strings.NewReplacer(
-		"::OMP::", executable,
+		"::PROMPTO::", executable,
 		"::CONFIG::", configPath,
 		"::SESSION_ID::", cache.SessionID(),
 	).Replace(script)
@@ -202,7 +202,7 @@ func generateNuScript(env runtime.Environment, feats Features) string {
 	executable = quoteNuStr(executable)
 
 	init := strings.NewReplacer(
-		"::OMP::", executable,
+		"::PROMPTO::", executable,
 		"::CONFIG::", quoteNuStr(env.Flags().ConfigPath),
 		"::SESSION_ID::", cache.SessionID(),
 	).Replace(nuInit)
@@ -272,13 +272,13 @@ func printDebugInfo(env runtime.Environment, startTime *time.Time) string {
 func sessionScript(shell string) string {
 	switch shell {
 	case PWSH:
-		return fmt.Sprintf("$env:POSH_SESSION_ID = \"%s\";", cache.SessionID())
+		return fmt.Sprintf("$env:PROMPTO_SESSION_ID = \"%s\";", cache.SessionID())
 	case ZSH, BASH:
-		return fmt.Sprintf("export POSH_SESSION_ID=\"%s\";", cache.SessionID())
+		return fmt.Sprintf("export PROMPTO_SESSION_ID=\"%s\";", cache.SessionID())
 	case FISH:
-		return fmt.Sprintf("set --export --global POSH_SESSION_ID \"%s\";", cache.SessionID())
+		return fmt.Sprintf("set --export --global PROMPTO_SESSION_ID \"%s\";", cache.SessionID())
 	case NU:
-		return fmt.Sprintf("$env.POSH_SESSION_ID = \"%s\";", cache.SessionID())
+		return fmt.Sprintf("$env.PROMPTO_SESSION_ID = \"%s\";", cache.SessionID())
 	}
 	return ""
 }

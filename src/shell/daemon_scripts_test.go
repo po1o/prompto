@@ -17,19 +17,19 @@ func TestDaemonScriptsIncludePIDAndVimModeSupport(t *testing.T) {
 		{
 			name:            "bash",
 			script:          bashInit,
-			expectedStart:   "daemon start --config=\"$_omp_config\"",
+			expectedStart:   "daemon start --config=\"$_prompto_config\"",
 			expectedPIDFlag: "--pid=$$",
 		},
 		{
 			name:            "zsh",
 			script:          zshInit,
-			expectedStart:   "daemon start --config=$_omp_config",
+			expectedStart:   "daemon start --config=$_prompto_config",
 			expectedPIDFlag: "--pid=$$",
 		},
 		{
 			name:            "fish",
 			script:          fishInit,
-			expectedStart:   "daemon start --config=$_omp_config",
+			expectedStart:   "daemon start --config=$_prompto_config",
 			expectedPIDFlag: "--pid=$parent_pid",
 		},
 		{

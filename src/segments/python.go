@@ -7,9 +7,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime/path"
+	"github.com/po1o/prompto/src/segments/options"
 )
 
 type Python struct {

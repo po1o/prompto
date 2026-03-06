@@ -4,7 +4,7 @@ import (
 	"errors"
 	"path/filepath"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/log"
 	yaml "go.yaml.in/yaml/v3"
 )
 

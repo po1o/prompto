@@ -3,7 +3,7 @@ package segments
 import (
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/runtime"
 )
 
 type WinGet struct {

@@ -10,8 +10,8 @@ import (
 	stdruntime "runtime"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime"
 )
 
 // This is based on the following key generation and validation.
@@ -39,7 +39,7 @@ func downloadAndVerify(cfg *Config) ([]byte, error) {
 		extension = ".exe"
 	}
 
-	asset := fmt.Sprintf("posh-%s-%s%s", stdruntime.GOOS, stdruntime.GOARCH, extension)
+	asset := fmt.Sprintf("prompto-%s-%s%s", stdruntime.GOOS, stdruntime.GOARCH, extension)
 
 	log.Debug("downloading asset:", asset)
 

@@ -5,10 +5,10 @@ import (
 	"errors"
 	httplib "net/http"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/auth"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/cli/auth"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/segments/options"
 )
 
 const (
@@ -48,7 +48,7 @@ type ytmdaStatusResponse struct {
 func (y *Ytm) setStatus() error {
 	token, OK := cache.Get[string](cache.Device, auth.YTMDATOKEN)
 	if !OK || token == "" {
-		return errors.New("YTMDA token not found, please authenticate using `oh-my-posh auth ytmda`")
+		return errors.New("YTMDA token not found, please authenticate using `prompto auth ytmda`")
 	}
 
 	status, err := y.requestStatus(token)

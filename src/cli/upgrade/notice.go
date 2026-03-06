@@ -4,19 +4,19 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/build"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/http"
+	"github.com/po1o/prompto/src/build"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime/http"
 )
 
 const (
 	CACHEKEY = "upgrade_check"
 
 	upgradeNotice = `
-A new release of Oh My Posh is available: v%s → v%s
-To upgrade, run: 'oh-my-posh upgrade%s'
+A new release of Prompto is available: v%s → v%s
+To upgrade, run: 'prompto upgrade%s'
 
-To enable automated upgrades, run: 'oh-my-posh enable upgrade'.
+To enable automated upgrades, run: 'prompto enable upgrade'.
 `
 )
 
@@ -26,7 +26,7 @@ To enable automated upgrades, run: 'oh-my-posh enable upgrade'.
 // The upgrade check is only performed every other week.
 func (cfg *Config) Notice() (string, bool) {
 	// never validate when we install using the Windows Store
-	if os.Getenv("POSH_INSTALLER") == "ws" {
+	if os.Getenv("PROMPTO_INSTALLER") == "ws" {
 		log.Debug("skipping upgrade check because we are using the Windows Store")
 		return "", false
 	}

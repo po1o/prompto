@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/log"
 )
 
 // debug will loop through your config file and output the timings for each segments
 func (e *Engine) PrintDebug(startTime time.Time, version string) string {
 	e.write(fmt.Sprintf("\n%s %s\n", log.Text("Version:").Green().Bold().Plain(), version))
 	sh := e.Env.Shell()
-	shellVersion := e.Env.Getenv("POSH_SHELL_VERSION")
+	shellVersion := e.Env.Getenv("PROMPTO_SHELL_VERSION")
 	if len(shellVersion) != 0 {
 		sh += fmt.Sprintf(" (%s)", shellVersion)
 	}

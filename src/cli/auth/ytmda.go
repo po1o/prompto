@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/jandedobbeleer/oh-my-posh/src/build"
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/http"
+	"github.com/po1o/prompto/src/build"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/http"
 )
 
 const (
@@ -77,7 +77,7 @@ func (y *Ytmda) Authenticate() {
 }
 
 func (y *Ytmda) requestCode() (string, error) {
-	body := fmt.Sprintf(`{"appId": "ohmyposh", "appName": "oh-my-posh", "appVersion": "%s"}`, strings.TrimPrefix(build.Version, "v"))
+	body := fmt.Sprintf(`{"appId": "prompto", "appName": "prompto", "appVersion": "%s"}`, strings.TrimPrefix(build.Version, "v"))
 
 	type codeResponse struct {
 		Code string `json:"code"`
@@ -89,7 +89,7 @@ func (y *Ytmda) requestCode() (string, error) {
 }
 
 func (y *Ytmda) requestToken(code string) (string, error) {
-	body := fmt.Sprintf(`{"appId": "ohmyposh", "code": "%s"}`, code)
+	body := fmt.Sprintf(`{"appId": "prompto", "code": "%s"}`, code)
 
 	type tokenResponse struct {
 		Token string `json:"token"`

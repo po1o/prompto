@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/upgrade"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/cli/upgrade"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime/path"
 	yaml "go.yaml.in/yaml/v3"
 )
 

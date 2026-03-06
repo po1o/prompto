@@ -8,16 +8,16 @@ import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 import Config from "@site/src/components/Config.js";
 
-Before validating anything, make sure you're on the [latest version][latest] of Oh My Posh and your terminal and shell are up-to-date.
+Before validating anything, make sure you're on the [latest version][latest] of Prompto and your terminal and shell are up-to-date.
 
 ## My prompt is broken after upgrading to PowerShell 7.4
 
-PowerShell 7.4 has an [issue][pwsh-20733] in encoding which affects the rendering of Oh My Posh.
+PowerShell 7.4 has an [issue][pwsh-20733] in encoding which affects the rendering of Prompto.
 You can work around this by forcing the entire shell to UTF8.
 
 ```powershell
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
-oh-my-posh init pwsh --config ~/custom.omp.json | Invoke-Expression
+prompto init pwsh --config ~/custom.omp.json | Invoke-Expression
 ```
 
 :::warning
@@ -30,13 +30,13 @@ consider this a temporary workaround until the original PowerShell [issue][pwsh-
 You can disable the upgrade notice using the following command once:
 
 ```bash
-oh-my-posh disable notice
+prompto disable notice
 ```
 
 If you want to enable it again, run:
 
 ```bash
-oh-my-posh enable notice
+prompto enable notice
 ```
 
 ## The prompt is slow (delay in showing the prompt between commands)
@@ -47,7 +47,7 @@ The delay you're experiencing may be linked to the real-time protection features
 To potentially alleviate this delay, ensure that Windows Defender or your primary antivirus software has an [exclusion][exclusion] set for the full path of the executable. To identify the full path of the executable in question, you can run the following command in a PowerShell prompt:
 
 ```powershell
-(Get-Command oh-my-posh).Source
+(Get-Command prompto).Source
 ```
 
 Additionally, check your antivirus settings for features that actively scan scripts during execution. Even with exclusions set, some antivirus programs might still actively scan scripts, which can introduce a noticeable delay.
@@ -68,21 +68,21 @@ Always proceed with caution to maintain a balance between system performance and
 }>
 <TabItem value="powershell">
 
-You can use the `oh-my-posh debug` functionality to see where Oh My Posh spends its time.
+You can use the `prompto debug` functionality to see where Prompto spends its time.
 In case there's no clear culprit (timings indicate everything's OK), chances are some modules are the culprit.
 We bootstrap a few PowerShell modules to maximize compatibility, but sometimes these can introduce unwanted side-effects.
 
 The modules we support are:
 
-- posh-git
+- prompto-git
 
 </TabItem>
 <TabItem value="others">
 
-You can use Oh My Posh's built-in debug functionality to identify slow segments.
+You can use Prompto's built-in debug functionality to identify slow segments.
 
 ```bash
-oh-my-posh debug
+prompto debug
 ```
 
 Whenever there's a segment that spikes, see if there might be updates to the underlying functionality (usually shell commands).
@@ -150,8 +150,8 @@ one at [VIM][vim-wt].
 ## Conda: environment name displayed in front of the prompt
 
 Conda will automatically prepend the prompt with the name of the environment you're in.
-To solely rely on Oh My Posh to set the prompt, you can configure the following setting to hide it.
-Make sure to add this **before** initializing Oh My Posh.
+To solely rely on Prompto to set the prompt, you can configure the following setting to hide it.
+Make sure to add this **before** initializing Prompto.
 
 ```bash
 conda config --set changeps1 False
@@ -212,31 +212,31 @@ You're here because you've seen the following message:
 [WARNING] ConstrainedLanguage mode detected, unable to set console to UTF-8.
 When using PowerShell in ConstrainedLanguage mode, please set the
 console mode manually to UTF-8. See here for more information:
-https://ohmyposh.dev/docs/faq#powershell-running-in-constrainedlanguage-mode
+https://prompto.dev/docs/faq#powershell-running-in-constrainedlanguage-mode
 ```
 
 When running PowerShell in ConstrainedLanguage mode, we can't set the console to UTF-8. This will cause the prompt to be rendered incorrectly.
 There's a few [options][utf-8] to set the console to UTF-8 from an OS perspective on Windows, other systems shouldn't be impacted.
 
-To remove the message after manual configuration, you can add the following to your `$PROFILE` before importing Oh My Posh:
+To remove the message after manual configuration, you can add the following to your `$PROFILE` before importing Prompto:
 
 ```powershell
-$env:POSH_CONSTRAINED_LANGUAGE = 1
+$env:PROMPTO_CONSTRAINED_LANGUAGE = 1
 ```
 
-## PowerShell: The term '.../oh-my-posh.exe' is not recognized as a name of a cmdlet...
+## PowerShell: The term '.../prompto.exe' is not recognized as a name of a cmdlet...
 
 For example:
 
 ```
-&: The term 'C:/Users/TommiGr├╢nlund/.oh-my-posh/oh-my-posh.exe' is not recognized as a name of a cmdlet, function, script file, or executable program.
+&: The term 'C:/Users/TommiGr├╢nlund/.prompto/prompto.exe' is not recognized as a name of a cmdlet, function, script file, or executable program.
 Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
 ```
 
-The issue is that PowerShell on Windows doesn't yet default to UTF-8. Resolve the issue by setting the shell to UTF-8 in the scope of initializing Oh My Posh.
+The issue is that PowerShell on Windows doesn't yet default to UTF-8. Resolve the issue by setting the shell to UTF-8 in the scope of initializing Prompto.
 
 :::info Why it matters?
-If the location contains non-ASCII characters, non-UTF-8 PowerShell may provide a wrong path to Oh My Posh, which can break the initialization.
+If the location contains non-ASCII characters, non-UTF-8 PowerShell may provide a wrong path to Prompto, which can break the initialization.
 
 The scenario for non-ASCII location:
 
@@ -244,14 +244,14 @@ The scenario for non-ASCII location:
 - Your [config file](./installation/customize.mdx) is under your `$HOME`.
   :::
 
-To do so, edit your `$PROFILE`, find the line that initializes Oh My Posh (as highlighted below), and change it to the following:
+To do so, edit your `$PROFILE`, find the line that initializes Prompto (as highlighted below), and change it to the following:
 
 ```powershell
 $previousOutputEncoding = [Console]::OutputEncoding
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 try {
     // highlight-start
-    oh-my-posh init pwsh --config ~/custom.omp.json | Invoke-Expression
+    prompto init pwsh --config ~/custom.omp.json | Invoke-Expression
     // highlight-end
 } finally {
     [Console]::OutputEncoding = $previousOutputEncoding
@@ -266,7 +266,7 @@ $OutputEncoding = [console]::InputEncoding = [console]::OutputEncoding = New-Obj
 
 ## Zsh: No command history (Ctrl+R does not work)
 
-This issue occurs when you're using plain zsh in combination with Oh My Posh.
+This issue occurs when you're using plain zsh in combination with Prompto.
 You can fix this by adding the right configuration to `~/.zshrc`.
 
 ```bash
@@ -278,11 +278,11 @@ setopt appendhistory
 
 ## ZSH: No such shell function 'zle-line-init'
 
-This is most likely caused by two Oh My Posh init lines in your `.zshrc`, remove one of them. See [here][zsh-init].
+This is most likely caused by two Prompto init lines in your `.zshrc`, remove one of them. See [here][zsh-init].
 
 ## Fish: Display current bind (Vim) mode
 
-By default, Oh My Posh will not re-render the prompt (i.e., generate a new prompt) until a new command is run, so you should
+By default, Prompto will not re-render the prompt (i.e., generate a new prompt) until a new command is run, so you should
 export `$fish_bind_mode` to `FISH__BIND_MODE` and call the `omp_repaint_prompt` function to do prompt re-rendering when
 `$fish_bind_mode` changes:
 
@@ -317,7 +317,7 @@ After that, you can use the value in a template. The following replicates the [e
 
 Fish supports using `Alt+←` (Alt+Left) and `Alt+→` (Alt+Right) bindings to [navigate the directory history](https://fishshell.com/docs/current/interactive.html#id13).
 
-To have oh-my-posh update the directory context as the directory history is navigated, use a function that calls `omp_repaint_prompt` when the `$PWD` variable changes:
+To have prompto update the directory context as the directory history is navigated, use a function that calls `omp_repaint_prompt` when the `$PWD` variable changes:
 
 ```fish
 function rerender_on_dir_change --on-variable PWD
@@ -328,12 +328,12 @@ end
 ## After updating my Nerd Font to a newer version, the prompt displays unknown characters
 
 Nerd Fonts moved the icons to a different location in the font for v3.
-This can cause the prompt to display unknown characters. There's a built-in migration in Oh My Posh to fix this.
+This can cause the prompt to display unknown characters. There's a built-in migration in Prompto to fix this.
 
 To migrate, run the following command:
 
 ```bash
-oh-my-posh config migrate glyphs --write
+prompto config migrate glyphs --write
 ```
 
 This will update your configuration file to use the new glyph locations. Do know they might look different, as they also
@@ -349,8 +349,8 @@ This is a known problem with Xonsh. The issue is tracked [here][xonsh-issue].
 [ps-ansi-docs]: https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_ansi_terminals?view=powershell-7.2
 [xterm-gh-comment]: https://github.com/microsoft/terminal/issues/6045#issuecomment-631743728
 [git-gc]: https://git-scm.com/docs/git-gc
-[new-issue]: https://github.com/JanDeDobbeleer/oh-my-posh/issues/new/choose
-[latest]: https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest
+[new-issue]: https://github.com/po1o/prompto/issues/new/choose
+[latest]: https://github.com/po1o/prompto/releases/latest
 [wt-glyph]: https://github.com/microsoft/terminal/issues/3546
 [wt-glyphs]: https://github.com/microsoft/terminal/issues?q=is%3Aissue+is%3Aopen+unicode+width
 [export]: installation/customize.mdx#custom-configuration
@@ -363,5 +363,5 @@ This is a known problem with Xonsh. The issue is tracked [here][xonsh-issue].
 [vim-wt]: https://github.com/vim/vim/issues/5092
 [utf-8]: https://github.com/PowerShell/PowerShell/issues/7233#issuecomment-640243647
 [xonsh-issue]: https://github.com/xonsh/xonsh/issues/3810
-[zsh-init]: https://github.com/JanDeDobbeleer/oh-my-posh/discussions/3462#discussioncomment-5155790
+[zsh-init]: https://github.com/po1o/prompto/discussions/3462#discussioncomment-5155790
 [fish-mode-prompt]: https://fishshell.com/docs/current/cmds/fish_mode_prompt.html#example

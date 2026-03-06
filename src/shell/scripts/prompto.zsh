@@ -1,6 +1,6 @@
-export POSH_SHELL='zsh'
-export POSH_SHELL_VERSION=$ZSH_VERSION
-export POWERLINE_COMMAND='oh-my-posh'
+export PROMPTO_SHELL='zsh'
+export PROMPTO_SHELL_VERSION=$ZSH_VERSION
+export POWERLINE_COMMAND='prompto'
 export CONDA_PROMPT_MODIFIER=false
 export ZLE_RPROMPT_INDENT=0
 export OSTYPE=$OSTYPE
@@ -9,21 +9,21 @@ export OSTYPE=$OSTYPE
 export VIRTUAL_ENV_DISABLE_PROMPT=1
 export PYENV_VIRTUALENV_DISABLE_PROMPT=1
 
-_omp_executable=::OMP::
-_omp_config=::CONFIG::
-_omp_tooltip_command=''
+_prompto_executable=::PROMPTO::
+_prompto_config=::CONFIG::
+_prompto_tooltip_command=''
 
 # switches to enable/disable features
-_omp_cursor_positioning=0
-_omp_ftcs_marks=0
+_prompto_cursor_positioning=0
+_prompto_ftcs_marks=0
 
 # set secondary prompt
-_omp_secondary_prompt=''
+_prompto_secondary_prompt=''
 
-function _omp_set_cursor_position() {
+function _prompto_set_cursor_position() {
   # not supported in Midnight Commander
-  # see https://github.com/JanDeDobbeleer/oh-my-posh/issues/3415
-  if [[ $_omp_cursor_positioning == 0 ]] || [[ -v MC_SID ]]; then
+  # see https://github.com/po1o/prompto/issues/3415
+  if [[ $_prompto_cursor_positioning == 0 ]] || [[ -v MC_SID ]]; then
     return
   fi
 
@@ -38,49 +38,49 @@ function _omp_set_cursor_position() {
 
   stty $oldstty
 
-  export POSH_CURSOR_LINE=${parts[1]}
-  export POSH_CURSOR_COLUMN=${parts[2]}
+  export PROMPTO_CURSOR_LINE=${parts[1]}
+  export PROMPTO_CURSOR_COLUMN=${parts[2]}
 }
 
 # template function for context loading
-function set_poshcontext() {
+function set_promptocontext() {
   return
 }
 
-function _omp_preexec() {
-  if [[ $_omp_ftcs_marks == 1 ]]; then
+function _prompto_preexec() {
+  if [[ $_prompto_ftcs_marks == 1 ]]; then
     printf '\033]133;C\007'
   fi
 
-  _omp_start_time=$($_omp_executable get millis)
+  _prompto_start_time=$($_prompto_executable get millis)
 }
 
-function _omp_precmd() {
-  if [[ -z $_omp_secondary_prompt ]]; then
-    _omp_secondary_prompt=$($_omp_executable render secondary --shell=zsh)
+function _prompto_precmd() {
+  if [[ -z $_prompto_secondary_prompt ]]; then
+    _prompto_secondary_prompt=$($_prompto_executable render secondary --shell=zsh)
   fi
 
-  _omp_status=$?
-  _omp_pipestatus=(${pipestatus[@]})
-  _omp_job_count=${#jobstates}
-  _omp_stack_count=${#dirstack[@]}
-  _omp_execution_time=-1
-  _omp_no_status=true
-  _omp_tooltip_command=''
+  _prompto_status=$?
+  _prompto_pipestatus=(${pipestatus[@]})
+  _prompto_job_count=${#jobstates}
+  _prompto_stack_count=${#dirstack[@]}
+  _prompto_execution_time=-1
+  _prompto_no_status=true
+  _prompto_tooltip_command=''
 
-  if [ $_omp_start_time ]; then
-    local omp_now=$($_omp_executable get millis)
-    _omp_execution_time=$(($omp_now - $_omp_start_time))
-    _omp_no_status=false
+  if [ $_prompto_start_time ]; then
+    local prompto_now=$($_prompto_executable get millis)
+    _prompto_execution_time=$(($prompto_now - $_prompto_start_time))
+    _prompto_no_status=false
   fi
 
-  if [[ ${_omp_pipestatus[-1]} != "$_omp_status" ]]; then
-    _omp_pipestatus=("$_omp_status")
+  if [[ ${_prompto_pipestatus[-1]} != "$_prompto_status" ]]; then
+    _prompto_pipestatus=("$_prompto_status")
   fi
 
-  set_poshcontext
-  _omp_apply_cursor_shape
-  _omp_set_cursor_position
+  set_promptocontext
+  _prompto_apply_cursor_shape
+  _prompto_set_cursor_position
 
   # We do this to avoid unexpected expansions in a prompt string.
   unsetopt PROMPT_SUBST
@@ -89,59 +89,59 @@ function _omp_precmd() {
   # Ensure that escape sequences work in a prompt string.
   setopt PROMPT_PERCENT
 
-  PS2=$_omp_secondary_prompt
-  eval "$(_omp_get_prompt primary --eval)"
+  PS2=$_prompto_secondary_prompt
+  eval "$(_prompto_get_prompt primary --eval)"
 
-  unset _omp_start_time
+  unset _prompto_start_time
 }
 
 # add hook functions
 autoload -Uz add-zsh-hook
-add-zsh-hook precmd _omp_precmd
-add-zsh-hook preexec _omp_preexec
+add-zsh-hook precmd _prompto_precmd
+add-zsh-hook preexec _prompto_preexec
 
 # Prevent incorrect behaviors when the initialization is executed twice in current session.
-function _omp_cleanup() {
-  local omp_widgets=(
+function _prompto_cleanup() {
+  local prompto_widgets=(
     self-insert
     zle-line-init
   )
   local widget
-  for widget in "${omp_widgets[@]}"; do
-    if [[ ${widgets[._omp_original::$widget]} ]]; then
+  for widget in "${prompto_widgets[@]}"; do
+    if [[ ${widgets[._prompto_original::$widget]} ]]; then
       # Restore the original widget.
-      zle -A ._omp_original::$widget $widget
-    elif [[ ${widgets[$widget]} = user:_omp_* ]]; then
+      zle -A ._prompto_original::$widget $widget
+    elif [[ ${widgets[$widget]} = user:_prompto_* ]]; then
       # Delete the OMP-defined widget.
       zle -D $widget
     fi
   done
 }
-_omp_cleanup
-unset -f _omp_cleanup
+_prompto_cleanup
+unset -f _prompto_cleanup
 
-function _omp_get_prompt() {
+function _prompto_get_prompt() {
   local type=$1
   local args=("${@[2,-1]}")
   local vim_mode_arg=""
-  if [[ $_omp_vim_mode == 1 ]]; then
-    vim_mode_arg="--vim-mode=$(_omp_get_vim_mode)"
+  if [[ $_prompto_vim_mode == 1 ]]; then
+    vim_mode_arg="--vim-mode=$(_prompto_get_vim_mode)"
   fi
-  $_omp_executable render $type \
+  $_prompto_executable render $type \
     --shell=zsh \
     --shell-version=$ZSH_VERSION \
-    --status=$_omp_status \
-    --pipestatus="${_omp_pipestatus[*]}" \
-    --no-status=$_omp_no_status \
-    --execution-time=$_omp_execution_time \
-    --job-count=$_omp_job_count \
-    --stack-count=$_omp_stack_count \
+    --status=$_prompto_status \
+    --pipestatus="${_prompto_pipestatus[*]}" \
+    --no-status=$_prompto_no_status \
+    --execution-time=$_prompto_execution_time \
+    --job-count=$_prompto_job_count \
+    --stack-count=$_prompto_stack_count \
     --terminal-width="${COLUMNS-0}" \
     $vim_mode_arg \
     ${args[@]}
 }
 
-function _omp_render_tooltip() {
+function _prompto_render_tooltip() {
   if [[ $KEYS != ' ' ]]; then
     return
   fi
@@ -152,12 +152,12 @@ function _omp_render_tooltip() {
   local tooltip_command=${${(MS)BUFFER##[[:graph:]]*}%%[[:space:]]*}
 
   # Ignore an empty/repeated tooltip command.
-  if [[ -z $tooltip_command ]] || [[ $tooltip_command = "$_omp_tooltip_command" ]]; then
+  if [[ -z $tooltip_command ]] || [[ $tooltip_command = "$_prompto_tooltip_command" ]]; then
     return
   fi
 
-  _omp_tooltip_command="$tooltip_command"
-  local tooltip=$(_omp_get_prompt tooltip --command="$tooltip_command")
+  _prompto_tooltip_command="$tooltip_command"
+  local tooltip=$(_prompto_get_prompt tooltip --command="$tooltip_command")
   if [[ -z $tooltip ]]; then
     return
   fi
@@ -166,7 +166,7 @@ function _omp_render_tooltip() {
   zle .reset-prompt
 }
 
-function _omp_zle-line-init() {
+function _prompto_zle-line-init() {
   [[ $CONTEXT == start ]] || return 0
 
   # Start regular line editor.
@@ -175,10 +175,10 @@ function _omp_zle-line-init() {
   local -i ret=$?
   (( $+zle_bracketed_paste )) && print -r -n - $zle_bracketed_paste[2]
 
-  if [[ $_omp_daemon_mode == 1 ]]; then
+  if [[ $_prompto_daemon_mode == 1 ]]; then
     # Always use daemon-provided transient prompt in daemon mode.
     # If it's empty (e.g. first render), fall back to an empty prompt instead of CLI rendering.
-    PS1=${_omp_transient_prompt-}
+    PS1=${_prompto_transient_prompt-}
   else
     # We need this workaround because when the `filler` is set,
     # there will be a redundant blank line below the transient prompt if the input is empty.
@@ -186,7 +186,7 @@ function _omp_zle-line-init() {
     if [[ -z $BUFFER ]]; then
       terminal_width_option="--terminal-width=$((${COLUMNS-0} - 1))"
     fi
-    eval "$(_omp_get_prompt transient --eval $terminal_width_option)"
+    eval "$(_prompto_get_prompt transient --eval $terminal_width_option)"
   fi
   zle .reset-prompt
 
@@ -205,62 +205,62 @@ function _omp_zle-line-init() {
 }
 
 # Helper function for calling a widget before the specified OMP function.
-function _omp_call_widget() {
+function _prompto_call_widget() {
   # The name of the OMP function.
-  local omp_func=$1
+  local prompto_func=$1
   # The remainder are the widget to call and potential arguments.
   shift
 
-  zle "$@" && shift 2 && $omp_func "$@"
+  zle "$@" && shift 2 && $prompto_func "$@"
 }
 
 # Create a widget with the specified OMP function.
 # An existing widget will be preserved and decorated with the function.
-function _omp_create_widget() {
+function _prompto_create_widget() {
   # The name of the widget to create/decorate.
   local widget=$1
   # The name of the OMP function.
-  local omp_func=$2
+  local prompto_func=$2
 
   case ${widgets[$widget]:-''} in
   # Already decorated: do nothing.
-  user:_omp_decorated_*) ;;
+  user:_prompto_decorated_*) ;;
 
   # Non-existent: just create it.
   '')
-    zle -N $widget $omp_func
+    zle -N $widget $prompto_func
     ;;
 
   # User-defined or builtin: backup and decorate it.
   *)
     # Back up the original widget. The leading dot in widget name is to work around bugs when used with zsh-syntax-highlighting in Zsh v5.8 or lower.
-    zle -A $widget ._omp_original::$widget
-    eval "_omp_decorated_${(q)widget}() { _omp_call_widget ${(q)omp_func} ._omp_original::${(q)widget} -- \"\$@\" }"
-    zle -N $widget _omp_decorated_$widget
+    zle -A $widget ._prompto_original::$widget
+    eval "_prompto_decorated_${(q)widget}() { _prompto_call_widget ${(q)prompto_func} ._prompto_original::${(q)widget} -- \"\$@\" }"
+    zle -N $widget _prompto_decorated_$widget
     ;;
   esac
 }
 
 # Daemon mode variables
-_omp_daemon_mode=0
-_omp_daemon_fd=
-_omp_transient_prompt=
+_prompto_daemon_mode=0
+_prompto_daemon_fd=
+_prompto_transient_prompt=
 
 # Vim mode variables
-_omp_vim_mode=0
-_omp_vim_mode_repaint=0
-_omp_cursor_shape=0
-_omp_cursor_blink=0
+_prompto_vim_mode=0
+_prompto_vim_mode_repaint=0
+_prompto_cursor_shape=0
+_prompto_cursor_blink=0
 
 # Check if terminal handles cursor natively (Ghostty, Kitty)
-function _omp_should_change_cursor() {
+function _prompto_should_change_cursor() {
   [[ -n "$GHOSTTY_RESOURCES_DIR" ]] && return 1
   [[ -n "$KITTY_WINDOW_ID" ]] && return 1
   return 0
 }
 
 # Get current vim mode for segment template
-function _omp_get_vim_mode() {
+function _prompto_get_vim_mode() {
   case $KEYMAP in
     vicmd) echo "normal" ;;
     viins|main) echo "insert" ;;
@@ -270,12 +270,12 @@ function _omp_get_vim_mode() {
   esac
 }
 
-function _omp_apply_cursor_shape() {
+function _prompto_apply_cursor_shape() {
   # Change cursor shape if enabled and terminal doesn't handle it natively
-  if [[ "$_omp_cursor_shape" == "1" ]] && _omp_should_change_cursor; then
+  if [[ "$_prompto_cursor_shape" == "1" ]] && _prompto_should_change_cursor; then
     local block_code=2
     local beam_code=6
-    if [[ "$_omp_cursor_blink" == "1" ]]; then
+    if [[ "$_prompto_cursor_blink" == "1" ]]; then
       block_code=1
       beam_code=5
     fi
@@ -291,81 +291,81 @@ function _omp_apply_cursor_shape() {
 }
 
 # Vim mode keymap change handler
-function _omp_zle-keymap-select() {
-  _omp_apply_cursor_shape
+function _prompto_zle-keymap-select() {
+  _prompto_apply_cursor_shape
 
   # In daemon mode, trigger async repaint with new vim mode
-  if [[ $_omp_daemon_mode == 1 ]]; then
-    _omp_daemon_render --repaint
+  if [[ $_prompto_daemon_mode == 1 ]]; then
+    _prompto_daemon_render --repaint
   fi
 
   # Trigger prompt repaint
   zle .reset-prompt
 }
 
-function _omp_daemon_precmd() {
-  _omp_status=$?
-  _omp_pipestatus=(${pipestatus[@]})
-  _omp_job_count=${#jobstates}
-  _omp_stack_count=${#dirstack[@]}
-  _omp_execution_time=-1
-  _omp_no_status=true
-  _omp_tooltip_command=''
+function _prompto_daemon_precmd() {
+  _prompto_status=$?
+  _prompto_pipestatus=(${pipestatus[@]})
+  _prompto_job_count=${#jobstates}
+  _prompto_stack_count=${#dirstack[@]}
+  _prompto_execution_time=-1
+  _prompto_no_status=true
+  _prompto_tooltip_command=''
 
-  if [ $_omp_start_time ]; then
-    local omp_now=$($_omp_executable get millis)
-    _omp_execution_time=$(($omp_now - $_omp_start_time))
-    _omp_no_status=false
+  if [ $_prompto_start_time ]; then
+    local prompto_now=$($_prompto_executable get millis)
+    _prompto_execution_time=$(($prompto_now - $_prompto_start_time))
+    _prompto_no_status=false
   fi
 
-  if [[ ${_omp_pipestatus[-1]} != "$_omp_status" ]]; then
-    _omp_pipestatus=("$_omp_status")
+  if [[ ${_prompto_pipestatus[-1]} != "$_prompto_status" ]]; then
+    _prompto_pipestatus=("$_prompto_status")
   fi
 
-  set_poshcontext
-  _omp_apply_cursor_shape
-  _omp_set_cursor_position
+  set_promptocontext
+  _prompto_apply_cursor_shape
+  _prompto_set_cursor_position
 
   unsetopt PROMPT_SUBST
   unsetopt PROMPT_BANG
   setopt PROMPT_PERCENT
 
-  PS2=$_omp_secondary_prompt
+  PS2=$_prompto_secondary_prompt
 
-  _omp_daemon_render
-  unset _omp_start_time
+  _prompto_daemon_render
+  unset _prompto_start_time
 }
 
 # Async daemon render - used by both precmd and vim mode changes
 # Pass --repaint for vim mode toggles (soft cancel, reuse computations)
-function _omp_daemon_render() {
+function _prompto_daemon_render() {
   local repaint_flag=$1
 
   # Clean up any existing fd handler from previous render
-  if [[ -n $_omp_daemon_fd ]]; then
-    zle -F $_omp_daemon_fd
-    exec {_omp_daemon_fd}<&-
-    _omp_daemon_fd=
+  if [[ -n $_prompto_daemon_fd ]]; then
+    zle -F $_prompto_daemon_fd
+    exec {_prompto_daemon_fd}<&-
+    _prompto_daemon_fd=
   fi
 
   local vim_mode_arg=""
-  if [[ $_omp_vim_mode == 1 ]]; then
-    vim_mode_arg="--vim-mode=$(_omp_get_vim_mode)"
+  if [[ $_prompto_vim_mode == 1 ]]; then
+    vim_mode_arg="--vim-mode=$(_prompto_get_vim_mode)"
   fi
 
   local fd
-  exec {fd}< <($_omp_executable render \
-    --config=$_omp_config \
+  exec {fd}< <($_prompto_executable render \
+    --config=$_prompto_config \
     --shell=zsh \
     --shell-version=$ZSH_VERSION \
     --pwd="$PWD" \
     --pid=$$ \
-    --status=$_omp_status \
-    --pipestatus="${_omp_pipestatus[*]}" \
-    --no-status=$_omp_no_status \
-    --execution-time=$_omp_execution_time \
-    --job-count=$_omp_job_count \
-    --stack-count=$_omp_stack_count \
+    --status=$_prompto_status \
+    --pipestatus="${_prompto_pipestatus[*]}" \
+    --no-status=$_prompto_no_status \
+    --execution-time=$_prompto_execution_time \
+    --job-count=$_prompto_job_count \
+    --stack-count=$_prompto_stack_count \
     --terminal-width="${COLUMNS-0}" \
     $vim_mode_arg \
     $repaint_flag \
@@ -374,7 +374,7 @@ function _omp_daemon_render() {
   # Read first batch synchronously (partial results after daemon timeout)
   local line batch_complete=0
   while [[ $batch_complete -eq 0 ]] && IFS= read -r line <&$fd; do
-    _omp_daemon_parse_line "$line"
+    _prompto_daemon_parse_line "$line"
     if [[ $line == status:* ]]; then
       batch_complete=1
       if [[ $line == "status:complete" ]]; then
@@ -386,11 +386,11 @@ function _omp_daemon_render() {
   done
 
   # More updates may come - register fd handler for async streaming
-  _omp_daemon_fd=$fd
-  zle -F $fd _omp_daemon_handler
+  _prompto_daemon_fd=$fd
+  zle -F $fd _prompto_daemon_handler
 }
 
-function _omp_daemon_parse_line() {
+function _prompto_daemon_parse_line() {
   local line=$1
   local type=${line%%:*}
   local text=${line#*:}
@@ -406,18 +406,18 @@ function _omp_daemon_parse_line() {
       PS2=$text
       ;;
     transient)
-      _omp_transient_prompt=$text
+      _prompto_transient_prompt=$text
       ;;
   esac
 }
 
-function _omp_daemon_handler() {
+function _prompto_daemon_handler() {
   local fd=$1
   local line batch_complete=0
 
   # Read until we see a status line (daemon always ends a batch with status:*).
   while [[ $batch_complete -eq 0 ]] && IFS= read -r line <&$fd; do
-    _omp_daemon_parse_line "$line"
+    _prompto_daemon_parse_line "$line"
     if [[ $line == status:* ]]; then
       batch_complete=1
     fi
@@ -432,32 +432,32 @@ function _omp_daemon_handler() {
   if [[ $batch_complete -eq 0 ]] || [[ $line == "status:complete" ]]; then
     zle -F $fd
     exec {fd}<&-
-    _omp_daemon_fd=
+    _prompto_daemon_fd=
   fi
 }
 
-function enable_poshdaemon() {
+function enable_prompto_daemon() {
   # Start daemon if not running
-  $_omp_executable daemon start --config=$_omp_config --silent >/dev/null 2>&1 &!
+  $_prompto_executable daemon start --config=$_prompto_config --silent >/dev/null 2>&1 &!
 
   # Replace precmd with daemon version
-  _omp_daemon_mode=1
-  add-zsh-hook -d precmd _omp_precmd
-  add-zsh-hook precmd _omp_daemon_precmd
+  _prompto_daemon_mode=1
+  add-zsh-hook -d precmd _prompto_precmd
+  add-zsh-hook precmd _prompto_daemon_precmd
 }
 
-function enable_poshtooltips() {
+function enable_prompto_tooltips() {
   local widget=${$(bindkey ' '):2}
 
   if [[ -z $widget ]]; then
     widget=self-insert
   fi
 
-  _omp_create_widget $widget _omp_render_tooltip
+  _prompto_create_widget $widget _prompto_render_tooltip
 }
 
 # Set up vim mode keybindings (oh-my-zsh style)
-function _omp_setup_vim_keybindings() {
+function _prompto_setup_vim_keybindings() {
   # Reduce mode switching delay (default is 40 = 400ms)
   KEYTIMEOUT=15
 
@@ -479,20 +479,20 @@ function _omp_setup_vim_keybindings() {
 }
 
 # legacy functions
-function enable_poshtransientprompt() {}
+function enable_prompto_transient_prompt() {}
 
-_omp_custom_dir=${OMP_CUSTOM:-}
-if [[ -z $_omp_custom_dir ]]; then
+_prompto_custom_dir=${PROMPTO_CUSTOM:-}
+if [[ -z $_prompto_custom_dir ]]; then
   # Avoid double-sourcing if oh-my-zsh is managing ZSH_CUSTOM.
   if [[ -n $ZSH ]] && [[ -f $ZSH/oh-my-zsh.sh ]]; then
-    _omp_custom_dir=
+    _prompto_custom_dir=
   else
-    _omp_custom_dir=$ZSH_CUSTOM
+    _prompto_custom_dir=$ZSH_CUSTOM
   fi
 fi
 
-if [[ -n $_omp_custom_dir ]] && [[ -d $_omp_custom_dir ]]; then
-  for script in $_omp_custom_dir/*.zsh(N); do
+if [[ -n $_prompto_custom_dir ]] && [[ -d $_prompto_custom_dir ]]; then
+  for script in $_prompto_custom_dir/*.zsh(N); do
     source $script
   done
 fi

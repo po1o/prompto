@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/dsc"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/regex"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/cmd"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
+	"github.com/po1o/prompto/src/dsc"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/regex"
+	"github.com/po1o/prompto/src/runtime/cmd"
+	"github.com/po1o/prompto/src/runtime/path"
 )
 
 func init() {
@@ -19,7 +19,7 @@ func init() {
 }
 
 const (
-	initCommandRegex = `oh-my-posh(?:\.exe)?\s+init`
+	initCommandRegex = `prompto(?:\.exe)?\s+init`
 )
 
 func DSC() *dsc.Resource[*Shell] {
@@ -27,7 +27,7 @@ func DSC() *dsc.Resource[*Shell] {
 }
 
 type Shell struct {
-	Command string `json:"command,omitempty" jsonschema:"title=Command,description=The oh-my-posh init command to run"`
+	Command string `json:"command,omitempty" jsonschema:"title=Command,description=The prompto init command to run"`
 	Name    string `json:"name,omitempty" jsonschema:"title=Shell name,description=The name of the shell"`
 }
 
@@ -146,7 +146,7 @@ func (s *Shell) updateShellConfig(content string) (string, bool) {
 
 	// validate if we have the same command
 	if strings.Contains(initLineStr, shellCommand) {
-		log.Debug("oh-my-posh already correctly configured")
+		log.Debug("prompto already correctly configured")
 		return content, false
 	}
 
@@ -158,7 +158,7 @@ func (s *Shell) updateShellConfig(content string) (string, bool) {
 }
 
 func (s *Shell) addInitLine(content string) string {
-	log.Debug("oh-my-posh not initialized, adding initialization")
+	log.Debug("prompto not initialized, adding initialization")
 
 	// Add the initialization command to the end of the file
 	if !strings.HasSuffix(content, "\n") {

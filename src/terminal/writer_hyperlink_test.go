@@ -3,8 +3,8 @@ package terminal
 import (
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/shell"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -112,8 +112,8 @@ func TestGenerateFileLink(t *testing.T) {
 		Expected string
 	}{
 		{
-			Text:     `<LINK>file:C:/Program Files (x86)/Common Files/Microsoft Shared/Posh<TEXT>Posh</TEXT></LINK>`,
-			Expected: "\x1b[47m\x1b[30m\x1b]8;;file:C:/Program Files (x86)/Common Files/Microsoft Shared/Posh\x1b\\Posh\x1b]8;;\x1b\\\x1b[0m",
+			Text:     `<LINK>file:C:/Program Files (x86)/Common Files/Microsoft Shared/Prompto<TEXT>Prompto</TEXT></LINK>`,
+			Expected: "\x1b[47m\x1b[30m\x1b]8;;file:C:/Program Files (x86)/Common Files/Microsoft Shared/Prompto\x1b\\Prompto\x1b]8;;\x1b\\\x1b[0m",
 		},
 		{Text: `<LINK>file:C:/Windows<TEXT>Windows</TEXT></LINK>`, Expected: "\x1b[47m\x1b[30m\x1b]8;;file:C:/Windows\x1b\\Windows\x1b]8;;\x1b\\\x1b[0m"},
 	}

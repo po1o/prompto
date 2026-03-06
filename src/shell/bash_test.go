@@ -11,11 +11,11 @@ func TestBashFeatures(t *testing.T) {
 	got := allFeatures.Lines(BASH).String("// these are the features")
 
 	want := `// these are the features
-_omp_ftcs_marks=1
-"$_omp_executable" upgrade --auto
-"$_omp_executable" notice
-_omp_cursor_positioning=1
-enable_poshdaemon`
+_prompto_ftcs_marks=1
+"$_prompto_executable" upgrade --auto
+"$_prompto_executable" notice
+_prompto_cursor_positioning=1
+enable_prompto_daemon`
 
 	assert.Equal(t, want, got)
 }
@@ -28,28 +28,28 @@ func TestBashFeaturesWithBLE(t *testing.T) {
 	want := `// these are the features
 bleopt prompt_ps1_transient=always
 bleopt prompt_ps1_final='$(
-    "$_omp_executable" render transient \
+    "$_prompto_executable" render transient \
         --shell=bash \
         --shell-version="$BASH_VERSION" \
         --escape=false
 )'
-_omp_ftcs_marks=1
-"$_omp_executable" upgrade --auto
-"$_omp_executable" notice
+_prompto_ftcs_marks=1
+"$_prompto_executable" upgrade --auto
+"$_prompto_executable" notice
 bleopt prompt_rps1='$(
-	"$_omp_executable" render right \
+	"$_prompto_executable" render right \
 		--shell=bash \
 		--shell-version="$BASH_VERSION" \
-		--status="$_omp_status" \
-		--pipestatus="${_omp_pipestatus[*]}" \
-		--no-status="$_omp_no_status" \
-		--execution-time="$_omp_execution_time" \
-		--stack-count="$_omp_stack_count" \
+		--status="$_prompto_status" \
+		--pipestatus="${_prompto_pipestatus[*]}" \
+		--no-status="$_prompto_no_status" \
+		--execution-time="$_prompto_execution_time" \
+		--stack-count="$_prompto_stack_count" \
 		--terminal-width="${COLUMNS-0}" \
 		--escape=false
 )'
-_omp_cursor_positioning=1
-enable_poshdaemon`
+_prompto_cursor_positioning=1
+enable_prompto_daemon`
 
 	assert.Equal(t, want, got)
 
@@ -62,9 +62,9 @@ func TestBashVimFeatures(t *testing.T) {
 	got := features.Lines(BASH).String("")
 
 	want := `
-set -o vi; enable_posh_vim_mode
-_omp_cursor_blink=1
-_omp_cursor_shape=1; _omp_should_change_cursor && _omp_apply_cursor_shape`
+set -o vi; enable_prompto_vim_mode
+_prompto_cursor_blink=1
+_prompto_cursor_shape=1; _prompto_should_change_cursor && _prompto_apply_cursor_shape`
 
 	assert.Equal(t, want, got)
 }
@@ -75,8 +75,8 @@ func TestQuotePosixStr(t *testing.T) {
 		expected string
 	}{
 		{str: "", expected: "''"},
-		{str: `/tmp/"omp's dir"/oh-my-posh`, expected: `$'/tmp/"omp\'s dir"/oh-my-posh'`},
-		{str: `C:/tmp\omp's dir/oh-my-posh.exe`, expected: `$'C:/tmp\\omp\'s dir/oh-my-posh.exe'`},
+		{str: `/tmp/"omp's dir"/prompto`, expected: `$'/tmp/"omp\'s dir"/prompto'`},
+		{str: `C:/tmp\omp's dir/prompto.exe`, expected: `$'C:/tmp\\omp\'s dir/prompto.exe'`},
 	}
 	for _, tc := range tests {
 		assert.Equal(t, tc.expected, QuotePosixStr(tc.str), fmt.Sprintf("QuotePosixStr: %s", tc.str))

@@ -1,11 +1,11 @@
 export default {
-  title: 'Oh My Posh',
+  title: 'Prompto',
   tagline: 'The most customizable and fastest prompt engine for any shell.',
-  url: 'https://ohmyposh.dev',
+  url: 'https://prompto.dev',
   baseUrl: '/',
   favicon: 'img/favicons.svg',
   organizationName: 'jandedobbeleer',
-  projectName: 'oh-my-posh',
+  projectName: 'prompto',
   onBrokenLinks: 'ignore',
   plugins: [
     './plugins/appinsights'
@@ -29,9 +29,9 @@ export default {
         },
     },
     navbar: {
-      title: 'Oh My Posh',
+      title: 'Prompto',
       logo: {
-        alt: 'Oh My Posh Logo',
+        alt: 'Prompto Logo',
         src: 'img/logo-dark.svg',
         srcDark: 'img/logo-light.svg',
       },
@@ -53,12 +53,12 @@ export default {
           position: 'left',
         },
         {
-          href: 'https://swag.ohmyposh.dev',
+          href: 'https://swag.prompto.dev',
           label: 'Swag',
           position: 'left',
         },
         {
-          href: 'https://github.com/jandedobbeleer/oh-my-posh',
+          href: 'https://github.com/po1o/prompto',
           className: 'header-github-link',
           'aria-label': 'GitHub repository',
           position: 'right',
@@ -70,7 +70,7 @@ export default {
           position: 'right',
         },
         {
-          href: 'https://staging.bsky.app/profile/ohmyposh.dev',
+          href: 'https://staging.bsky.app/profile/prompto.dev',
           className: 'header-bluesky-link',
           'aria-label': 'Bluesky',
           position: 'right',
@@ -98,7 +98,7 @@ export default {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/jandedobbeleer/oh-my-posh',
+              href: 'https://github.com/po1o/prompto',
             },
             {
               label: 'Discord',
@@ -106,7 +106,7 @@ export default {
             },
             {
               label: 'Bluesky',
-              href: 'https://staging.bsky.app/profile/ohmyposh.dev',
+              href: 'https://staging.bsky.app/profile/prompto.dev',
             }
           ],
         },
@@ -146,7 +146,7 @@ export default {
     announcementBar: {
       id: 'support_us',
       content:
-        'If you\'re enjoying Oh My Posh, consider becoming a <a target="_blank" rel="noopener noreferrer" href="https://github.com/sponsors/JanDeDobbeleer">sponsor</a> to keep the project going strong 💪',
+        'If you\'re enjoying Prompto, consider becoming a <a target="_blank" rel="noopener noreferrer" href="https://github.com/sponsors/JanDeDobbeleer">sponsor</a> to keep the project going strong 💪',
       backgroundColor: '#2c7ae0',
       textColor: '#ffffff',
       isCloseable: false,
@@ -157,7 +157,7 @@ export default {
     algolia: {
       appId: 'XIR4RB3TM1',
       apiKey: '15c5f4340520612ed98fe21d15882029',
-      indexName: 'ohmyposh',
+      indexName: 'prompto',
     },
   },
   presets: [
@@ -166,7 +166,7 @@ export default {
       {
         docs: {
           sidebarPath: './sidebars.js',
-          editUrl: 'https://github.com/jandedobbeleer/oh-my-posh/edit/main/website/',
+          editUrl: 'https://github.com/po1o/prompto/edit/main/website/',
         },
         theme: {
           customCss: [

@@ -6,12 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/log"
 
 	"github.com/fsnotify/fsnotify"
 )
 
-// BinaryWatcher watches the oh-my-posh executable for changes using fsnotify.
+// BinaryWatcher watches the prompto executable for changes using fsnotify.
 // When the binary is replaced (e.g. by brew upgrade, go install, or an installer),
 // it calls the onChange callback so the daemon can shut down gracefully.
 //

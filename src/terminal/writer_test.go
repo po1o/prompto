@@ -3,8 +3,8 @@ package terminal
 import (
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/shell"
 
 	"github.com/stretchr/testify/assert"
 )

@@ -29,7 +29,7 @@ func testSocketDir(t *testing.T) string {
 func TestSocketPath(t *testing.T) {
 	path := SocketPath()
 	assert.NotEmpty(t, path)
-	assert.Contains(t, path, "oh-my-posh-")
+	assert.Contains(t, path, "prompto-")
 	assert.Contains(t, path, ".sock")
 }
 
@@ -39,7 +39,7 @@ func TestSocketPathWithXDGRuntimeDir(t *testing.T) {
 
 	path := socketPath()
 	assert.Contains(t, path, tmpDir)
-	assert.Contains(t, path, "oh-my-posh-")
+	assert.Contains(t, path, "prompto-")
 	assert.Contains(t, path, ".sock")
 }
 
@@ -49,14 +49,14 @@ func TestSocketPathFallback(t *testing.T) {
 
 	path := socketPath()
 	assert.NotEmpty(t, path)
-	assert.Contains(t, path, "oh-my-posh-")
+	assert.Contains(t, path, "prompto-")
 	assert.Contains(t, path, ".sock")
 }
 
 func TestDialTarget(t *testing.T) {
 	target := dialTarget()
 	assert.Contains(t, target, "unix://")
-	assert.Contains(t, target, "oh-my-posh-")
+	assert.Contains(t, target, "prompto-")
 }
 
 func TestListenAndCleanup(t *testing.T) {

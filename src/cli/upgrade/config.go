@@ -8,10 +8,10 @@ import (
 	httplib "net/http"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/progress"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/http"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/cli/progress"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime/http"
 )
 
 func init() {
@@ -40,7 +40,7 @@ func (s Source) String() string {
 	case GitHub:
 		return "github.com"
 	case CDN:
-		return "cdn.ohmyposh.dev"
+		return "cdn.prompto.dev"
 	default:
 		return "Unknown"
 	}
@@ -75,16 +75,16 @@ func (cfg *Config) DownloadAsset(asset string) ([]byte, error) {
 
 		switch cfg.Latest {
 		case "latest":
-			url = fmt.Sprintf("https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/%s", asset)
+			url = fmt.Sprintf("https://github.com/po1o/prompto/releases/latest/download/%s", asset)
 		default:
-			url = fmt.Sprintf("https://github.com/JanDeDobbeleer/oh-my-posh/releases/download/%s/%s", cfg.Latest, asset)
+			url = fmt.Sprintf("https://github.com/po1o/prompto/releases/download/%s/%s", cfg.Latest, asset)
 		}
 
 		return cfg.Download(url)
 	case CDN:
 		fallthrough
 	default:
-		url := fmt.Sprintf("https://cdn.ohmyposh.dev/releases/%s/%s", cfg.Latest, asset)
+		url := fmt.Sprintf("https://cdn.prompto.dev/releases/%s/%s", cfg.Latest, asset)
 		return cfg.Download(url)
 	}
 }
@@ -96,7 +96,7 @@ func (cfg *Config) Download(url string) ([]byte, error) {
 		return nil, err
 	}
 
-	req.Header.Add("User-Agent", "oh-my-posh")
+	req.Header.Add("User-Agent", "prompto")
 	req.Header.Add("Cache-Control", "max-age=0")
 
 	resp, err := http.HTTPClient.Do(req)

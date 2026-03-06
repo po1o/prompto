@@ -4,7 +4,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
+	"github.com/po1o/prompto/src/cache"
 )
 
 func hideFile(path string) error {

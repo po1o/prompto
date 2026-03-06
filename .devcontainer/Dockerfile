@@ -44,30 +44,30 @@ ARG USERNAME=vscode
 # the code logic above.
 
 # Setup a neat little PowerShell experience
-RUN pwsh -Command Install-Module posh-git -Scope AllUsers -Force; \
+RUN pwsh -Command Install-Module prompto-git -Scope AllUsers -Force; \
     pwsh -Command Install-Module z -Scope AllUsers -Force; \
     pwsh -Command Install-Module PSFzf -Scope AllUsers -Force; \
     pwsh -Command Install-Module Terminal-Icons -Scope AllUsers -Force;
 
-# add the oh-my-posh path to the PATH variable
+# add the prompto path to the PATH variable
 ENV PATH="$PATH:/home/${USERNAME}/bin"
 
-# Deploy oh-my-posh prompt to Powershell:
+# Deploy prompto prompt to Powershell:
 COPY Microsoft.PowerShell_profile.ps1 /home/${USERNAME}/.config/powershell/Microsoft.PowerShell_profile.ps1
 
-# Deploy oh-my-posh prompt to Fish:
+# Deploy prompto prompt to Fish:
 COPY config.fish /home/${USERNAME}/.config/fish/config.fish
 
 # Everything runs as root during build time, so we want
 # to make sure the vscode user can edit these paths too:
 RUN chmod 777 -R /home/${USERNAME}/.config
 
-# Override vscode's own Bash prompt with oh-my-posh:
+# Override vscode's own Bash prompt with prompto:
 RUN sed -i 's/^__bash_prompt$/#&/' /home/${USERNAME}/.bashrc && \
-    echo "eval \"\$(oh-my-posh init bash)\"" >> /home/${USERNAME}/.bashrc
+    echo "eval \"\$(prompto init bash)\"" >> /home/${USERNAME}/.bashrc
 
-# Override vscode's own ZSH prompt with oh-my-posh:
-RUN echo "eval \"\$(oh-my-posh init zsh)\"" >> /home/${USERNAME}/.zshrc
+# Override vscode's own ZSH prompt with prompto:
+RUN echo "eval \"\$(prompto init zsh)\"" >> /home/${USERNAME}/.zshrc
 
 # Set container timezone:
 ARG TZ="UTC"

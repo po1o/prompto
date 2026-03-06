@@ -4,15 +4,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/regex"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
-	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/regex"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/shell"
+	"github.com/po1o/prompto/src/template"
+	"github.com/po1o/prompto/src/terminal"
 )
 
 var cycle *color.Cycle = &color.Cycle{}
@@ -223,7 +223,7 @@ func (e *Engine) applyPowerShellBleedPatch() {
 	// when in PowerShell, we need to clear the line after the prompt
 	// to avoid the background being printed on the next line
 	// when at the end of the buffer.
-	// See https://github.com/JanDeDobbeleer/oh-my-posh/issues/65
+	// See https://github.com/po1o/prompto/issues/65
 	if e.Env.Shell() != shell.PWSH {
 		return
 	}
@@ -464,7 +464,7 @@ func New(flags *runtime.Flags) *Engine {
 		Config:                cfg,
 		Env:                   env,
 		Plain:                 flags.Plain,
-		forceRender:           flags.Force || len(env.Getenv("POSH_FORCE_RENDER")) > 0,
+		forceRender:           flags.Force || len(env.Getenv("PROMPTO_FORCE_RENDER")) > 0,
 		CompiledConfig:        nil,
 		sharedProviderFactory: defaultSharedProviderFactories(),
 		segmentStates:         make(map[string]*segmentAsyncState),
@@ -502,7 +502,7 @@ func New(flags *runtime.Flags) *Engine {
 		// when in PowerShell, and force patching the bleed bug
 		// we need to reduce the terminal width by 1 so the last
 		// character isn't cut off by the ANSI escape sequences
-		// See https://github.com/JanDeDobbeleer/oh-my-posh/issues/65
+		// See https://github.com/po1o/prompto/issues/65
 		if cfg.PatchPwshBleed {
 			eng.rectifyTerminalWidth(-1)
 		}

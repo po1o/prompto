@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"path"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/segments/options"
 )
 
 const (

@@ -1,11 +1,11 @@
 package config
 
 import (
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/upgrade"
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/cli/upgrade"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/segments"
+	"github.com/po1o/prompto/src/segments/options"
 )
 
 func Default(configError error) *Config {

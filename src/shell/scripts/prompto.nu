@@ -3,30 +3,30 @@ if ($env.config? | is-not-empty) {
     $env.config = ($env.config | upsert render_right_prompt_on_last_line true)
 }
 
-$env.POWERLINE_COMMAND = 'oh-my-posh'
+$env.POWERLINE_COMMAND = 'prompto'
 $env.PROMPT_INDICATOR = ""
-$env.POSH_SESSION_ID = "::SESSION_ID::"
-$env.POSH_SHELL = "nu"
-$env.POSH_SHELL_VERSION = (version | get version)
+$env.PROMPTO_SESSION_ID = "::SESSION_ID::"
+$env.PROMPTO_SHELL = "nu"
+$env.PROMPTO_SHELL_VERSION = (version | get version)
 
 # disable all known python virtual environment prompts
 $env.VIRTUAL_ENV_DISABLE_PROMPT = 1
 $env.PYENV_VIRTUALENV_DISABLE_PROMPT = 1
 
-let _omp_executable: string = (echo ::OMP::)
-$env._omp_daemon_mode = false
-$env._omp_current_prompt = ""
-$env._omp_current_rprompt = ""
-$env._omp_current_transient = ""
-$env._omp_current_secondary = ""
+let _prompto_executable: string = (echo ::PROMPTO::)
+$env._prompto_daemon_mode = false
+$env._prompto_current_prompt = ""
+$env._prompto_current_rprompt = ""
+$env._prompto_current_transient = ""
+$env._prompto_current_secondary = ""
 
-def enable_poshdaemon [] {
-    $env._omp_daemon_mode = true
+def enable_prompto_daemon [] {
+    $env._prompto_daemon_mode = true
 }
 
 # PROMPTS
 
-def --wrapped _omp_get_prompt [
+def --wrapped _prompto_get_prompt [
     type: string,
     ...args: string
 ] {
@@ -40,9 +40,9 @@ def --wrapped _omp_get_prompt [
     }
 
     (
-        ^$_omp_executable render $type
+        ^$_prompto_executable render $type
             --shell=nu
-            $"--shell-version=($env.POSH_SHELL_VERSION)"
+            $"--shell-version=($env.PROMPTO_SHELL_VERSION)"
             $"--status=($env.LAST_EXIT_CODE)"
             $"--no-status=($no_status)"
             $"--execution-time=($execution_time)"
@@ -52,7 +52,7 @@ def --wrapped _omp_get_prompt [
     )
 }
 
-def _omp_daemon_render [clear: bool] {
+def _prompto_daemon_render [clear: bool] {
     mut execution_time = -1
     mut no_status = true
     if $env.CMD_DURATION_MS != '0823' {
@@ -61,9 +61,9 @@ def _omp_daemon_render [clear: bool] {
     }
 
     for line in (
-        ^$_omp_executable render
+        ^$_prompto_executable render
             --shell=nu
-            $"--shell-version=($env.POSH_SHELL_VERSION)"
+            $"--shell-version=($env.PROMPTO_SHELL_VERSION)"
             $"--status=($env.LAST_EXIT_CODE)"
             $"--no-status=($no_status)"
             $"--execution-time=($execution_time)"
@@ -80,22 +80,22 @@ def _omp_daemon_render [clear: bool] {
         let value = ($line | str replace --regex '^[^:]*:' '')
 
         if $key == "primary" {
-            $env._omp_current_prompt = $value
+            $env._prompto_current_prompt = $value
             continue
         }
 
         if $key == "right" {
-            $env._omp_current_rprompt = $value
+            $env._prompto_current_rprompt = $value
             continue
         }
 
         if $key == "transient" {
-            $env._omp_current_transient = $value
+            $env._prompto_current_transient = $value
             continue
         }
 
         if $key == "secondary" {
-            $env._omp_current_secondary = $value
+            $env._prompto_current_secondary = $value
             continue
         }
 
@@ -106,9 +106,9 @@ def _omp_daemon_render [clear: bool] {
 }
 
 $env.PROMPT_MULTILINE_INDICATOR = (
-    ^$_omp_executable render secondary
+    ^$_prompto_executable render secondary
         --shell=nu
-        $"--shell-version=($env.POSH_SHELL_VERSION)"
+        $"--shell-version=($env.PROMPTO_SHELL_VERSION)"
 )
 
 $env.PROMPT_COMMAND = {||
@@ -123,18 +123,18 @@ $env.PROMPT_COMMAND = {||
         do --env $env.SET_POSHCONTEXT
     }
 
-    if $env._omp_daemon_mode {
-        _omp_daemon_render $clear
-        $env._omp_current_prompt
+    if $env._prompto_daemon_mode {
+        _prompto_daemon_render $clear
+        $env._prompto_current_prompt
     } else {
-        _omp_get_prompt primary $"--cleared=($clear)"
+        _prompto_get_prompt primary $"--cleared=($clear)"
     }
 }
 
 $env.PROMPT_COMMAND_RIGHT = {||
-    if $env._omp_daemon_mode {
-        $env._omp_current_rprompt
+    if $env._prompto_daemon_mode {
+        $env._prompto_current_rprompt
     } else {
-        _omp_get_prompt right
+        _prompto_get_prompt right
     }
 }

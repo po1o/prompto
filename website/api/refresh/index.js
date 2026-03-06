@@ -4,7 +4,7 @@ const withings = require('../shared/withings.js');
 module.exports = async function (context, req) {
   context.log('Refresh function processed a request');
   // strava example:
-  // https://ohmyposh.dev/api/refresh?segment=strava&token=<refresh_token>
+  // https://prompto.dev/api/refresh?segment=strava&token=<refresh_token>
 
   try {
     const refresh_token = (req.query.token || (req.body && req.body.token));

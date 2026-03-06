@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/daemon"
-	"github.com/jandedobbeleer/oh-my-posh/src/daemon/ipc"
-	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
+	"github.com/po1o/prompto/src/daemon"
+	"github.com/po1o/prompto/src/daemon/ipc"
+	"github.com/po1o/prompto/src/prompt"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/path"
+	"github.com/po1o/prompto/src/shell"
 
 	"github.com/spf13/cobra"
 )

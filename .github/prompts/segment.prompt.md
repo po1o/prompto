@@ -1,5 +1,5 @@
 ---
-description: 'Generate a new Oh My Posh segment (code, registration, docs, schema, sidebar)'
+description: 'Generate a new Prompto segment (code, registration, docs, schema, sidebar)'
 agent: 'agent'
 tools: ['execute/testFailure', 'execute/getTerminalOutput', 'execute/runTask', 'execute/createAndRunTask', 'execute/runInTerminal', 'execute/runTests', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'read/getTaskOutput', 'edit/createFile', 'edit/editFiles', 'search', 'web/githubRepo', 'agent']
 ---

@@ -4,7 +4,7 @@ title: Add Segment
 sidebar_label: Add Segment
 ---
 
-Adding a new segment to Oh My Posh involves several steps to ensure proper integration. This guide walks you through creating a complete segment with all necessary files and registrations.
+Adding a new segment to Prompto involves several steps to ensure proper integration. This guide walks you through creating a complete segment with all necessary files and registrations.
 
 ## Planning Your Segment
 
@@ -38,7 +38,7 @@ Create a new file in `./src/segments/` named after your segment ID: `new_feature
 package segments
 
 import (
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/segments/options"
 )
 
 type NewFeature struct {
@@ -195,7 +195,7 @@ In the `allOf` array, add your segment's property schema (maintain alphabetical 
   },
   "then": {
     "title": "New Feature Segment",
-    "description": "https://ohmyposh.dev/docs/segments/system/new-feature",
+    "description": "https://prompto.dev/docs/segments/system/new-feature",
     "properties": {
       "options": {
         "properties": {
@@ -228,8 +228,8 @@ package segments
 import (
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
+	"github.com/po1o/prompto/src/segments/options"
+	"github.com/po1o/prompto/src/runtime/mock"
 )
 
 func TestNewFeature(t *testing.T) {
@@ -330,10 +330,10 @@ Once you've completed all steps:
 
 Be patient during the review process! 🏎
 
-[segment-go]: https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/src/config/segment_types.go
-[themes]: https://github.com/JanDeDobbeleer/oh-my-posh/tree/main/themes
-[docs]: https://github.com/JanDeDobbeleer/oh-my-posh/tree/main/website/docs/segments
-[sidebars]: https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/website/sidebars.js
+[segment-go]: https://github.com/po1o/prompto/blob/main/src/config/segment_types.go
+[themes]: https://github.com/po1o/prompto/tree/main/themes
+[docs]: https://github.com/po1o/prompto/tree/main/website/docs/segments
+[sidebars]: https://github.com/po1o/prompto/blob/main/website/sidebars.js
 [nf-icons]: https://www.nerdfonts.com/cheat-sheet
-[tests]: https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/src/segments/az_test.go
+[tests]: https://github.com/po1o/prompto/blob/main/src/segments/az_test.go
 [tables]: https://blog.alexellis.io/golang-writing-unit-tests/

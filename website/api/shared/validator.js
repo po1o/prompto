@@ -7,7 +7,7 @@ const path = require('path');
 const axios = require('axios');
 
 // Configuration constants
-const SCHEMA_GITHUB_URL = 'https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json';
+const SCHEMA_GITHUB_URL = 'https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json';
 const SCHEMA_FETCH_TIMEOUT = 10000;
 
 // Schema cache
@@ -70,7 +70,7 @@ async function loadSchema() {
   return schemaLoadPromise;
 }
 
-// Initialize AJV with draft 2020-12 support (oh-my-posh schema uses draft 2020-12)
+// Initialize AJV with draft 2020-12 support (prompto schema uses draft 2020-12)
 const ajv = new Ajv({
   allErrors: true,
   verbose: true,
@@ -208,7 +208,7 @@ function formatErrors(errors) {
 }
 
 /**
- * Validate an oh-my-posh configuration
+ * Validate an prompto configuration
  * @param {string} content - The configuration content
  * @param {string} format - The format (json, yaml, toml, or auto)
  * @returns {Promise<Object>} Validation result
@@ -354,7 +354,7 @@ async function validateSegment(content, format = 'auto') {
 
     // Wrap segment in a minimal valid config for schema validation
     const wrappedConfig = {
-      "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+      "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json",
       "version": 3,
       "blocks": [
         {

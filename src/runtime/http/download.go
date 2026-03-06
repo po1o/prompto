@@ -9,16 +9,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/log"
 )
 
 func Download(url string, isCacheEnabled bool) ([]byte, error) {
 	defer log.Trace(time.Now(), url)
 
 	// some users use the blob url, we need to convert it to the raw url
-	themeBlob := "https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/themes/"
-	url = strings.Replace(url, themeBlob, "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/", 1)
+	themeBlob := "https://github.com/po1o/prompto/blob/main/themes/"
+	url = strings.Replace(url, themeBlob, "https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/", 1)
 
 	ctx, cncl := context.WithTimeout(context.Background(), time.Second*time.Duration(5))
 	defer cncl()
@@ -29,7 +29,7 @@ func Download(url string, isCacheEnabled bool) ([]byte, error) {
 		return nil, err
 	}
 
-	request.Header.Add("User-Agent", "oh-my-posh")
+	request.Header.Add("User-Agent", "prompto")
 	// if we have an etag, add it to the request to check if the file changed
 	etag, OK := cache.Get[string](cache.Device, etagKey(url))
 	if OK {

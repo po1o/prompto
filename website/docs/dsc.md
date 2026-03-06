@@ -4,18 +4,18 @@ title: Desired State Configuration
 sidebar_label: 🖥️ Desired State Configuration
 ---
 
-Oh My Posh supports Desired State Configuration (DSC) for declarative configuration management, enabling automated
+Prompto supports Desired State Configuration (DSC) for declarative configuration management, enabling automated
 deployment and consistent configuration across multiple systems.
 
 ## Concept
 
-Oh My Posh DSC builds on the traditional Oh My Posh configuration approach by adding automation and orchestration
+Prompto DSC builds on the traditional Prompto configuration approach by adding automation and orchestration
 capabilities. Instead of manually configuring your prompt, you can define the desired state declaratively and let DSC
 ensure your system matches that state.
 
-DSC works with **resources** that represent different aspects of your Oh My Posh setup:
+DSC works with **resources** that represent different aspects of your Prompto setup:
 
-- **Configuration Resource**: Manages your Oh My Posh configuration files
+- **Configuration Resource**: Manages your Prompto configuration files
 - **Shell Resource**: Handles shell initialization and integration
 - **Font Resource**: Tracks installed Nerd Fonts
 
@@ -24,35 +24,35 @@ Microsoft DSC for automated deployments.
 
 ## Overview
 
-DSC support in Oh My Posh provides:
+DSC support in Prompto provides:
 
-- **Declarative configuration**: Define the desired state of your Oh My Posh setup
-- **Automated deployment**: Configure Oh My Posh as part of system provisioning workflows
+- **Declarative configuration**: Define the desired state of your Prompto setup
+- **Automated deployment**: Configure Prompto as part of system provisioning workflows
 - **Shell integration**: Automatically configure shell initialization for bash, zsh, fish, PowerShell, and more
 - **Font management**: Track installed Nerd Fonts through DSC state
 - **Orchestration support**: Integration with WinGet and Microsoft DSC tools
 
-DSC functionality is available through the `oh-my-posh` CLI and can be used standalone or with orchestration tools.
+DSC functionality is available through the `prompto` CLI and can be used standalone or with orchestration tools.
 
 ## DSC Resources
 
-Oh My Posh provides the following DSC resources:
+Prompto provides the following DSC resources:
 
 ### Configuration Resource
 
-Manages Oh My Posh configuration files.
+Manages Prompto configuration files.
 
 **Operations**: `get`, `set`, `export`, `schema`
 
 ```bash
 # Get current configuration state
-oh-my-posh config dsc get
+prompto config dsc get
 
 # Apply a configuration
-oh-my-posh config dsc set --state '{"states":[{"source":"~/mytheme.omp.json","format":"json"}]}'
+prompto config dsc set --state '{"states":[{"source":"~/mytheme.omp.json","format":"json"}]}'
 
 # Get configuration schema
-oh-my-posh config dsc schema
+prompto config dsc schema
 ```
 
 ### Shell Resource
@@ -63,24 +63,24 @@ Manages shell initialization and integration.
 
 ```bash
 # Get current shell configurations
-oh-my-posh init bash dsc get
+prompto init bash dsc get
 
 # Configure shell initialization
-oh-my-posh init bash dsc set --state '{"states":[{"name":"bash","command":"oh-my-posh init bash --config ~/mytheme.omp.json"}]}'
+prompto init bash dsc set --state '{"states":[{"name":"bash","command":"prompto init bash --config ~/mytheme.omp.json"}]}'
 ```
 
 ### Font Resource
 
-Tracks Nerd Fonts installed through Oh My Posh.
+Tracks Nerd Fonts installed through Prompto.
 
 **Operations**: `get`, `export`, `schema`
 
 ```bash
 # Get installed fonts
-oh-my-posh font dsc get
+prompto font dsc get
 
 # Get font schema
-oh-my-posh font dsc schema
+prompto font dsc schema
 ```
 
 ## Direct CLI Usage
@@ -94,7 +94,7 @@ You can use the DSC commands directly from the command line for configuration ma
 Retrieve the current configuration state:
 
 ```bash
-oh-my-posh config dsc get
+prompto config dsc get
 ```
 
 Example output:
@@ -115,7 +115,7 @@ Example output:
 Apply a new configuration state:
 
 ```bash
-oh-my-posh config dsc set --state '{"states":[{"source":"~/mytheme.omp.json","format":"json"}]}'
+prompto config dsc set --state '{"states":[{"source":"~/mytheme.omp.json","format":"json"}]}'
 ```
 
 This creates or updates the configuration file at the specified location with the provided format.
@@ -125,7 +125,7 @@ This creates or updates the configuration file at the specified location with th
 Get the JSON schema for the configuration resource:
 
 ```bash
-oh-my-posh config dsc schema
+prompto config dsc schema
 ```
 
 Use this to understand the structure and available options for configuration states.
@@ -134,75 +134,75 @@ Use this to understand the structure and available options for configuration sta
 
 #### Bash
 
-Configure Oh My Posh initialization for bash:
+Configure Prompto initialization for bash:
 
 ```bash
 # Get current state
-oh-my-posh init bash dsc get
+prompto init bash dsc get
 
 # Set initialization
-oh-my-posh init bash dsc set --state '{"states":[{"name":"bash","command":"oh-my-posh init bash --config ~/mytheme.omp.json"}]}'
+prompto init bash dsc set --state '{"states":[{"name":"bash","command":"prompto init bash --config ~/mytheme.omp.json"}]}'
 ```
 
-This automatically updates your `.bashrc` or `.bash_profile` with the Oh My Posh initialization command.
+This automatically updates your `.bashrc` or `.bash_profile` with the Prompto initialization command.
 
 #### Zsh
 
-Configure Oh My Posh initialization for zsh:
+Configure Prompto initialization for zsh:
 
 ```bash
 # Get current state
-oh-my-posh init zsh dsc get
+prompto init zsh dsc get
 
 # Set initialization
-oh-my-posh init zsh dsc set --state '{"states":[{"name":"zsh","command":"oh-my-posh init zsh --config ~/mytheme.omp.json"}]}'
+prompto init zsh dsc set --state '{"states":[{"name":"zsh","command":"prompto init zsh --config ~/mytheme.omp.json"}]}'
 ```
 
-This automatically updates your `.zshrc` with the Oh My Posh initialization command.
+This automatically updates your `.zshrc` with the Prompto initialization command.
 
 #### PowerShell
 
-Configure Oh My Posh initialization for PowerShell:
+Configure Prompto initialization for PowerShell:
 
 ```powershell
 # Get current state
-oh-my-posh init pwsh dsc get
+prompto init pwsh dsc get
 
 # Set initialization
-oh-my-posh init pwsh dsc set --state '{"states":[{"name":"pwsh","command":"oh-my-posh init pwsh --config ~/mytheme.omp.json"}]}'
+prompto init pwsh dsc set --state '{"states":[{"name":"pwsh","command":"prompto init pwsh --config ~/mytheme.omp.json"}]}'
 ```
 
-This automatically updates your PowerShell profile with the Oh My Posh initialization command.
+This automatically updates your PowerShell profile with the Prompto initialization command.
 
 #### Fish
 
-Configure Oh My Posh initialization for fish:
+Configure Prompto initialization for fish:
 
 ```bash
 # Get current state
-oh-my-posh init fish dsc get
+prompto init fish dsc get
 
 # Set initialization
-oh-my-posh init fish dsc set --state '{"states":[{"name":"fish","command":"oh-my-posh init fish --config ~/mytheme.omp.json"}]}'
+prompto init fish dsc set --state '{"states":[{"name":"fish","command":"prompto init fish --config ~/mytheme.omp.json"}]}'
 ```
 
-This automatically updates your fish `config.fish` with the Oh My Posh initialization command.
+This automatically updates your fish `config.fish` with the Prompto initialization command.
 
 ## Orchestration with WinGet
 
-WinGet configuration enables you to install Oh My Posh and apply configuration in a single declarative file.
+WinGet configuration enables you to install Prompto and apply configuration in a single declarative file.
 
 ### Basic WinGet configuration
 
-Create a configuration file to install and configure Oh My Posh:
+Create a configuration file to install and configure Prompto:
 
-```yaml title="oh-my-posh-setup.yaml"
+```yaml title="prompto-setup.yaml"
 $schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/v3/config/document.json
 metadata:
   winget:
     processor: dscv3
 resources:
-  - name: Install Oh My Posh
+  - name: Install Prompto
     type: Microsoft.WinGet.DSC/WinGetPackage
     properties:
       id: JanDeDobbeleer.OhMyPosh
@@ -212,26 +212,26 @@ resources:
 Apply the configuration:
 
 ```powershell
-winget configure oh-my-posh-setup.yaml
+winget configure prompto-setup.yaml
 ```
 
 ### Complete setup with configuration and shell
 
-This example installs Oh My Posh, adds your configuration, and initializes PowerShell:
+This example installs Prompto, adds your configuration, and initializes PowerShell:
 
-```yaml title="oh-my-posh-complete.yaml"
+```yaml title="prompto-complete.yaml"
 $schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/v3/config/document.json
 metadata:
   winget:
     processor: dscv3
 resources:
-  - name: Install Oh My Posh
+  - name: Install Prompto
     type: Microsoft.WinGet.DSC/WinGetPackage
     properties:
       id: JanDeDobbeleer.OhMyPosh
       source: winget
 
-  - name: Add Oh My Posh configuration
+  - name: Add Prompto configuration
     type: OhMyPosh/Config
     properties:
       states:
@@ -243,26 +243,26 @@ resources:
     properties:
       states:
         - name: pwsh
-          command: oh-my-posh init pwsh --config ~/mytheme.omp.json
+          command: prompto init pwsh --config ~/mytheme.omp.json
 ```
 
 Apply with:
 
 ```powershell
-winget configure oh-my-posh-complete.yaml
+winget configure prompto-complete.yaml
 ```
 
 ### Multi-shell configuration
 
 Initialize multiple shells with different configurations:
 
-```yaml title="oh-my-posh-multi-shell.yaml"
+```yaml title="prompto-multi-shell.yaml"
 $schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/v3/config/document.json
 metadata:
   winget:
     processor: dscv3
 resources:
-  - name: Install Oh My Posh
+  - name: Install Prompto
     type: Microsoft.WinGet.DSC/WinGetPackage
     properties:
       id: JanDeDobbeleer.OhMyPosh
@@ -287,29 +287,29 @@ resources:
     properties:
       states:
         - name: pwsh
-          command: oh-my-posh init pwsh --config ~/work-theme.omp.json
+          command: prompto init pwsh --config ~/work-theme.omp.json
 
   - name: Initialize Bash with personal configuration
     type: OhMyPosh/Shell
     properties:
       states:
         - name: bash
-          command: oh-my-posh init bash --config ~/personal-theme.omp.json
+          command: prompto init bash --config ~/personal-theme.omp.json
 ```
 
 ## Orchestration with Microsoft DSC
 
-Microsoft DSC (`dsc`) provides cross-platform configuration management capabilities. Oh My Posh provides native DSC
+Microsoft DSC (`dsc`) provides cross-platform configuration management capabilities. Prompto provides native DSC
 resources that can be used in DSC configuration documents.
 
 ### Example DSC configuration
 
-Create a configuration document for Oh My Posh:
+Create a configuration document for Prompto:
 
-```yaml title="oh-my-posh-dsc.yaml"
+```yaml title="prompto-dsc.yaml"
 $schema: https://aka.ms/dsc/schemas/v3/bundled/config/document.json
 resources:
-  - name: Add Oh My Posh configuration
+  - name: Add Prompto configuration
     type: OhMyPosh/Config
     properties:
       states:
@@ -321,18 +321,18 @@ resources:
     properties:
       states:
         - name: pwsh
-          command: oh-my-posh init pwsh --config ~/mytheme.omp.json
+          command: prompto init pwsh --config ~/mytheme.omp.json
 ```
 
 Apply the configuration using the `dsc` CLI:
 
 ```bash
-dsc config set --document oh-my-posh-dsc.yaml
+dsc config set --document prompto-dsc.yaml
 ```
 
 ### Complete configuration with multiple shells
 
-```yaml title="oh-my-posh-complete-dsc.yaml"
+```yaml title="prompto-complete-dsc.yaml"
 $schema: https://aka.ms/dsc/schemas/v3/bundled/config/document.json
 resources:
   - name: Add primary configuration
@@ -354,30 +354,30 @@ resources:
     properties:
       states:
         - name: pwsh
-          command: oh-my-posh init pwsh --config ~/primary-theme.omp.json
+          command: prompto init pwsh --config ~/primary-theme.omp.json
 
   - name: Initialize Bash
     type: OhMyPosh/Shell
     properties:
       states:
         - name: bash
-          command: oh-my-posh init bash --config ~/primary-theme.omp.json
+          command: prompto init bash --config ~/primary-theme.omp.json
 
   - name: Initialize Zsh
     type: OhMyPosh/Shell
     properties:
       states:
         - name: zsh
-          command: oh-my-posh init zsh --config ~/secondary-theme.omp.json
+          command: prompto init zsh --config ~/secondary-theme.omp.json
 ```
 
 ### Resource Types
 
-Oh My Posh provides the following DSC resource types:
+Prompto provides the following DSC resource types:
 
 #### OhMyPosh/Config
 
-Manages Oh My Posh configuration files.
+Manages Prompto configuration files.
 
 **Properties:**
 
@@ -393,18 +393,18 @@ Manages shell initialization.
 
 - `states` (array): List of shell configurations
   - `name` (string): Shell name (`bash`, `zsh`, `pwsh`, `fish`, etc.)
-  - `command` (string): Oh My Posh initialization command
+  - `command` (string): Prompto initialization command
 
 #### OhMyPosh/Font
 
 Tracks installed Nerd Fonts. This resource is read-only and automatically populated when fonts are installed through
-Oh My Posh.
+Prompto.
 
 ## Configuration State Management
 
-DSC state is stored in the Oh My Posh cache and persists across sessions. This enables:
+DSC state is stored in the Prompto cache and persists across sessions. This enables:
 
-- **State tracking**: Oh My Posh remembers configurations set through DSC
+- **State tracking**: Prompto remembers configurations set through DSC
 - **Idempotency**: Running the same DSC command multiple times produces the same result
 - **State validation**: Query current state before making changes
 
@@ -415,7 +415,7 @@ DSC state is stored in the Oh My Posh cache and persists across sessions. This e
 You can manage multiple configuration files:
 
 ```bash
-oh-my-posh config dsc set --state '{
+prompto config dsc set --state '{
   "states": [
     {"source":"~/work.omp.json","format":"json"},
     {"source":"~/personal.omp.json","format":"json"}
@@ -429,10 +429,10 @@ Initialize multiple shells with different configuration:
 
 ```bash
 # Bash with one configuration
-oh-my-posh init bash dsc set --state '{"states":[{"name":"bash","command":"oh-my-posh init bash --config ~/bash-theme.omp.json"}]}'
+prompto init bash dsc set --state '{"states":[{"name":"bash","command":"prompto init bash --config ~/bash-theme.omp.json"}]}'
 
 # PowerShell with another configuration
-oh-my-posh init pwsh dsc set --state '{"states":[{"name":"pwsh","command":"oh-my-posh init pwsh --config ~/pwsh-theme.omp.json"}]}'
+prompto init pwsh dsc set --state '{"states":[{"name":"pwsh","command":"prompto init pwsh --config ~/pwsh-theme.omp.json"}]}'
 ```
 
 ## Supported shells
@@ -450,14 +450,14 @@ DSC shell configuration supports the following shells:
 The shell integration automatically:
 
 - Creates configuration files if they don't exist
-- Updates existing Oh My Posh initialization commands
+- Updates existing Prompto initialization commands
 - Preserves shell-specific command syntax
 - Maintains proper whitespace and formatting
 
 ## See Also
 
 - [General configuration](/docs/configuration/general) - Main configuration documentation
-- [Installation](/docs/installation/windows) - Installing Oh My Posh
-- [Themes](https://github.com/JanDeDobbeleer/oh-my-posh/tree/main/themes) - Available themes
+- [Installation](/docs/installation/windows) - Installing Prompto
+- [Themes](https://github.com/po1o/prompto/tree/main/themes) - Available themes
 - [WinGet configuration](https://learn.microsoft.com/windows/package-manager/configuration/) - WinGet DSC documentation
 - [Microsoft DSC](https://learn.microsoft.com/powershell/dsc/overview) - Microsoft DSC documentation

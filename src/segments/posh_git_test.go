@@ -5,9 +5,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/mock"
+	"github.com/po1o/prompto/src/segments/options"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -37,10 +37,10 @@ func TestPoshGitSegment(t *testing.T) {
 			Case: "Changes in Working",
 			PoshGitJSON: `
 			{
-				"RepoName": "oh-my-posh",
+				"RepoName": "prompto",
 				"HasIndex": false,
-				"GitDir": "/Users/bill/Code/oh-my-posh/.git",
-				"Upstream": "origin/posh-git-json",
+				"GitDir": "/Users/bill/Code/prompto/.git",
+				"Upstream": "origin/prompto-git-json",
 				"UpstreamGone": false,
 				"HasUntracked": false,
 				"AheadBy": 0,
@@ -67,7 +67,7 @@ func TestPoshGitSegment(t *testing.T) {
 					"Deleted": [],
 					"Unmerged": []
 				},
-				"Branch": "posh-git-json"
+				"Branch": "prompto-git-json"
 			}
 			`,
 			ExpectedString:  "\ue0a0posh-git-json ≡ \uf044 ~2",
@@ -77,10 +77,10 @@ func TestPoshGitSegment(t *testing.T) {
 			Case: "Changes in Working and Staging, branch ahead and behind",
 			PoshGitJSON: `
 			{
-				"RepoName": "oh-my-posh",
+				"RepoName": "prompto",
 				"HasIndex": false,
-				"GitDir": "/Users/bill/Code/oh-my-posh/.git",
-				"Upstream": "origin/posh-git-json",
+				"GitDir": "/Users/bill/Code/prompto/.git",
+				"Upstream": "origin/prompto-git-json",
 				"UpstreamGone": false,
 				"HasUntracked": false,
 				"AheadBy": 1,
@@ -113,7 +113,7 @@ func TestPoshGitSegment(t *testing.T) {
 					"Deleted": [],
 					"Unmerged": []
 				},
-				"Branch": "posh-git-json"
+				"Branch": "prompto-git-json"
 			}
 			`,
 			ExpectedString:  "\ue0a0posh-git-json ↑1 ↓1 \uf044 ~2 | \uf046 -2",
@@ -123,8 +123,8 @@ func TestPoshGitSegment(t *testing.T) {
 			Case: "Clean branch, no upstream and stash count",
 			PoshGitJSON: `
 			{
-				"RepoName": "oh-my-posh",
-				"GitDir": "/Users/bill/Code/oh-my-posh/.git",
+				"RepoName": "prompto",
+				"GitDir": "/Users/bill/Code/prompto/.git",
 				"StashCount": 2,
 				"Index": {
 					"value": [],
@@ -140,7 +140,7 @@ func TestPoshGitSegment(t *testing.T) {
 					"Deleted": [],
 					"Unmerged": []
 				},
-				"Branch": "posh-git-json"
+				"Branch": "prompto-git-json"
 			}
 			`,
 			ExpectedString:  "\ue0a0posh-git-json ≢",
@@ -150,8 +150,8 @@ func TestPoshGitSegment(t *testing.T) {
 			Case: "No working data",
 			PoshGitJSON: `
 			{
-				"RepoName": "oh-my-posh",
-				"GitDir": "/Users/bill/Code/oh-my-posh/.git",
+				"RepoName": "prompto",
+				"GitDir": "/Users/bill/Code/prompto/.git",
 				"StashCount": 2,
 				"Index": {
 					"value": [],
@@ -160,7 +160,7 @@ func TestPoshGitSegment(t *testing.T) {
 					"Deleted": [],
 					"Unmerged": []
 				},
-				"Branch": "posh-git-json"
+				"Branch": "prompto-git-json"
 			}
 			`,
 			ExpectedString:  "\ue0a0posh-git-json ≢",
@@ -171,10 +171,10 @@ func TestPoshGitSegment(t *testing.T) {
 			Template: "{{ .UpstreamIcon }}",
 			PoshGitJSON: `
 			{
-				"RepoName": "oh-my-posh",
-				"GitDir": "/Users/bill/Code/oh-my-posh/.git",
+				"RepoName": "prompto",
+				"GitDir": "/Users/bill/Code/prompto/.git",
 				"Branch": "\ue0a0posh-git-json",
-				"Upstream": "origin/posh-git-json"
+				"Upstream": "origin/prompto-git-json"
 			}
 			`,
 			ExpectedString:    "\uf408",

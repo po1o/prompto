@@ -3,9 +3,9 @@ package daemon
 import (
 	"context"
 
-	runtimePkg "github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	runtimePkg "github.com/po1o/prompto/src/runtime"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
+	"github.com/po1o/prompto/src/prompt"
 )
 
 type PromptBundle struct {

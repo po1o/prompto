@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/runtime/mock"
+	"github.com/po1o/prompto/src/runtime/path"
+	"github.com/po1o/prompto/src/segments/options"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,7 +46,7 @@ func TestPulumi(t *testing.T) {
 			ExpectedEnabled: true,
 			HasCommand:      true,
 			YAMLConfig: `
-name: oh-my-posh
+name: prompto
 runtime: golang
 description: A Console App
 `,
@@ -56,7 +56,7 @@ description: A Console App
 			ExpectedString:  "\ue873",
 			ExpectedEnabled: true,
 			HasCommand:      true,
-			JSONConfig:      `{ "name": "oh-my-posh" }`,
+			JSONConfig:      `{ "name": "prompto" }`,
 		},
 		{
 			Case:               "no stack present",
@@ -65,7 +65,7 @@ description: A Console App
 			HasCommand:         true,
 			HasWorkspaceFolder: true,
 			FetchStack:         true,
-			JSONConfig:         `{ "name": "oh-my-posh" }`,
+			JSONConfig:         `{ "name": "prompto" }`,
 			WorkSpaceFile:      `{ "stack": "1337" }`,
 		},
 		{
@@ -75,20 +75,20 @@ description: A Console App
 			HasCommand:         true,
 			HasWorkspaceFolder: true,
 			FetchStack:         true,
-			JSONConfig:         `{ "name": "oh-my-posh" }`,
+			JSONConfig:         `{ "name": "prompto" }`,
 			WorkSpaceFile:      `{ "stack": "1337" }`,
 		},
 		{
 			Case:               "pulumi URL",
-			ExpectedString:     "\ue873 1337 :: posh-user@s3://test-pulumi-state-test",
+			ExpectedString:     "\ue873 1337 :: prompto-user@s3://test-pulumi-state-test",
 			ExpectedEnabled:    true,
 			HasCommand:         true,
 			HasWorkspaceFolder: true,
 			FetchStack:         true,
 			FetchAbout:         true,
-			JSONConfig:         `{ "name": "oh-my-posh" }`,
+			JSONConfig:         `{ "name": "prompto" }`,
 			WorkSpaceFile:      `{ "stack": "1337" }`,
-			About:              `{ "backend": { "url": "s3://test-pulumi-state-test", "user":"posh-user" } }`,
+			About:              `{ "backend": { "url": "s3://test-pulumi-state-test", "user":"prompto-user" } }`,
 		},
 		// Error flows
 		{
@@ -105,7 +105,7 @@ description: A Console App
 			ExpectedEnabled:    true,
 			FetchStack:         true,
 			HasCommand:         true,
-			JSONConfig:         `{ "name": "oh-my-posh" }`,
+			JSONConfig:         `{ "name": "prompto" }`,
 			WorkSpaceFile:      `{`,
 			HasWorkspaceFolder: true,
 		},
@@ -115,7 +115,7 @@ description: A Console App
 			ExpectedEnabled: true,
 			HasCommand:      true,
 			FetchAbout:      true,
-			JSONConfig:      `{ "name": "oh-my-posh" }`,
+			JSONConfig:      `{ "name": "prompto" }`,
 		},
 		{
 			Case:               "pulumi URL - about error",
@@ -125,7 +125,7 @@ description: A Console App
 			HasWorkspaceFolder: true,
 			FetchStack:         true,
 			FetchAbout:         true,
-			JSONConfig:         `{ "name": "oh-my-posh" }`,
+			JSONConfig:         `{ "name": "prompto" }`,
 			WorkSpaceFile:      `{ "stack": "1337" }`,
 			AboutError:         errors.New("error"),
 		},
@@ -137,7 +137,7 @@ description: A Console App
 			HasWorkspaceFolder: true,
 			FetchStack:         true,
 			FetchAbout:         true,
-			JSONConfig:         `{ "name": "oh-my-posh" }`,
+			JSONConfig:         `{ "name": "prompto" }`,
 			WorkSpaceFile:      `{ "stack": "1337" }`,
 			About:              `{`,
 		},
@@ -149,7 +149,7 @@ description: A Console App
 			HasWorkspaceFolder: true,
 			FetchStack:         true,
 			FetchAbout:         true,
-			JSONConfig:         `{ "name": "oh-my-posh" }`,
+			JSONConfig:         `{ "name": "prompto" }`,
 			WorkSpaceFile:      `{ "stack": "1337" }`,
 			About:              `{}`,
 		},
@@ -162,7 +162,7 @@ description: A Console App
 		env.On("RunCommand", "pulumi", []string{"stack", "ls", "--json"}).Return(tc.Stack, tc.StackError)
 		env.On("RunCommand", "pulumi", []string{"about", "--json"}).Return(tc.About, tc.AboutError)
 
-		pwd := "/home/foobar/Work/oh-my-posh/pulumi/projects/awesome-project"
+		pwd := "/home/foobar/Work/prompto/pulumi/projects/awesome-project"
 		env.On("Pwd").Return(pwd)
 		env.On("Home").Return(filepath.Clean("/home/foobar"))
 
@@ -184,7 +184,7 @@ description: A Console App
 		}
 
 		sha1 := pulumi.sha1HexString(pwd + path.Separator() + fileName)
-		workspaceFile := fmt.Sprintf("oh-my-posh-%s-workspace.json", sha1)
+		workspaceFile := fmt.Sprintf("prompto-%s-workspace.json", sha1)
 
 		env.On("HasFilesInDir", filepath.Clean("/home/foobar/.pulumi/workspaces"), workspaceFile).Return(len(tc.WorkSpaceFile) > 0)
 

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/runtime"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ var noticeCmd = &cobra.Command{
 		env := &runtime.Terminal{}
 		env.Init(&runtime.Flags{})
 
-		cache.Init(os.Getenv("POSH_SHELL"), cache.Persist)
+		cache.Init(os.Getenv("PROMPTO_SHELL"), cache.Persist)
 
 		defer func() {
 			cache.Close()

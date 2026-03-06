@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    Builds MSI and MSIX packages for Oh My Posh.
+    Builds MSI and MSIX packages for Prompto.
 
 .DESCRIPTION
-    This script creates MSI and MSIX installer packages for Oh My Posh with the specified architecture and version.
+    This script creates MSI and MSIX installer packages for Prompto with the specified architecture and version.
     It can optionally copy the executable, sign the packages, and generate hash files for verification.
 
 .PARAMETER Architecture
@@ -142,7 +142,7 @@ function Invoke-PackageSigning {
         $packageName = Split-Path $PackagePath -Leaf
         Write-Verbose "Signing package: $packageName" -Verbose
 
-        & $SigningTools.SignTool sign /v /debug /d "Oh My Posh" /fd SHA256 /tr 'http://timestamp.acs.microsoft.com' /td SHA256 /dlib $SigningTools.SignToolDlib /dmdf ../../src/metadata.json $PackagePath
+        & $SigningTools.SignTool sign /v /debug /d "Prompto" /fd SHA256 /tr 'http://timestamp.acs.microsoft.com' /td SHA256 /dlib $SigningTools.SignToolDlib /dmdf ../../src/metadata.json $PackagePath
 
         Write-Verbose "Successfully signed: $packageName" -Verbose
     }
@@ -170,18 +170,18 @@ catch {
 
 if ($Copy) {
     $sourceFile = switch ($Architecture) {
-        'x64' { "posh-windows-amd64.exe" }
-        Default { "posh-windows-$Architecture.exe" }
+        'x64' { "prompto-windows-amd64.exe" }
+        Default { "prompto-windows-$Architecture.exe" }
     }
 
-    Write-Verbose "Copying $sourceFile to ./dist/oh-my-posh.exe" -Verbose
+    Write-Verbose "Copying $sourceFile to ./dist/prompto.exe" -Verbose
 
     try {
         $sourcePath = "../../dist/$sourceFile"
         if (-not (Test-Path $sourcePath)) {
             throw "Source file not found: $sourcePath"
         }
-        Copy-Item -Path $sourcePath -Destination "./dist/oh-my-posh.exe" -Force
+        Copy-Item -Path $sourcePath -Destination "./dist/prompto.exe" -Force
     }
     catch {
         Write-Error "Failed to copy executable: $_"
@@ -200,7 +200,7 @@ try {
     $msiPackagePath = "$PWD/out/$msiFileName" -replace '\\', '/'
 
     Write-Verbose "Building MSI: $msiPackagePath" -Verbose
-    wix build -arch $Architecture -out $msiPackagePath .\oh-my-posh.wxs
+    wix build -arch $Architecture -out $msiPackagePath .\prompto.wxs
 
     if (-not (Test-Path $msiPackagePath)) {
         throw "MSI package was not created successfully"

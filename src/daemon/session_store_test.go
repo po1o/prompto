@@ -3,8 +3,8 @@ package daemon
 import (
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/prompt"
+	"github.com/po1o/prompto/src/runtime"
 
 	"github.com/stretchr/testify/require"
 )

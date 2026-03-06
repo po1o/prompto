@@ -7,12 +7,12 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/log"
 )
 
 func platformCachePath() (string, bool) {
 	if pfn, OK := PackageFamilyName(); OK {
-		// WINDOWS MSIX cache folder, will only be present when oh-my-posh is installed via MSIX
+		// WINDOWS MSIX cache folder, will only be present when prompto is installed via MSIX
 		msixLocalAppData := filepath.Join(os.Getenv("LOCALAPPDATA"), "Packages", pfn, "LocalCache", "Local")
 		if cachePath, OK := returnOrBuildCachePath(msixLocalAppData); OK {
 			return cachePath, true

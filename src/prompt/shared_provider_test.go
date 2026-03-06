@@ -4,14 +4,14 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/maps"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
-	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/maps"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/shell"
+	"github.com/po1o/prompto/src/template"
+	"github.com/po1o/prompto/src/terminal"
 
 	"github.com/stretchr/testify/require"
 )

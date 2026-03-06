@@ -9,7 +9,7 @@ if ($IsMacOS) {
     Write-Host @"
 $installInstructions
 
-https://ohmyposh.dev/docs/installation/macos
+https://prompto.dev/docs/installation/macos
 "@
     exit
 }
@@ -17,7 +17,7 @@ if ($IsLinux) {
     Write-Host @"
 $installInstructions
 
-https://ohmyposh.dev/docs/installation/linux
+https://prompto.dev/docs/installation/linux
 "@
     exit
 }
@@ -51,7 +51,7 @@ if (Get-Command -Name New-TemporaryFile -ErrorAction SilentlyContinue) {
 else {
     $tmp = New-Item -Path $env:TEMP -Name ([System.IO.Path]::GetRandomFileName() -replace '\.\w+$', '.msix') -Force -ItemType File
 }
-$url = "https://cdn.ohmyposh.dev/releases/latest/$installer"
+$url = "https://cdn.prompto.dev/releases/latest/$installer"
 
 # check if we can make https requests and download the binary
 try {
@@ -74,5 +74,5 @@ Done!
 Restart your terminal and have a look at the
 documentation on how to proceed from here.
 
-https://ohmyposh.dev/docs/installation/prompt
+https://prompto.dev/docs/installation/prompt
 '@

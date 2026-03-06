@@ -1,8 +1,8 @@
 package daemon
 
 import (
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime"
 )
 
 // Environment wraps runtime.Terminal to use environment variables

@@ -3,10 +3,10 @@ package prompt
 import (
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	runjobs "github.com/jandedobbeleer/oh-my-posh/src/runtime/jobs"
-	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/log"
+	runjobs "github.com/po1o/prompto/src/runtime/jobs"
+	"github.com/po1o/prompto/src/terminal"
 )
 
 type result struct {

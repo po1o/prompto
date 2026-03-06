@@ -35,13 +35,13 @@ func socketPath() string {
 		if username == "" {
 			username = "default"
 		}
-		return fmt.Sprintf(`\\.\pipe\oh-my-posh-%s`, username)
+		return fmt.Sprintf(`\\.\pipe\prompto-%s`, username)
 	}
 
 	// Create a unique pipe name based on the LOCALAPPDATA path.
 	// This ensures test isolation when LOCALAPPDATA is overridden.
 	hash := sha256.Sum256([]byte(strings.ToLower(localAppData)))
-	return fmt.Sprintf(`\\.\pipe\oh-my-posh-%x`, hash[:8])
+	return fmt.Sprintf(`\\.\pipe\prompto-%x`, hash[:8])
 }
 
 func listen() (net.Listener, error) {

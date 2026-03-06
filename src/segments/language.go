@@ -9,12 +9,12 @@ import (
 
 	"slices"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/regex"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/regex"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/segments/options"
+	"github.com/po1o/prompto/src/template"
 )
 
 const (

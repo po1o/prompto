@@ -1,8 +1,8 @@
 package font
 
 import (
-	"github.com/jandedobbeleer/oh-my-posh/src/dsc"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/dsc"
+	"github.com/po1o/prompto/src/log"
 )
 
 type Resource struct {

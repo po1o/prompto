@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/segments/options"
 	lang "golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
@@ -221,7 +221,7 @@ func (t *Executiontime) formatDurationRound() string {
 }
 
 func (t *Executiontime) formatDurationLucky7() string {
-	// https://github.com/JanDeDobbeleer/oh-my-posh/issues/3970
+	// https://github.com/po1o/prompto/issues/3970
 	// execution time will always be 7 characters long
 	// decimal point will be at the same location (3rd space or str[2])
 	// seconds and milliseconds will be aligned

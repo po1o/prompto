@@ -4,7 +4,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/log"
 )
 
 const (

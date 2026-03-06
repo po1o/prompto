@@ -9,8 +9,8 @@ import TabItem from "@theme/TabItem";
 
 ## Nerd Fonts
 
-Oh My Posh was designed to use [Nerd Fonts][nerdfonts]. Nerd Fonts are popular fonts that are patched to include icons.
-To see the icons displayed in Oh My Posh, **install** a [Nerd Font][nerdfonts], and **configure** your terminal to use it.
+Prompto was designed to use [Nerd Fonts][nerdfonts]. Nerd Fonts are popular fonts that are patched to include icons.
+To see the icons displayed in Prompto, **install** a [Nerd Font][nerdfonts], and **configure** your terminal to use it.
 
 :::info
 Fonts need to be installed on the host system as this is a UI setting, not a command line, or shell configuration.
@@ -21,32 +21,32 @@ your terminal emulator to use it.
 ## Installation
 
 <Tabs
-    defaultValue="oh-my-posh"
+    defaultValue="prompto"
     values={[
-        { label: 'Oh My Posh', value: 'oh-my-posh' },
+        { label: 'Prompto', value: 'prompto' },
         { label: 'Homebrew', value: 'homebrew' },
         { label: 'PowerShell', value: 'powershell' }
     ]
 }>
-<TabItem value="oh-my-posh">
+<TabItem value="prompto">
 
-Oh My Posh has a CLI to help you select and install a [Nerd Font][nerdfonts]:
+Prompto has a CLI to help you select and install a [Nerd Font][nerdfonts]:
 
 :::info
 When running as root/administrator, the fonts will be installed system-wide.
 When running as a regular user, the fonts will be installed in the user's font directory.
-By default, Oh My Posh installs the `.ttf` version of the font in case multiple versions are available.
+By default, Prompto installs the `.ttf` version of the font in case multiple versions are available.
 :::
 
 ```bash
-oh-my-posh font install
+prompto font install
 ```
 
 This will present a list of Nerd Font libraries, from which you can  select `Meslo`, which includes the
 `Meslo LGM NF` font we recommend. Note that you can also install it directly via:
 
 ```bash
-oh-my-posh font install meslo
+prompto font install meslo
 ```
 
 </TabItem>

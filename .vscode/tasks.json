@@ -9,8 +9,8 @@
     {
       "type": "shell",
       "command": "go",
-      "label": "build oh-my-posh",
-      "detail": "Build oh-my-posh in the /src folder locally",
+      "label": "build prompto",
+      "detail": "Build prompto in the /src folder locally",
       "options": {
         "cwd": "${workspaceRoot}/src"
       },
@@ -27,8 +27,8 @@
     {
       "type": "shell",
       "command": "go",
-      "label": "devcontainer: rebuild oh-my-posh",
-      "detail": "Build oh-my-posh for all shells when inside the devcontainer",
+      "label": "devcontainer: rebuild prompto",
+      "detail": "Build prompto for all shells when inside the devcontainer",
       "options": {
         "cwd": "${workspaceRoot}/src",
         "shell": {
@@ -40,8 +40,8 @@
         "statusbar": {
           "hide": false,
           "color": "#22C1D6",
-          "label": "$(beaker) devcontainer: rebuild oh-my-posh",
-          "tooltip": "Compiles *oh-my-posh* from this repo while **overwriting** your preinstalled stable release."
+          "label": "$(beaker) devcontainer: rebuild prompto",
+          "tooltip": "Compiles *prompto* from this repo while **overwriting** your preinstalled stable release."
         }
       },
       "group": "build",
@@ -50,9 +50,9 @@
         "build",
         "-v",
         "-o",
-        "/home/vscode/bin/oh-my-posh",
+        "/home/vscode/bin/prompto",
         "-ldflags",
-        "\"-s -w -X 'github.com/jandedobbeleer/oh-my-posh/src/build.Version=development-$(git --no-pager log -1 --pretty=%h-%s)' -extldflags '-static'\""
+        "\"-s -w -X 'github.com/po1o/prompto/src/build.Version=development-$(git --no-pager log -1 --pretty=%h-%s)' -extldflags '-static'\""
       ]
     },
     {

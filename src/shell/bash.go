@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-//go:embed scripts/omp.bash
+//go:embed scripts/prompto.bash
 var bashInit string
 
 func (f Features) Bash() Code {
@@ -20,27 +20,27 @@ func (f Features) Bash() Code {
 	case Notice:
 		return unixNotice
 	case Daemon:
-		return enablePoshDaemon
+		return enablePromptoDaemon
 	case VimMode:
-		return "set -o vi; enable_posh_vim_mode"
+		return "set -o vi; enable_prompto_vim_mode"
 	case VimCursorBlink:
-		return "_omp_cursor_blink=1"
+		return "_prompto_cursor_blink=1"
 	case VimCursorShape:
-		return "_omp_cursor_shape=1; _omp_should_change_cursor && _omp_apply_cursor_shape"
+		return "_prompto_cursor_shape=1; _prompto_should_change_cursor && _prompto_apply_cursor_shape"
 	case RPrompt:
 		if !bashBLEsession {
 			return ""
 		}
 
 		return `bleopt prompt_rps1='$(
-	"$_omp_executable" render right \
+	"$_prompto_executable" render right \
 		--shell=bash \
 		--shell-version="$BASH_VERSION" \
-		--status="$_omp_status" \
-		--pipestatus="${_omp_pipestatus[*]}" \
-		--no-status="$_omp_no_status" \
-		--execution-time="$_omp_execution_time" \
-		--stack-count="$_omp_stack_count" \
+		--status="$_prompto_status" \
+		--pipestatus="${_prompto_pipestatus[*]}" \
+		--no-status="$_prompto_no_status" \
+		--execution-time="$_prompto_execution_time" \
+		--stack-count="$_prompto_stack_count" \
 		--terminal-width="${COLUMNS-0}" \
 		--escape=false
 )'`
@@ -51,7 +51,7 @@ func (f Features) Bash() Code {
 
 		return `bleopt prompt_ps1_transient=always
 bleopt prompt_ps1_final='$(
-    "$_omp_executable" render transient \
+    "$_prompto_executable" render transient \
         --shell=bash \
         --shell-version="$BASH_VERSION" \
         --escape=false

@@ -3,7 +3,7 @@ package text
 import (
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/generics"
+	"github.com/po1o/prompto/src/generics"
 )
 
 var builderPool *generics.Pool[*StringBuilder]

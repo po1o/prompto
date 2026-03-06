@@ -1,6 +1,6 @@
 package segments
 
-import "github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+import "github.com/po1o/prompto/src/segments/options"
 
 type Spotify struct {
 	Base

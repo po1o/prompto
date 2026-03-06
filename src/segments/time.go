@@ -3,7 +3,7 @@ package segments
 import (
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/segments/options"
 )
 
 type Time struct {

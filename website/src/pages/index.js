@@ -82,7 +82,7 @@ function Home() {
               See themes &rarr;
             </Link>
           </div>
-          <img className="hero--image" src="/img/hero.png" alt="Oh My Posh prompt"></img>
+          <img className="hero--image" src="/img/hero.png" alt="Prompto prompt"></img>
         </div>
       </header>
       <main>

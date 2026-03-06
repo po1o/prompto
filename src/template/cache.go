@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/build"
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/maps"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
+	"github.com/po1o/prompto/src/build"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/maps"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/path"
 )
 
 var (

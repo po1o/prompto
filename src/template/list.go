@@ -3,7 +3,7 @@ package template
 import (
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/text"
+	"github.com/po1o/prompto/src/text"
 )
 
 type Logic string

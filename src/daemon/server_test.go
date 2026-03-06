@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/daemon/ipc"
+	"github.com/po1o/prompto/src/daemon/ipc"
 	"github.com/stretchr/testify/require"
 )
 

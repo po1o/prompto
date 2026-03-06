@@ -5,9 +5,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/mock"
+	"github.com/po1o/prompto/src/segments/options"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -653,8 +653,8 @@ func TestNodePackageVersion(t *testing.T) {
 
 	for _, tc := range cases {
 		var env = new(mock.Environment)
-		env.On("Pwd").Return("posh")
-		path := filepath.Join("posh", "node_modules", "nx")
+		env.On("Pwd").Return("prompto")
+		path := filepath.Join("prompto", "node_modules", "nx")
 		env.On("HasFilesInDir", path, "package.json").Return(!tc.NoFiles)
 		env.On("FileContent", filepath.Join(path, "package.json")).Return(tc.PackageJSON)
 

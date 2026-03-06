@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/config"
 
 	"github.com/spf13/cobra"
 )
@@ -49,7 +49,7 @@ func toggleFeature(cmd *cobra.Command, feature string, enable bool) {
 		return
 	}
 
-	cache.Init(os.Getenv("POSH_SHELL"), cache.Persist)
+	cache.Init(os.Getenv("PROMPTO_SHELL"), cache.Persist)
 	cache.Set(cache.Device, feature, enable, cache.INFINITE)
 	cache.Close()
 }

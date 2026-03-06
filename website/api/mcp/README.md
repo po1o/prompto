@@ -1,12 +1,12 @@
 ---
 title: MCP Validator Function
-description: 'Azure Function implementing the Model Context Protocol server for validating oh-my-posh configurations'
+description: 'Azure Function implementing the Model Context Protocol server for validating prompto configurations'
 ---
 
 ## Overview
 
 This directory contains the Azure Function that implements the Model Context Protocol (MCP) server for
-validating oh-my-posh configurations.
+validating prompto configurations.
 
 ## Endpoints
 
@@ -17,7 +17,7 @@ validating oh-my-posh configurations.
 
 ### validate_config
 
-Validate an oh-my-posh configuration.
+Validate an prompto configuration.
 
 - Supports JSON, YAML, and TOML formats
 - Returns detailed validation errors with JSON paths
@@ -39,8 +39,8 @@ Configure your MCP client to connect to this server:
 ```json
 {
   "mcpServers": {
-    "oh-my-posh-validator": {
-      "url": "https://ohmyposh.dev/api/mcp",
+    "prompto-validator": {
+      "url": "https://prompto.dev/api/mcp",
       "transport": "http"
     }
   }
@@ -52,13 +52,13 @@ Configure your MCP client to connect to this server:
 #### Get Server Info
 
 ```bash
-curl https://ohmyposh.dev/api/mcp
+curl https://prompto.dev/api/mcp
 ```
 
 #### List Available Tools
 
 ```bash
-curl -X POST https://ohmyposh.dev/api/mcp \
+curl -X POST https://prompto.dev/api/mcp \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -70,7 +70,7 @@ curl -X POST https://ohmyposh.dev/api/mcp \
 #### Validate a Configuration
 
 ```bash
-curl -X POST https://ohmyposh.dev/api/mcp \
+curl -X POST https://prompto.dev/api/mcp \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -78,7 +78,7 @@ curl -X POST https://ohmyposh.dev/api/mcp \
     "params": {
       "name": "validate_config",
       "arguments": {
-        "content": "{\"$schema\":\"https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/
+        "content": "{\"$schema\":\"https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/
 themes/schema.json\",\"blocks\":[]}",
         "format": "json"
       }
@@ -90,7 +90,7 @@ themes/schema.json\",\"blocks\":[]}",
 #### Validate a Segment Snippet
 
 ```bash
-curl -X POST https://ohmyposh.dev/api/mcp \
+curl -X POST https://prompto.dev/api/mcp \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
@@ -163,7 +163,7 @@ This server is published to the [MCP Registry](https://github.com/modelcontextpr
 
 ### Publishing
 
-Publishing is triggered automatically when you push a version tag (same as oh-my-posh releases):
+Publishing is triggered automatically when you push a version tag (same as prompto releases):
 
 ```bash
 git tag v9.0.0
@@ -178,7 +178,7 @@ The workflow will:
 4. Authenticate with the MCP Registry using GitHub OIDC
 5. Publish the server to the registry
 
-**Note**: The MCP server version will stay in sync with oh-my-posh versions automatically.
+**Note**: The MCP server version will stay in sync with prompto versions automatically.
 
 ### Files
 

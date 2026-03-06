@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/runtime/mock"
+	"github.com/po1o/prompto/src/segments/options"
 
 	"github.com/alecthomas/assert"
 
@@ -515,8 +515,8 @@ func TestNuspecPackage(t *testing.T) {
 				c.ReturnArguments = testify_.Arguments{false}
 			}
 		})
-		env.On("Pwd").Return("posh")
-		env.On("LsDir", "posh").Return([]fs.DirEntry{
+		env.On("Pwd").Return("prompto")
+		env.On("LsDir", "prompto").Return([]fs.DirEntry{
 			&MockDirEntry{
 				name: tc.FileName,
 			},
@@ -589,8 +589,8 @@ func TestDotnetProject(t *testing.T) {
 				}
 			}
 		})
-		env.On("Pwd").Return("posh")
-		env.On("LsDir", "posh").Return([]fs.DirEntry{
+		env.On("Pwd").Return("prompto")
+		env.On("LsDir", "prompto").Return([]fs.DirEntry{
 			&MockDirEntry{
 				name: tc.FileName,
 			},
@@ -616,7 +616,7 @@ func TestPowerShellModuleProject(t *testing.T) {
 			Case:            "valid PowerShell module file",
 			HasFiles:        true,
 			ExpectedEnabled: true,
-			ExpectedString:  "\uf487 1.0.0.0 oh-my-posh",
+			ExpectedString:  "\uf487 1.0.0.0 prompto",
 		},
 	}
 
@@ -629,18 +629,18 @@ func TestPowerShellModuleProject(t *testing.T) {
 				}
 			}
 		})
-		env.On("Pwd").Return("posh")
-		env.On("LsDir", "posh").Return([]fs.DirEntry{
+		env.On("Pwd").Return("prompto")
+		env.On("LsDir", "prompto").Return([]fs.DirEntry{
 			&MockDirEntry{
-				name: "oh-my-posh.psd1",
+				name: "prompto.psd1",
 			},
 		})
 		var moduleContent string
 		if tc.HasFiles {
-			content, _ := os.ReadFile("../test/oh-my-posh.psd1")
+			content, _ := os.ReadFile("../test/prompto.psd1")
 			moduleContent = string(content)
 		}
-		env.On("FileContent", "oh-my-posh.psd1").Return(moduleContent)
+		env.On("FileContent", "prompto.psd1").Return(moduleContent)
 		pkg := &Project{}
 		pkg.Init(options.Map{}, env)
 		assert.Equal(t, tc.ExpectedEnabled, pkg.Enabled(), tc.Case)

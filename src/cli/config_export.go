@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/runtime/path"
 
 	"github.com/spf13/cobra"
 )
@@ -29,11 +29,11 @@ You can choose to print the output to stdout, or export your config in the forma
 
 Example usage:
 
-> oh-my-posh config export --config ~/myconfig.omp.yaml --format yaml
+> prompto config export --config ~/myconfig.omp.yaml --format yaml
 
 Exports the config file "~/myconfig.omp.yaml" in YAML format and prints the result to stdout.
 
-> oh-my-posh config export --output ~/new_config.omp.yaml
+> prompto config export --output ~/new_config.omp.yaml
 
 Exports the current config to "~/new_config.omp.yaml" (in YAML format).`,
 	Args: cobra.NoArgs,
@@ -45,7 +45,7 @@ Exports the current config to "~/new_config.omp.yaml" (in YAML format).`,
 			return
 		}
 
-		cache.Init(os.Getenv("POSH_SHELL"))
+		cache.Init(os.Getenv("PROMPTO_SHELL"))
 
 		err := setConfigFlag()
 		if err != nil {

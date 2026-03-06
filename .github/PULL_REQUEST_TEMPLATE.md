@@ -12,11 +12,11 @@
 Tips:
 
 If you're not comfortable with working with Git,
-we're working on a guide (https://ohmyposh.dev/docs/contributing/git) to help you out.
-Oh My Posh advises GitKraken (https://www.gitkraken.com/invite/nQmDPR9D)
+we're working on a guide (https://prompto.dev/docs/contributing/git) to help you out.
+Prompto advises GitKraken (https://www.gitkraken.com/invite/nQmDPR9D)
 as your preferred cross platform Git GUI power tool.
 
 -->
 
-[CONTRIBUTING.md]: https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/CONTRIBUTING.md
+[CONTRIBUTING.md]: https://github.com/po1o/prompto/blob/main/CONTRIBUTING.md
 [cc]: https://www.conventionalcommits.org/en/v1.0.0/#summary

@@ -3,8 +3,8 @@ package config
 import (
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/segments/options"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

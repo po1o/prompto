@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
+	"github.com/po1o/prompto/src/runtime/path"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -28,7 +28,7 @@ func Dial(opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 func socketPath() string {
 	// Try XDG_RUNTIME_DIR first (for systemd-based systems)
 	if runtimeDir := os.Getenv("XDG_RUNTIME_DIR"); runtimeDir != "" {
-		return filepath.Join(runtimeDir, fmt.Sprintf("oh-my-posh-%d.sock", os.Getuid()))
+		return filepath.Join(runtimeDir, fmt.Sprintf("prompto-%d.sock", os.Getuid()))
 	}
 
 	// Fall back to state directory
@@ -37,7 +37,7 @@ func socketPath() string {
 		statePath = filepath.Join(path.Home(), ".local", "state")
 	}
 
-	return filepath.Join(statePath, "oh-my-posh", fmt.Sprintf("oh-my-posh-%d.sock", os.Getuid()))
+	return filepath.Join(statePath, "prompto", fmt.Sprintf("prompto-%d.sock", os.Getuid()))
 }
 
 // dialTarget returns the gRPC dial target for Unix sockets.

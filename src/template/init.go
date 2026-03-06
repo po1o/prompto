@@ -4,9 +4,9 @@ import (
 	"sync"
 	"text/template"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/generics"
-	"github.com/jandedobbeleer/oh-my-posh/src/maps"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/generics"
+	"github.com/po1o/prompto/src/maps"
+	"github.com/po1o/prompto/src/runtime"
 )
 
 const (

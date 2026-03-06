@@ -5,7 +5,7 @@ import (
 	stdOS "os"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/log"
 
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"

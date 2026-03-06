@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/dsc"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/dsc"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +29,7 @@ You can export, migrate or edit the config (via the editor specified in the envi
 
 		switch args[0] {
 		case "edit":
-			cache.Init(os.Getenv("POSH_SHELL"))
+			cache.Init(os.Getenv("PROMPTO_SHELL"))
 			if configPath, OK := cache.Get[string](cache.Session, config.SourceKey); OK {
 				exitcode = editFileWithEditor(configPath)
 				return

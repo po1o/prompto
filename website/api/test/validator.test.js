@@ -60,7 +60,7 @@ blocks:
   malformedJson: `{ "invalid": json }`
 };
 
-describe('oh-my-posh validator', () => {
+describe('prompto validator', () => {
   describe('validateConfig', () => {
     it('should validate a valid JSON config', async () => {
       const result = await validator.validateConfig(fixtures.validConfig, 'json');

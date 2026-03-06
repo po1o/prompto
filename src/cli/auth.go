@@ -3,10 +3,10 @@ package cli
 import (
 	"os"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/auth"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/cli/auth"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime"
 
 	"github.com/spf13/cobra"
 )
@@ -32,7 +32,7 @@ Available services:
 		}
 
 		flags := &runtime.Flags{
-			Shell: os.Getenv("POSH_SHELL"),
+			Shell: os.Getenv("PROMPTO_SHELL"),
 		}
 
 		env := &runtime.Terminal{}

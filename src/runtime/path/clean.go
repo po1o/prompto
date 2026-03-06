@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/regex"
-	"github.com/jandedobbeleer/oh-my-posh/src/text"
+	"github.com/po1o/prompto/src/regex"
+	"github.com/po1o/prompto/src/text"
 )
 
 // Base returns the last element of path.

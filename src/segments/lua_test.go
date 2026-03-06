@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/template"
 	"github.com/stretchr/testify/assert"
 )
 

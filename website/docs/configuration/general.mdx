@@ -7,7 +7,7 @@ sidebar_label: General
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-Oh My Posh renders your prompt based on the definition of _blocks_ (like Lego) which contain one or more _segments_.
+Prompto renders your prompt based on the definition of _blocks_ (like Lego) which contain one or more _segments_.
 A really simple configuration could look like this. The default format is `json`, but we also support `toml` and `yaml`.
 There's a [schema][schema] available which is kept up-to-date and helps with autocomplete and validation of the configuration.
 
@@ -29,7 +29,7 @@ starting point to create your own configuration.
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json",
   "final_space": true,
   "version": 4,
   "blocks": [
@@ -57,7 +57,7 @@ starting point to create your own configuration.
 <TabItem value="yaml">
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 final_space: true
 version: 4
 blocks:
@@ -77,7 +77,7 @@ blocks:
 <TabItem value="toml">
 
 ```toml
-"$schema" = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json"
+"$schema" = "https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json"
 final_space = true
 version = 4
 
@@ -100,7 +100,7 @@ alignment = "left"
 </Tabs>
 
 With this configuration, a single powerline segment is rendered that shows the name of the folder you're currently in.
-To set this configuration in combination with an Oh My Posh [executable][releases], use the `--config` flag to
+To set this configuration in combination with an Prompto [executable][releases], use the `--config` flag to
 set a path to a file containing the above code. The `--shell universal` flag is used to print the prompt without
 escape characters to see the prompt as it would be shown inside a prompt function for your shell.
 
@@ -111,7 +111,7 @@ configuration.
 :::
 
 ```bash
-oh-my-posh print primary --config sample.json --shell uni
+prompto print primary --config sample.json --shell uni
 ```
 
 If all goes according to plan, you should see the prompt being printed out on the line below. In case you see a lot of
@@ -121,7 +121,7 @@ boxes with question marks, set up your terminal to use a [supported font][font] 
 The `--config` flag can accept either a local filepath or a remotely hosted config file.
 
 For example, the following is a valid `--config` flag:
-`--config 'https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/jandedobbeleer.omp.json'`
+`--config 'https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/jandedobbeleer.omp.json'`
 :::
 
 ## Settings
@@ -185,7 +185,7 @@ specific positions in the configuration. Be aware that the index is **1-based**,
 
 ### JSON Schema Validation
 
-As mentioned above, Oh My Posh configurations can utilize JSON Schema to validate their contents. Configurations should include a link to
+As mentioned above, Prompto configurations can utilize JSON Schema to validate their contents. Configurations should include a link to
 the [external schema document][schema] which prescribes the appropriate structure and contents for various elements. If
 your code editor is configured to use JSON Schema, it will compare your configuration to the external document, and issue
 warnings for discrepancies.
@@ -209,29 +209,29 @@ warnings, and ignore them at your peril.
 
 ### Accepted Formats
 
-Oh My Posh supports three file formats for configurations: `json`, `yaml`, and `toml`.
+Prompto supports three file formats for configurations: `json`, `yaml`, and `toml`.
 
 Various converters exist to convert between these, although they aren't perfect and will require manual
 adjustment. Notably, the schema implementation for json is as follows:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json"
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json"
 }
 ```
 
 While for yaml:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 ```
 
 Converters won't catch this change, so you will need to adjust manually.
 
-[releases]: https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest
+[releases]: https://github.com/po1o/prompto/releases/latest
 [font]: /docs/installation/fonts
-[schema]: https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/themes/schema.json
-[themes]: https://github.com/JanDeDobbeleer/oh-my-posh/tree/main/themes
+[schema]: https://github.com/po1o/prompto/blob/main/themes/schema.json
+[themes]: https://github.com/po1o/prompto/tree/main/themes
 [colors]: /docs/configuration/colors
 [accent]: /docs/configuration/colors#standard-colors
 [templates]: /docs/configuration/templates#config-variables

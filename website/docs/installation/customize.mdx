@@ -7,9 +7,9 @@ sidebar_label: 🧩 Customize
 import Tabs from "@theme/Tabs";
 import TabItem from "@theme/TabItem";
 
-The standard initialization sets Oh My Posh' default, built-in theme.
+The standard initialization sets Prompto' default, built-in theme.
 
-To set a new configuration or theme you need to change the `--config` option of the `oh-my-posh init <shell>`
+To set a new configuration or theme you need to change the `--config` option of the `prompto init <shell>`
 line in your `profile` or `.<shell>rc` script (see [prompt][prompt]).
 
 These are the three possible values the `--config` flag can handle:
@@ -17,7 +17,7 @@ These are the three possible values the `--config` flag can handle:
 - a path to a local configuration file
 
   ```powershell
-  --config 'C:/Users/Posh/myconfig.omp.json'
+  --config 'C:/Users/Prompto/myconfig.omp.json'
   ```
 
 - a pointer to a theme, without the extensions
@@ -29,7 +29,7 @@ These are the three possible values the `--config` flag can handle:
 - a URL pointing to a remote config
 
   ```powershell
-  --config 'https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/jandedobbeleer.omp.json'
+  --config 'https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/jandedobbeleer.omp.json'
   ```
 
 :::info
@@ -64,11 +64,11 @@ to reflect your configuration file, local or remote.
 Use the full path to the config file, not the relative path or `~` as a shorthand for `$HOME`.
 :::
 
-Adjust the Oh My Posh init line in `~/.bashrc` (could be `~/.profile` or `~/.bash_profile` depending
+Adjust the Prompto init line in `~/.bashrc` (could be `~/.profile` or `~/.bash_profile` depending
 on your environment) by adding the `--config` flag with the location of your configuration.
 
 ```bash
-eval "$(oh-my-posh init bash --config ~/jandedobbeleer.omp.json)"
+eval "$(prompto init bash --config ~/jandedobbeleer.omp.json)"
 ```
 
 Once altered, reload your profile for the changes to take effect.
@@ -80,11 +80,11 @@ exec bash
 </TabItem>
 <TabItem value="cmd">
 
-Adjust the Oh My Posh init line in `oh-my-posh.lua` by adding the `--config` flag with the location
+Adjust the Prompto init line in `prompto.lua` by adding the `--config` flag with the location
 of your configuration.
 
-```lua title="oh-my-posh.lua"
-load(io.popen('oh-my-posh init cmd --config C:/Users/Posh/jandedobbeleer.omp.json'):read("*a"))()
+```lua title="prompto.lua"
+load(io.popen('prompto init cmd --config C:/Users/Prompto/jandedobbeleer.omp.json'):read("*a"))()
 ```
 
 :::caution
@@ -97,11 +97,11 @@ Once altered, restart cmd for the changes to take effect.
 </TabItem>
 <TabItem value="elvish">
 
-Adjust the Oh My Posh init line in `~/.elvish/rc.elv` by adding the `--config` flag with the location
+Adjust the Prompto init line in `~/.elvish/rc.elv` by adding the `--config` flag with the location
 of your configuration.
 
 ```bash
-eval (oh-my-posh init elvish --config ~/jandedobbeleer.omp.json)
+eval (prompto init elvish --config ~/jandedobbeleer.omp.json)
 ```
 
 Once added, reload your profile for the changes to take effect.
@@ -117,11 +117,11 @@ exec elvish
 It is recommended to use the latest version of Fish. Versions below 4.1.0 have issues and do not support [transient prompt].
 :::
 
-Adjust the Oh My Posh init line in `~/.config/fish/config.fish` by adding the `--config` flag with
+Adjust the Prompto init line in `~/.config/fish/config.fish` by adding the `--config` flag with
 the location of your configuration.
 
 ```bash
-oh-my-posh init fish --config ~/jandedobbeleer.omp.json | source
+prompto init fish --config ~/jandedobbeleer.omp.json | source
 ```
 
 Once altered, reload your config for the changes to take effect.
@@ -134,24 +134,24 @@ Once altered, reload your config for the changes to take effect.
 <TabItem value="nu">
 
 :::caution
-Oh My Posh requires Nushell `v0.104.0` or higher.
+Prompto requires Nushell `v0.104.0` or higher.
 :::
 
-Adjust the Oh My Posh init line in the Nushell config file (`$nu.config-path`) by adding the `--config` flag
+Adjust the Prompto init line in the Nushell config file (`$nu.config-path`) by adding the `--config` flag
 with the location of your configuration.
 
 ```bash
-oh-my-posh init nu --config ~/jandedobbeleer.omp.json
+prompto init nu --config ~/jandedobbeleer.omp.json
 ```
 
 </TabItem>
 <TabItem value="powershell">
 
-Adjust the Oh My Posh init line in your `$PROFILE` by adding the `--config` flag with the location
+Adjust the Prompto init line in your `$PROFILE` by adding the `--config` flag with the location
 of your configuration.
 
 ```powershell
-oh-my-posh init pwsh --config ~/jandedobbeleer.omp.json | Invoke-Expression
+prompto init pwsh --config ~/jandedobbeleer.omp.json | Invoke-Expression
 ```
 
 Once altered, reload your profile for the changes to take effect.
@@ -161,7 +161,7 @@ Once altered, reload your profile for the changes to take effect.
 ```
 
 :::info
-When the above command gives an error, make sure to create the profile first and add the `oh-my-posh init` above.
+When the above command gives an error, make sure to create the profile first and add the `prompto init` above.
 
 ```powershell
 New-Item -Path $PROFILE -Type File -Force
@@ -174,10 +174,10 @@ to only require remote scripts to be signed using `Set-ExecutionPolicy RemoteSig
 </TabItem>
 <TabItem value="xonsh">
 
-Adjust the Oh My Posh init line in `~/.xonshrc` by adding the `--config` flag with the location of your configuration.
+Adjust the Prompto init line in `~/.xonshrc` by adding the `--config` flag with the location of your configuration.
 
 ```bash
-execx($(oh-my-posh init xonsh --config ~/jandedobbeleer.omp.json))
+execx($(prompto init xonsh --config ~/jandedobbeleer.omp.json))
 ```
 
 Once added, reload your profile for the changes to take effect.
@@ -189,10 +189,10 @@ exec xonsh
 </TabItem>
 <TabItem value="zsh">
 
-Adjust the Oh My Posh init line in `~/.zshrc` by adding the `--config` flag with the location of your configuration.
+Adjust the Prompto init line in `~/.zshrc` by adding the `--config` flag with the location of your configuration.
 
 ```bash
-eval "$(oh-my-posh init zsh --config ~/jandedobbeleer.omp.json)"
+eval "$(prompto init zsh --config ~/jandedobbeleer.omp.json)"
 ```
 
 Once altered, reload your profile for the changes to take effect.
@@ -205,7 +205,7 @@ exec zsh
 </Tabs>
 
 :::tip wsl
-When using oh-my-posh in Windows and the WSL, know that you can **share your theme with the WSL** by pointing to a theme in your
+When using prompto in Windows and the WSL, know that you can **share your theme with the WSL** by pointing to a theme in your
 Windows user's home folder.
 
 Inside the WSL, you can find your Windows user's home folder here: `/mnt/c/Users/<WINDOWSUSERNAME>`.
@@ -221,7 +221,7 @@ You can export the current theme (default, or set via `--config`) to the format 
 which can be used to tweak and store as your own custom configuration.
 
 ```bash
-oh-my-posh config export --config jandedobbeleer --output ~/.mytheme.omp.json
+prompto config export --config jandedobbeleer --output ~/.mytheme.omp.json
 ```
 
 ## Live reloading
@@ -231,13 +231,13 @@ and want to see those changes reflected in your prompt without restarting your s
 command to enable live reload.
 
 ```bash
-oh-my-posh enable reload
+prompto enable reload
 ```
 
 You can disable live reload with:
 
 ```bash
-oh-my-posh disable reload
+prompto disable reload
 ```
 
 ### Previewing changes
@@ -245,19 +245,19 @@ oh-my-posh disable reload
 If you want to preview your changes, you can use the following command to render every configured prompt.
 
 ```bash
-oh-my-posh print preview
+prompto print preview
 ```
 
 Use the `--force` flag in case you want to render all segments, regardless of the current context.
 
 ```bash
-oh-my-posh print preview --force
+prompto print preview --force
 ```
 
 ## Read the docs
 
 To fully understand how to customize a theme, read through the documentation in the configuration and segments sections.
-The [configuration][configuration] section covers the basic building blocks and concepts of Oh My Posh themes, while the
+The [configuration][configuration] section covers the basic building blocks and concepts of Prompto themes, while the
 segments section covers how to configure each available segment.
 
 [configuration]: configuration/general.mdx

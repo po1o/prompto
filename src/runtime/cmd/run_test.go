@@ -3,7 +3,7 @@ package cmd
 import (
 	"testing"
 
-	runjobs "github.com/jandedobbeleer/oh-my-posh/src/runtime/jobs"
+	runjobs "github.com/po1o/prompto/src/runtime/jobs"
 )
 
 func TestCurrentGID(t *testing.T) {

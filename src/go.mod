@@ -1,4 +1,4 @@
-module github.com/jandedobbeleer/oh-my-posh/src
+module github.com/po1o/prompto/src
 
 go 1.26.0
 

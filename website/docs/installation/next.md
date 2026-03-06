@@ -1,12 +1,12 @@
 <!-- markdownlint-disable-next-line MD041 -->
 ## Next
 
-Now that Oh My Posh is installed, you can go ahead and configure your terminal and shell to
+Now that Prompto is installed, you can go ahead and configure your terminal and shell to
 get the prompt to look exactly like you want.
 
 - install a [font][fonts]
 - configure your terminal/editor to use the installed font
-- configure your shell to [use Oh My Posh][prompt]
+- configure your shell to [use Prompto][prompt]
 - (optional) configure a theme or [custom prompt configuration][customize]
 
 [fonts]: fonts.mdx

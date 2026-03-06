@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	runjobs "github.com/jandedobbeleer/oh-my-posh/src/runtime/jobs"
+	runjobs "github.com/po1o/prompto/src/runtime/jobs"
 )
 
 // Run executes a command while ensuring the OS process is started in its own

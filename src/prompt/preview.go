@@ -3,8 +3,8 @@ package prompt
 import (
 	"fmt"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/text"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/text"
 )
 
 func (e *Engine) Preview() string {

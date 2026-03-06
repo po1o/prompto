@@ -1,5 +1,5 @@
 ---
-description: 'Automate scaffolding for a new Oh My Posh segment: code, registration, docs, schema, sidebar updates'
+description: 'Automate scaffolding for a new Prompto segment: code, registration, docs, schema, sidebar updates'
 applyTo: ['src/segments/*.go', 'website/docs/**/*.mdx', 'themes/schema.json', 'website/sidebars.js']
 ---
 
@@ -40,8 +40,8 @@ Implementation steps
 package segments
 
 import (
-    "github.com/jandedobbeleer/oh-my-posh/src/segments/options"
-    "github.com/jandedobbeleer/oh-my-posh/src/runtime"
+    "github.com/po1o/prompto/src/segments/options"
+    "github.com/po1o/prompto/src/runtime"
 )
 
 type {{goType}} struct {
@@ -143,7 +143,7 @@ import Config from '@site/src/components/Config.js';
 
 Validation
 
-- After changes, run `go build` (task: build oh-my-posh). Ensure no compile
+- After changes, run `go build` (task: build prompto). Ensure no compile
   errors.
 - Check markdown formatting; respect 120-char line length and fenced blocks with
   language.

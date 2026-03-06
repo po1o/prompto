@@ -1,6 +1,6 @@
 package config
 
-import "github.com/jandedobbeleer/oh-my-posh/src/runtime"
+import "github.com/po1o/prompto/src/runtime"
 
 func shouldHideForWidth(env runtime.Environment, minWidth, maxWidth int) bool {
 	if maxWidth == 0 && minWidth == 0 {

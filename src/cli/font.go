@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/font"
-	"github.com/jandedobbeleer/oh-my-posh/src/dsc"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/cli/font"
+	"github.com/po1o/prompto/src/dsc"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/terminal"
 
 	"github.com/spf13/cobra"
 )
@@ -25,7 +25,7 @@ var (
 
 This command is used to install fonts and configure the font in your terminal.
 
-  - install: oh-my-posh font install 3270`,
+  - install: prompto font install 3270`,
 		ValidArgs: []string{
 			"install",
 			"configure",

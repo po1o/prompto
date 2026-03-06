@@ -6,33 +6,33 @@ import (
 	"strings"
 )
 
-//go:embed scripts/omp.ps1
+//go:embed scripts/prompto.ps1
 var pwshInit string
 
 func (f Features) Pwsh() Code {
 	switch f {
 	case Tooltips:
-		return "Enable-PoshTooltips"
+		return "Enable-PromptoTooltips"
 	case LineError:
-		return "Enable-PoshLineError"
+		return "Enable-PromptoLineError"
 	case Transient:
-		return "Enable-PoshTransientPrompt"
+		return "Enable-PromptoTransientPrompt"
 	case Jobs:
-		return "$global:_ompJobCount = $true"
+		return "$global:_promptoJobCount = $true"
 	case Azure:
-		return "$global:_ompAzure = $true"
+		return "$global:_promptoAzure = $true"
 	case PoshGit:
-		return "$global:_ompPoshGit = $true"
+		return "$global:_promptoPoshGit = $true"
 	case FTCSMarks:
-		return "$global:_ompFTCSMarks = $true"
+		return "$global:_promptoFTCSMarks = $true"
 	case Upgrade:
-		return "& $global:_ompExecutable upgrade --auto"
+		return "& $global:_promptoExecutable upgrade --auto"
 	case Notice:
-		return "& $global:_ompExecutable notice"
+		return "& $global:_promptoExecutable notice"
 	case Daemon:
-		return "Enable-PoshDaemon"
+		return "Enable-PromptoDaemon"
 	case VimMode:
-		return "Set-PSReadLineOption -EditMode Vi; Enable-PoshVimMode"
+		return "Set-PSReadLineOption -EditMode Vi; Enable-PromptoVimMode"
 	case VimCursorBlink:
 		return "$script:CursorBlink = $true"
 	case VimCursorShape:

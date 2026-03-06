@@ -20,13 +20,13 @@ warn() {
 
 help() {
     # Display Help
-    echo "Install script for Oh My Posh"
+    echo "Install script for Prompto"
     echo
     echo "Syntax: install.sh [-h] [-d <dir>] [-t <dir>] [-v <ver>]"
     echo "options:"
     echo "-h     Print this help."
-    echo "-d     Specify the installation directory. Defaults to $HOME/bin, $HOME/.local/bin or the directory where oh-my-posh is installed."
-    echo "-t     Specify the themes installation directory. Defaults to the oh-my-posh cache directory."
+    echo "-d     Specify the installation directory. Defaults to $HOME/bin, $HOME/.local/bin or the directory where prompto is installed."
+    echo "-t     Specify the themes installation directory. Defaults to the prompto cache directory."
     echo "-v     Version to download, defaults to latest"
     echo
 }
@@ -52,7 +52,7 @@ SUPPORTED_TARGETS="linux-amd64 linux-arm linux-arm64 darwin-amd64 darwin-arm64 f
 
 validate_dependency() {
     if ! command -v $1 >/dev/null; then
-        error "$1 is required to install Oh My Posh. Please install $1 and try again.\n"
+        error "$1 is required to install Prompto. Please install $1 and try again.\n"
     fi
 }
 
@@ -70,13 +70,13 @@ set_install_directory() {
         return 0
     fi
 
-    # check if we have oh-my-posh installed, if so, use the executable directory
+    # check if we have prompto installed, if so, use the executable directory
     # to install into and follow symlinks
-    if command -v oh-my-posh >/dev/null; then
-        posh_dir=$(command -v oh-my-posh)
+    if command -v prompto >/dev/null; then
+        posh_dir=$(command -v prompto)
         real_dir=$(realpath $posh_dir)
         install_dir=$(dirname $real_dir)
-        info "Oh My Posh is already installed, updating existing installation in:"
+        info "Prompto is already installed, updating existing installation in:"
         info "  ${install_dir}"
         return 0
     fi
@@ -93,7 +93,7 @@ set_install_directory() {
         return 0
     fi
 
-    error "Cannot determine installation directory. Please specify a directory and try again: \ncurl -s https://ohmyposh.dev/install.sh | bash -s -- -d {directory}"
+    error "Cannot determine installation directory. Please specify a directory and try again: \ncurl -s https://prompto.dev/install.sh | bash -s -- -d {directory}"
 }
 
 validate_install_directory() {
@@ -104,7 +104,7 @@ validate_install_directory() {
 
     # Check if regular user has write permission
     if [ ! -w "$install_dir" ]; then
-        error "Cannot write to ${install_dir}. Please check write permissions or set a different directory and try again: \ncurl -s https://ohmyposh.dev/install.sh | bash -s -- -d {directory}"
+        error "Cannot write to ${install_dir}. Please check write permissions or set a different directory and try again: \ncurl -s https://prompto.dev/install.sh | bash -s -- -d {directory}"
     fi
 
     # check if the directory is in the PATH
@@ -127,12 +127,12 @@ validate_themes_directory() {
 
     # Validate if the themes directory exists
     if ! mkdir -p "$themes_dir" > /dev/null 2>&1; then
-        error "Cannot write to ${themes_dir}. Please check write permissions or set a different directory and try again: \ncurl -s https://ohmyposh.dev/install.sh | bash -s -- -t {directory}"
+        error "Cannot write to ${themes_dir}. Please check write permissions or set a different directory and try again: \ncurl -s https://prompto.dev/install.sh | bash -s -- -t {directory}"
     fi
 
     #check user write permission
     if [ ! -w "$themes_dir" ]; then
-        error "Cannot write to ${themes_dir}. Please check write permissions or set a different directory and try again: \ncurl -s https://ohmyposh.dev/install.sh | bash -s -- -t {directory}"
+        error "Cannot write to ${themes_dir}. Please check write permissions or set a different directory and try again: \ncurl -s https://prompto.dev/install.sh | bash -s -- -t {directory}"
     fi
 }
 
@@ -151,11 +151,11 @@ install_themes() {
 
     validate_themes_directory
 
-    info "🎨 Installing oh-my-posh themes in ${themes_dir}\n"
+    info "🎨 Installing prompto themes in ${themes_dir}\n"
 
     zip_file="${cache_dir}/themes.zip"
 
-    url="https://cdn.ohmyposh.dev/releases/latest/themes.zip"
+    url="https://cdn.prompto.dev/releases/latest/themes.zip"
 
     http_response=$(curl -s -f -L $url -o $zip_file -w "%{http_code}")
 
@@ -185,18 +185,18 @@ install() {
     )
 
     if [ "${good}" != "1" ]; then
-        error "${arch} builds for ${platform} are not available for Oh My Posh"
+        error "${arch} builds for ${platform} are not available for Prompto"
     fi
 
-    info "\nℹ️  Installing oh-my-posh for ${target} in ${install_dir}"
+    info "\nℹ️  Installing prompto for ${target} in ${install_dir}"
 
-    executable=${install_dir}/oh-my-posh
-    url=https://cdn.ohmyposh.dev/releases/latest/posh-${target}
+    executable=${install_dir}/prompto
+    url=https://cdn.prompto.dev/releases/latest/prompto-${target}
     if [ "$version" ]; then
-      url=https://cdn.ohmyposh.dev/releases/${version}/posh-${target}
+      url=https://cdn.prompto.dev/releases/${version}/prompto-${target}
     fi
 
-    info "⬇️  Downloading oh-my-posh from ${url}"
+    info "⬇️  Downloading prompto from ${url}"
 
     http_response=$(curl -s -f -L $url -o $executable -w "%{http_code}")
 
@@ -208,11 +208,11 @@ install() {
 
     install_themes
 
-    info "🚀 Installation complete.\n\nYou can follow the instructions at https://ohmyposh.dev/docs/installation/prompt"
-    info "to setup your shell to use oh-my-posh."
+    info "🚀 Installation complete.\n\nYou can follow the instructions at https://prompto.dev/docs/installation/prompt"
+    info "to setup your shell to use prompto."
     if [ $http_response = "200" ]; then
         info "\nIf you want to use a built-in theme, you can find them in the ${themes_dir} directory:"
-        info "  oh-my-posh init {shell} --config ${themes_dir}/{theme}.omp.json\n"
+        info "  prompto init {shell} --config ${themes_dir}/{theme}.omp.json\n"
     fi
 }
 

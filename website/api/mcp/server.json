@@ -1,24 +1,24 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
-  "name": "dev.ohmyposh/validator",
-  "title": "Oh My Posh Validator",
-  "description": "Validate oh-my-posh configurations and segment snippets against the official schema.",
+  "name": "dev.prompto/validator",
+  "title": "Prompto Validator",
+  "description": "Validate prompto configurations and segment snippets against the official schema.",
   "version": "1.0.0",
   "license": "MIT",
-  "websiteUrl": "https://ohmyposh.dev/docs/advanced/mcp-server",
+  "websiteUrl": "https://prompto.dev/docs/advanced/mcp-server",
   "repository": {
-    "url": "https://github.com/JanDeDobbeleer/oh-my-posh",
+    "url": "https://github.com/po1o/prompto",
     "source": "github",
     "id": "175405157",
     "subfolder": "website/api/mcp"
   },
   "author": {
     "name": "Jan De Dobbeleer",
-    "email": "jan@ohmyposh.dev",
+    "email": "jan@prompto.dev",
     "url": "https://github.com/JanDeDobbeleer"
   },
   "keywords": [
-    "oh-my-posh",
+    "prompto",
     "prompt",
     "theme",
     "validation",
@@ -32,7 +32,7 @@
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://ohmyposh.dev/api/mcp"
+      "url": "https://prompto.dev/api/mcp"
     }
   ]
 }

@@ -3,8 +3,8 @@ package template
 import (
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/runtime/mock"
 
 	"github.com/stretchr/testify/assert"
 )

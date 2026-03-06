@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/build"
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/build"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime"
 )
 
 var scriptPathCache string
@@ -150,7 +150,7 @@ func scriptPath(env runtime.Environment) (string, error) {
 	}
 
 	const autoloadDir = "NUAUTOLOADDIR"
-	const fileName = "oh-my-posh.nu"
+	const fileName = "prompto.nu"
 
 	if dir, OK := cache.Get[string](cache.Device, autoloadDir); OK {
 		scriptPathCache = filepath.Join(dir, fileName)

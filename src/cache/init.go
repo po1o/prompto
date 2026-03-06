@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/log"
 )
 
 type Option func()
@@ -60,7 +60,7 @@ func SessionID() string {
 			return
 		}
 
-		sessionID = os.Getenv("POSH_SESSION_ID")
+		sessionID = os.Getenv("PROMPTO_SESSION_ID")
 		if sessionID == "" {
 			sessionID = uuid.NewString()
 		}

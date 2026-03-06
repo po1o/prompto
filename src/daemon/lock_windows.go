@@ -12,7 +12,7 @@ import (
 // statePath returns the state directory path for Windows.
 // Uses %LOCALAPPDATA% which is the appropriate location for local application state.
 func statePath() string {
-	return filepath.Join(os.Getenv("LOCALAPPDATA"), "oh-my-posh")
+	return filepath.Join(os.Getenv("LOCALAPPDATA"), "prompto")
 }
 
 // IsProcessRunning checks if a process with the given PID is running.

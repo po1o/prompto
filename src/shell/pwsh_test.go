@@ -13,16 +13,16 @@ func TestPwshFeatures(t *testing.T) {
 	got := allFeatures.Lines(PWSH).String("")
 
 	want := `
-$global:_ompJobCount = $true
-$global:_ompAzure = $true
-$global:_ompPoshGit = $true
-Enable-PoshLineError
-Enable-PoshTooltips
-Enable-PoshTransientPrompt
-$global:_ompFTCSMarks = $true
-& $global:_ompExecutable upgrade --auto
-& $global:_ompExecutable notice
-Enable-PoshDaemon`
+$global:_promptoJobCount = $true
+$global:_promptoAzure = $true
+$global:_promptoPoshGit = $true
+Enable-PromptoLineError
+Enable-PromptoTooltips
+Enable-PromptoTransientPrompt
+$global:_promptoFTCSMarks = $true
+& $global:_promptoExecutable upgrade --auto
+& $global:_promptoExecutable notice
+Enable-PromptoDaemon`
 
 	assert.Equal(t, want, got)
 }
@@ -33,7 +33,7 @@ func TestPwshVimFeatures(t *testing.T) {
 	got := features.Lines(PWSH).String("")
 
 	want := `
-Set-PSReadLineOption -EditMode Vi; Enable-PoshVimMode
+Set-PSReadLineOption -EditMode Vi; Enable-PromptoVimMode
 $script:CursorBlink = $true
 $script:CursorShape = $true; Set-VimModeCursorFromState`
 
@@ -46,8 +46,8 @@ func TestQuotePwshOrElvishStr(t *testing.T) {
 		expected string
 	}{
 		{str: "", expected: "''"},
-		{str: `/tmp/"omp's dir"/oh-my-posh`, expected: `'/tmp/"omp''s dir"/oh-my-posh'`},
-		{str: `C:/tmp\omp's dir/oh-my-posh.exe`, expected: `'C:/tmp\omp''s dir/oh-my-posh.exe'`},
+		{str: `/tmp/"omp's dir"/prompto`, expected: `'/tmp/"omp''s dir"/prompto'`},
+		{str: `C:/tmp\omp's dir/prompto.exe`, expected: `'C:/tmp\omp''s dir/prompto.exe'`},
 	}
 	for _, tc := range tests {
 		assert.Equal(t, tc.expected, quotePwshOrElvishStr(tc.str), fmt.Sprintf("quotePwshOrElvishStr: %s", tc.str))

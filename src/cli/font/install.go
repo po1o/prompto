@@ -11,9 +11,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/cmd"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/cmd"
 )
 
 func contains[S ~[]E, E comparable](s S, e E) bool {

@@ -3,8 +3,8 @@ package template
 import (
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/runtime/mock"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -16,7 +16,7 @@ func TestUrl(t *testing.T) {
 		Template    string
 		ShouldError bool
 	}{
-		{Case: "valid url", Expected: "<LINK>https://ohmyposh.dev<TEXT>link</TEXT></LINK>", Template: `{{ url "link" "https://ohmyposh.dev" }}`},
+		{Case: "valid url", Expected: "<LINK>https://prompto.dev<TEXT>link</TEXT></LINK>", Template: `{{ url "link" "https://prompto.dev" }}`},
 		{Case: "invalid url", Expected: "", Template: `{{ url "link" "Foo" }}`, ShouldError: true},
 	}
 

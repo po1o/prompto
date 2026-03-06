@@ -7,7 +7,7 @@ authors:
   title: Maintainer
   url: https://github.com/jandedobbeleer
   image_url: https://avatars.githubusercontent.com/u/2492783?v=4
-tags: [breaking, ohmyposh]
+tags: [breaking, prompto]
 hide_table_of_contents: false
 ---
 
@@ -19,13 +19,13 @@ interested in the reasons behind this decision, please read on.
 
 [`rprompt`][rprompt] is a feature that allows you to display a prompt at the right side of the terminal, on
 the same line as your cursor. This feature is available natively on a lot of shells, but not on bash.
-To work around this limitation, Oh My Posh has a **custom implementation** we use for both bash and PowerShell.
+To work around this limitation, Prompto has a **custom implementation** we use for both bash and PowerShell.
 
 ## History
 
 ### First implementation
 
-There were two evolutions of bash' custom [`rprompt`][rprompt] in Oh My Posh. The first one printed the [`rprompt`][rprompt]
+There were two evolutions of bash' custom [`rprompt`][rprompt] in Prompto. The first one printed the [`rprompt`][rprompt]
 together with the primany prompt in the `PS1` variable, so we only need one CLI call to visualize the prompt.
 
 The challenge is that, as the [`rprompt`][rprompt] is printed together with the primary prompt, we need to make sure
@@ -65,8 +65,8 @@ Of these issues, **only bullet 4 could be fixed**. Everything else was outside o
 
 ## Conclusion
 
-Oh My Posh is a tool that needs to be easy to use, maintain and be 100% reliable. One of the core principles of
-Oh My Posh is that it should **never break the shell**. The [`rprompt`][rprompt] feature in bash has never been reliable
+Prompto is a tool that needs to be easy to use, maintain and be 100% reliable. One of the core principles of
+Prompto is that it should **never break the shell**. The [`rprompt`][rprompt] feature in bash has never been reliable
 enough, and it was _hard to debug_ when it broke.
 I spent countless hours debugging issues with the [`rprompt`][rprompt] in bash, but it's **time to move on**. If you
 want to use the [`rprompt`][rprompt] feature, I would recommend using a shell that supports it natively, like

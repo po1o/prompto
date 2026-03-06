@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/upgrade"
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/cli/upgrade"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/runtime/mock"
+	"github.com/po1o/prompto/src/shell"
+	"github.com/po1o/prompto/src/template"
 
 	"github.com/stretchr/testify/assert"
 )

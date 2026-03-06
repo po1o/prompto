@@ -28,7 +28,7 @@ we've added instructions on how to use it below as well.
 }>
 <TabItem value="kraken">
 
-Open your oh-my-posh repo inside GitKraken and right click the commit you want to reword in the graph overview.
+Open your prompto repo inside GitKraken and right click the commit you want to reword in the graph overview.
 Select `Edit commit message`, reword it to respect the conventional commit guidelines and press `Update message`.
 
 Click Push on the top of the screen and select `Force Push` to bring the changes to the Pull Request.
@@ -66,11 +66,11 @@ Start Rebase to continue.
 
 ## My branch is out of date with the remote
 
-This means the main branch of oh-my-posh contains commits your branch does not (could be your main branch, or the branch you created to work on).
-To remedy this, we need to rebase (add the new commits of oh-my-posh's main branch underneath your new commits) so the pull request can get merged.
+This means the main branch of prompto contains commits your branch does not (could be your main branch, or the branch you created to work on).
+To remedy this, we need to rebase (add the new commits of prompto's main branch underneath your new commits) so the pull request can get merged.
 
-The first thing to do is to add the oh-my-posh codebase as a remote to your local git repository. By default, your fork is a standalone copy
-of oh-my-posh with its own remote on GitHub that's not connected to the oh-my-posh codebase. Forks and Pull Requests are a feature GitHub introduced
+The first thing to do is to add the prompto codebase as a remote to your local git repository. By default, your fork is a standalone copy
+of prompto with its own remote on GitHub that's not connected to the prompto codebase. Forks and Pull Requests are a feature GitHub introduced
 on top of git functionality, so we need to mimic that situation ourselves.
 
 
@@ -87,7 +87,7 @@ on top of git functionality, so we need to mimic that situation ourselves.
 <TabItem value="kraken">
 
 Hover over `Remote` on the left-hand side, this will show a `+` button. Click it and select GitHub. There you have the ability to select
-`jandedobbeleer/oh-my-posh` and name it `upstream`. GitKraken will fetch the remote and you will see all branches underneath `upstream` as
+`jandedobbeleer/prompto` and name it `upstream`. GitKraken will fetch the remote and you will see all branches underneath `upstream` as
 you do for your own branches. Right click `upstream`'s `main` branch and select `Rebase <branch> onto upstream/main`.
 
 Click Push on the top of the screen and select `Force Push` to bring the changes to the Pull Request.
@@ -96,7 +96,7 @@ Click Push on the top of the screen and select `Force Push` to bring the changes
 <TabItem value="cli">
 
 ```bash
-git remote add upstream git@github.com:JanDeDobbeleer/oh-my-posh.git
+git remote add upstream git@github.com:JanDeDobbeleer/prompto.git
 git fetch upstream
 ```
 

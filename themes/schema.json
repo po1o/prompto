@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "$id": "https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json",
   "type": "object",
-  "title": "The Oh My Posh theme definition",
-  "description": "https://ohmyposh.dev/docs/configuration/general",
+  "title": "The Prompto theme definition",
+  "description": "https://prompto.dev/docs/configuration/general",
   "definitions": {
     "color": {
       "anyOf": [
@@ -19,14 +19,14 @@
       "type": "string",
       "pattern": "^(#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})|^([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])$|black|red|green|yellow|blue|magenta|cyan|white|default|darkGray|lightRed|lightGreen|lightYellow|lightBlue|lightMagenta|lightCyan|lightWhite|transparent|parentBackground|parentForeground|background|foreground|accent)$",
       "title": "Color string",
-      "description": "https://ohmyposh.dev/docs/configuration/colors",
+      "description": "https://prompto.dev/docs/configuration/colors",
       "format": "color"
     },
     "palette_reference": {
       "type": "string",
       "pattern": "^p:.*$",
       "title": "Palette reference",
-      "description": "https://ohmyposh.dev/docs/configuration/colors#palette"
+      "description": "https://prompto.dev/docs/configuration/colors#palette"
     },
     "templates": {
       "type": "array",
@@ -199,20 +199,20 @@
         },
         "foreground_templates": {
           "$ref": "#/definitions/templates",
-          "description": "https://ohmyposh.dev/docs/configuration/colors#color-templates"
+          "description": "https://prompto.dev/docs/configuration/colors#color-templates"
         },
         "background": {
           "$ref": "#/definitions/color"
         },
         "background_templates": {
           "$ref": "#/definitions/templates",
-          "description": "https://ohmyposh.dev/docs/configuration/colors#color-templates"
+          "description": "https://prompto.dev/docs/configuration/colors#color-templates"
         }
       }
     },
     "block": {
       "type": "object",
-      "description": "https://ohmyposh.dev/docs/configuration/block",
+      "description": "https://prompto.dev/docs/configuration/block",
       "allOf": [
         {
           "if": {
@@ -263,7 +263,7 @@
               "overflow": {
                 "type": "string",
                 "title": "Block overflow",
-                "description": "https://ohmyposh.dev/docs/configuration/block#overflow",
+                "description": "https://prompto.dev/docs/configuration/block#overflow",
                 "enum": [
                   "break",
                   "hide"
@@ -272,7 +272,7 @@
               },
               "filler": {
                 "$ref": "#/definitions/filler",
-                "description": "https://ohmyposh.dev/docs/configuration/block#filler"
+                "description": "https://prompto.dev/docs/configuration/block#filler"
               }
             }
           }
@@ -282,7 +282,7 @@
         "type": {
           "type": "string",
           "title": "Block type",
-          "description": "https://ohmyposh.dev/docs/configuration/block#type",
+          "description": "https://prompto.dev/docs/configuration/block#type",
           "enum": [
             "prompt",
             "rprompt"
@@ -292,7 +292,7 @@
         "alignment": {
           "type": "string",
           "title": "Block alignment",
-          "description": "https://ohmyposh.dev/docs/configuration/block#alignment",
+          "description": "https://prompto.dev/docs/configuration/block#alignment",
           "enum": [
             "left",
             "right"
@@ -302,37 +302,37 @@
         "newline": {
           "type": "boolean",
           "title": "Newline",
-          "description": "https://ohmyposh.dev/docs/configuration/block#newline",
+          "description": "https://prompto.dev/docs/configuration/block#newline",
           "default": false
         },
         "filler": {
           "type": "string",
           "title": "Filler",
-          "description": "https://ohmyposh.dev/docs/configuration/block#filler",
+          "description": "https://prompto.dev/docs/configuration/block#filler",
           "default": ""
         },
         "overflow": {
           "type": "string",
           "title": "Overflow",
-          "description": "https://ohmyposh.dev/docs/configuration/block#overflow",
+          "description": "https://prompto.dev/docs/configuration/block#overflow",
           "default": ""
         },
         "leading_diamond": {
           "type": "string",
           "title": "Leading diamond",
-          "description": "https://ohmyposh.dev/docs/configuration/block#leading-diamond",
+          "description": "https://prompto.dev/docs/configuration/block#leading-diamond",
           "default": ""
         },
         "trailing_diamond": {
           "type": "string",
           "title": "Trailing diamond",
-          "description": "https://ohmyposh.dev/docs/configuration/block#trailing-diamond",
+          "description": "https://prompto.dev/docs/configuration/block#trailing-diamond",
           "default": ""
         },
         "segments": {
           "type": "array",
           "title": "Segments list, prompt elements to display based on context",
-          "description": "https://ohmyposh.dev/docs/configuration/block#segments",
+          "description": "https://prompto.dev/docs/configuration/block#segments",
           "default": [],
           "items": {
             "$ref": "#/definitions/segment"
@@ -341,20 +341,20 @@
         "force": {
           "type": "boolean",
           "title": "Force",
-          "description": "https://ohmyposh.dev/docs/configuration/block#force",
+          "description": "https://prompto.dev/docs/configuration/block#force",
           "default": false
         },
         "index": {
           "type": "integer",
           "title": "Index",
-          "description": "https://ohmyposh.dev/docs/configuration/block#index"
+          "description": "https://prompto.dev/docs/configuration/block#index"
         }
       }
     },
     "segment": {
       "type": "object",
       "title": "Segment",
-      "description": "https://ohmyposh.dev/docs/configuration/segment",
+      "description": "https://prompto.dev/docs/configuration/segment",
       "default": {},
       "required": [
         "type",
@@ -364,7 +364,7 @@
         "type": {
           "type": "string",
           "title": "Segment Type",
-          "description": "https://ohmyposh.dev/docs/configuration/segment",
+          "description": "https://prompto.dev/docs/configuration/segment",
           "enum": [
             "angular",
             "argocd",
@@ -476,7 +476,7 @@
         },
         "style": {
           "title": "Segment Style",
-          "description": "https://ohmyposh.dev/docs/configuration/segment#style",
+          "description": "https://prompto.dev/docs/configuration/segment#style",
           "anyOf": [
             {
               "enum": [
@@ -496,25 +496,25 @@
         },
         "foreground_templates": {
           "$ref": "#/definitions/templates",
-          "description": "https://ohmyposh.dev/docs/configuration/colors#color-templates"
+          "description": "https://prompto.dev/docs/configuration/colors#color-templates"
         },
         "background": {
           "$ref": "#/definitions/color"
         },
         "background_templates": {
           "$ref": "#/definitions/templates",
-          "description": "https://ohmyposh.dev/docs/configuration/colors#color-templates"
+          "description": "https://prompto.dev/docs/configuration/colors#color-templates"
         },
         "template": {
           "type": "string",
           "title": "Template text",
-          "description": "https://ohmyposh.dev/docs/configuration/templates",
+          "description": "https://prompto.dev/docs/configuration/templates",
           "default": ""
         },
         "templates_logic": {
           "type": "string",
           "title": "Templates Logic",
-          "description": "https://ohmyposh.dev/docs/configuration/segment",
+          "description": "https://prompto.dev/docs/configuration/segment",
           "enum": [
             "first_match",
             "join"
@@ -523,25 +523,25 @@
         "max_width": {
           "type": "integer",
           "title": "if the terminal width exceeds this value, the segment will be hidden",
-          "description": "https://ohmyposh.dev/docs/configuration/segment",
+          "description": "https://prompto.dev/docs/configuration/segment",
           "default": 0
         },
         "min_width": {
           "type": "integer",
           "title": "if the terminal width is inferior than this value, the segment will be hidden",
-          "description": "https://ohmyposh.dev/docs/configuration/segment",
+          "description": "https://prompto.dev/docs/configuration/segment",
           "default": 0
         },
         "options": {
           "type": "object",
           "title": "Segment options, used to change behavior/displaying",
-          "description": "https://ohmyposh.dev/docs/configuration/segment#options",
+          "description": "https://prompto.dev/docs/configuration/segment#options",
           "default": {}
         },
         "properties": {
           "type": "object",
           "title": "Segment Properties (DEPRECATED)",
-          "description": "DEPRECATED: Use 'options' instead. This field is maintained for backward compatibility with version 3 configs and will be removed in a future version. See https://ohmyposh.dev/docs/configuration/segment#options",
+          "description": "DEPRECATED: Use 'options' instead. This field is maintained for backward compatibility with version 3 configs and will be removed in a future version. See https://prompto.dev/docs/configuration/segment#options",
           "default": {},
           "deprecated": true,
           "deprecationMessage": "The 'properties' field is deprecated. Please rename it to 'options' in your configuration."
@@ -549,19 +549,19 @@
         "interactive": {
           "type": "boolean",
           "title": "Allow the use of interactive prompt escape sequences",
-          "description": "https://ohmyposh.dev/docs/configuration/segment",
+          "description": "https://prompto.dev/docs/configuration/segment",
           "default": false
         },
         "alias": {
           "type": "string",
           "title": "Give the segment an alias for use in templates",
-          "description": "https://ohmyposh.dev/docs/configuration/segment",
+          "description": "https://prompto.dev/docs/configuration/segment",
           "default": ""
         },
         "include_folders": {
           "type": "array",
           "title": "If specified, segment will only render in these folders",
-          "description": "https://ohmyposh.dev/docs/configuration/segment#include--exclude-folders",
+          "description": "https://prompto.dev/docs/configuration/segment#include--exclude-folders",
           "default": [],
           "items": {
             "type": "string"
@@ -570,7 +570,7 @@
         "exclude_folders": {
           "type": "array",
           "title": "Exclude rendering in these folders",
-          "description": "https://ohmyposh.dev/docs/configuration/segment#include--exclude-folders",
+          "description": "https://prompto.dev/docs/configuration/segment#include--exclude-folders",
           "default": [],
           "items": {
             "type": "string"
@@ -579,7 +579,7 @@
         "cache": {
           "type": "object",
           "title": "Cache settings",
-          "description": "https://ohmyposh.dev/docs/configuration/segment#cache",
+          "description": "https://prompto.dev/docs/configuration/segment#cache",
           "default": {},
           "properties": {
             "duration": {
@@ -588,7 +588,7 @@
             "strategy": {
               "type": "string",
               "title": "Cache strategy",
-              "description": "https://ohmyposh.dev/docs/configuration/segment#strategy",
+              "description": "https://prompto.dev/docs/configuration/segment#strategy",
               "default": "folder",
               "enum": [
                 "folder",
@@ -610,7 +610,7 @@
           },
           "then": {
             "title": "Angular CLI Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/angular",
+            "description": "https://prompto.dev/docs/segments/cli/angular",
             "properties": {
               "options": {
                 "allOf": [
@@ -644,7 +644,7 @@
           },
           "then": {
             "title": "ArgoCD Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/argocd"
+            "description": "https://prompto.dev/docs/segments/cli/argocd"
           }
         },
         {
@@ -657,7 +657,7 @@
           },
           "then": {
             "title": "Aurelia Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/aurelia",
+            "description": "https://prompto.dev/docs/segments/cli/aurelia",
             "properties": {
               "options": {
                 "allOf": [
@@ -691,7 +691,7 @@
           },
           "then": {
             "title": "AWS Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cloud/aws",
+            "description": "https://prompto.dev/docs/segments/cloud/aws",
             "properties": {
               "options": {
                 "properties": {
@@ -717,14 +717,14 @@
           },
           "then": {
             "title": "Azure Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cloud/az",
+            "description": "https://prompto.dev/docs/segments/cloud/az",
             "properties": {
               "options": {
                 "properties": {
                   "source": {
                     "type": "string",
                     "title": "Source",
-                    "description": "https://ohmyposh.dev/docs/segments/cloud/az#options",
+                    "description": "https://prompto.dev/docs/segments/cloud/az#options",
                     "default": "first_match",
                     "enum": [
                       "cli",
@@ -747,7 +747,7 @@
           },
           "then": {
             "title": "Azure Developer CLI Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cloud/azd"
+            "description": "https://prompto.dev/docs/segments/cloud/azd"
           }
         },
         {
@@ -760,7 +760,7 @@
           },
           "then": {
             "title": "Azure Function Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cloud/azfunc",
+            "description": "https://prompto.dev/docs/segments/cloud/azfunc",
             "properties": {
               "options": {
                 "allOf": [
@@ -797,7 +797,7 @@
           },
           "then": {
             "title": "Battery Segment",
-            "description": "https://ohmyposh.dev/docs/segments/system/battery",
+            "description": "https://prompto.dev/docs/segments/system/battery",
             "properties": {
               "options": {
                 "properties": {
@@ -847,7 +847,7 @@
           },
           "then": {
             "title": "Bazel Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/bazel",
+            "description": "https://prompto.dev/docs/segments/cli/bazel",
             "properties": {
               "options": {
                 "allOf": [
@@ -899,7 +899,7 @@
           },
           "then": {
             "title": "Brewfather Batch Status",
-            "description": "https://ohmyposh.dev/docs/segments/web/brewfather",
+            "description": "https://prompto.dev/docs/segments/web/brewfather",
             "properties": {
               "options": {
                 "properties": {
@@ -1024,7 +1024,7 @@
           },
           "then": {
             "title": "Buf Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/buf",
+            "description": "https://prompto.dev/docs/segments/cli/buf",
             "properties": {
               "options": {
                 "allOf": [
@@ -1060,7 +1060,7 @@
           },
           "then": {
             "title": "Bun CLI Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/bun",
+            "description": "https://prompto.dev/docs/segments/cli/bun",
             "properties": {
               "options": {
                 "allOf": [
@@ -1095,7 +1095,7 @@
           },
           "then": {
             "title": "Carbon Intensity Segment",
-            "description": "https://ohmyposh.dev/docs/segments/web/carbonintensity",
+            "description": "https://prompto.dev/docs/segments/web/carbonintensity",
             "properties": {
               "options": {
                 "properties": {
@@ -1118,7 +1118,7 @@
           },
           "then": {
             "title": "CDS (SAP CAP) segment",
-            "description": "https://ohmyposh.dev/docs/segments/cloud/cds",
+            "description": "https://prompto.dev/docs/segments/cloud/cds",
             "properties": {
               "options": {
                 "allOf": [
@@ -1154,7 +1154,7 @@
           },
           "then": {
             "title": "Clound Foundry CLI segment",
-            "description": "https://ohmyposh.dev/docs/segments/cloud/cf",
+            "description": "https://prompto.dev/docs/segments/cloud/cf",
             "properties": {
               "options": {
                 "allOf": [
@@ -1189,7 +1189,7 @@
           },
           "then": {
             "title": "Clound Foundry Target segment",
-            "description": "https://ohmyposh.dev/docs/segments/cloud/cftarget",
+            "description": "https://prompto.dev/docs/segments/cloud/cftarget",
             "properties": {
               "options": {
                 "properties": {
@@ -1228,7 +1228,7 @@
           },
           "then": {
             "title": "Clojure Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/clojure",
+            "description": "https://prompto.dev/docs/segments/languages/clojure",
             "properties": {
               "options": {
                 "allOf": [
@@ -1269,7 +1269,7 @@
           },
           "then": {
             "title": "Cmake Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/cmake",
+            "description": "https://prompto.dev/docs/segments/cli/cmake",
             "properties": {
               "options": {
                 "allOf": [
@@ -1304,7 +1304,7 @@
           },
           "then": {
             "title": "Claude Code Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/claude",
+            "description": "https://prompto.dev/docs/segments/cli/claude",
             "properties": {
               "options": {
                 "unevaluatedProperties": false
@@ -1322,7 +1322,7 @@
           },
           "then": {
             "title": "GitHub Copilot Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/copilot",
+            "description": "https://prompto.dev/docs/segments/cli/copilot",
             "properties": {
               "options": {
                 "properties": {
@@ -1345,7 +1345,7 @@
           },
           "then": {
             "title": "Connection Segment",
-            "description": "https://ohmyposh.dev/docs/segments/system/connection",
+            "description": "https://prompto.dev/docs/segments/system/connection",
             "properties": {
               "options": {
                 "properties": {
@@ -1377,7 +1377,7 @@
           },
           "then": {
             "title": "Crystal Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/crystal",
+            "description": "https://prompto.dev/docs/segments/languages/crystal",
             "properties": {
               "options": {
                 "allOf": [
@@ -1412,7 +1412,7 @@
           },
           "then": {
             "title": "Dart Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/dart",
+            "description": "https://prompto.dev/docs/segments/languages/dart",
             "properties": {
               "options": {
                 "allOf": [
@@ -1455,7 +1455,7 @@
           },
           "then": {
             "title": "Deno CLI Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/deno",
+            "description": "https://prompto.dev/docs/segments/cli/deno",
             "properties": {
               "options": {
                 "allOf": [
@@ -1494,13 +1494,13 @@
               "leading_diamond": {
                 "type": "string",
                 "title": "Leading diamond",
-                "description": "https://ohmyposh.dev/docs/configuration/segment#leading-diamond",
+                "description": "https://prompto.dev/docs/configuration/segment#leading-diamond",
                 "default": ""
               },
               "trailing_diamond": {
                 "type": "string",
                 "title": "Trailing diamond",
-                "description": "https://ohmyposh.dev/docs/configuration/segment#trailing-diamond",
+                "description": "https://prompto.dev/docs/configuration/segment#trailing-diamond",
                 "default": ""
               }
             }
@@ -1516,7 +1516,7 @@
           },
           "then": {
             "title": "Docker Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/docker",
+            "description": "https://prompto.dev/docs/segments/cli/docker",
             "properties": {
               "options": {
                 "properties": {
@@ -1558,7 +1558,7 @@
           },
           "then": {
             "title": "Dotnet Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/dotnet",
+            "description": "https://prompto.dev/docs/segments/languages/dotnet",
             "properties": {
               "options": {
                 "allOf": [
@@ -1609,7 +1609,7 @@
           },
           "then": {
             "title": "Elixir Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/elixir",
+            "description": "https://prompto.dev/docs/segments/languages/elixir",
             "properties": {
               "options": {
                 "allOf": [
@@ -1645,7 +1645,7 @@
           },
           "then": {
             "title": "Displays the execution time of the previously executed command",
-            "description": "https://ohmyposh.dev/docs/segments/system/executiontime",
+            "description": "https://prompto.dev/docs/segments/system/executiontime",
             "properties": {
               "options": {
                 "properties": {
@@ -1694,7 +1694,7 @@
           },
           "then": {
             "title": "Firebase Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/firebase"
+            "description": "https://prompto.dev/docs/segments/cli/firebase"
           }
         },
         {
@@ -1707,7 +1707,7 @@
           },
           "then": {
             "title": "Flutter Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/flutter",
+            "description": "https://prompto.dev/docs/segments/cli/flutter",
             "properties": {
               "options": {
                 "allOf": [
@@ -1750,7 +1750,7 @@
           },
           "then": {
             "title": "Fortran Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/fortran",
+            "description": "https://prompto.dev/docs/segments/languages/fortran",
             "properties": {
               "options": {
                 "allOf": [
@@ -1800,7 +1800,7 @@
           },
           "then": {
             "title": "Fossil Segment",
-            "description": "https://ohmyposh.dev/docs/segments/scm/fossil",
+            "description": "https://prompto.dev/docs/segments/scm/fossil",
             "properties": {
               "options": {
                 "properties": {
@@ -1823,7 +1823,7 @@
           },
           "then": {
             "title": "GCP Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cloud/gcp"
+            "description": "https://prompto.dev/docs/segments/cloud/gcp"
           }
         },
         {
@@ -1836,7 +1836,7 @@
           },
           "then": {
             "title": "Git Segment",
-            "description": "https://ohmyposh.dev/docs/segments/scm/git",
+            "description": "https://prompto.dev/docs/segments/scm/git",
             "properties": {
               "options": {
                 "properties": {
@@ -2045,7 +2045,7 @@
           },
           "then": {
             "title": "Display GitVersion segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/gitversion"
+            "description": "https://prompto.dev/docs/segments/cli/gitversion"
           }
         },
         {
@@ -2058,7 +2058,7 @@
           },
           "then": {
             "title": "Golang Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/golang",
+            "description": "https://prompto.dev/docs/segments/languages/golang",
             "properties": {
               "options": {
                 "allOf": [
@@ -2109,7 +2109,7 @@
           },
           "then": {
             "title": "Haskell Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/haskell",
+            "description": "https://prompto.dev/docs/segments/languages/haskell",
             "properties": {
               "options": {
                 "allOf": [
@@ -2159,7 +2159,7 @@
           },
           "then": {
             "title": "Helm segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/helm",
+            "description": "https://prompto.dev/docs/segments/cli/helm",
             "properties": {
               "options": {
                 "properties": {
@@ -2187,7 +2187,7 @@
           },
           "then": {
             "title": "HTTP segment",
-            "description": "https://ohmyposh.dev/docs/segments/web/http",
+            "description": "https://prompto.dev/docs/segments/web/http",
             "properties": {
               "options": {
                 "properties": {
@@ -2223,7 +2223,7 @@
           },
           "then": {
             "title": "Display your external IP Address",
-            "description": "https://ohmyposh.dev/docs/segments/web/ipify",
+            "description": "https://prompto.dev/docs/segments/web/ipify",
             "properties": {
               "options": {
                 "properties": {
@@ -2256,7 +2256,7 @@
           },
           "then": {
             "title": "Java Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/java",
+            "description": "https://prompto.dev/docs/segments/languages/java",
             "properties": {
               "options": {
                 "allOf": [
@@ -2302,7 +2302,7 @@
           },
           "then": {
             "title": "Jujutsu Segment",
-            "description": "https://ohmyposh.dev/docs/segments/scm/jujutsu",
+            "description": "https://prompto.dev/docs/segments/scm/jujutsu",
             "properties": {
               "options": {
                 "properties": {
@@ -2358,7 +2358,7 @@
           },
           "then": {
             "title": "Julia Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/julia",
+            "description": "https://prompto.dev/docs/segments/languages/julia",
             "properties": {
               "options": {
                 "allOf": [
@@ -2392,7 +2392,7 @@
           },
           "then": {
             "title": "Kotlin Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/kotlin",
+            "description": "https://prompto.dev/docs/segments/languages/kotlin",
             "properties": {
               "options": {
                 "allOf": [
@@ -2428,7 +2428,7 @@
           },
           "then": {
             "title": "Kubectl Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/kubectl",
+            "description": "https://prompto.dev/docs/segments/cli/kubectl",
             "properties": {
               "options": {
                 "properties": {
@@ -2472,7 +2472,7 @@
           },
           "then": {
             "title": "LastFM Segment",
-            "description": "https://ohmyposh.dev/docs/segments/music/lastfm",
+            "description": "https://prompto.dev/docs/segments/music/lastfm",
             "properties": {
               "options": {
                 "properties": {
@@ -2519,7 +2519,7 @@
           },
           "then": {
             "title": "Lua Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/lua",
+            "description": "https://prompto.dev/docs/segments/languages/lua",
             "properties": {
               "options": {
                 "allOf": [
@@ -2560,7 +2560,7 @@
           },
           "then": {
             "title": "Mercurial Segment",
-            "description": "https://ohmyposh.dev/docs/segments/scm/mercurial",
+            "description": "https://prompto.dev/docs/segments/scm/mercurial",
             "properties": {
               "options": {
                 "properties": {
@@ -2592,7 +2592,7 @@
           },
           "then": {
             "title": "Mojo Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/mojo",
+            "description": "https://prompto.dev/docs/segments/languages/mojo",
             "properties": {
               "options": {
                 "allOf": [
@@ -2640,7 +2640,7 @@
           },
           "then": {
             "title": "Maven Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/mvn",
+            "description": "https://prompto.dev/docs/segments/cli/mvn",
             "properties": {
               "options": {
                 "allOf": [
@@ -2674,7 +2674,7 @@
           },
           "then": {
             "title": "Nerdbank.GitVersion Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/nbgv"
+            "description": "https://prompto.dev/docs/segments/cli/nbgv"
           }
         },
         {
@@ -2687,7 +2687,7 @@
           },
           "then": {
             "title": "Display Nightscout segment",
-            "description": "https://ohmyposh.dev/docs/segments/health/nightscout",
+            "description": "https://prompto.dev/docs/segments/health/nightscout",
             "properties": {
               "options": {
                 "properties": {
@@ -2725,7 +2725,7 @@
           },
           "then": {
             "title": "NBA Segment",
-            "description": "https://ohmyposh.dev/docs/segments/web/nba",
+            "description": "https://prompto.dev/docs/segments/web/nba",
             "properties": {
               "options": {
                 "properties": {
@@ -2760,7 +2760,7 @@
           },
           "then": {
             "title": "Nim Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/nim",
+            "description": "https://prompto.dev/docs/segments/languages/nim",
             "properties": {
               "options": {
                 "allOf": [
@@ -2795,7 +2795,7 @@
           },
           "then": {
             "title": "Nix Shell",
-            "description": "https://ohmyposh.dev/docs/segments/cli/nix-shell"
+            "description": "https://prompto.dev/docs/segments/cli/nix-shell"
           }
         },
         {
@@ -2808,7 +2808,7 @@
           },
           "then": {
             "title": "Node Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/node",
+            "description": "https://prompto.dev/docs/segments/languages/node",
             "properties": {
               "options": {
                 "allOf": [
@@ -2878,7 +2878,7 @@
           },
           "then": {
             "title": "NPM Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/npm",
+            "description": "https://prompto.dev/docs/segments/cli/npm",
             "properties": {
               "options": {
                 "allOf": [
@@ -2913,7 +2913,7 @@
           },
           "then": {
             "title": "Nx Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/nx",
+            "description": "https://prompto.dev/docs/segments/cli/nx",
             "properties": {
               "options": {
                 "allOf": [
@@ -2948,7 +2948,7 @@
           },
           "then": {
             "title": "OCaml Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/ocaml",
+            "description": "https://prompto.dev/docs/segments/languages/ocaml",
             "properties": {
               "options": {
                 "allOf": [
@@ -2986,7 +2986,7 @@
           },
           "then": {
             "title": "Operating System Segment",
-            "description": "https://ohmyposh.dev/docs/segments/system/os",
+            "description": "https://prompto.dev/docs/segments/system/os",
             "properties": {
               "options": {
                 "properties": {
@@ -3222,7 +3222,7 @@
           },
           "then": {
             "title": "Open Weather Map Segment",
-            "description": "https://ohmyposh.dev/docs/segments/web/owm",
+            "description": "https://prompto.dev/docs/segments/web/owm",
             "properties": {
               "options": {
                 "properties": {
@@ -3268,7 +3268,7 @@
           },
           "then": {
             "title": "Path Segment",
-            "description": "https://ohmyposh.dev/docs/segments/system/path",
+            "description": "https://prompto.dev/docs/segments/system/path",
             "properties": {
               "options": {
                 "properties": {
@@ -3444,7 +3444,7 @@
           },
           "then": {
             "title": "Perl Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/perl",
+            "description": "https://prompto.dev/docs/segments/languages/perl",
             "properties": {
               "options": {
                 "allOf": [
@@ -3481,7 +3481,7 @@
           },
           "then": {
             "title": "PHP Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/php",
+            "description": "https://prompto.dev/docs/segments/languages/php",
             "properties": {
               "options": {
                 "allOf": [
@@ -3519,7 +3519,7 @@
           },
           "then": {
             "title": "Plastic SCM Segment",
-            "description": "https://ohmyposh.dev/docs/segments/scm/plastic",
+            "description": "https://prompto.dev/docs/segments/scm/plastic",
             "properties": {
               "options": {
                 "properties": {
@@ -3575,7 +3575,7 @@
           },
           "then": {
             "title": "PNPM Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/pnpm",
+            "description": "https://prompto.dev/docs/segments/cli/pnpm",
             "properties": {
               "options": {
                 "allOf": [
@@ -3613,19 +3613,19 @@
               "powerline_symbol": {
                 "type": "string",
                 "title": "Powerline Symbol",
-                "description": "https://ohmyposh.dev/docs/configuration/segment#powerline-symbol",
+                "description": "https://prompto.dev/docs/configuration/segment#powerline-symbol",
                 "default": "\ue0b0"
               },
               "leading_powerline_symbol": {
                 "type": "string",
                 "title": "Leading Powerline Symbol",
-                "description": "https://ohmyposh.dev/docs/configuration/segment#powerline-symbol",
+                "description": "https://prompto.dev/docs/configuration/segment#powerline-symbol",
                 "default": "\ue0d7"
               },
               "invert_powerline": {
                 "type": "boolean",
                 "title": "Flip the Powerline symbol vertically",
-                "description": "https://ohmyposh.dev/docs/configuration/segment#invert-powerline",
+                "description": "https://prompto.dev/docs/configuration/segment#invert-powerline",
                 "default": false
               }
             }
@@ -3641,7 +3641,7 @@
           },
           "then": {
             "title": "Project Segment",
-            "description": "https://ohmyposh.dev/docs/segments/system/project",
+            "description": "https://prompto.dev/docs/segments/system/project",
             "properties": {
               "options": {
                 "properties": {
@@ -3666,7 +3666,7 @@
           },
           "then": {
             "title": "Pulumi Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cloud/pulumi",
+            "description": "https://prompto.dev/docs/segments/cloud/pulumi",
             "properties": {
               "options": {
                 "properties": {
@@ -3698,7 +3698,7 @@
           },
           "then": {
             "title": "Python Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/python",
+            "description": "https://prompto.dev/docs/segments/languages/python",
             "properties": {
               "options": {
                 "allOf": [
@@ -3777,7 +3777,7 @@
           },
           "then": {
             "title": "Quasar Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/quasar",
+            "description": "https://prompto.dev/docs/segments/cli/quasar",
             "properties": {
               "options": {
                 "allOf": [
@@ -3818,7 +3818,7 @@
           },
           "then": {
             "title": "R Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/r",
+            "description": "https://prompto.dev/docs/segments/languages/r",
             "properties": {
               "options": {
                 "allOf": [
@@ -3860,7 +3860,7 @@
           },
           "then": {
             "title": "React Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/react",
+            "description": "https://prompto.dev/docs/segments/cli/react",
             "properties": {
               "options": {
                 "allOf": [
@@ -3894,7 +3894,7 @@
           },
           "then": {
             "title": "Root Segment",
-            "description": "https://ohmyposh.dev/docs/segments/system/root"
+            "description": "https://prompto.dev/docs/segments/system/root"
           }
         },
         {
@@ -3907,7 +3907,7 @@
           },
           "then": {
             "title": "Ruby Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/ruby",
+            "description": "https://prompto.dev/docs/segments/languages/ruby",
             "properties": {
               "options": {
                 "allOf": [
@@ -3947,7 +3947,7 @@
           },
           "then": {
             "title": "Rust Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/rust",
+            "description": "https://prompto.dev/docs/segments/languages/rust",
             "properties": {
               "options": {
                 "allOf": [
@@ -3983,7 +3983,7 @@
           },
           "then": {
             "title": "Sapling Segment",
-            "description": "https://ohmyposh.dev/docs/segments/scm/sapling",
+            "description": "https://prompto.dev/docs/segments/scm/sapling",
             "properties": {
               "options": {
                 "properties": {
@@ -4015,7 +4015,7 @@
           },
           "then": {
             "title": "Session Segment",
-            "description": "https://ohmyposh.dev/docs/segments/system/session"
+            "description": "https://prompto.dev/docs/segments/system/session"
           }
         },
         {
@@ -4028,7 +4028,7 @@
           },
           "then": {
             "title": "Shell Segment",
-            "description": "https://ohmyposh.dev/docs/segments/system/shell",
+            "description": "https://prompto.dev/docs/segments/system/shell",
             "properties": {
               "options": {
                 "properties": {
@@ -4061,7 +4061,7 @@
           },
           "then": {
             "title": "Sitecore Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cloud/sitecore",
+            "description": "https://prompto.dev/docs/segments/cloud/sitecore",
             "properties": {
               "options": {
                 "properties": {
@@ -4087,7 +4087,7 @@
           },
           "then": {
             "title": "Spotify Segment",
-            "description": "https://ohmyposh.dev/docs/segments/music/spotify",
+            "description": "https://prompto.dev/docs/segments/music/spotify",
             "properties": {
               "options": {
                 "properties": {
@@ -4125,7 +4125,7 @@
           },
           "then": {
             "title": "Status Segment",
-            "description": "https://ohmyposh.dev/docs/segments/system/status",
+            "description": "https://prompto.dev/docs/segments/system/status",
             "properties": {
               "options": {
                 "properties": {
@@ -4163,7 +4163,7 @@
           },
           "then": {
             "title": "Display training data from Strava",
-            "description": "https://ohmyposh.dev/docs/segments/health/strava",
+            "description": "https://prompto.dev/docs/segments/health/strava",
             "properties": {
               "options": {
                 "properties": {
@@ -4225,7 +4225,7 @@
           },
           "then": {
             "title": "Svelte Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/svelte",
+            "description": "https://prompto.dev/docs/segments/cli/svelte",
             "properties": {
               "options": {
                 "allOf": [
@@ -4259,7 +4259,7 @@
           },
           "then": {
             "title": "SVN Segment",
-            "description": "https://ohmyposh.dev/docs/segments/scm/svn",
+            "description": "https://prompto.dev/docs/segments/scm/svn",
             "properties": {
               "options": {
                 "properties": {
@@ -4291,7 +4291,7 @@
           },
           "then": {
             "title": "Swift Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/swift",
+            "description": "https://prompto.dev/docs/segments/languages/swift",
             "properties": {
               "options": {
                 "allOf": [
@@ -4327,7 +4327,7 @@
           },
           "then": {
             "title": "Get sysinfo",
-            "description": "https://ohmyposh.dev/docs/segments/system/sysinfo",
+            "description": "https://prompto.dev/docs/segments/system/sysinfo",
             "properties": {
               "options": {
                 "properties": {
@@ -4353,7 +4353,7 @@
           },
           "then": {
             "title": "Talosctl Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/talosctl"
+            "description": "https://prompto.dev/docs/segments/cli/talosctl"
           }
         },
         {
@@ -4366,7 +4366,7 @@
           },
           "then": {
             "title": "Tauri Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/tauri",
+            "description": "https://prompto.dev/docs/segments/cli/tauri",
             "properties": {
               "options": {
                 "allOf": [
@@ -4405,7 +4405,7 @@
           },
           "then": {
             "title": "Terraform Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/terraform",
+            "description": "https://prompto.dev/docs/segments/cli/terraform",
             "properties": {
               "options": {
                 "properties": {
@@ -4437,7 +4437,7 @@
           },
           "then": {
             "title": "Text Segment",
-            "description": "https://ohmyposh.dev/docs/segments/system/text"
+            "description": "https://prompto.dev/docs/segments/system/text"
           }
         },
         {
@@ -4450,7 +4450,7 @@
           },
           "then": {
             "title": "Time Segment",
-            "description": "https://ohmyposh.dev/docs/segments/system/time",
+            "description": "https://prompto.dev/docs/segments/system/time",
             "properties": {
               "options": {
                 "properties": {
@@ -4476,7 +4476,7 @@
           },
           "then": {
             "title": "Todoist Segment",
-            "description": "https://ohmyposh.dev/docs/segments/web/todoist",
+            "description": "https://prompto.dev/docs/segments/web/todoist",
             "properties": {
               "options": {
                 "properties": {
@@ -4504,7 +4504,7 @@
           },
           "then": {
             "title": "UI5 tooling CLI segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/ui5tooling",
+            "description": "https://prompto.dev/docs/segments/cli/ui5tooling",
             "properties": {
               "options": {
                 "allOf": [
@@ -4538,7 +4538,7 @@
           },
           "then": {
             "title": "Umbraco Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/umbraco"
+            "description": "https://prompto.dev/docs/segments/cli/umbraco"
           }
         },
         {
@@ -4551,7 +4551,7 @@
           },
           "then": {
             "title": "Unity Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/unity",
+            "description": "https://prompto.dev/docs/segments/cli/unity",
             "properties": {
               "options": {
                 "properties": {
@@ -4574,7 +4574,7 @@
           },
           "then": {
             "title": "Upgrade Segment",
-            "description": "https://ohmyposh.dev/docs/segments/system/upgrade",
+            "description": "https://prompto.dev/docs/segments/system/upgrade",
             "properties": {
               "options": {
                 "properties": {
@@ -4598,7 +4598,7 @@
           },
           "then": {
             "title": "V Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/v",
+            "description": "https://prompto.dev/docs/segments/languages/v",
             "properties": {
               "options": {
                 "allOf": [
@@ -4632,7 +4632,7 @@
           },
           "then": {
             "title": "Vala Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/vala",
+            "description": "https://prompto.dev/docs/segments/languages/vala",
             "properties": {
               "options": {
                 "allOf": [
@@ -4666,7 +4666,7 @@
           },
           "then": {
             "title": "Wakatime",
-            "description": "https://ohmyposh.dev/docs/segments/web/wakatime",
+            "description": "https://prompto.dev/docs/segments/web/wakatime",
             "properties": {
               "options": {
                 "properties": {
@@ -4695,7 +4695,7 @@
           },
           "then": {
             "title": "WinGet",
-            "description": "https://ohmyposh.dev/docs/segments/system/winget"
+            "description": "https://prompto.dev/docs/segments/system/winget"
           }
         },
         {
@@ -4708,7 +4708,7 @@
           },
           "then": {
             "title": "Windows Registry Query",
-            "description": "https://ohmyposh.dev/docs/segments/system/winreg",
+            "description": "https://prompto.dev/docs/segments/system/winreg",
             "properties": {
               "options": {
                 "properties": {
@@ -4740,7 +4740,7 @@
           },
           "then": {
             "title": "Display activity data from Withings",
-            "description": "https://ohmyposh.dev/docs/segments/health/withings",
+            "description": "https://prompto.dev/docs/segments/health/withings",
             "properties": {
               "options": {
                 "properties": {
@@ -4772,7 +4772,7 @@
           },
           "then": {
             "title": "XMake Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/xmake",
+            "description": "https://prompto.dev/docs/segments/cli/xmake",
             "properties": {
               "options": {
                 "allOf": [
@@ -4806,7 +4806,7 @@
           },
           "then": {
             "title": "Yarn Segment",
-            "description": "https://ohmyposh.dev/docs/segments/cli/yarn",
+            "description": "https://prompto.dev/docs/segments/cli/yarn",
             "properties": {
               "options": {
                 "allOf": [
@@ -4841,7 +4841,7 @@
           },
           "then": {
             "title": "YouTube Music Desktop App Segment",
-            "description": "https://ohmyposh.dev/docs/segments/music/ytm",
+            "description": "https://prompto.dev/docs/segments/music/ytm",
             "properties": {
               "options": {
                 "properties": {
@@ -4888,7 +4888,7 @@
           },
           "then": {
             "title": "Zig Segment",
-            "description": "https://ohmyposh.dev/docs/segments/languages/zig",
+            "description": "https://prompto.dev/docs/segments/languages/zig",
             "properties": {
               "options": {
                 "allOf": [
@@ -4923,13 +4923,13 @@
     "final_space": {
       "type": "boolean",
       "title": "Final Space",
-      "description": "https://ohmyposh.dev/docs/configuration/general#general-settings",
+      "description": "https://prompto.dev/docs/configuration/general#general-settings",
       "default": true
     },
     "enable_cursor_positioning": {
       "type": "boolean",
       "title": "Enable Cursor Positioning",
-      "description": "https://ohmyposh.dev/docs/configuration/general#general-settings",
+      "description": "https://prompto.dev/docs/configuration/general#general-settings",
       "default": false
     },
     "shell_integration": {
@@ -4940,13 +4940,13 @@
     "pwd": {
       "type": "string",
       "title": "Enable OSC99/7/51",
-      "description": "https://ohmyposh.dev/docs/configuration/general#general-settings",
+      "description": "https://prompto.dev/docs/configuration/general#general-settings",
       "default": ""
     },
     "upgrade": {
       "type": "object",
       "title": "Enable Upgrade Notice",
-      "description": "https://ohmyposh.dev/docs/configuration/general#general-settings",
+      "description": "https://prompto.dev/docs/configuration/general#general-settings",
       "default": {
         "source": "cdn",
         "auto": false,
@@ -4977,13 +4977,13 @@
     "patch_pwsh_bleed": {
       "type": "boolean",
       "title": "Patch PowerShell Color Bleed",
-      "description": "https://ohmyposh.dev/docs/configuration/general#general-settings",
+      "description": "https://prompto.dev/docs/configuration/general#general-settings",
       "default": false
     },
     "console_title_template": {
       "type": "string",
       "title": "Console Title Template",
-      "description": "https://ohmyposh.dev/docs/configuration/title#console-title-template",
+      "description": "https://prompto.dev/docs/configuration/title#console-title-template",
       "default": "{{ .Shell }} in {{ .Folder }}"
     },
     "terminal_background": {
@@ -4993,7 +4993,7 @@
       "type": "array",
       "title": "Block array",
       "default": [],
-      "description": "https://ohmyposh.dev/docs/configuration/general#blocks",
+      "description": "https://prompto.dev/docs/configuration/general#blocks",
       "items": {
         "$ref": "#/definitions/block"
       }
@@ -5001,7 +5001,7 @@
     "tooltips": {
       "type": "array",
       "title": "Tooltip list, prompt elements to display based on context",
-      "description": "https://ohmyposh.dev/docs/configuration/tooltips",
+      "description": "https://prompto.dev/docs/configuration/tooltips",
       "default": [],
       "items": {
         "allOf": [
@@ -5026,7 +5026,7 @@
     "transient_prompt": {
       "$ref": "#/definitions/extra_prompt",
       "title": "Transient Prompt Setting",
-      "description": "https://ohmyposh.dev/docs/configuration/transient",
+      "description": "https://prompto.dev/docs/configuration/transient",
       "anyOf": [
         {
           "properties": {
@@ -5046,27 +5046,27 @@
     "valid_line": {
       "$ref": "#/definitions/extra_prompt",
       "title": "Valid Line Setting (for PowerShell only)",
-      "description": "https://ohmyposh.dev/docs/configuration/line-error"
+      "description": "https://prompto.dev/docs/configuration/line-error"
     },
     "error_line": {
       "$ref": "#/definitions/extra_prompt",
       "title": "Error Line Setting (for PowerShell only)",
-      "description": "https://ohmyposh.dev/docs/configuration/line-error"
+      "description": "https://prompto.dev/docs/configuration/line-error"
     },
     "secondary_prompt": {
       "$ref": "#/definitions/extra_prompt",
       "title": "Secondary Prompt Setting",
-      "description": "https://ohmyposh.dev/docs/configuration/secondary-prompt"
+      "description": "https://prompto.dev/docs/configuration/secondary-prompt"
     },
     "debug_prompt": {
       "$ref": "#/definitions/extra_prompt",
       "title": "Debug Prompt Setting (for PowerShell only)",
-      "description": "https://ohmyposh.dev/docs/configuration/debug-prompt"
+      "description": "https://prompto.dev/docs/configuration/debug-prompt"
     },
     "palette": {
       "type": "object",
       "title": "Palette",
-      "description": "https://ohmyposh.dev/docs/configuration/colors#palette",
+      "description": "https://prompto.dev/docs/configuration/colors#palette",
       "default": {},
       "patternProperties": {
         ".*": {
@@ -5077,7 +5077,7 @@
     "palettes": {
       "type": "object",
       "title": "Palettes",
-      "description": "https://ohmyposh.dev/docs/configuration/colors#palettes",
+      "description": "https://prompto.dev/docs/configuration/colors#palettes",
       "default": {},
       "properties": {
         "template": {
@@ -5098,7 +5098,7 @@
     "cycle": {
       "type": "array",
       "title": "List of settings to cycle through segment by segment",
-      "description": "https://ohmyposh.dev/docs/configuration/colors#cycle",
+      "description": "https://prompto.dev/docs/configuration/colors#cycle",
       "default": [],
       "items": {
         "properties": {
@@ -5130,13 +5130,13 @@
     "var": {
       "type": "object",
       "title": "Config variables to use in templates (can be any value)",
-      "description": "https://ohmyposh.dev/docs/configuration/templates#config-variables",
+      "description": "https://prompto.dev/docs/configuration/templates#config-variables",
       "default": {}
     },
     "maps": {
       "type": "object",
       "title": "Custom text mappings",
-      "description": "https://ohmyposh.dev/docs/configuration/general#maps",
+      "description": "https://prompto.dev/docs/configuration/general#maps",
       "default": {},
       "items": {
         "properties": {
@@ -5160,7 +5160,7 @@
     "tooltips_action": {
       "type": "string",
       "title": "Tooltips action",
-      "description": "https://ohmyposh.dev/docs/configuration/tooltips#tooltips-action",
+      "description": "https://prompto.dev/docs/configuration/tooltips#tooltips-action",
       "enum": [
         "replace",
         "extend",
@@ -5171,13 +5171,13 @@
     "version": {
       "type": "integer",
       "title": "Version",
-      "description": "https://ohmyposh.dev/docs/configuration/general",
+      "description": "https://prompto.dev/docs/configuration/general",
       "default": 4
     },
     "extends": {
       "type": "string",
       "title": "Extends",
-      "description": "https://ohmyposh.dev/docs/configuration/general#extends",
+      "description": "https://prompto.dev/docs/configuration/general#extends",
       "default": ""
     }
   }

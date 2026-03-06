@@ -7,14 +7,14 @@ import (
 	"slices"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/build"
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/upgrade"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
-	"github.com/jandedobbeleer/oh-my-posh/src/text"
+	"github.com/po1o/prompto/src/build"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/cli/upgrade"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/terminal"
+	"github.com/po1o/prompto/src/text"
 	"github.com/spf13/cobra"
 )
 
@@ -55,7 +55,7 @@ var upgradeCmd = &cobra.Command{
 			return
 		}
 
-		sh := os.Getenv("POSH_SHELL")
+		sh := os.Getenv("PROMPTO_SHELL")
 
 		env := &runtime.Terminal{}
 		env.Init(&runtime.Flags{
@@ -117,7 +117,7 @@ var upgradeCmd = &cobra.Command{
 
 		if upgrade.IsMajorUpgrade(build.Version, latest) {
 			log.Debug("major upgrade available")
-			message := fmt.Sprintf("\n  🚨 major upgrade available: v%s -> v%s, use oh-my-posh upgrade --force to upgrade\n\n", build.Version, latest)
+			message := fmt.Sprintf("\n  🚨 major upgrade available: v%s -> v%s, use prompto upgrade --force to upgrade\n\n", build.Version, latest)
 			fmt.Print(message)
 			return
 		}

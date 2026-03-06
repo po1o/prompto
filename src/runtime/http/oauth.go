@@ -7,7 +7,7 @@ import (
 	"io"
 	httplib "net/http"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
+	"github.com/po1o/prompto/src/cache"
 )
 
 const (
@@ -72,7 +72,7 @@ func (o *OAuthRequest) refreshToken(refreshToken string) (string, error) {
 		o.HTTPTimeout = 20
 	}
 
-	url := fmt.Sprintf("https://ohmyposh.dev/api/refresh?segment=%s&token=%s", o.SegmentName, refreshToken)
+	url := fmt.Sprintf("https://prompto.dev/api/refresh?segment=%s&token=%s", o.SegmentName, refreshToken)
 	body, err := o.Env.HTTPRequest(url, nil, o.HTTPTimeout)
 	if err != nil {
 		return "", &OAuthError{

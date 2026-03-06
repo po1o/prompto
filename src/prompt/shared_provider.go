@@ -3,7 +3,7 @@ package prompt
 import (
 	"sync"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
+	"github.com/po1o/prompto/src/config"
 )
 
 type sharedExecutionResult struct {

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/segments/options"
 )
 
 type Az struct {
@@ -23,7 +23,7 @@ const (
 	Cli  = "cli"
 	// this deprecated value is used to support the old behavior of first_match
 	FirstMatch = "cli|pwsh"
-	azureEnv   = "POSH_AZURE_SUBSCRIPTION"
+	azureEnv   = "PROMPTO_AZURE_SUBSCRIPTION"
 )
 
 type AzureConfig struct {

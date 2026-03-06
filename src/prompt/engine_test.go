@@ -5,15 +5,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/maps"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
-	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/maps"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/mock"
+	"github.com/po1o/prompto/src/shell"
+	"github.com/po1o/prompto/src/template"
+	"github.com/po1o/prompto/src/terminal"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -69,16 +69,16 @@ func TestPrintPWD(t *testing.T) {
 		{Case: "Template (non empty)", Shell: shell.GENERIC, Config: "{{ if eq .Shell \"shell\" }}osc7{{ end }}", Expected: "\x1b]7;file://host/pwd\x1b\\"},
 		{
 			Case:     "OSC99 Cygwin",
-			Pwd:      `C:\Users\user\Documents\GitHub\oh-my-posh`,
+			Pwd:      `C:\Users\user\Documents\GitHub\prompto`,
 			Config:   terminal.OSC99,
 			Cygwin:   true,
-			Expected: "\x1b]9;9;C:/Users/user/Documents/GitHub/oh-my-posh\x1b\\",
+			Expected: "\x1b]9;9;C:/Users/user/Documents/GitHub/prompto\x1b\\",
 		},
 		{
 			Case:     "OSC99 Windows",
-			Pwd:      `C:\Users\user\Documents\GitHub\oh-my-posh`,
+			Pwd:      `C:\Users\user\Documents\GitHub\prompto`,
 			Config:   terminal.OSC99,
-			Expected: "\x1b]9;9;C:\\Users\\user\\Documents\\GitHub\\oh-my-posh\x1b\\",
+			Expected: "\x1b]9;9;C:\\Users\\user\\Documents\\GitHub\\prompto\x1b\\",
 		},
 	}
 

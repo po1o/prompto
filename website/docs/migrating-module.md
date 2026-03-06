@@ -6,7 +6,7 @@ sidebar_label: ⚰️ PowerShell Module
 
 ## Problem statement
 
-Traditionally, the module was the only way to install oh-my-posh using `Install-Module oh-my-posh`.
+Traditionally, the module was the only way to install prompto using `Install-Module prompto`.
 Today, with the shift to the executable version over a year ago, it only acts as a wrapper around the
 executable, offering no additional functionality. Throughout the year, the following changes have been made:
 
@@ -24,7 +24,7 @@ There's a problem with the Module due to the following:
 ### Remove the module's cached files
 
 ```powershell
-Remove-Item $env:POSH_PATH -Force -Recurse
+Remove-Item $env:PROMPTO_PATH -Force -Recurse
 ```
 
 :::warning
@@ -32,7 +32,7 @@ If you added custom elements to this location, they will be deleted with the com
 Make sure to move these before running the command.
 :::
 
-### Install oh-my-posh
+### Install prompto
 
 See your platform's installation guide. The preferred ways are **winget** and **Homebrew**.
 
@@ -43,13 +43,13 @@ See your platform's installation guide. The preferred ways are **winget** and **
 ### Uninstall the PowerShell module
 
 ```powershell
-Uninstall-Module oh-my-posh -AllVersions
+Uninstall-Module prompto -AllVersions
 ```
 
 Delete the import of the PowerShell module in your `$PROFILE`
 
 ```powershell
-Import-Module oh-my-posh
+Import-Module prompto
 ```
 
 ### Adjust setting the prompt
@@ -59,7 +59,7 @@ If you're still using `Set-PoshPrompt`, replace that statement with the followin
 #### I have a custom theme
 
 ```powershell
-oh-my-posh init pwsh --config ~/.custom.omp.json | Invoke-Expression
+prompto init pwsh --config ~/.custom.omp.json | Invoke-Expression
 ```
 
 And replace `~/.custom.omp.json` with the location of your theme.
@@ -67,13 +67,13 @@ And replace `~/.custom.omp.json` with the location of your theme.
 #### I have an out-of-the-box theme
 
 ```powershell
-oh-my-posh init pwsh --config "jandedobbeleer" | Invoke-Expression
+prompto init pwsh --config "jandedobbeleer" | Invoke-Expression
 ```
 
 Replace `jandedobbeleer` with the theme you use.
 
-[init]: https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/src/shell/scripts/omp.ps1
-[idiots]: https://ohmyposh.dev/blog/idiots-everywhere
+[init]: https://github.com/po1o/prompto/blob/main/src/shell/scripts/omp.ps1
+[idiots]: https://prompto.dev/blog/idiots-everywhere
 [windows]: /docs/installation/windows
 [macos]: /docs/installation/macos
 [linux]: /docs/installation/linux

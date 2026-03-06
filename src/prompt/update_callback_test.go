@@ -4,9 +4,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/shell"
 
 	"github.com/stretchr/testify/require"
 )

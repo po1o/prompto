@@ -1,6 +1,6 @@
 ---
 date: 2025-12-28
-description: Oh My Posh now integrates with Claude Code's statusline feature to bring beautiful, customizable AI session information right into your terminal prompt.
+description: Prompto now integrates with Claude Code's statusline feature to bring beautiful, customizable AI session information right into your terminal prompt.
 tags:
 - claude
 - ai
@@ -9,8 +9,8 @@ tags:
 - statusline
 - integration
 - customization
-title: "Oh My Posh Meets Claude Code: AI-Powered Terminal Prompts"
-slug: oh-my-posh-claude-code-integration
+title: "Prompto Meets Claude Code: AI-Powered Terminal Prompts"
+slug: prompto-claude-code-integration
 authors:
 - name: Jan De Dobbeleer
   title: Maintainer
@@ -18,7 +18,7 @@ authors:
   image_url: https://avatars.githubusercontent.com/u/2492783?v=4
 ---
 
-Terminal customization just got a lot smarter. Oh My Posh now integrates with [Claude Code](https://code.claude.com/)
+Terminal customization just got a lot smarter. Prompto now integrates with [Claude Code](https://code.claude.com/)
 through its [`statusline` functionality](https://code.claude.com/docs/en/statusline), bringing real-time AI session
 information  and development context directly into your Claude Code prompt.
 This isn't just another segment: it's a bridge between your
@@ -50,24 +50,24 @@ Configuration is straightforward. Add this to your Claude Code settings:
 {
   "statusLine": {
     "type": "command",
-    "command": "oh-my-posh claude",
+    "command": "prompto claude",
     "padding": 0
   }
 }
 ```
 
-That's it! Oh My Posh will automatically detect when Claude Code provides session data and display the
+That's it! Prompto will automatically detect when Claude Code provides session data and display the
 relevant information in your prompt.
 
 It's important to note that the `claude` CLI command operates differently from your regular prompt
-configuration. When used as a `statusline` command, Oh My Posh runs in a special mode that's completely separate
+configuration. When used as a `statusline` command, Prompto runs in a special mode that's completely separate
 from your standard terminal prompt. This means you'll likely want to create a dedicated, minimal configuration
 specifically for Claude Code that focuses on displaying AI session information rather than your usual prompt
 elements.
 
 ### Custom configuration
 
-By default, the `oh-my-posh claude` command provides a built-in `statusline` that shows your current working
+By default, the `prompto claude` command provides a built-in `statusline` that shows your current working
 directory, git context, active model name, and context window usage as a visual gauge. To customize this
 display, use the `--config` flag to specify your own theme configuration file that includes a custom claude
 segment tailored to your preferences.
@@ -76,7 +76,7 @@ segment tailored to your preferences.
 {
   "statusLine": {
     "type": "command",
-    "command": "oh-my-posh claude --config ~/.claude.omp.json",
+    "command": "prompto claude --config ~/.claude.omp.json",
     "padding": 0
   }
 }
@@ -88,7 +88,7 @@ aligned prompt blocks to play with.
 
 ```json title="~/.claude.omp.json"
 {
-  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json",
   "palette": {
     "black": "#262B44",
     "blue": "#4B95E9",
@@ -186,8 +186,8 @@ aligned prompt blocks to play with.
 
 ## The Claude Code segment
 
-Oh My Posh's new `claude` segment taps into this `statusline` data to bring AI session awareness directly
-into your terminal prompt. When you use the `oh-my-posh claude` command as your `statusline` command in Claude
+Prompto's new `claude` segment taps into this `statusline` data to bring AI session awareness directly
+into your terminal prompt. When you use the `prompto claude` command as your `statusline` command in Claude
 Code, you get access to a wealth of session information that can be displayed in your prompt without needing
 to know the technical details.
 
@@ -214,20 +214,20 @@ crucial for managing long coding sessions.
 
 ## The Technical Details
 
-Under the hood, Oh My Posh reads the rich JSON session data that Claude Code provides via stdin when used
+Under the hood, Prompto reads the rich JSON session data that Claude Code provides via stdin when used
 as a `statusline` command. The segment only activates when Claude Code session data is available, so there's no
 performance impact when you're not using Claude Code.
 
 ## Getting Started
 
-If you're already using Oh My Posh, adding Claude Code integration is as simple as:
+If you're already using Prompto, adding Claude Code integration is as simple as:
 
 1. Install Claude Code if you haven't already
 2. Add the `statusline` configuration to your Claude Code settings
 3. Optionally create your own configuration including the `claude` segment
 4. Start a Claude Code session and watch your prompt come alive
 
-For detailed configuration options and all available properties, check out the [complete Claude segment documentation](https://ohmyposh.dev/docs/segments/cli/claude).
+For detailed configuration options and all available properties, check out the [complete Claude segment documentation](https://prompto.dev/docs/segments/cli/claude).
 
 ## What's Next?
 

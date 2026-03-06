@@ -1,8 +1,8 @@
 {
   "$schema": "https://aka.ms/dsc/schemas/v3/bundled/resource/manifest.vscode.json",
-  "description": "Allows configuring the Oh My Posh font installs.",
+  "description": "Allows configuring the Prompto font installs.",
   "export": {
-    "executable": "oh-my-posh",
+    "executable": "prompto",
     "input": "stdin",
     "args": [
       "font",
@@ -11,7 +11,7 @@
     ]
   },
   "get": {
-    "executable": "oh-my-posh",
+    "executable": "prompto",
     "input": "stdin",
     "args": [
       "font",
@@ -21,7 +21,7 @@
   },
   "schema": {
     "command": {
-      "executable": "oh-my-posh",
+      "executable": "prompto",
       "args": [
         "font",
         "dsc",
@@ -30,7 +30,7 @@
     }
   },
   "set": {
-    "executable": "oh-my-posh",
+    "executable": "prompto",
     "implementsPretest": true,
     "args": [
       "font",

@@ -5,8 +5,8 @@ import (
 
 	"net/http"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
+	"github.com/po1o/prompto/src/segments/options"
+	"github.com/po1o/prompto/src/template"
 )
 
 type HTTP struct {

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/dsc"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
+	"github.com/po1o/prompto/src/dsc"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/shell"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +17,7 @@ var shellCmd = &cobra.Command{
 	Long: `Get the shell name.
 
 This command retrieves the name of the current shell being used.`,
-	Example: `  oh-my-posh shell get`,
+	Example: `  prompto shell get`,
 	ValidArgs: []string{
 		"get",
 	},
@@ -29,7 +29,7 @@ This command retrieves the name of the current shell being used.`,
 		}
 
 		flags := &runtime.Flags{
-			Shell: os.Getenv("POSH_SHELL"),
+			Shell: os.Getenv("PROMPTO_SHELL"),
 		}
 
 		env := &runtime.Terminal{}

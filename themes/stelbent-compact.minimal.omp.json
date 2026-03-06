@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json",
   "console_title_template": "{{if .Segments.Git.RepoName}} {{.Segments.Git.RepoName}} {{else}} {{.Folder}} {{end}}",
   "blocks": [
     {
@@ -51,7 +51,7 @@
             "rebase_icon": "\u2c62 ",
             "tag_icon": "\u25b6 ",
             "untracked_modes": {
-              "/Users/user/Projects/oh-my-posh/": "no"
+              "/Users/user/Projects/prompto/": "no"
             }
           }
         },

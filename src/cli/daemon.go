@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/daemon"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
+	"github.com/po1o/prompto/src/daemon"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime/path"
 
 	"github.com/spf13/cobra"
 )
@@ -18,8 +18,8 @@ var (
 
 	daemonCmd = &cobra.Command{
 		Use:   "daemon [start|stop|restart|status|serve|log]",
-		Short: "Manage the oh-my-posh daemon",
-		Long: `Manage the oh-my-posh daemon for faster prompt rendering.
+		Short: "Manage the prompto daemon",
+		Long: `Manage the prompto daemon for faster prompt rendering.
 
 The daemon runs in the background and renders prompt segments asynchronously.
 It automatically shuts down after being idle (no connections) for 5 minutes.

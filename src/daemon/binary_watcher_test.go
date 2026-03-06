@@ -12,7 +12,7 @@ import (
 
 func TestBinaryWatcherTriggersOnWrite(t *testing.T) {
 	tmpDir := t.TempDir()
-	binaryPath := filepath.Join(tmpDir, "oh-my-posh")
+	binaryPath := filepath.Join(tmpDir, "prompto")
 	require.NoError(t, os.WriteFile(binaryPath, []byte("v1"), 0o755))
 
 	triggered := make(chan struct{}, 1)
@@ -39,7 +39,7 @@ func TestBinaryWatcherTriggersOnWrite(t *testing.T) {
 
 func TestBinaryWatcherTriggersOnRemove(t *testing.T) {
 	tmpDir := t.TempDir()
-	binaryPath := filepath.Join(tmpDir, "oh-my-posh")
+	binaryPath := filepath.Join(tmpDir, "prompto")
 	require.NoError(t, os.WriteFile(binaryPath, []byte("v1"), 0o755))
 
 	triggered := make(chan struct{}, 1)
@@ -73,10 +73,10 @@ func TestBinaryWatcherTracksResolvedPathForSymlinkInput(t *testing.T) {
 	binDir := filepath.Join(tmpDir, "bin")
 	require.NoError(t, os.MkdirAll(binDir, 0o755))
 
-	realBinaryV1 := filepath.Join(tmpDir, "oh-my-posh-v1")
+	realBinaryV1 := filepath.Join(tmpDir, "prompto-v1")
 	require.NoError(t, os.WriteFile(realBinaryV1, []byte("v1"), 0o755))
 
-	symlinkPath := filepath.Join(binDir, "oh-my-posh")
+	symlinkPath := filepath.Join(binDir, "prompto")
 	require.NoError(t, os.Symlink(realBinaryV1, symlinkPath))
 
 	triggered := make(chan struct{}, 1)

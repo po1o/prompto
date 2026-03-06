@@ -1,7 +1,7 @@
 {
   "Endpoint": "https://weu.codesigning.azure.net",
-  "CodeSigningAccountName": "oh-my-posh",
-  "CertificateProfileName": "oh-my-posh",
+  "CodeSigningAccountName": "prompto",
+  "CertificateProfileName": "prompto",
   "ExcludeCredentials": [
     "AzureCliCredential",
     "AzurePowerShellCredential",

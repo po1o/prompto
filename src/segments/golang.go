@@ -1,8 +1,8 @@
 package segments
 
 import (
-	"github.com/jandedobbeleer/oh-my-posh/src/regex"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/regex"
+	"github.com/po1o/prompto/src/segments/options"
 	"golang.org/x/mod/modfile"
 )
 

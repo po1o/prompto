@@ -3,7 +3,7 @@ package segments
 import (
 	"path/filepath"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/segments/options"
 
 	yaml "go.yaml.in/yaml/v3"
 )

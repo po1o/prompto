@@ -36,7 +36,7 @@ it with `.$` to reference it directly.
 | `.WSL`          | `boolean`             | in WSL yes/no                                                                    |
 | `.Templates`    | `string`              | the [templates][templates] result                                                |
 | `.PromptCount`  | `int`                 | the prompt counter, increments with 1 for every prompt invocation                |
-| `.Version`      | `string`              | the Oh My Posh version                                                           |
+| `.Version`      | `string`              | the Prompto version                                                           |
 | `.Segment`      | [`Segment`](#segment) | the current segment's metadata                                                   |
 
 ### Segment
@@ -173,7 +173,7 @@ $env.SET_POSHCONTEXT = {
 
 ### Sprig
 
-Oh My Posh has all [sprig][sprig] functions included, meaning you can do operations on strings, paths and a lot of other
+Prompto has all [sprig][sprig] functions included, meaning you can do operations on strings, paths and a lot of other
 manipulations straight from your template. Have a look at [their documentation][sprig] for available options and how to
 use them.
 
@@ -208,7 +208,7 @@ do so like this:
 
 :::caution
 For this to work, the segment you refer to needs to be in your config. The above example won't work if
-your config does not contain a git segment as Oh My Posh only populates the properties when it needs to.
+your config does not contain a git segment as Prompto only populates the properties when it needs to.
 :::
 
 :::tip

@@ -32,7 +32,7 @@ import Config from "@site/src/components/Config.js";
       fetch_status: true,
       fetch_upstream_icon: true,
       untracked_modes: {
-        "/Users/user/Projects/oh-my-posh/": "no",
+        "/Users/user/Projects/prompto/": "no",
       },
       source: "cli",
       mapped_branches: {
@@ -62,7 +62,7 @@ You can set the following options to `true` to enable fetching additional inform
 | `ignore_submodules`   | `map[string]string` |         | map of repo's where to change the [--ignore-submodules][submodules] flag (`none`, `untracked`, `dirty` or `all`). For example `"ignore_submodules": { "/Users/me/repos/repo1": "all" }`. If you want to override for all repo's, use `*` to set the mode instead of the repo path                                                     |
 | `native_fallback`     |      `boolean`      | `false` | when set to `true` and `git.exe` is not available when inside a WSL2 shared Windows drive, we will fallback to the native `git` executable to fetch data. Not all information can be displayed in this case                                                                                                                           |
 | `status_formats`      | `map[string]string` |         | a key, value map allowing to override how individual status items are displayed. For example, `"status_formats": { "Added": "Added: %d" }` will display the added count as `Added: 1` instead of `+1`. See the [Status](#status) section for available overrides.                                                                     |
-| `source`              |      `string`       |  `cli`  | <ul><li>`cli`: fetch the information using the git CLI</li><li>`pwsh`: fetch the information from the [posh-git][poshgit] PowerShell Module</li></ul>                                                                                                                                                                                 |
+| `source`              |      `string`       |  `cli`  | <ul><li>`cli`: fetch the information using the git CLI</li><li>`pwsh`: fetch the information from the [prompto-git][poshgit] PowerShell Module</li></ul>                                                                                                                                                                                 |
 | `mapped_branches`     |      `object`       |         | custom glyph/text for specific branches. You can use `*` at the end as a wildcard character for matching                                                                                                                                                                                                                              |
 | `branch_template`     |      `string`       |         | a [template][templates] to format that branch name. You can use `{{ .Branch }}` as reference to the original branch name                                                                                                                                                                                                              |
 | `disable_with_jj`     |      `boolean`      | `false` | disable the git segment in case of a [Jujutsu] collocated repository                                                                                                                                                                                                                                                                  |
@@ -215,30 +215,30 @@ As these are arrays of strings, you can join them using the `join` function:
 | `.HEAD`    | `string` | the current HEAD                 |
 | `.Onto`    | `string` | the branch we're rebasing onto   |
 
-## posh-git
+## prompto-git
 
-If you want to display the default [posh-git][poshgit] output, **do not** use this segment
-but add the following snippet after initializing Oh My Posh in your `$PROFILE`:
+If you want to display the default [prompto-git][poshgit] output, **do not** use this segment
+but add the following snippet after initializing Prompto in your `$PROFILE`:
 
 ```powershell
 function Set-PoshGitStatus {
     $global:GitStatus = Get-GitStatus
-    $env:POSH_GIT_STRING = Write-GitStatus -Status $global:GitStatus
+    $env:PROMPTO_GIT_STRING = Write-GitStatus -Status $global:GitStatus
 }
 New-Alias -Name 'Set-PoshContext' -Value 'Set-PoshGitStatus' -Scope Global -Force
 ```
 
-You can then use the `POSH_GIT_STRING` environment variable in a [text segment][text]:
+You can then use the `PROMPTO_GIT_STRING` environment variable in a [text segment][text]:
 
 <Config
   data={{
     template:
-      "{{ if .Env.POSH_GIT_STRING }} {{ .Env.POSH_GIT_STRING }} {{ end }}",
+      "{{ if .Env.PROMPTO_GIT_STRING }} {{ .Env.PROMPTO_GIT_STRING }} {{ end }}",
   }}
 />
 
 [git]: https://git-scm.com/
-[poshgit]: https://github.com/dahlbyk/posh-git
+[poshgit]: https://github.com/dahlbyk/prompto-git
 [templates]: /docs/configuration/templates
 [hyperlinks]: /docs/configuration/templates#custom
 [untracked]: https://git-scm.com/docs/git-status#Documentation/git-status.txt---untracked-filesltmodegt

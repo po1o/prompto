@@ -3,8 +3,8 @@ package segments
 import (
 	"encoding/json"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/constants"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/constants"
+	"github.com/po1o/prompto/src/segments/options"
 )
 
 type globalJSON struct {

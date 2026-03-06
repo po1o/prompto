@@ -5,7 +5,7 @@ package segments
 import (
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
+	"github.com/po1o/prompto/src/shell"
 )
 
 func (s *Spotify) Enabled() bool {

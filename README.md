@@ -2,21 +2,21 @@
 <p align="center">
   <img
     width="400"
-    src="https://raw.githubusercontent.com/jandedobbeleer/oh-my-posh/main/website/static/img/logo.png"
-    alt="Oh My Posh logo – Prompt theme engine for any shell"
+    src="https://raw.githubusercontent.com/jandedobbeleer/prompto/main/website/static/img/logo.png"
+    alt="Prompto logo – Prompt theme engine for any shell"
   />
 </p>
 <!-- markdownlint-enable -->
 
-![MIT license badge](https://img.shields.io/github/license/JanDeDobbeleer/oh-my-posh.svg)
+![MIT license badge](https://img.shields.io/github/license/JanDeDobbeleer/prompto.svg)
 
-![Build Status badge](https://img.shields.io/github/actions/workflow/status/jandedobbeleer/oh-my-posh/release.yml?branch=main)
+![Build Status badge](https://img.shields.io/github/actions/workflow/status/jandedobbeleer/prompto/release.yml?branch=main)
 
 [![Release version number badge][release-badge]][release]
 
-[![Documentation link badge ohmyposh.dev][docs-badge]][docs]
+[![Documentation link badge prompto.dev][docs-badge]][docs]
 
-![Number of GitHub Downloads badge](https://img.shields.io/github/downloads/jandedobbeleer/oh-my-posh/total?color=pink&label=GitHub%20Downloads)
+![Number of GitHub Downloads badge](https://img.shields.io/github/downloads/jandedobbeleer/prompto/total?color=pink&label=GitHub%20Downloads)
 
 This repo was made with love using GitKraken.
 
@@ -25,7 +25,7 @@ This repo was made with love using GitKraken.
 
 ## Sponsors
 
-[![Documentation link badge ohmyposh.dev][merge-conflict-logo]][merge-conflict]
+[![Documentation link badge prompto.dev][merge-conflict-logo]][merge-conflict]
 
 [Want to become a sponsor?][sponsor-link]
 
@@ -35,9 +35,9 @@ This repo was made with love using GitKraken.
 
 ![Discord badge](https://img.shields.io/discord/1023597603331526656)
 
-What started as the offspring of [oh-my-posh2](https://github.com/JanDeDobbeleer/oh-my-posh2) for PowerShell
+What started as the offspring of [prompto2](https://github.com/po1o/prompto2) for PowerShell
 resulted in a cross platform, highly customizable and extensible prompt theme engine. After 4 years of working
-on oh-my-posh, a modern and more efficient tool was needed to suit my personal needs.
+on prompto, a modern and more efficient tool was needed to suit my personal needs.
 
 ## :heart: Support :heart:
 
@@ -63,12 +63,12 @@ on oh-my-posh, a modern and more efficient tool was needed to suit my personal n
 
 ## Reviews
 
-* [Repo review](https://repo-reviews.github.io//reviews/2023-06-21_TameWizard_JanDeDobbeleer_oh-my-posh) by [TameWizard](https://github.com/TameWizard)
+* [Repo review](https://repo-reviews.github.io//reviews/2023-06-21_TameWizard_JanDeDobbeleer_prompto) by [TameWizard](https://github.com/TameWizard)
 
 ## Thanks
 
-* [Chris Benti](https://github.com/chrisbenti/PS-Config) providing the first influence to start oh-my-posh
-* [Keith Dahlby](https://github.com/dahlbyk/posh-git) for creating posh-git and making life more enjoyable
+* [Chris Benti](https://github.com/chrisbenti/PS-Config) providing the first influence to start prompto
+* [Keith Dahlby](https://github.com/dahlbyk/prompto-git) for creating prompto-git and making life more enjoyable
 * [Robby Russell](https://github.com/ohmyzsh/ohmyzsh) for creating oh-my-zsh, without him this would probably not be here
 * [Janne Mareike Koschinski](https://github.com/justjanne) for providing information on how to get certain information
 using Go (and the amazing [README](https://github.com/justjanne/powerline-go))
@@ -77,15 +77,15 @@ using Go (and the amazing [README](https://github.com/justjanne/powerline-go))
 [kraken]: https://img.shields.io/badge/GitKraken-Legendary%20Git%20Tools-teal?style=plastic&logo=gitkraken
 [kraken-ref]: https://www.gitkraken.com/invite/nQmDPR9D
 [swag-badge]: https://img.shields.io/badge/Swag-Get%20some!-blue
-[swag]: https://swag.ohmyposh.dev
+[swag]: https://swag.prompto.dev
 [github-badge]: https://img.shields.io/badge/-Sponsor-fafbfc?logo=GitHub%20Sponsors
 [github-sponsors]: https://github.com/sponsors/JanDeDobbeleer
 [kofi-badge]: https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee!-%2346b798.svg
 [kofi]: https://ko-fi.com/jandedobbeleer
-[docs-badge]: https://img.shields.io/badge/Docs-ohmyposh.dev-blue
-[docs]: https://ohmyposh.dev
-[release-badge]: https://img.shields.io/github/v/release/jandedobbeleer/oh-my-posh?label=Release
-[release]: https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest
+[docs-badge]: https://img.shields.io/badge/Docs-prompto.dev-blue
+[docs]: https://prompto.dev
+[release-badge]: https://img.shields.io/github/v/release/jandedobbeleer/prompto?label=Release
+[release]: https://github.com/po1o/prompto/releases/latest
 
 [merge-conflict]: https://www.mergeconflict.fm/
 [merge-conflict-logo]: https://media24.fireside.fm/file/fireside-images-2024/podcasts/images/0/02d84890-e58d-43eb-ab4c-26bcc8524289/cover_small.jpg?v=1

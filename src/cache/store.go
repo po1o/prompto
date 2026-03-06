@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/maps"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/maps"
 )
 
 type store struct {

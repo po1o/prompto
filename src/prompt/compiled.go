@@ -1,6 +1,6 @@
 package prompt
 
-import "github.com/jandedobbeleer/oh-my-posh/src/config"
+import "github.com/po1o/prompto/src/config"
 
 func (e *Engine) hasCompiledPrimaryLayout() bool {
 	if e.CompiledConfig == nil {

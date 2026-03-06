@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/regex"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/cmd"
+	"github.com/po1o/prompto/src/regex"
+	"github.com/po1o/prompto/src/runtime/cmd"
 )
 
 func mapMostLogicalState(state string) State {
@@ -41,7 +41,7 @@ func parseBatteryOutput(output string) (*Info, error) {
 	}
 
 	// sometimes it reports discharging when at 100, so let's force it to Full
-	// https://github.com/JanDeDobbeleer/oh-my-posh/issues/3729
+	// https://github.com/po1o/prompto/issues/3729
 	if percentage == 100 {
 		return &Info{
 			Percentage: percentage,

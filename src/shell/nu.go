@@ -6,19 +6,19 @@ import (
 	"strings"
 )
 
-//go:embed scripts/omp.nu
+//go:embed scripts/prompto.nu
 var nuInit string
 
 func (f Features) Nu() Code {
 	switch f {
 	case Transient:
-		return `$env.TRANSIENT_PROMPT_COMMAND = {|| _omp_get_prompt transient }`
+		return `$env.TRANSIENT_PROMPT_COMMAND = {|| _prompto_get_prompt transient }`
 	case Upgrade:
-		return "^$_omp_executable upgrade --auto"
+		return "^$_prompto_executable upgrade --auto"
 	case Notice:
-		return "^$_omp_executable notice"
+		return "^$_prompto_executable notice"
 	case Daemon:
-		return enablePoshDaemon
+		return enablePromptoDaemon
 	case PromptMark, RPrompt, PoshGit, Azure, LineError, Jobs, Tooltips, FTCSMarks, CursorPositioning, Async, VimMode, VimCursorBlink, VimCursorShape:
 		fallthrough
 	default:

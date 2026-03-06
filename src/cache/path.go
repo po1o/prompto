@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime/path"
 )
 
 var cachePath string
@@ -20,8 +20,8 @@ func Path() string {
 
 	var OK bool
 
-	// allow the user to set the cache path using OMP_CACHE_DIR
-	if cachePath, OK = returnOrBuildCachePath(os.Getenv("OMP_CACHE_DIR")); OK {
+	// allow the user to set the cache path using PROMPTO_CACHE_DIR
+	if cachePath, OK = returnOrBuildCachePath(os.Getenv("PROMPTO_CACHE_DIR")); OK {
 		return cachePath
 	}
 
@@ -49,8 +49,8 @@ func returnOrBuildCachePath(input string) (string, bool) {
 		return "", false
 	}
 
-	// validate oh-my-posh folder, if non existent, create it
-	cachePath := filepath.Join(input, "oh-my-posh")
+	// validate prompto folder, if non existent, create it
+	cachePath := filepath.Join(input, "prompto")
 	if _, err := os.Stat(cachePath); err == nil {
 		return cachePath, true
 	}

@@ -29,7 +29,7 @@ We have a `.devcontainer/devcontainer.json` file, meaning we are compatible with
 - [![Open in GitHub Codespaces][codespaces-badge]][codespaces-link], or
 - the [Visual Studio Code Remote - Containers][devcontainer-ext] extension.
 
-This Linux environment includes all shells supported by oh-my-posh, including Bash, ZSH,
+This Linux environment includes all shells supported by prompto, including Bash, ZSH,
 Fish and PowerShell, the latter of which is the default.
 
 ### Configuring Devcontainer's Timezone & Theme
@@ -41,15 +41,15 @@ Fish and PowerShell, the latter of which is the default.
 2. Summon the Command Panel (Ctrl+Shift+P) and select `Codespaces: Rebuild Container`
    to rebuild your devcontainer. (This should take just a few seconds.)
 
-### Recompiling oh-my-posh
+### Recompiling prompto
 
-The devcontainer definition preinstalls the latest stable oh-my-posh release at build time.
+The devcontainer definition preinstalls the latest stable prompto release at build time.
 
 To overwrite the installation's version inside the running devcontainer, you may use the
-VSCode *task* `devcontainer: build omp` to rebuild your oh-my-posh with that of
+VSCode *task* `devcontainer: build omp` to rebuild your prompto with that of
 your running repository's state. (You might see a button for this in your statusbar.)
 
-If the compile succeeds, `oh-my-posh --version` should reply:
+If the compile succeeds, `prompto --version` should reply:
 `development`
 
 Should you somehow mess up your devcontainer's OMP install catastrophically, remember that
@@ -58,10 +58,10 @@ if you do `Codespaces: Rebuild Container` again, you'll be back to the latest st
 ## Local development
 
 Make sure your local go version matches with the pinned version in [go.mod]. You can build
-oh-my-posh by navigating the to the `/src` folder and executing the following command.
+prompto by navigating the to the `/src` folder and executing the following command.
 
 ```bash
-go build -v -o /path/to/oh-my-posh(.exe)
+go build -v -o /path/to/prompto(.exe)
 ```
 
 ### Running tests
@@ -72,12 +72,12 @@ To execute the tests, run the following command from the `/src` folder.
 go test "./..."
 ```
 
-[themes-discussion]: [https://github.com/JanDeDobbeleer/oh-my-posh/discussions/categories/themes]
+[themes-discussion]: [https://github.com/po1o/prompto/discussions/categories/themes]
 [discord-link]: [https://discord.com/channels/1023597603331526656/1055533233309233252]
-[docs]: <https://ohmyposh.dev/docs>
-[guide]: <https://ohmyposh.dev/docs/contributing/started>
+[docs]: <https://prompto.dev/docs>
+[guide]: <https://prompto.dev/docs/contributing/started>
 [cc]: <https://www.conventionalcommits.org/en/v1.0.0/#summary>
-[cc-types]: <https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/.commitlintrc.yml#L23-L33>
+[cc-types]: <https://github.com/po1o/prompto/blob/main/.commitlintrc.yml#L23-L33>
 [codespaces-badge]: <https://github.com/codespaces/badge.svg>
 [codespaces-link]: <https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=175405157>
 [devcontainer-ext]: <https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers>

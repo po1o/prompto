@@ -12,21 +12,21 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
+	"github.com/po1o/prompto/src/runtime/path"
 )
 
 // statePath returns the state directory path following XDG Base Directory Specification.
 // Uses $XDG_STATE_HOME if set, otherwise defaults to ~/.local/state.
 func statePath() string {
 	if stateHome := os.Getenv("XDG_STATE_HOME"); stateHome != "" {
-		return filepath.Join(stateHome, "oh-my-posh")
+		return filepath.Join(stateHome, "prompto")
 	}
-	return filepath.Join(path.Home(), ".local", "state", "oh-my-posh")
+	return filepath.Join(path.Home(), ".local", "state", "prompto")
 }
 
 // IsProcessRunning checks if the daemon process with the given PID is running.
 // Uses kill(pid, 0) to check existence, then verifies the process is actually
-// oh-my-posh to avoid false positives from PID reuse.
+// prompto to avoid false positives from PID reuse.
 func IsProcessRunning(pid int) bool {
 	process, err := os.FindProcess(pid)
 	if err != nil {
@@ -44,7 +44,7 @@ func IsProcessRunning(pid int) bool {
 		return true
 	}
 
-	// Process exists, but verify it's actually oh-my-posh (PID reuse protection).
+	// Process exists, but verify it's actually prompto (PID reuse protection).
 	exe, err := processExecutable(pid)
 	if err != nil {
 		// Can't determine — assume running to be safe
@@ -52,7 +52,7 @@ func IsProcessRunning(pid int) bool {
 	}
 
 	name := filepath.Base(exe)
-	return strings.Contains(name, "oh-my-posh") || strings.HasSuffix(name, ".test")
+	return strings.Contains(name, "prompto") || strings.HasSuffix(name, ".test")
 }
 
 // processExecutable returns the executable path for a given PID.

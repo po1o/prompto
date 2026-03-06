@@ -3,9 +3,9 @@ package segments
 import (
 	"net"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/http"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/runtime/http"
+	"github.com/po1o/prompto/src/segments/options"
 )
 
 type ipData struct {

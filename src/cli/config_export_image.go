@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/image"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
-	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/cli/image"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/prompt"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/shell"
+	"github.com/po1o/prompto/src/template"
+	"github.com/po1o/prompto/src/terminal"
 
 	"github.com/spf13/cobra"
 )
@@ -37,20 +37,20 @@ You can tweak the output by using additional flags:
 
 Example usage:
 
-> oh-my-posh config export image --config ~/myconfig.omp.json
+> prompto config export image --config ~/myconfig.omp.json
 
 Exports the config to an image file called myconfig.png in the current working directory.
 
-> oh-my-posh config export image --config ~/myconfig.omp.json --output ~/mytheme.png
+> prompto config export image --config ~/myconfig.omp.json --output ~/mytheme.png
 
 Exports the config to an image file ~/mytheme.png.
 
-> oh-my-posh config export image --config ~/myconfig.omp.json --settings ~/.image.settings.json
+> prompto config export image --config ~/myconfig.omp.json --settings ~/.image.settings.json
 
 Exports the config to an image file using customized output settings.`,
 	Args: cobra.NoArgs,
 	Run: func(_ *cobra.Command, _ []string) {
-		cache.Init(os.Getenv("POSH_SHELL"))
+		cache.Init(os.Getenv("PROMPTO_SHELL"))
 
 		err := setConfigFlag()
 		if err != nil {

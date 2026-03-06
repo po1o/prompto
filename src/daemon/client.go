@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/daemon/ipc"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/daemon/ipc"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
@@ -268,7 +268,7 @@ func (c *Client) SetLogging(ctx context.Context, path string) error {
 
 // getSessionID returns the session ID from environment or cache.
 func getSessionID() string {
-	if id := os.Getenv("POSH_SESSION_ID"); id != "" {
+	if id := os.Getenv("PROMPTO_SESSION_ID"); id != "" {
 		return id
 	}
 	return cache.SessionID()

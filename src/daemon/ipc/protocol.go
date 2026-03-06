@@ -3,7 +3,7 @@ package ipc
 //go:generate protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative daemon.proto
 
 import (
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/runtime"
 )
 
 // ProtocolVersion is the current protocol version.

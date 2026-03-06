@@ -16,7 +16,7 @@ const CONFIG = {
   CONCURRENCY: 8,
   DEFAULT_BG_COLOR: '#151515',
   THEME_EXTENSIONS: ['.omp.json', '.omp.toml', '.omp.yaml'],
-  GITHUB_BASE_URL: 'https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/themes'
+  GITHUB_BASE_URL: 'https://github.com/po1o/prompto/blob/main/themes'
 };
 
 /**
@@ -71,7 +71,7 @@ function getThemeNameFromFile(fileName) {
 }
 
 /**
- * Builds the oh-my-posh command for exporting theme image
+ * Builds the prompto command for exporting theme image
  * @param {string} configPath - Path to theme config file
  * @param {string} outputImage - Output image file name
  * @param {Object} config - Theme configuration
@@ -79,7 +79,7 @@ function getThemeNameFromFile(fileName) {
  */
 function buildPoshCommand(configPath, outputImage, config) {
   const parts = [
-    'oh-my-posh config export image',
+    'prompto config export image',
     `--config=${configPath}`,
     `--output=${outputImage}`,
     `--background-color=${config.bgColor}`,

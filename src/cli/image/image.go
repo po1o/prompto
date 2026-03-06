@@ -35,10 +35,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	font_ "github.com/jandedobbeleer/oh-my-posh/src/cli/font"
-	"github.com/jandedobbeleer/oh-my-posh/src/regex"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/cache"
+	font_ "github.com/po1o/prompto/src/cli/font"
+	"github.com/po1o/prompto/src/regex"
+	"github.com/po1o/prompto/src/runtime"
 
 	"github.com/esimov/stackblur-go"
 	"github.com/fogleman/gg"
@@ -395,7 +395,7 @@ func (ir *Renderer) cleanContent() {
 	ir.AnsiString = strings.ReplaceAll(ir.AnsiString, saveCursorAnsi, ir.Cursor)
 
 	// add watermarks
-	ir.AnsiString += "\n\n\x1b[1mohmyposh.dev\x1b[22m"
+	ir.AnsiString += "\n\n\x1b[1mprompto.dev\x1b[22m"
 	if len(ir.Author) > 0 {
 		createdBy := fmt.Sprintf(" by \x1b[1m%s\x1b[22m", ir.Author)
 		ir.AnsiString += createdBy

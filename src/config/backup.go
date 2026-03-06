@@ -40,7 +40,7 @@ func (cfg *Config) Export(format string) string {
 	}
 
 	var result bytes.Buffer
-	prefix := "# yaml-language-server: $schema=https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json\n\n"
+	prefix := "# yaml-language-server: $schema=https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json\n\n"
 	yamlEncoder := yaml.NewEncoder(&result)
 
 	err := yamlEncoder.Encode(cfg)

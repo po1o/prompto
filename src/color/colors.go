@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/gookit/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/generics"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/generics"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/template"
 )
 
 func init() {

@@ -35,20 +35,20 @@ jobs:
         uses: helm/kind-action@92086f6be054225fa813e0a4b13787fc9088faab
         with:
           node_image: kindest/node:v1.23.4@sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9
-          cluster_name: posh
+          cluster_name: prompto
       - name: Create Kubernetes namespace
         run: |
           kubectl create ns demo
       - name: Set default Kubernetes namespace
         run: |
-          kubectl config set-context posh --namespace demo
+          kubectl config set-context prompto --namespace demo
       - uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Build oh-my-posh 🔧
+      - name: Build prompto 🔧
         run: |
           cd src
-          go build -o ./bin/oh-my-posh
+          go build -o ./bin/prompto
           cd ..
       - name: Render themes 🎨
         run: |

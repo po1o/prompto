@@ -5,8 +5,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/prompt"
+	"github.com/po1o/prompto/src/runtime"
 )
 
 type engineFactory func(flags *runtime.Flags) *prompt.Engine

@@ -7,7 +7,7 @@ async function getToken(code) {
     code: code,
     grant_type: 'authorization_code',
     action: 'requesttoken',
-    redirect_uri: 'https://ohmyposh.dev/api/auth',
+    redirect_uri: 'https://prompto.dev/api/auth',
   };
 
   const resp = await axios.post('https://wbsapi.withings.net/v2/oauth2', null, { params: params });
@@ -30,7 +30,7 @@ async function refreshToken(refresh_token) {
     refresh_token: refresh_token,
     grant_type: 'refresh_token',
     action: 'requesttoken',
-    redirect_uri: 'https://ohmyposh.dev/api/auth',
+    redirect_uri: 'https://prompto.dev/api/auth',
   };
   const resp = await axios.post('https://wbsapi.withings.net/v2/oauth2', null, { params: params });
 

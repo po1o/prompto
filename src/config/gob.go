@@ -6,8 +6,8 @@ import (
 	"encoding/gob"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/log"
 )
 
 const (

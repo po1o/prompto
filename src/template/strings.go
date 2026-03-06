@@ -3,7 +3,7 @@ package template
 import (
 	"unicode/utf8"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/generics"
+	"github.com/po1o/prompto/src/generics"
 )
 
 func trunc(length any, s string) string {

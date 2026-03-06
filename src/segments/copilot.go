@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/auth"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
-	"github.com/jandedobbeleer/oh-my-posh/src/text"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/cli/auth"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/segments/options"
+	"github.com/po1o/prompto/src/text"
 )
 
 // CopilotUsage represents usage statistics for a specific quota type.
@@ -69,7 +69,7 @@ func (c *Copilot) Enabled() bool {
 }
 
 func (c *Copilot) getAccessToken() string {
-	// Check cache from `oh-my-posh auth copilot`
+	// Check cache from `prompto auth copilot`
 	if cachedToken, OK := cache.Get[string](cache.Device, auth.CopilotTokenKey); OK && len(cachedToken) != 0 {
 		return cachedToken
 	}
@@ -202,5 +202,5 @@ func (e *noQuotaDataError) Error() string {
 type noAccessTokenError struct{}
 
 func (e *noAccessTokenError) Error() string {
-	return "no access token available, use 'oh-my-posh auth copilot' to authenticate"
+	return "no access token available, use 'prompto auth copilot' to authenticate"
 }

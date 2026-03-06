@@ -11,9 +11,9 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/progress"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/http"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/cli/progress"
+	"github.com/po1o/prompto/src/runtime/http"
 )
 
 func Download(fontURL string) ([]byte, error) {

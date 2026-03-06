@@ -13,7 +13,7 @@ function Auth() {
       <div>
         <p>
           Error on authenticating with the <code>{params.get('segment')}</code> API, please provide the following error message
-          in a <a href='https://github.com/JanDeDobbeleer/oh-my-posh/issues/new/choose'>ticket</a> in
+          in a <a href='https://github.com/po1o/prompto/issues/new/choose'>ticket</a> in
           case this was unexpected.
         </p>
         <CodeBlock className="language-jsstacktrace">

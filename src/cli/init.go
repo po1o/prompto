@@ -6,13 +6,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/path"
+	"github.com/po1o/prompto/src/shell"
+	"github.com/po1o/prompto/src/template"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -36,7 +36,7 @@ func createInitCmd() *cobra.Command {
 		Short: "Initialize your shell and config",
 		Long: `Initialize your shell and config.
 
-See the documentation to initialize your shell: https://ohmyposh.dev/docs/installation/prompt.`,
+See the documentation to initialize your shell: https://prompto.dev/docs/installation/prompt.`,
 		ValidArgs: supportedShells,
 		Args:      NoArgsOrOneValidArg,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -62,7 +62,7 @@ See the documentation to initialize your shell: https://ohmyposh.dev/docs/instal
 
 func runInit(sh, command string) {
 	if os.Getenv("CURSOR_AGENT") == "1" {
-		log.Errorf("oh-my-posh init is disabled when running inside Cursor agent mode")
+		log.Errorf("prompto init is disabled when running inside Cursor agent mode")
 		return
 	}
 

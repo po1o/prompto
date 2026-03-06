@@ -3,8 +3,8 @@ package segments
 import (
 	"errors"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/shell"
 )
 
 const (
@@ -420,7 +420,7 @@ var testFullAndFolderPathCases = []testFullAndFolderPathCase{
 	{Style: FolderType, FolderSeparatorIcon: `\`, Pwd: homeDirWindows, Expected: "~", PathSeparator: `\`, GOOS: runtime.WINDOWS},
 	{Style: Full, FolderSeparatorIcon: `\`, Pwd: homeDirWindows, Expected: "~", PathSeparator: `\`, GOOS: runtime.WINDOWS},
 	{Style: Full, FolderSeparatorIcon: `\`, Pwd: homeDirWindows + "\\abc", Expected: "~\\abc", PathSeparator: `\`, GOOS: runtime.WINDOWS},
-	{Style: Full, FolderSeparatorIcon: `\`, Pwd: "C:\\Users\\posh", Expected: "C:\\Users\\posh", PathSeparator: `\`, GOOS: runtime.WINDOWS},
+	{Style: Full, FolderSeparatorIcon: `\`, Pwd: "C:\\Users\\prompto", Expected: "C:\\Users\\prompto", PathSeparator: `\`, GOOS: runtime.WINDOWS},
 }
 
 var testFullPathCustomMappedLocationsCases = []testFullPathCustomMappedLocationsCase{

@@ -3,8 +3,8 @@ package daemon
 import (
 	"context"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
-	runtimePkg "github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/prompt"
+	runtimePkg "github.com/po1o/prompto/src/runtime"
 )
 
 type SessionRenderHandle struct {

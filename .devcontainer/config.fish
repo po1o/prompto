@@ -1,2 +1,2 @@
-# Activate oh-my-posh prompt:
-oh-my-posh init fish | source
+# Activate prompto prompt:
+prompto init fish | source

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/alecthomas/assert"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/runtime"
 )
 
 func TestQuasar(t *testing.T) {

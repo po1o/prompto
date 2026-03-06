@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/runtime"
 
 	color2 "github.com/gookit/color"
 	"github.com/spf13/cobra"
@@ -16,8 +16,8 @@ import (
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get [shell|millis|accent|toggles|width]",
-	Short: "Get a value from oh-my-posh",
-	Long: `Get a value from oh-my-posh.
+	Short: "Get a value from prompto",
+	Long: `Get a value from prompto.
 
 This command is used to get the value of the following variables:
 
@@ -47,7 +47,7 @@ This command is used to get the value of the following variables:
 		}
 
 		flags := &runtime.Flags{
-			Shell: os.Getenv("POSH_SHELL"),
+			Shell: os.Getenv("PROMPTO_SHELL"),
 		}
 
 		env := &runtime.Terminal{}

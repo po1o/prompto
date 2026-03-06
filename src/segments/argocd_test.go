@@ -5,18 +5,18 @@ import (
 	"path"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/mock"
+	"github.com/po1o/prompto/src/segments/options"
 	"github.com/stretchr/testify/assert"
 )
 
 const (
-	poshHome = "/Users/posh"
+	poshHome = "/Users/prompto"
 )
 
 func TestArgocdGetConfigFromOpts(t *testing.T) {
-	configFile := "/Users/posh/.config/argocd/config"
+	configFile := "/Users/prompto/.config/argocd/config"
 	cases := []struct {
 		Case     string
 		Opts     string
@@ -74,7 +74,7 @@ func TestArgocdGetConfigPath(t *testing.T) {
 }
 
 func TestArgocdParseConfig(t *testing.T) {
-	configFile := "/Users/posh/.config/argocd/config"
+	configFile := "/Users/prompto/.config/argocd/config"
 	cases := []struct {
 		ExpectedContext ArgocdContext
 		Case            string

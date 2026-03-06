@@ -58,7 +58,7 @@ import Config from "@site/src/components/Config.js";
 
 Allows you to override a location with an icon/string.
 It validates if the current path **starts with the specific elements** and replaces it with the icon/string if there's a match.
-To avoid issues with nested overrides, Oh My Posh will sort the list of mapped locations before doing a replacement.
+To avoid issues with nested overrides, Prompto will sort the list of mapped locations before doing a replacement.
 
 | Name                       |   Type    | Default | Description                                                                              |
 | -------------------------- | :-------: | :-----: | ---------------------------------------------------------------------------------------- |
@@ -79,7 +79,7 @@ For example, to swap out `C:\Users\Leet\GitHub` with a GitHub icon, you can do t
 
 ### How it works
 
-- To make mapped locations work cross-platform, use `/` as the path separator, Oh My Posh will
+- To make mapped locations work cross-platform, use `/` as the path separator, Prompto will
   automatically match effective separators based on the running operating system.
 - If you want to match all child directories, you can use `*` as a wildcard, for example:
   `"C:/Users/Bill/*": "$"` will turn `C:/Users/Bill/Downloads` into `$/Downloads` but leave `C:/Users/Bill` unchanged.

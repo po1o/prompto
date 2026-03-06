@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/mock"
+	"github.com/po1o/prompto/src/segments/options"
+	"github.com/po1o/prompto/src/template"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -126,14 +126,14 @@ func TestAzSegment(t *testing.T) {
 
 		env.On("GOOS").Return(runtime.LINUX)
 		env.On("FileContent", filepath.Join(poshHome, ".azure", "azureProfile.json")).Return(azureProfile)
-		env.On("Getenv", "POSH_AZURE_SUBSCRIPTION").Return(azureRmContext)
+		env.On("Getenv", "PROMPTO_AZURE_SUBSCRIPTION").Return(azureRmContext)
 		env.On("Getenv", "AZURE_CONFIG_DIR").Return("")
 
 		if tc.HasCLI {
-			env.On("HasFilesInDir", filepath.Clean("/Users/posh/.azure"), "azureProfile.json").Return(true)
+			env.On("HasFilesInDir", filepath.Clean("/Users/prompto/.azure"), "azureProfile.json").Return(true)
 		} else {
-			env.On("HasFilesInDir", filepath.Clean("/Users/posh/.azure"), "azureProfile.json").Return(false)
-			env.On("HasFilesInDir", filepath.Clean("/Users/posh/.Azure"), "azureProfile.json").Return(false)
+			env.On("HasFilesInDir", filepath.Clean("/Users/prompto/.azure"), "azureProfile.json").Return(false)
+			env.On("HasFilesInDir", filepath.Clean("/Users/prompto/.Azure"), "azureProfile.json").Return(false)
 		}
 
 		if tc.Source == "" {

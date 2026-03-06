@@ -4,9 +4,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/config"
 )
 
 type segmentRenderCache struct {

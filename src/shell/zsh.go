@@ -4,7 +4,7 @@ import (
 	_ "embed"
 )
 
-//go:embed scripts/omp.zsh
+//go:embed scripts/prompto.zsh
 var zshInit string
 
 func (f Features) Zsh() Code {
@@ -12,9 +12,9 @@ func (f Features) Zsh() Code {
 	case CursorPositioning:
 		return unixCursorPositioning
 	case Tooltips:
-		return "enable_poshtooltips"
+		return "enable_prompto_tooltips"
 	case Transient:
-		return "_omp_create_widget zle-line-init _omp_zle-line-init"
+		return "_prompto_create_widget zle-line-init _prompto_zle-line-init"
 	case FTCSMarks:
 		return unixFTCSMarks
 	case Upgrade:
@@ -22,13 +22,13 @@ func (f Features) Zsh() Code {
 	case Notice:
 		return unixNotice
 	case Daemon:
-		return enablePoshDaemon
+		return enablePromptoDaemon
 	case VimMode:
-		return "bindkey -v; _omp_vim_mode=1; _omp_create_widget zle-keymap-select _omp_zle-keymap-select; _omp_setup_vim_keybindings"
+		return "bindkey -v; _prompto_vim_mode=1; _prompto_create_widget zle-keymap-select _prompto_zle-keymap-select; _prompto_setup_vim_keybindings"
 	case VimCursorBlink:
-		return "_omp_cursor_blink=1"
+		return "_prompto_cursor_blink=1"
 	case VimCursorShape:
-		return "_omp_cursor_shape=1; _omp_should_change_cursor && _omp_apply_cursor_shape"
+		return "_prompto_cursor_shape=1; _prompto_should_change_cursor && _prompto_apply_cursor_shape"
 	case PromptMark, RPrompt, PoshGit, Azure, LineError, Jobs, Async:
 		fallthrough
 	default:

@@ -5,8 +5,8 @@ package runtime
 import (
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/battery"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/runtime/battery"
 )
 
 func (term *Terminal) BatteryState() (*battery.Info, error) {

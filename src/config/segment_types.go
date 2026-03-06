@@ -4,9 +4,9 @@ import (
 	"encoding/gob"
 	"errors"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/segments"
+	"github.com/po1o/prompto/src/segments/options"
 )
 
 // SegmentType the type of segment, for more information, see the constants
@@ -347,7 +347,7 @@ const (
 	UMBRACO SegmentType = "umbraco"
 	// UNITY writes which Unity version is currently active
 	UNITY SegmentType = "unity"
-	// UPGRADE lets you know if you can upgrade Oh My Posh
+	// UPGRADE lets you know if you can upgrade Prompto
 	UPGRADE SegmentType = "upgrade"
 	// VIM writes the current vim mode
 	VIM SegmentType = "vim"

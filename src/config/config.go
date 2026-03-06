@@ -7,16 +7,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/cli/upgrade"
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/maps"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
-	"github.com/jandedobbeleer/oh-my-posh/src/segments"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
-	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/cli/upgrade"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/maps"
+	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/segments"
+	"github.com/po1o/prompto/src/shell"
+	"github.com/po1o/prompto/src/template"
+	"github.com/po1o/prompto/src/terminal"
 )
 
 func init() {
@@ -93,7 +93,7 @@ type Config struct {
 }
 
 func (cfg *Config) MakeColors(env runtime.Environment) color.String {
-	cacheDisabled := env.Getenv("OMP_CACHE_DISABLED") == "1"
+	cacheDisabled := env.Getenv("PROMPTO_CACHE_DISABLED") == "1"
 	return color.MakeColors(cfg.getPalette(), !cacheDisabled, cfg.AccentColor, env)
 }
 

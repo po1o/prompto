@@ -7,13 +7,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/color"
-	"github.com/jandedobbeleer/oh-my-posh/src/config"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	runjobs "github.com/jandedobbeleer/oh-my-posh/src/runtime/jobs"
-	"github.com/jandedobbeleer/oh-my-posh/src/shell"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
-	"github.com/jandedobbeleer/oh-my-posh/src/terminal"
+	"github.com/po1o/prompto/src/color"
+	"github.com/po1o/prompto/src/config"
+	"github.com/po1o/prompto/src/log"
+	runjobs "github.com/po1o/prompto/src/runtime/jobs"
+	"github.com/po1o/prompto/src/shell"
+	"github.com/po1o/prompto/src/template"
+	"github.com/po1o/prompto/src/terminal"
 )
 
 func segmentKey(blockIndex, segmentIndex int, segment *config.Segment) string {

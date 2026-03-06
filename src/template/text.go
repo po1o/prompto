@@ -7,7 +7,7 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/po1o/prompto/src/log"
 )
 
 type Text struct {

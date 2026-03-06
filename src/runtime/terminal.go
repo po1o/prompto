@@ -16,13 +16,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
-	"github.com/jandedobbeleer/oh-my-posh/src/maps"
-	"github.com/jandedobbeleer/oh-my-posh/src/regex"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/cmd"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/http"
-	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/maps"
+	"github.com/po1o/prompto/src/regex"
+	"github.com/po1o/prompto/src/runtime/cmd"
+	"github.com/po1o/prompto/src/runtime/http"
+	"github.com/po1o/prompto/src/runtime/path"
 
 	disk "github.com/shirou/gopsutil/v4/disk"
 	load "github.com/shirou/gopsutil/v4/load"
@@ -542,11 +542,11 @@ func (term *Terminal) setPromptCount() {
 }
 
 func (term *Terminal) CursorPosition() (row, col int) {
-	if number, err := strconv.Atoi(term.Getenv("POSH_CURSOR_LINE")); err == nil {
+	if number, err := strconv.Atoi(term.Getenv("PROMPTO_CURSOR_LINE")); err == nil {
 		row = number
 	}
 
-	if number, err := strconv.Atoi(term.Getenv("POSH_CURSOR_COLUMN")); err != nil {
+	if number, err := strconv.Atoi(term.Getenv("PROMPTO_CURSOR_COLUMN")); err != nil {
 		col = number
 	}
 
