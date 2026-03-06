@@ -32,8 +32,7 @@ function _omp_get_prompt
     if test "$_omp_vim_mode" = "1"
         set vim_mode_arg "--vim-mode="(_omp_get_vim_mode)
     end
-    $_omp_executable print $argv[1] \
-        --save-cache \
+    $_omp_executable render $argv[1] \
         --shell=fish \
         --shell-version=$FISH_VERSION \
         --status=$_omp_status \

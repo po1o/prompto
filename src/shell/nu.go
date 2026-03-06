@@ -17,7 +17,9 @@ func (f Features) Nu() Code {
 		return "^$_omp_executable upgrade --auto"
 	case Notice:
 		return "^$_omp_executable notice"
-	case PromptMark, RPrompt, PoshGit, Azure, LineError, Jobs, Tooltips, FTCSMarks, CursorPositioning, Async, Daemon, VimMode, VimCursorBlink, VimCursorShape:
+	case Daemon:
+		return enablePoshDaemon
+	case PromptMark, RPrompt, PoshGit, Azure, LineError, Jobs, Tooltips, FTCSMarks, CursorPositioning, Async, VimMode, VimCursorBlink, VimCursorShape:
 		fallthrough
 	default:
 		return ""

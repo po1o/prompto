@@ -2,19 +2,17 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"time"
 
-	"github.com/jandedobbeleer/oh-my-posh/src/cache"
 	"github.com/jandedobbeleer/oh-my-posh/src/daemon"
 	"github.com/jandedobbeleer/oh-my-posh/src/daemon/ipc"
-	"github.com/jandedobbeleer/oh-my-posh/src/log"
 	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
 	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
 	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
 	"github.com/jandedobbeleer/oh-my-posh/src/shell"
-	"github.com/jandedobbeleer/oh-my-posh/src/template"
 
 	"github.com/spf13/cobra"
 )
@@ -24,13 +22,29 @@ const (
 )
 
 var (
+	pwd           string
+	pswd          string
+	status        int
+	pipestatus    string
+	timing        float64
+	stackCount    int
+	terminalWidth int
+	eval          bool
+	cleared       bool
+	jobCount      int
+	command       string
+	shellVersion  string
+	noStatus      bool
+	column        int
+	escape        bool
+
 	pid           int
 	repaint       bool
 	renderVimMode string
 )
 
 var renderCmd = &cobra.Command{
-	Use:   "render",
+	Use:   "render [debug|primary|secondary|transient|right|tooltip|valid|error|preview]",
 	Short: "Render prompts via the daemon",
 	Long: `Render all prompts via the daemon for faster display.
 
@@ -42,12 +56,31 @@ Output format (one per line):
   primary:<text>
   right:<text>
   secondary:<text>
-  ...
-
-Falls back to direct rendering if daemon is not available.`,
-	Run: func(_ *cobra.Command, _ []string) {
+  ...`,
+	ValidArgs: []string{
+		prompt.DEBUG,
+		prompt.PRIMARY,
+		prompt.SECONDARY,
+		prompt.TRANSIENT,
+		prompt.RIGHT,
+		prompt.TOOLTIP,
+		prompt.VALID,
+		prompt.ERROR,
+		prompt.PREVIEW,
+	},
+	Args: NoArgsOrOneValidArg,
+	Run: func(cmd *cobra.Command, args []string) {
 		if shellName == "" {
 			shellName = shell.GENERIC
+		}
+
+		if shellName != shell.GENERIC {
+			normalizedShell, err := normalizeSupportedShell(shellName)
+			if err != nil {
+				exitcode = 1
+				return
+			}
+			shellName = normalizedShell
 		}
 
 		if configFlag != "" {
@@ -70,17 +103,28 @@ Falls back to direct rendering if daemon is not available.`,
 			ShellVersion:  shellVersion,
 			Plain:         plain,
 			Cleared:       cleared,
+			Eval:          eval,
 			NoExitCode:    noStatus,
 			Column:        column,
 			JobCount:      jobCount,
 			Escape:        escape,
 			Force:         force,
 			VimMode:       renderVimMode,
+			Command:       command,
+		}
+
+		if len(args) > 0 {
+			flags.Type = args[0]
+			flags.IsPrimary = args[0] == prompt.PRIMARY
+			if err := renderTypeViaDaemon(flags, pid, args[0]); err != nil {
+				exitcode = 1
+				fmt.Print("")
+			}
+			return
 		}
 
 		if err := renderViaDaemon(flags, pid, repaint); err != nil {
-			log.Debugf("daemon render failed: %v, falling back to direct render", err)
-			renderDirect(flags)
+			exitcode = 1
 		}
 	},
 }
@@ -97,14 +141,15 @@ func init() {
 	renderCmd.Flags().IntVarP(&stackCount, "stack-count", "s", 0, "number of locations on the stack")
 	renderCmd.Flags().IntVarP(&terminalWidth, "terminal-width", "w", 0, "width of the terminal")
 	renderCmd.Flags().BoolVar(&cleared, "cleared", false, "do we have a clear terminal or not")
+	renderCmd.Flags().BoolVar(&eval, "eval", false, "output the prompt for eval")
 	renderCmd.Flags().IntVar(&column, "column", 0, "the column position of the cursor")
 	renderCmd.Flags().IntVar(&jobCount, "job-count", 0, "number of background jobs")
+	renderCmd.Flags().StringVar(&command, "command", "", "tooltip command")
 	renderCmd.Flags().BoolVar(&escape, "escape", true, "escape the ANSI sequences for the shell")
 	renderCmd.Flags().BoolVarP(&force, "force", "f", false, "force rendering the segments")
 	renderCmd.Flags().IntVar(&pid, "pid", 0, "shell process id")
 	renderCmd.Flags().BoolVar(&repaint, "repaint", false, "vim mode repaint (soft cancel, reuse computations)")
 	renderCmd.Flags().StringVar(&renderVimMode, "vim-mode", "", "current vim mode (insert, normal, visual, replace)")
-
 	RootCmd.AddCommand(renderCmd)
 }
 
@@ -123,6 +168,35 @@ func renderViaDaemon(flags *runtime.Flags, pid int, repaint bool) error {
 		outputPrompts(resp)
 		return resp.Type != "complete"
 	})
+}
+
+func renderTypeViaDaemon(flags *runtime.Flags, pid int, promptType string) error {
+	silent = true
+	client, err := daemon.ConnectOrStart(startDetachedDaemon)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), renderTimeout)
+	defer cancel()
+
+	response, err := client.RenderPromptSync(ctx, flags, pid, "", nil, false)
+	if err != nil {
+		return err
+	}
+
+	if response == nil || response.Prompts == nil {
+		return errors.New("no prompts returned")
+	}
+
+	selected, ok := response.Prompts[promptType]
+	if !ok || selected == nil {
+		return errors.New("requested prompt type not returned")
+	}
+
+	fmt.Print(selected.Text)
+	return nil
 }
 
 func outputPrompts(resp *ipc.PromptResponse) {
@@ -152,22 +226,4 @@ func outputPrompts(resp *ipc.PromptResponse) {
 	// Output status line so shell knows when a batch is complete
 	// "update" = more updates may come, "complete" = all segments done
 	fmt.Printf("status:%s\n", resp.Type)
-}
-
-func renderDirect(flags *runtime.Flags) {
-	silent = true
-	flags.Eval = false
-	cache.Init(flags.Shell)
-
-	eng := prompt.New(flags)
-
-	defer func() {
-		template.SaveCache()
-		cache.Close()
-	}()
-
-	// Always output primary and right prompts (even if empty) so shell can clear stale values
-	fmt.Printf("primary:%s\n", eng.Primary())
-	fmt.Printf("right:%s\n", eng.RPrompt())
-	fmt.Println("status:complete")
 }

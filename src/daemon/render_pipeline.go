@@ -13,6 +13,7 @@ type PromptBundle struct {
 	RPrompt   string
 	Secondary string
 	Transient string
+	Extras    map[string]string
 }
 
 type PromptUpdate struct {
@@ -70,6 +71,17 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 		engine.SetDeviceCache(pipeline.deviceCache)
 		applyRenderFlags(engine, flags, repaint)
 
+		if flags != nil && flags.Type != "" && flags.Type != prompt.PRIMARY {
+			bundle := renderPromptByType(engine, flags.Type, flags.Command)
+			if handle.Hub() != nil {
+				handle.Hub().Publish(renderCompletePayload, handle.RenderID())
+			}
+			return bundle, &ActiveRender{
+				handle:   handle,
+				renderer: pipeline.renderer,
+			}
+		}
+
 		if repaint && handle.Reattached() {
 			primary = engine.PrimaryRepaint()
 			if len(engine.PendingSegments()) == 0 && handle.Hub() != nil {
@@ -107,6 +119,42 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 	return bundle, &ActiveRender{
 		handle:   handle,
 		renderer: pipeline.renderer,
+	}
+}
+
+func renderPromptByType(engine *prompt.Engine, promptType, command string) PromptBundle {
+	if engine == nil {
+		return PromptBundle{}
+	}
+
+	text := ""
+	switch promptType {
+	case prompt.DEBUG:
+		text = engine.ExtraPrompt(prompt.Debug)
+	case prompt.PRIMARY:
+		text = engine.Primary()
+	case prompt.SECONDARY:
+		text = engine.ExtraPrompt(prompt.Secondary)
+	case prompt.TRANSIENT:
+		text = engine.ExtraPrompt(prompt.Transient)
+	case prompt.RIGHT:
+		text = engine.RPrompt()
+	case prompt.TOOLTIP:
+		text = engine.Tooltip(command)
+	case prompt.VALID:
+		text = engine.ExtraPrompt(prompt.Valid)
+	case prompt.ERROR:
+		text = engine.ExtraPrompt(prompt.Error)
+	case prompt.PREVIEW:
+		text = engine.Preview()
+	default:
+		return PromptBundle{}
+	}
+
+	return PromptBundle{
+		Extras: map[string]string{
+			promptType: text,
+		},
 	}
 }
 

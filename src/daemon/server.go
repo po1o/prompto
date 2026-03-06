@@ -367,6 +367,10 @@ func makePromptResponse(responseType, requestID string, bundle PromptBundle) *ip
 		prompts["transient"] = &ipc.Prompt{Text: bundle.Transient}
 	}
 
+	for name, text := range bundle.Extras {
+		prompts[name] = &ipc.Prompt{Text: text}
+	}
+
 	return &ipc.PromptResponse{
 		Type:      responseType,
 		RequestId: requestID,

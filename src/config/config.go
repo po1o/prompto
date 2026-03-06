@@ -135,7 +135,7 @@ func (cfg *Config) getPalette() color.Palette {
 func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features {
 	var feats shell.Features
 
-	asyncShells := []string{shell.BASH, shell.ZSH, shell.FISH, shell.PWSH}
+	asyncShells := []string{shell.BASH, shell.ZSH, shell.FISH, shell.PWSH, shell.NU}
 
 	if cfg.Async && slices.Contains(asyncShells, env.Shell()) {
 		log.Debug("async enabled")

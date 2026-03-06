@@ -74,6 +74,7 @@ type Flags struct {
 	PSWD           string
 	Shell          string
 	ShellVersion   string
+	Command        string
 	PWD            string
 	AbsolutePWD    string
 	VimMode        string

@@ -26,7 +26,7 @@ PS0='${_omp_start_time:0:$((_omp_start_time="$(_omp_start_timer)",0))}$(_omp_ftc
 
 # set secondary prompt
 _omp_secondary_prompt=(
-    "$_omp_executable" print secondary \
+    "$_omp_executable" render secondary \
         --shell=bash \
         --shell-version="$BASH_VERSION"
 )
@@ -83,8 +83,7 @@ function _omp_get_primary() {
         prompt='[NOTICE: Oh My Posh prompt is not supported in POSIX mode]\n\u@\h:\w\$ '
     else
         prompt=(
-            "$_omp_executable" print primary \
-                --save-cache \
+            "$_omp_executable" render primary \
                 --shell=bash \
                 --shell-version="$BASH_VERSION" \
                 --status="$_omp_status" \

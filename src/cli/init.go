@@ -23,18 +23,6 @@ var (
 	debug       bool
 	daemonMode  bool
 
-	supportedShells = []string{
-		"bash",
-		"zsh",
-		"fish",
-		"powershell",
-		"pwsh",
-		"cmd",
-		"nu",
-		"elvish",
-		"xonsh",
-	}
-
 	initCmd = createInitCmd()
 )
 
@@ -44,7 +32,7 @@ func init() {
 
 func createInitCmd() *cobra.Command {
 	initCmd := &cobra.Command{
-		Use:   "init [bash|zsh|fish|powershell|pwsh|cmd|nu|elvish|xonsh]",
+		Use:   "init [bash|zsh|fish|powershell|pwsh|nu]",
 		Short: "Initialize your shell and config",
 		Long: `Initialize your shell and config.
 
@@ -82,9 +70,13 @@ func runInit(sh, command string) {
 		log.Enable(plain)
 	}
 
-	if sh == "powershell" {
-		sh = shell.PWSH
+	normalizedShell, err := normalizeSupportedShell(sh)
+	if err != nil {
+		log.Error(err)
+		exitcode = 1
+		return
 	}
+	sh = normalizedShell
 
 	cfg := config.Load(configFlag)
 	persist := !daemonMode
@@ -181,20 +173,6 @@ func getFullCommand(cmd *cobra.Command, args []string) string {
 }
 
 func initCache(sh string, persist bool) {
-	if !persist {
-		cache.Init(sh, cache.NoSession)
-		return
-	}
-
-	switch {
-	case !printOutput:
-		if (eval && sh == shell.PWSH) || sh == shell.ELVISH {
-			cache.Init(sh)
-			return
-		}
-
-		fallthrough
-	default:
-		cache.Init(sh, cache.NewSession, cache.Persist)
-	}
+	_ = persist
+	cache.Init(sh, cache.NoSession)
 }

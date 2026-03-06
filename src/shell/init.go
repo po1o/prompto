@@ -47,7 +47,7 @@ func getExecutablePath(env runtime.Environment) (string, error) {
 // It writes the init script to the appropriate location and returns
 // a source command or wrapper command depending on the shell.
 // For Nu shell, it writes to the autoload directory and returns empty.
-// For PWSH/Elvish, it returns a wrapper command that re-invokes oh-my-posh.
+// For PWSH, it returns a wrapper command that re-invokes oh-my-posh.
 func Init(env runtime.Environment, feats Features) string {
 	switch env.Flags().Shell {
 	case PWSH:
@@ -56,11 +56,9 @@ func Init(env runtime.Environment, feats Features) string {
 		}
 
 		return recurseInitCommand(env)
-	case ELVISH:
-		return recurseInitCommand(env)
 	case NU:
 		return initNu(env, feats)
-	case ZSH, BASH, FISH, CMD, XONSH:
+	case ZSH, BASH, FISH:
 		return generateAndSourceScript(env, feats)
 	default:
 		return fmt.Sprintf(`echo "%s is not supported by Oh My Posh"`, env.Flags().Shell)
@@ -89,7 +87,7 @@ func Debug(env runtime.Environment, feats Features, startTime *time.Time) string
 }
 
 // recurseInitCommand returns a wrapper command that re-invokes oh-my-posh
-// with --print. This is used by PWSH and Elvish which eval the script.
+// with --print. This is used by PWSH which evals the script.
 func recurseInitCommand(env runtime.Environment) string {
 	executable, err := getExecutablePath(env)
 	if err != nil {
@@ -109,15 +107,7 @@ func recurseInitCommand(env runtime.Environment) string {
 	config := quotePwshOrElvishStr(env.Flags().ConfigPath)
 	executable = quotePwshOrElvishStr(executable)
 
-	var command string
-
-	switch env.Flags().Shell {
-	case PWSH:
-		command = "(@(& %s init %s --config=%s --print%s) -join \"`n\") | Invoke-Expression"
-	case ELVISH:
-		command = "eval ((external %s) init %s --config=%s --print%s | slurp)"
-	}
-
+	command := "(@(& %s init %s --config=%s --print%s) -join \"`n\") | Invoke-Expression"
 	return fmt.Sprintf(command, executable, env.Flags().Shell, config, additionalParams)
 }
 
@@ -185,22 +175,10 @@ func generateScript(env runtime.Environment, feats Features) string {
 		executable = quoteFishStr(executable)
 		configPath = quoteFishStr(configPath)
 		script = fishInit
-	case CMD:
-		executable = escapeLuaStr(executable)
-		configPath = escapeLuaStr(configPath)
-		script = cmdInit
 	case NU:
 		executable = quoteNuStr(executable)
 		configPath = quoteNuStr(configPath)
 		script = nuInit
-	case ELVISH:
-		executable = quotePwshOrElvishStr(executable)
-		configPath = quotePwshOrElvishStr(configPath)
-		script = elvishInit
-	case XONSH:
-		executable = quotePythonStr(executable)
-		configPath = quotePythonStr(configPath)
-		script = xonshInit
 	default:
 		return fmt.Sprintf("echo \"No initialization script available for %s\"", env.Flags().Shell)
 	}
@@ -254,14 +232,8 @@ func sourceCommand(env runtime.Environment, scriptPath string, async bool) strin
 		script += fmt.Sprintf("& %s", quotePwshOrElvishStr(scriptPath))
 	case ZSH, BASH:
 		script += fmt.Sprintf("source %s", QuotePosixStr(scriptPath))
-	case XONSH:
-		script += fmt.Sprintf("source %s", quotePythonStr(scriptPath))
 	case FISH:
 		script += fmt.Sprintf("source %s", quoteFishStr(scriptPath))
-	case ELVISH:
-		script += fmt.Sprintf("eval (slurp < %s)", quotePwshOrElvishStr(scriptPath))
-	case CMD:
-		script += fmt.Sprintf(`load(io.open('%s', "r"):read("*a"))()`, escapeLuaStr(scriptPath))
 	default:
 		return fmt.Sprintf("echo \"No source command available for %s\"", env.Flags().Shell)
 	}
@@ -303,14 +275,10 @@ func sessionScript(shell string) string {
 		return fmt.Sprintf("$env:POSH_SESSION_ID = \"%s\";", cache.SessionID())
 	case ZSH, BASH:
 		return fmt.Sprintf("export POSH_SESSION_ID=\"%s\";", cache.SessionID())
-	case XONSH:
-		return fmt.Sprintf("$POSH_SESSION_ID = \"%s\";", cache.SessionID())
 	case FISH:
 		return fmt.Sprintf("set --export --global POSH_SESSION_ID \"%s\";", cache.SessionID())
-	case ELVISH:
-		return fmt.Sprintf("set-env POSH_SESSION_ID \"%s\";", cache.SessionID())
-	case CMD:
-		return fmt.Sprintf(`os.setenv('POSH_SESSION_ID', '%s');`, cache.SessionID())
+	case NU:
+		return fmt.Sprintf("$env.POSH_SESSION_ID = \"%s\";", cache.SessionID())
 	}
 	return ""
 }

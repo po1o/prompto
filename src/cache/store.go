@@ -1,9 +1,7 @@
 package cache
 
 import (
-	"encoding/gob"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -12,10 +10,8 @@ import (
 )
 
 type store struct {
-	cache    *maps.Concurrent[*Entry[any]]
-	filePath string
-	dirty    bool
-	persist  bool
+	cache *maps.Concurrent[*Entry[any]]
+	dirty bool
 }
 
 var (
@@ -55,74 +51,19 @@ func (s Store) get() *store {
 	}
 }
 
-// Init initializes a store with the given file path
-func (s Store) init(filePath string, persist bool) {
+// Init initializes a store.
+func (s Store) init(filePath string) {
 	defer log.Trace(time.Now(), string(s), filePath)
 
 	store := s.get()
 	store.cache = maps.NewConcurrent[*Entry[any]]()
-	store.filePath = filepath.Join(Path(), filePath)
-	store.persist = persist
-
-	reader, err := openFile(store.filePath)
-	if err != nil {
-		// set to dirty so we create it on close
-		log.Error(err)
-		store.dirty = true
-		return
-	}
-
-	defer reader.Close()
-
-	var list maps.Simple[*Entry[any]]
-
-	dec := gob.NewDecoder(reader)
-	if err := dec.Decode(&list); err != nil {
-		log.Error(err)
-		// If gob decoding fails, the cache file might be from the old format
-		// Set dirty to true so we recreate it in gob format
-		store.dirty = true
-		return
-	}
-
-	for key, entry := range list {
-		if entry.Expired() {
-			log.Debugf("(%s) skipping expired key: %s", string(s), key)
-			continue
-		}
-
-		log.Debugf("(%s) loading %s", string(s), key)
-		store.cache.Set(key, entry)
-	}
+	store.dirty = false
 }
 
 func (s Store) close() {
 	defer log.Trace(time.Now(), string(s))
 
-	store := s.get()
-	if store == nil || !store.persist || !store.dirty {
-		log.Debugf("(%s) not persisting", string(s))
-		return
-	}
-
-	cache := store.cache.ToSimple()
-
-	file, err := openFile(store.filePath)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Error(err)
-		}
-	}()
-
-	enc := gob.NewEncoder(file)
-	if err := enc.Encode(cache); err != nil {
-		log.Error(err)
-	}
+	log.Debugf("(%s) not persisting", string(s))
 }
 
 // Get retrieves a typed value from the specified store

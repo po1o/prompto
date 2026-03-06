@@ -28,7 +28,7 @@ func TestBashFeaturesWithBLE(t *testing.T) {
 	want := `// these are the features
 bleopt prompt_ps1_transient=always
 bleopt prompt_ps1_final='$(
-    "$_omp_executable" print transient \
+    "$_omp_executable" render transient \
         --shell=bash \
         --shell-version="$BASH_VERSION" \
         --escape=false
@@ -37,8 +37,7 @@ _omp_ftcs_marks=1
 "$_omp_executable" upgrade --auto
 "$_omp_executable" notice
 bleopt prompt_rps1='$(
-	"$_omp_executable" print right \
-		--save-cache \
+	"$_omp_executable" render right \
 		--shell=bash \
 		--shell-version="$BASH_VERSION" \
 		--status="$_omp_status" \

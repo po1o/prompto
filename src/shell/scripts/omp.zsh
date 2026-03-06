@@ -57,7 +57,7 @@ function _omp_preexec() {
 
 function _omp_precmd() {
   if [[ -z $_omp_secondary_prompt ]]; then
-    _omp_secondary_prompt=$($_omp_executable print secondary --shell=zsh)
+    _omp_secondary_prompt=$($_omp_executable render secondary --shell=zsh)
   fi
 
   _omp_status=$?
@@ -127,8 +127,7 @@ function _omp_get_prompt() {
   if [[ $_omp_vim_mode == 1 ]]; then
     vim_mode_arg="--vim-mode=$(_omp_get_vim_mode)"
   fi
-  $_omp_executable print $type \
-    --save-cache \
+  $_omp_executable render $type \
     --shell=zsh \
     --shell-version=$ZSH_VERSION \
     --status=$_omp_status \

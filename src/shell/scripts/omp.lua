@@ -171,9 +171,8 @@ end
 local function get_posh_prompt(prompt_type, ...)
     os.setenv('POSH_CURSOR_LINE', console.getnumlines())
     local command = table.concat({
-        'print',
+        'render',
         prompt_type,
-        '--save-cache',
         '--shell=cmd',
         status_option(),
         no_status_option(),

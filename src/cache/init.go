@@ -15,7 +15,6 @@ type Option func()
 var (
 	sessionID  string
 	newSession bool
-	persist    bool
 	noSession  bool
 	once       sync.Once
 )
@@ -26,8 +25,7 @@ var NewSession Option = func() {
 }
 
 var Persist Option = func() {
-	log.Debug("enable persistent cache")
-	persist = true
+	log.Debug("persistent cache is disabled")
 }
 
 var NoSession Option = func() {
@@ -36,18 +34,21 @@ var NoSession Option = func() {
 }
 
 func Init(shell string, options ...Option) {
+	newSession = false
+	noSession = false
+
 	for _, opt := range options {
 		opt()
 	}
 
-	Device.init(DeviceStore, persist)
+	Device.init(DeviceStore)
 
 	if noSession {
 		return
 	}
 
 	sessionFileName := fmt.Sprintf("%s.%s.%s", shell, SessionID(), DeviceStore)
-	Session.init(sessionFileName, persist)
+	Session.init(sessionFileName)
 }
 
 func SessionID() string {

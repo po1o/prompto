@@ -29,8 +29,7 @@ def _omp_get_context():
 def _omp_get_prompt(type: str, *args: str):
     status, duration = _omp_get_context()
     return $(
-        @(_omp_executable) print @(type) \
-            --save-cache \
+        @(_omp_executable) render @(type) \
             --shell=xonsh \
             --shell-version=$XONSH_VERSION \
             --status=@(status) \

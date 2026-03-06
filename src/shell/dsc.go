@@ -99,10 +99,6 @@ func (s *Shell) getShellConfigPath() (string, error) {
 		return cmd.Run(s.Name, "-NoProfile", "-Command", "$PROFILE")
 	case NU:
 		return cmd.Run("nu", "-c", "$nu.config-path")
-	case ELVISH:
-		return filepath.Join(home, ".elvish", "rc.elv"), nil
-	case XONSH:
-		return filepath.Join(home, ".xonshrc"), nil
 	default:
 		return "", fmt.Errorf("unsupported shell type: %s", s.Name)
 	}
@@ -192,10 +188,6 @@ func (s *Shell) shellCommand() string {
 		return s.Command + " | source"
 	case PWSH:
 		return s.Command + " | Invoke-Expression"
-	case ELVISH:
-		return fmt.Sprintf(`eval (%s)`, s.Command)
-	case XONSH:
-		return fmt.Sprintf(`execx($(%s))`, s.Command)
 	default:
 		return s.Command
 	}

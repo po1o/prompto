@@ -186,26 +186,6 @@ func TestUpdateShellConfig(t *testing.T) {
 			expectedUpdate: true,
 		},
 		{
-			name: "elvish - add initialization when not present",
-			shell: &Shell{
-				Name:    "elvish",
-				Command: "oh-my-posh init elvish",
-			},
-			content:        "# Elvish config\nset paths = [$@paths /usr/local/bin]\n",
-			expectedOutput: "# Elvish config\nset paths = [$@paths /usr/local/bin]\neval (oh-my-posh init elvish)\n",
-			expectedUpdate: true,
-		},
-		{
-			name: "xonsh - add initialization when not present",
-			shell: &Shell{
-				Name:    "xonsh",
-				Command: "oh-my-posh init xonsh",
-			},
-			content:        "# Xonsh config\n$PATH.append('/usr/local/bin')\n",
-			expectedOutput: "# Xonsh config\n$PATH.append('/usr/local/bin')\nexecx($(oh-my-posh init xonsh))\n",
-			expectedUpdate: true,
-		},
-		{
 			name: "preserve indentation when updating",
 			shell: &Shell{
 				Name:    "bash",
@@ -396,22 +376,6 @@ func TestShellCommand(t *testing.T) {
 				Command: "oh-my-posh init pwsh",
 			},
 			expected: "oh-my-posh init pwsh | Invoke-Expression",
-		},
-		{
-			name: "elvish shell command",
-			shell: &Shell{
-				Name:    "elvish",
-				Command: "oh-my-posh init elvish",
-			},
-			expected: `eval (oh-my-posh init elvish)`,
-		},
-		{
-			name: "xonsh shell command",
-			shell: &Shell{
-				Name:    "xonsh",
-				Command: "oh-my-posh init xonsh",
-			},
-			expected: `execx($(oh-my-posh init xonsh))`,
 		},
 		{
 			name: "unknown shell command",

@@ -57,6 +57,7 @@ message Flags {
   string pswd = 4;                    // PowerShell working directory
   string shell = 5;                   // Shell name
   string shell_version = 6;           // Shell version
+  string command = 30;                // Tooltip/auxiliary command context
   string pwd = 7;                     // Current working directory
   string absolute_pwd = 8;            // Absolute working directory
   int32 error_code = 9;               // Exit code of last command
@@ -132,4 +133,3 @@ message SetLoggingResponse {
   bool success = 1;
   string error = 2;
 }
-

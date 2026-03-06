@@ -33,8 +33,7 @@ func (f Features) Bash() Code {
 		}
 
 		return `bleopt prompt_rps1='$(
-	"$_omp_executable" print right \
-		--save-cache \
+	"$_omp_executable" render right \
 		--shell=bash \
 		--shell-version="$BASH_VERSION" \
 		--status="$_omp_status" \
@@ -52,7 +51,7 @@ func (f Features) Bash() Code {
 
 		return `bleopt prompt_ps1_transient=always
 bleopt prompt_ps1_final='$(
-    "$_omp_executable" print transient \
+    "$_omp_executable" render transient \
         --shell=bash \
         --shell-version="$BASH_VERSION" \
         --escape=false

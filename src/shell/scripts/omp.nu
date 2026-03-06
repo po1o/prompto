@@ -14,6 +14,15 @@ $env.VIRTUAL_ENV_DISABLE_PROMPT = 1
 $env.PYENV_VIRTUALENV_DISABLE_PROMPT = 1
 
 let _omp_executable: string = (echo ::OMP::)
+$env._omp_daemon_mode = false
+$env._omp_current_prompt = ""
+$env._omp_current_rprompt = ""
+$env._omp_current_transient = ""
+$env._omp_current_secondary = ""
+
+def enable_poshdaemon [] {
+    $env._omp_daemon_mode = true
+}
 
 # PROMPTS
 
@@ -31,8 +40,7 @@ def --wrapped _omp_get_prompt [
     }
 
     (
-        ^$_omp_executable print $type
-            --save-cache
+        ^$_omp_executable render $type
             --shell=nu
             $"--shell-version=($env.POSH_SHELL_VERSION)"
             $"--status=($env.LAST_EXIT_CODE)"
@@ -44,8 +52,61 @@ def --wrapped _omp_get_prompt [
     )
 }
 
+def _omp_daemon_render [clear: bool] {
+    mut execution_time = -1
+    mut no_status = true
+    if $env.CMD_DURATION_MS != '0823' {
+        $execution_time = $env.CMD_DURATION_MS
+        $no_status = false
+    }
+
+    for line in (
+        ^$_omp_executable render
+            --shell=nu
+            $"--shell-version=($env.POSH_SHELL_VERSION)"
+            $"--status=($env.LAST_EXIT_CODE)"
+            $"--no-status=($no_status)"
+            $"--execution-time=($execution_time)"
+            $"--terminal-width=((term size).columns)"
+            $"--job-count=(job list | length)"
+            $"--cleared=($clear)"
+            | lines
+    ) {
+        if not ($line | str contains ":") {
+            continue
+        }
+
+        let key = ($line | split row ":" | first)
+        let value = ($line | str replace --regex '^[^:]*:' '')
+
+        if $key == "primary" {
+            $env._omp_current_prompt = $value
+            continue
+        }
+
+        if $key == "right" {
+            $env._omp_current_rprompt = $value
+            continue
+        }
+
+        if $key == "transient" {
+            $env._omp_current_transient = $value
+            continue
+        }
+
+        if $key == "secondary" {
+            $env._omp_current_secondary = $value
+            continue
+        }
+
+        if $key == "status" {
+            break
+        }
+    }
+}
+
 $env.PROMPT_MULTILINE_INDICATOR = (
-    ^$_omp_executable print secondary
+    ^$_omp_executable render secondary
         --shell=nu
         $"--shell-version=($env.POSH_SHELL_VERSION)"
 )
@@ -62,7 +123,18 @@ $env.PROMPT_COMMAND = {||
         do --env $env.SET_POSHCONTEXT
     }
 
-    _omp_get_prompt primary $"--cleared=($clear)"
+    if $env._omp_daemon_mode {
+        _omp_daemon_render $clear
+        $env._omp_current_prompt
+    } else {
+        _omp_get_prompt primary $"--cleared=($clear)"
+    }
 }
 
-$env.PROMPT_COMMAND_RIGHT = {|| _omp_get_prompt right }
+$env.PROMPT_COMMAND_RIGHT = {||
+    if $env._omp_daemon_mode {
+        $env._omp_current_rprompt
+    } else {
+        _omp_get_prompt right
+    }
+}

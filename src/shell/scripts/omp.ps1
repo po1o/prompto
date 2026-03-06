@@ -225,8 +225,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         $stackCount = Get-PoshStackCount
         $terminalWidth = Get-TerminalWidth
         Invoke-Utf8Posh @(
-            "print", $Type
-            "--save-cache"
+            "render", $Type
             "--shell=$script:ShellName"
             "--shell-version=$script:PSVersion"
             "--status=$script:ErrorCode"
@@ -266,7 +265,7 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
         Set-PoshContext $script:ErrorCode
 
         if (-not $script:SecondaryPromptSet) {
-            $sec = (Invoke-Utf8Posh @("print", "secondary", "--shell=$script:ShellName")) -join "`n"
+            $sec = (Invoke-Utf8Posh @("render", "secondary", "--shell=$script:ShellName")) -join "`n"
             Set-PSReadLineOption -ContinuationPrompt $sec
             $script:SecondaryPromptSet = $true
         }
@@ -410,8 +409,8 @@ New-Module -Name "oh-my-posh-core" -ScriptBlock {
     }
 
     function Enable-PoshLineError {
-        $validLine = (Invoke-Utf8Posh @("print", "valid", "--shell=$script:ShellName")) -join "`n"
-        $errorLine = (Invoke-Utf8Posh @("print", "error", "--shell=$script:ShellName")) -join "`n"
+        $validLine = (Invoke-Utf8Posh @("render", "valid", "--shell=$script:ShellName")) -join "`n"
+        $errorLine = (Invoke-Utf8Posh @("render", "error", "--shell=$script:ShellName")) -join "`n"
         Set-PSReadLineOption -PromptText $validLine, $errorLine
     }
 

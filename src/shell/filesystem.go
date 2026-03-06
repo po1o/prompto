@@ -111,14 +111,8 @@ func shellTemplate(sh string) string {
 		return bashInit
 	case FISH:
 		return fishInit
-	case CMD:
-		return cmdInit
 	case NU:
 		return nuInit
-	case ELVISH:
-		return elvishInit
-	case XONSH:
-		return xonshInit
 	default:
 		return ""
 	}
@@ -129,14 +123,8 @@ func InitScriptName(flags *runtime.Flags) string {
 	switch flags.Shell {
 	case PWSH:
 		sh = "ps1"
-	case CMD:
-		sh = "lua"
 	case BASH:
 		sh = "sh"
-	case ELVISH:
-		sh = "elv"
-	case XONSH:
-		sh = "xsh"
 	}
 
 	// to avoid a single init scripts for different configs
