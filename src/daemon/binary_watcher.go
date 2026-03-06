@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -17,43 +18,47 @@ import (
 // Like ConfigWatcher, we watch the parent directory rather than the file itself,
 // because installers replace binaries atomically (delete + rename or rename + rename).
 type BinaryWatcher struct {
-	watcher  *fsnotify.Watcher
-	done     chan struct{}
-	binPath  string
-	fileName string
-	once     sync.Once
+	watcher     *fsnotify.Watcher
+	done        chan struct{}
+	watchedDirs map[string]bool
+	targetPaths map[string]bool
+	once        sync.Once
 }
 
 // NewBinaryWatcher creates a watcher that monitors binPath for changes.
 // onChange is called at most once when the binary is replaced.
 func NewBinaryWatcher(binPath string, onChange func()) (*BinaryWatcher, error) {
-	// Resolve symlinks (e.g. Homebrew: /usr/local/bin/oh-my-posh -> ../Cellar/...)
-	resolved, err := filepath.EvalSymlinks(binPath)
-	if err != nil {
-		return nil, err
-	}
+	return newBinaryWatcher(binPath, onChange, time.Second)
+}
 
+func newBinaryWatcher(binPath string, onChange func(), debounceWindow time.Duration) (*BinaryWatcher, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
 	}
 
-	dir := filepath.Dir(resolved)
-	if err := watcher.Add(dir); err != nil {
-		watcher.Close()
+	bw := &BinaryWatcher{
+		watcher:     watcher,
+		done:        make(chan struct{}),
+		watchedDirs: make(map[string]bool),
+		targetPaths: make(map[string]bool),
+	}
+
+	if err := bw.addTargetPath(binPath); err != nil {
+		_ = bw.Close()
 		return nil, err
 	}
 
-	bw := &BinaryWatcher{
-		watcher:  watcher,
-		binPath:  resolved,
-		fileName: filepath.Base(resolved),
-		done:     make(chan struct{}),
+	// Also track the resolved path when available so we catch updates done via symlink swaps.
+	resolved, err := filepath.EvalSymlinks(binPath)
+	if err == nil {
+		if err := bw.addTargetPath(resolved); err != nil {
+			_ = bw.Close()
+			return nil, err
+		}
 	}
 
-	go bw.eventLoop(onChange)
-
-	log.Debugf("watching binary: %s (dir: %s)", resolved, dir)
+	go bw.eventLoop(onChange, debounceWindow)
 
 	return bw, nil
 }
@@ -64,8 +69,39 @@ func (bw *BinaryWatcher) Close() error {
 	return bw.watcher.Close()
 }
 
+func (bw *BinaryWatcher) addTargetPath(path string) error {
+	if path == "" {
+		return nil
+	}
+
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+
+	cleanPath := filepath.Clean(absPath)
+	bw.targetPaths[cleanPath] = true
+
+	dir := filepath.Dir(cleanPath)
+	if bw.watchedDirs[dir] {
+		return nil
+	}
+
+	err = bw.watcher.Add(dir)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	if err == nil {
+		bw.watchedDirs[dir] = true
+		log.Debugf("watching binary directory: %s", dir)
+	}
+
+	return nil
+}
+
 // eventLoop processes fsnotify events with debounce.
-func (bw *BinaryWatcher) eventLoop(onChange func()) {
+func (bw *BinaryWatcher) eventLoop(onChange func(), debounceWindow time.Duration) {
 	var debounce *time.Timer
 
 	for {
@@ -75,11 +111,16 @@ func (bw *BinaryWatcher) eventLoop(onChange func()) {
 				return
 			}
 
-			if filepath.Base(event.Name) != bw.fileName {
+			eventPath, err := filepath.Abs(event.Name)
+			if err != nil {
 				continue
 			}
 
-			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename) == 0 {
+			if !bw.targetPaths[filepath.Clean(eventPath)] {
+				continue
+			}
+
+			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename|fsnotify.Remove) == 0 {
 				continue
 			}
 
@@ -89,7 +130,7 @@ func (bw *BinaryWatcher) eventLoop(onChange func()) {
 			if debounce != nil {
 				debounce.Stop()
 			}
-			debounce = time.AfterFunc(1*time.Second, func() {
+			debounce = time.AfterFunc(debounceWindow, func() {
 				log.Debug("binary change confirmed, triggering callback")
 				onChange()
 			})
