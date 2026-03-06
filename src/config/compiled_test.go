@@ -34,7 +34,6 @@ session:
   style: "plain"
 
 path:
-  style: "powerline"
   leading_style: "rounded"
   trailing_separator: ">"
 
@@ -79,6 +78,51 @@ git.main:
 	assert.Equal(t, GIT, cfg.Segments["git.main"].Type)
 	assert.Equal(t, "git.main", cfg.Segments["git.main"].Alias)
 	assert.Equal(t, float64(20), cfg.Segments["git.main"].Options["branch_max_length"])
+}
+
+func TestParseCompiledYAMLStyleShortcutOnPromptLines(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+    style: "powerline"
+
+rprompt:
+  - segments: ["session"]
+    style: "powerline"
+
+session:
+  type: "session"
+`
+
+	cfg, err := ParseCompiledYAML([]byte(raw))
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Prompt, 1)
+	assert.Equal(t, "", cfg.Prompt[0].LeadingDiamond)
+	assert.Equal(t, "\uE0B0", cfg.Prompt[0].TrailingDiamond)
+
+	require.Len(t, cfg.RPrompt, 1)
+	assert.Equal(t, "", cfg.RPrompt[0].LeadingDiamond)
+	assert.Equal(t, "\uE0B2", cfg.RPrompt[0].TrailingDiamond)
+}
+
+func TestParseCompiledYAMLStyleShortcutOnSegments(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["git"]
+
+git:
+  style: "powerline"
+`
+
+	cfg, err := ParseCompiledYAML([]byte(raw))
+	require.NoError(t, err)
+
+	segment := cfg.Segments["git"]
+	require.NotNil(t, segment)
+	assert.Equal(t, Diamond, segment.Style)
+	assert.Equal(t, "", segment.LeadingDiamond)
+	assert.Equal(t, "\uE0B0", segment.TrailingDiamond)
 }
 
 func TestParseCompiledYAMLReturnsErrorForUnknownSegmentReference(t *testing.T) {
@@ -154,6 +198,22 @@ session:
 	assert.ErrorContains(t, err, "cannot define both leading_style and leading_separator")
 }
 
+func TestParseCompiledYAMLReturnsErrorForStyleShortcutMixedWithLineOverrides(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+    style: "powerline"
+    trailing_style: "rounded"
+
+session:
+  type: "session"
+`
+
+	_, err := ParseCompiledYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "cannot define style together with explicit leading/trailing separator settings")
+}
+
 func TestParseCompiledYAMLReturnsErrorForDirectSegmentDiamonds(t *testing.T) {
 	raw := `
 prompt:
@@ -183,4 +243,19 @@ session:
 	_, err := ParseCompiledYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "cannot define both leading_style and leading_separator")
+}
+
+func TestParseCompiledYAMLReturnsErrorForStyleShortcutMixedWithSegmentOverrides(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+
+session:
+  style: "powerline"
+  leading_style: "rounded"
+`
+
+	_, err := ParseCompiledYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "cannot define style together with explicit leading/trailing separator settings")
 }

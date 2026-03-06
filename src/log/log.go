@@ -2,9 +2,11 @@ package log
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -13,6 +15,9 @@ var (
 	raw     bool
 
 	log strings.Builder
+
+	outputFile *os.File
+	outputMu   sync.Mutex
 )
 
 func Enable(plain bool) {
@@ -90,6 +95,28 @@ func Errorf(format string, args ...any) {
 
 func String() string {
 	return log.String()
+}
+
+func SetOutputPath(path string) error {
+	outputMu.Lock()
+	defer outputMu.Unlock()
+
+	if outputFile != nil {
+		_ = outputFile.Close()
+		outputFile = nil
+	}
+
+	if path == "" {
+		return nil
+	}
+
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+
+	outputFile = file
+	return nil
 }
 
 func funcSpec() (string, int) {

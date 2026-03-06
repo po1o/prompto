@@ -21,7 +21,15 @@ func (h *RenderHandle) Complete() {
 		return
 	}
 
-	h.registry.ClearActiveRenderIf(h.sessionID, h.renderID)
+	h.registry.CancelRenderIf(h.sessionID, h.renderID)
+}
+
+func (h *RenderHandle) RenderID() uint64 {
+	if h == nil {
+		return 0
+	}
+
+	return h.renderID
 }
 
 type RenderCoordinator struct {
@@ -38,13 +46,14 @@ func (c *RenderCoordinator) StartRender(sessionID string, flags *runtime.Flags, 
 	engine := c.registry.GetOrCreateEngine(sessionID, flags)
 
 	if repaint {
-		ctx, ok := c.registry.GetActiveRenderContext(sessionID)
+		ctx, renderID, ok := c.registry.GetActiveRender(sessionID)
 		if ok {
 			return &RenderHandle{
 				Engine:     engine,
 				Context:    ctx,
 				Reattached: true,
 				sessionID:  sessionID,
+				renderID:   renderID,
 				registry:   c.registry,
 			}
 		}

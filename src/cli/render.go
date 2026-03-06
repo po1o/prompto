@@ -3,186 +3,171 @@ package cli
 import (
 	"context"
 	"fmt"
-	"io"
-	"os"
-	"strconv"
+	"path/filepath"
 	"time"
 
-	daemonpkg "github.com/jandedobbeleer/oh-my-posh/src/daemon"
+	"github.com/jandedobbeleer/oh-my-posh/src/cache"
+	"github.com/jandedobbeleer/oh-my-posh/src/daemon"
+	"github.com/jandedobbeleer/oh-my-posh/src/daemon/ipc"
+	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
 	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
 	"github.com/jandedobbeleer/oh-my-posh/src/shell"
+	"github.com/jandedobbeleer/oh-my-posh/src/template"
+
 	"github.com/spf13/cobra"
 )
 
-var (
-	renderPwd           string
-	renderPSwd          string
-	renderShell         string
-	renderShellVersion  string
-	renderStatus        int
-	renderPipeStatus    string
-	renderTiming        float64
-	renderStackCount    int
-	renderTerminalWidth int
-	renderNoStatus      bool
-	renderColumn        int
-	renderJobCount      int
-	renderEscape        bool
-	renderForce         bool
-	renderSessionID     string
-	renderPID           int
-	renderRepaint       bool
-	renderMaxUpdates    int
-	renderVimMode       string
+const (
+	renderTimeout = 10 * time.Second
 )
 
-var renderCmd = createRenderCmd()
+var (
+	pid           int
+	repaint       bool
+	renderVimMode string
+)
 
-const renderUpdateTimeout = 100 * time.Millisecond
+var renderCmd = &cobra.Command{
+	Use:   "render",
+	Short: "Render prompts via the daemon",
+	Long: `Render all prompts via the daemon for faster display.
+
+The daemon computes segments asynchronously and streams updates.
+After a short timeout (100ms), partial results are returned with
+cached values for slow segments. Updates stream as segments complete.
+
+Output format (one per line):
+  primary:<text>
+  right:<text>
+  secondary:<text>
+  ...
+
+Falls back to direct rendering if daemon is not available.`,
+	Run: func(_ *cobra.Command, _ []string) {
+		if shellName == "" {
+			shellName = shell.GENERIC
+		}
+
+		if configFlag != "" {
+			configFlag = path.ReplaceTildePrefixWithHomeDir(configFlag)
+			if abs, err := filepath.Abs(configFlag); err == nil {
+				configFlag = abs
+			}
+		}
+
+		flags := &runtime.Flags{
+			ConfigPath:    configFlag,
+			PWD:           pwd,
+			PSWD:          pswd,
+			ErrorCode:     status,
+			PipeStatus:    pipestatus,
+			ExecutionTime: timing,
+			StackCount:    stackCount,
+			TerminalWidth: terminalWidth,
+			Shell:         shellName,
+			ShellVersion:  shellVersion,
+			Plain:         plain,
+			Cleared:       cleared,
+			NoExitCode:    noStatus,
+			Column:        column,
+			JobCount:      jobCount,
+			Escape:        escape,
+			Force:         force,
+			VimMode:       renderVimMode,
+		}
+
+		if err := renderViaDaemon(flags, pid, repaint); err != nil {
+			log.Debugf("daemon render failed: %v, falling back to direct render", err)
+			renderDirect(flags)
+		}
+	},
+}
 
 func init() {
+	renderCmd.Flags().StringVar(&pwd, "pwd", "", "current working directory")
+	renderCmd.Flags().StringVar(&pswd, "pswd", "", "current working directory (according to pwsh)")
+	renderCmd.Flags().StringVar(&shellName, "shell", "", "the shell to render for")
+	renderCmd.Flags().StringVar(&shellVersion, "shell-version", "", "the shell version")
+	renderCmd.Flags().IntVar(&status, "status", 0, "last known status code")
+	renderCmd.Flags().BoolVar(&noStatus, "no-status", false, "no valid status code (cancelled or no command yet)")
+	renderCmd.Flags().StringVar(&pipestatus, "pipestatus", "", "the PIPESTATUS array")
+	renderCmd.Flags().Float64Var(&timing, "execution-time", 0, "timing of the last command")
+	renderCmd.Flags().IntVarP(&stackCount, "stack-count", "s", 0, "number of locations on the stack")
+	renderCmd.Flags().IntVarP(&terminalWidth, "terminal-width", "w", 0, "width of the terminal")
+	renderCmd.Flags().BoolVar(&cleared, "cleared", false, "do we have a clear terminal or not")
+	renderCmd.Flags().IntVar(&column, "column", 0, "the column position of the cursor")
+	renderCmd.Flags().IntVar(&jobCount, "job-count", 0, "number of background jobs")
+	renderCmd.Flags().BoolVar(&escape, "escape", true, "escape the ANSI sequences for the shell")
+	renderCmd.Flags().BoolVarP(&force, "force", "f", false, "force rendering the segments")
+	renderCmd.Flags().IntVar(&pid, "pid", 0, "shell process id")
+	renderCmd.Flags().BoolVar(&repaint, "repaint", false, "vim mode repaint (soft cancel, reuse computations)")
+	renderCmd.Flags().StringVar(&renderVimMode, "vim-mode", "", "current vim mode (insert, normal, visual, replace)")
+
 	RootCmd.AddCommand(renderCmd)
 }
 
-func createRenderCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "render",
-		Short: "Render prompts via the daemon service",
-		RunE: func(c *cobra.Command, _ []string) error {
-			sh := renderShell
-			if sh == "" {
-				sh = shell.GENERIC
-			}
-
-			sessionID := resolveRenderSessionID(renderSessionID, renderPID)
-
-			flags := &runtime.Flags{
-				ConfigPath:    configFlag,
-				PWD:           renderPwd,
-				PSWD:          renderPSwd,
-				ErrorCode:     renderStatus,
-				PipeStatus:    renderPipeStatus,
-				ExecutionTime: renderTiming,
-				StackCount:    renderStackCount,
-				TerminalWidth: renderTerminalWidth,
-				Shell:         sh,
-				ShellVersion:  renderShellVersion,
-				Plain:         plain,
-				NoExitCode:    renderNoStatus,
-				Column:        renderColumn,
-				JobCount:      renderJobCount,
-				Escape:        renderEscape,
-				Force:         renderForce,
-				VimMode:       renderVimMode,
-			}
-
-			updateTimeout := resolveRenderUpdateTimeout()
-
-			return renderWithDaemon(
-				daemonRuntime,
-				flags,
-				sessionID,
-				renderRepaint,
-				renderMaxUpdates,
-				updateTimeout,
-				os.Stdout,
-			)
-		},
+func renderViaDaemon(flags *runtime.Flags, pid int, repaint bool) error {
+	silent = true
+	client, err := daemon.ConnectOrStart(startDetachedDaemon)
+	if err != nil {
+		return err
 	}
+	defer client.Close()
 
-	cmd.Flags().StringVar(&renderPwd, "pwd", "", "current working directory")
-	cmd.Flags().StringVar(&renderPSwd, "pswd", "", "current working directory (according to pwsh)")
-	cmd.Flags().StringVar(&renderShell, "shell", "", "the shell to render for")
-	cmd.Flags().StringVar(&renderShellVersion, "shell-version", "", "the shell version")
-	cmd.Flags().IntVar(&renderStatus, "status", 0, "last known status code")
-	cmd.Flags().BoolVar(&renderNoStatus, "no-status", false, "no valid status code")
-	cmd.Flags().StringVar(&renderPipeStatus, "pipestatus", "", "the PIPESTATUS array")
-	cmd.Flags().Float64Var(&renderTiming, "execution-time", 0, "timing of the last command")
-	cmd.Flags().IntVarP(&renderStackCount, "stack-count", "s", 0, "number of locations on the stack")
-	cmd.Flags().IntVarP(&renderTerminalWidth, "terminal-width", "w", 0, "width of the terminal")
-	cmd.Flags().IntVar(&renderColumn, "column", 0, "the column position of the cursor")
-	cmd.Flags().IntVar(&renderJobCount, "job-count", 0, "number of background jobs")
-	cmd.Flags().BoolVar(&renderEscape, "escape", true, "escape ANSI sequences for the shell")
-	cmd.Flags().BoolVarP(&renderForce, "force", "f", false, "force rendering the segments")
-	cmd.Flags().StringVar(&renderSessionID, "session-id", "", "session identifier")
-	cmd.Flags().IntVar(&renderPID, "pid", 0, "shell process id (used as default session identifier)")
-	cmd.Flags().BoolVar(&renderRepaint, "repaint", false, "render as repaint request")
-	cmd.Flags().IntVar(&renderMaxUpdates, "max-updates", 10, "maximum streamed updates to print")
-	cmd.Flags().StringVar(&renderVimMode, "vim-mode", "", "current vim mode (insert, normal, visual, replace)")
+	ctx, cancel := context.WithTimeout(context.Background(), renderTimeout)
+	defer cancel()
 
-	return cmd
-}
-
-func resolveRenderSessionID(explicitSessionID string, pid int) string {
-	if explicitSessionID != "" {
-		return explicitSessionID
-	}
-
-	if pid > 0 {
-		return strconv.Itoa(pid)
-	}
-
-	sessionID := os.Getenv("POSH_SESSION_ID")
-	if sessionID != "" {
-		return sessionID
-	}
-
-	return "default"
-}
-
-func resolveRenderUpdateTimeout() time.Duration {
-	return renderUpdateTimeout
-}
-
-func renderWithDaemon(
-	controller *daemonController,
-	flags *runtime.Flags,
-	sessionID string,
-	repaint bool,
-	maxUpdates int,
-	updateTimeout time.Duration,
-	out io.Writer,
-) error {
-	instance := controller.EnsureStarted()
-	response := instance.StartRender(daemonpkg.RenderRequest{
-		SessionID: sessionID,
-		Flags:     flags,
-		Repaint:   repaint,
+	return client.RenderPrompt(ctx, flags, pid, "", nil, repaint, func(resp *ipc.PromptResponse) bool {
+		outputPrompts(resp)
+		return resp.Type != "complete"
 	})
-
-	if response.Type == "stopped" {
-		return fmt.Errorf("daemon is stopped")
-	}
-
-	writePromptBundle(out, response.Bundle)
-	sequence := response.Sequence
-
-	for range maxUpdates {
-		ctx, cancel := context.WithTimeout(context.Background(), updateTimeout)
-		update, ok := instance.NextUpdate(ctx, sessionID, sequence)
-		cancel()
-		if !ok {
-			break
-		}
-
-		sequence = update.Sequence
-		writePromptBundle(out, update.Bundle)
-		fmt.Fprintln(out, "status:update")
-	}
-
-	fmt.Fprintln(out, "status:complete")
-	return nil
 }
 
-func writePromptBundle(out io.Writer, bundle daemonpkg.PromptBundle) {
-	fmt.Fprintf(out, "primary:%s\n", bundle.Primary)
-	fmt.Fprintf(out, "right:%s\n", bundle.RPrompt)
-
-	if bundle.Secondary != "" {
-		fmt.Fprintf(out, "secondary:%s\n", bundle.Secondary)
+func outputPrompts(resp *ipc.PromptResponse) {
+	if resp == nil || resp.Prompts == nil {
+		return
 	}
 
-	if bundle.Transient != "" {
-		fmt.Fprintf(out, "transient:%s\n", bundle.Transient)
+	// Output each prompt with a prefix for shell parsing
+	// Format: type:text (text can contain newlines, shell handles it)
+	//
+	// IMPORTANT: Always output primary and right prompts even if empty.
+	// The shell keeps previous values if a prompt type isn't sent,
+	// so we must send empty values to clear stale prompts (e.g., git segment
+	// persisting after leaving a repo).
+	alwaysOutput := map[string]bool{"primary": true, "right": true}
+	promptTypes := []string{"primary", "right", "secondary", "transient", "debug", "valid", "error"}
+
+	for _, pt := range promptTypes {
+		if p, ok := resp.Prompts[pt]; ok {
+			// Always output primary/right; only output others if non-empty
+			if alwaysOutput[pt] || p.Text != "" {
+				fmt.Printf("%s:%s\n", pt, p.Text)
+			}
+		}
 	}
+
+	// Output status line so shell knows when a batch is complete
+	// "update" = more updates may come, "complete" = all segments done
+	fmt.Printf("status:%s\n", resp.Type)
+}
+
+func renderDirect(flags *runtime.Flags) {
+	silent = true
+	flags.Eval = false
+	cache.Init(flags.Shell)
+
+	eng := prompt.New(flags)
+
+	defer func() {
+		template.SaveCache()
+		cache.Close()
+	}()
+
+	// Always output primary and right prompts (even if empty) so shell can clear stale values
+	fmt.Printf("primary:%s\n", eng.Primary())
+	fmt.Printf("right:%s\n", eng.RPrompt())
+	fmt.Println("status:complete")
 }

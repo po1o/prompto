@@ -87,21 +87,52 @@ func (registry *EngineRegistry) GetActiveRenderContext(sessionID string) (contex
 	return state.activeCtx, true
 }
 
-// CancelActiveRender cancels the active render for a session.
-// Repaint requests should skip this cancellation and reattach.
-func (registry *EngineRegistry) CancelActiveRender(sessionID string) {
+func (registry *EngineRegistry) GetActiveRender(sessionID string) (context.Context, uint64, bool) {
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
 
 	state, ok := registry.sessions[sessionID]
+	if !ok || state.activeCtx == nil {
+		return nil, 0, false
+	}
+
+	return state.activeCtx, state.activeID, true
+}
+
+// CancelActiveRender cancels the active render for a session.
+// Repaint requests should skip this cancellation and reattach.
+func (registry *EngineRegistry) CancelActiveRender(sessionID string) {
+	registry.mu.Lock()
+
+	state, ok := registry.sessions[sessionID]
 	if !ok || state.activeCancel == nil {
+		registry.mu.Unlock()
 		return
 	}
 
-	state.activeCancel()
+	cancel := state.activeCancel
 	state.activeCtx = nil
 	state.activeCancel = nil
 	state.activeID = 0
+	registry.mu.Unlock()
+	cancel()
+}
+
+func (registry *EngineRegistry) CancelRenderIf(sessionID string, renderID uint64) {
+	registry.mu.Lock()
+
+	state, ok := registry.sessions[sessionID]
+	if !ok || state.activeCancel == nil || state.activeID != renderID {
+		registry.mu.Unlock()
+		return
+	}
+
+	cancel := state.activeCancel
+	state.activeCtx = nil
+	state.activeCancel = nil
+	state.activeID = 0
+	registry.mu.Unlock()
+	cancel()
 }
 
 func (registry *EngineRegistry) ClearActiveRenderIf(sessionID string, renderID uint64) {
@@ -130,4 +161,10 @@ func (registry *EngineRegistry) RemoveSession(sessionID string) {
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
 	delete(registry.sessions, sessionID)
+}
+
+func (registry *EngineRegistry) Reset() {
+	registry.mu.Lock()
+	registry.sessions = make(map[string]*sessionState)
+	registry.mu.Unlock()
 }

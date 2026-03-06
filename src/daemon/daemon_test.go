@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const sessionIDFixture = "session-a"
+
 func TestDaemonStartRenderAndNextUpdateFlow(t *testing.T) {
 	daemon := New(&rendererStub{})
 	sessionID := strconv.Itoa(os.Getpid())
@@ -37,7 +39,11 @@ func TestDaemonStartRenderAndNextUpdateFlow(t *testing.T) {
 	update, ok := daemon.NextUpdate(ctx, sessionID, 0)
 	require.True(t, ok)
 	require.Equal(t, "update", update.Type)
-	require.Equal(t, uint64(1), update.Sequence)
+	if update.Segment == renderCompletePayload {
+		update, ok = daemon.NextUpdate(ctx, sessionID, update.Sequence)
+		require.True(t, ok)
+	}
+
 	require.Equal(t, "path.main", update.Segment)
 }
 
@@ -90,7 +96,7 @@ func TestDaemonReloadBlocksNewRenderRequests(t *testing.T) {
 
 func TestDaemonReloadWaitsForActiveRenderCompletion(t *testing.T) {
 	daemon := New(&rendererStub{})
-	sessionID := "session-a"
+	sessionID := sessionIDFixture
 
 	daemon.StartRender(RenderRequest{
 		SessionID: sessionID,
@@ -130,7 +136,7 @@ func TestDaemonStopPreventsNewOperations(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
-	_, ok := daemon.NextUpdate(ctx, "session-a", 0)
+	_, ok := daemon.NextUpdate(ctx, sessionIDFixture, 0)
 	require.False(t, ok)
 }
 

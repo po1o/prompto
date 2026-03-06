@@ -105,6 +105,14 @@ func (daemon *Daemon) SessionHub(sessionID string) *SessionUpdateHub {
 	return daemon.service.SessionHub(sessionID)
 }
 
+func (daemon *Daemon) Reset() {
+	if daemon.stopped.Load() {
+		return
+	}
+
+	daemon.service.Reset()
+}
+
 func (daemon *Daemon) Stop() {
 	if !daemon.stopped.CompareAndSwap(false, true) {
 		return

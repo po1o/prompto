@@ -71,8 +71,11 @@ type Config struct {
 	Upgrade                 *upgrade.Config        `json:"upgrade,omitempty" toml:"upgrade,omitempty" yaml:"upgrade,omitempty"`
 	Vim                     *VimConfig             `json:"vim,omitempty" toml:"vim,omitempty" yaml:"vim,omitempty"`
 	Extends                 string                 `json:"extends,omitempty" toml:"extends,omitempty" yaml:"extends,omitempty"`
+	FilePaths               []string               `json:"-" toml:"-" yaml:"-"`
 	AccentColor             color.Ansi             `json:"accent_color,omitempty" toml:"accent_color,omitempty" yaml:"accent_color,omitempty"`
 	DaemonIdleTimeout       string                 `json:"daemon_idle_timeout,omitempty" toml:"daemon_idle_timeout,omitempty" yaml:"daemon_idle_timeout,omitempty"`
+	RenderPendingIcon       string                 `json:"render_pending_icon,omitempty" toml:"render_pending_icon,omitempty" yaml:"render_pending_icon,omitempty"`
+	RenderPendingBackground color.Ansi             `json:"render_pending_background,omitempty" toml:"render_pending_background,omitempty" yaml:"render_pending_background,omitempty"`
 	ConsoleTitleTemplate    string                 `json:"console_title_template,omitempty" toml:"console_title_template,omitempty" yaml:"console_title_template,omitempty"`
 	PWD                     string                 `json:"pwd,omitempty" toml:"pwd,omitempty" yaml:"pwd,omitempty"`
 	Source                  string                 `json:"-" toml:"-" yaml:"-"`

@@ -1,6 +1,8 @@
 package daemon
 
 import (
+	"context"
+
 	"github.com/jandedobbeleer/oh-my-posh/src/prompt"
 	runtimePkg "github.com/jandedobbeleer/oh-my-posh/src/runtime"
 )
@@ -8,6 +10,7 @@ import (
 type SessionRenderHandle struct {
 	request *RequestHandle
 	relay   *StreamRelay
+	hub     *SessionUpdateHub
 }
 
 func (h *SessionRenderHandle) Engine() *prompt.Engine {
@@ -24,6 +27,38 @@ func (h *SessionRenderHandle) Relay() *StreamRelay {
 	}
 
 	return h.relay
+}
+
+func (h *SessionRenderHandle) Hub() *SessionUpdateHub {
+	if h == nil {
+		return nil
+	}
+
+	return h.hub
+}
+
+func (h *SessionRenderHandle) Context() context.Context {
+	if h == nil || h.request == nil || h.request.Render == nil {
+		return nil
+	}
+
+	return h.request.Render.Context
+}
+
+func (h *SessionRenderHandle) RenderID() uint64 {
+	if h == nil || h.request == nil || h.request.Render == nil {
+		return 0
+	}
+
+	return h.request.Render.RenderID()
+}
+
+func (h *SessionRenderHandle) Reattached() bool {
+	if h == nil || h.request == nil || h.request.Render == nil {
+		return false
+	}
+
+	return h.request.Render.Reattached
 }
 
 func (h *SessionRenderHandle) Complete() {
@@ -51,11 +86,11 @@ func NewSessionRenderRuntime(registry *EngineRegistry, gate *ReloadGate) *Sessio
 
 func (sessionRuntime *SessionRenderRuntime) StartRequest(sessionID string, flags *runtimePkg.Flags, repaint bool) *SessionRenderHandle {
 	request := sessionRuntime.requests.StartRequest(sessionID, flags, repaint)
-	BindSegmentUpdates(sessionID, request.Render.Engine, sessionRuntime.sessions)
 	hub := sessionRuntime.sessions.Hub(sessionID)
 	return &SessionRenderHandle{
 		request: request,
 		relay:   NewStreamRelay(hub),
+		hub:     hub,
 	}
 }
 
@@ -73,4 +108,12 @@ func (sessionRuntime *SessionRenderRuntime) Snapshot() (active int, reloading bo
 
 func (sessionRuntime *SessionRenderRuntime) SessionHub(sessionID string) *SessionUpdateHub {
 	return sessionRuntime.sessions.Hub(sessionID)
+}
+
+func (sessionRuntime *SessionRenderRuntime) Reset() {
+	if sessionRuntime.sessions == nil {
+		return
+	}
+
+	sessionRuntime.sessions.Reset()
 }

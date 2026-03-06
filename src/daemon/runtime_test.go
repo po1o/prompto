@@ -37,7 +37,7 @@ func TestSessionRenderRuntimeRelayReadsSessionHubUpdates(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	snapshot, ok := handle.Relay().Next(ctx, 0)
+	snapshot, ok := handle.Relay().Next(ctx, 0, handle.RenderID())
 	require.True(t, ok)
 	require.Equal(t, uint64(1), snapshot.Sequence)
 	require.Equal(t, "path.main", snapshot.Payload)

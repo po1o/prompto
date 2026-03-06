@@ -17,7 +17,7 @@ func TestStreamRelayNextReplaysLatestWhenBehind(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	snapshot, ok := relay.Next(ctx, 1)
+	snapshot, ok := relay.Next(ctx, 1, 0)
 	require.True(t, ok)
 	require.Equal(t, uint64(2), snapshot.Sequence)
 	require.Equal(t, "second", snapshot.Payload)
@@ -33,7 +33,7 @@ func TestStreamRelayNextWaitsForNewUpdate(t *testing.T) {
 	result := make(chan UpdateSnapshot, 1)
 	done := make(chan bool, 1)
 	go func() {
-		snapshot, ok := relay.Next(ctx, 0)
+		snapshot, ok := relay.Next(ctx, 0, 0)
 		if ok {
 			result <- snapshot
 		}
@@ -66,16 +66,16 @@ func TestStreamRelayNextReturnsFalseOnContextCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, ok := relay.Next(ctx, 0)
+	_, ok := relay.Next(ctx, 0, 0)
 	require.False(t, ok)
 }
 
 func TestStreamRelayNextHandlesNilRelayOrHub(t *testing.T) {
 	var relay *StreamRelay
-	_, ok := relay.Next(context.Background(), 0)
+	_, ok := relay.Next(context.Background(), 0, 0)
 	require.False(t, ok)
 
 	relay = NewStreamRelay(nil)
-	_, ok = relay.Next(context.Background(), 0)
+	_, ok = relay.Next(context.Background(), 0, 0)
 	require.False(t, ok)
 }

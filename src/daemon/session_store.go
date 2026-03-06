@@ -48,3 +48,15 @@ func (store *PromptSessionStore) Count() int {
 	defer store.mu.Unlock()
 	return len(store.hubs)
 }
+
+func (store *PromptSessionStore) Reset() {
+	store.mu.Lock()
+	store.hubs = make(map[string]*SessionUpdateHub)
+	store.mu.Unlock()
+
+	if store.registry == nil {
+		return
+	}
+
+	store.registry.Reset()
+}

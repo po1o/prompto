@@ -3,147 +3,196 @@ package cli
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
-	"sync"
+	"path/filepath"
 
-	daemonpkg "github.com/jandedobbeleer/oh-my-posh/src/daemon"
+	"github.com/jandedobbeleer/oh-my-posh/src/daemon"
+	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
+
 	"github.com/spf13/cobra"
 )
 
-type managedDaemon interface {
-	Stop()
-	StartRender(daemonpkg.RenderRequest) daemonpkg.RenderResponse
-	NextUpdate(context.Context, string, uint64) (daemonpkg.RenderResponse, bool)
-	CompleteSession(string)
-}
-
-type daemonFactory func() managedDaemon
-
-type daemonController struct {
-	instance managedDaemon
-	factory  daemonFactory
-	mu       sync.Mutex
-}
-
-func newDaemonController(factory daemonFactory) *daemonController {
-	if factory == nil {
-		factory = func() managedDaemon {
-			return daemonpkg.NewFromConfig(configFlag, nil)
-		}
-	}
-
-	return &daemonController{
-		factory: factory,
-	}
-}
-
-func (controller *daemonController) Start() bool {
-	controller.mu.Lock()
-	defer controller.mu.Unlock()
-
-	if controller.instance != nil {
-		return false
-	}
-
-	controller.instance = controller.factory()
-	return true
-}
-
-func (controller *daemonController) Stop() bool {
-	controller.mu.Lock()
-	defer controller.mu.Unlock()
-
-	if controller.instance == nil {
-		return false
-	}
-
-	controller.instance.Stop()
-	controller.instance = nil
-	return true
-}
-
-func (controller *daemonController) Restart() {
-	controller.Stop()
-	controller.Start()
-}
-
-func (controller *daemonController) Running() bool {
-	controller.mu.Lock()
-	defer controller.mu.Unlock()
-	return controller.instance != nil
-}
-
-func (controller *daemonController) EnsureStarted() managedDaemon {
-	controller.mu.Lock()
-	defer controller.mu.Unlock()
-
-	if controller.instance == nil {
-		controller.instance = controller.factory()
-	}
-
-	return controller.instance
-}
-
 var (
-	daemonRuntime = newDaemonController(nil)
-	daemonCmd     = createDaemonCmd()
-)
+	foreground bool
 
-func init() {
-	RootCmd.AddCommand(daemonCmd)
-}
-
-func createDaemonCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "daemon [start|stop|restart|status|serve]",
+	daemonCmd = &cobra.Command{
+		Use:   "daemon [start|stop|restart|status|serve|log]",
 		Short: "Manage the oh-my-posh daemon",
 		Long: `Manage the oh-my-posh daemon for faster prompt rendering.
 
-Available commands:
-  - start:   Start the daemon
+The daemon runs in the background and renders prompt segments asynchronously.
+It automatically shuts down after being idle (no connections) for 5 minutes.
+
+  - start:   Start the daemon (detached)
   - stop:    Stop the daemon
-  - restart: Restart the daemon
+  - restart: Stop and start the daemon
   - status:  Check if the daemon is running
-  - serve:   Run the daemon server mode`,
-		Args: cobra.ExactArgs(1),
-		RunE: func(_ *cobra.Command, args []string) error {
-			return runDaemonAction(args[0], daemonRuntime, os.Stdout)
+  - serve:   Run the daemon server (foreground, silent by default)
+  - log:     Enable/disable daemon logging (log <path> to enable, log off to disable)`,
+		ValidArgs: []string{
+			"start",
+			"stop",
+			"restart",
+			"status",
+			"serve",
+			"log",
 		},
+		Args: cobra.ArbitraryArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) == 0 {
+				_ = cmd.Help()
+				return
+			}
+
+			switch args[0] {
+			case "start":
+				startDaemon()
+			case "stop":
+				stopDaemon()
+			case "restart":
+				restartDaemon()
+			case "status":
+				daemonStatus()
+			case "serve":
+				silent = true
+				runDaemonServe()
+			case "log":
+				daemonLog(args[1:])
+			default:
+				_ = cmd.Help()
+			}
+		},
+	}
+)
+
+func init() {
+	daemonCmd.Flags().BoolVar(&foreground, "foreground", false, "run daemon in foreground (for debugging)")
+	RootCmd.AddCommand(daemonCmd)
+}
+
+func startDaemon() {
+	// Check if already running
+	if daemon.IsRunning() {
+		fmt.Println("daemon is already running")
+		return
+	}
+
+	if foreground {
+		// Enable logging to stderr for debugging
+		log.Enable(false)
+		runDaemonServe()
+		return
+	}
+
+	if err := startDetachedDaemon(); err != nil {
+		log.Error(err)
+		fmt.Fprintln(os.Stderr, "failed to start daemon:", err)
+		exitcode = 1
 	}
 }
 
-func runDaemonAction(action string, controller *daemonController, out io.Writer) error {
-	switch action {
-	case "start", "serve":
-		if controller.Start() {
-			fmt.Fprintln(out, "daemon started")
-			return nil
+func runDaemonServe() {
+	if configFlag != "" {
+		configFlag = path.ReplaceTildePrefixWithHomeDir(configFlag)
+		if abs, err := filepath.Abs(configFlag); err == nil {
+			configFlag = abs
 		}
-
-		fmt.Fprintln(out, "daemon is already running")
-		return nil
-	case "stop":
-		if controller.Stop() {
-			fmt.Fprintln(out, "daemon stopped")
-			return nil
-		}
-
-		fmt.Fprintln(out, "daemon is not running")
-		return nil
-	case "restart":
-		controller.Restart()
-		fmt.Fprintln(out, "daemon restarted")
-		return nil
-	case "status":
-		if controller.Running() {
-			fmt.Fprintln(out, "daemon is running")
-			return nil
-		}
-
-		fmt.Fprintln(out, "daemon is not running")
-		return nil
 	}
 
-	return fmt.Errorf("unknown daemon action: %s", action)
+	d, err := daemon.NewServer(configFlag)
+	if err != nil {
+		log.Error(err)
+		fmt.Fprintln(os.Stderr, "failed to start daemon:", err)
+		exitcode = 1
+		return
+	}
+
+	log.Debug("daemon started")
+
+	if err := d.Start(); err != nil {
+		log.Error(err)
+		fmt.Fprintln(os.Stderr, "daemon error:", err)
+		exitcode = 1
+	}
+}
+
+func daemonLog(args []string) {
+	if len(args) == 0 {
+		fmt.Println("usage: daemon log <file_path>  (enable logging)")
+		fmt.Println("       daemon log off          (disable logging)")
+		return
+	}
+
+	client, err := daemon.NewClient()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "daemon is not running")
+		exitcode = 1
+		return
+	}
+	defer client.Close()
+
+	ctx := context.Background()
+	logPath := args[0]
+
+	if logPath == "off" {
+		logPath = ""
+	}
+
+	if err := client.SetLogging(ctx, logPath); err != nil {
+		fmt.Fprintln(os.Stderr, "failed to set logging:", err)
+		exitcode = 1
+		return
+	}
+
+	if logPath == "" {
+		fmt.Println("daemon logging disabled")
+	} else {
+		fmt.Println("daemon logging to", logPath)
+	}
+}
+
+func stopDaemon() {
+	if !daemon.IsRunning() {
+		fmt.Println("daemon is not running")
+		return
+	}
+
+	if err := daemon.KillDaemon(); err != nil {
+		fmt.Fprintln(os.Stderr, "failed to stop daemon:", err)
+		exitcode = 1
+		return
+	}
+
+	fmt.Println("daemon stopped")
+}
+
+func restartDaemon() {
+	if daemon.IsRunning() {
+		// Try to read config from existing daemon
+		_, configPath, err := daemon.GetRunningDaemonInfo()
+		if err == nil && configPath != "" && configFlag == "" {
+			configFlag = configPath
+		}
+
+		if err := daemon.KillDaemon(); err != nil {
+			fmt.Fprintln(os.Stderr, "failed to stop daemon:", err)
+			exitcode = 1
+			return
+		}
+	}
+
+	if err := startDetachedDaemon(); err != nil {
+		log.Error(err)
+		fmt.Fprintln(os.Stderr, "failed to start daemon:", err)
+		exitcode = 1
+	}
+}
+
+func daemonStatus() {
+	if daemon.IsRunning() {
+		fmt.Println("daemon is running")
+	} else {
+		fmt.Println("daemon is not running")
+	}
 }

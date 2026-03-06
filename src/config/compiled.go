@@ -12,6 +12,7 @@ import (
 )
 
 type PromptLayout struct {
+	Style             string   `json:"style,omitempty" yaml:"style,omitempty"`
 	Filler            string   `json:"filler,omitempty" yaml:"filler,omitempty"`
 	LeadingStyle      string   `json:"leading_style,omitempty" yaml:"leading_style,omitempty"`
 	TrailingStyle     string   `json:"trailing_style,omitempty" yaml:"trailing_style,omitempty"`
@@ -167,6 +168,19 @@ func normalizePromptLayout(layout *PromptLayout, rightAligned bool, table string
 		return fmt.Errorf("%s cannot define both trailing_style and trailing_separator", table)
 	}
 
+	if layout.Style != "" {
+		if layout.LeadingStyle != "" || layout.TrailingStyle != "" || layout.LeadingSeparator != "" || layout.TrailingSeparator != "" {
+			return fmt.Errorf("%s cannot define style together with explicit leading/trailing separator settings", table)
+		}
+
+		if !isSeparatorAlias(layout.Style) {
+			return fmt.Errorf("%s uses unknown style alias %q", table, layout.Style)
+		}
+
+		// Shortcut behavior: style defines trailing separator style, leading remains flat.
+		layout.TrailingStyle = layout.Style
+	}
+
 	leading, err := resolveSeparator(layout.LeadingStyle, layout.LeadingSeparator, rightAligned, true)
 	if err != nil {
 		return fmt.Errorf("%s leading separator: %w", table, err)
@@ -179,6 +193,7 @@ func normalizePromptLayout(layout *PromptLayout, rightAligned bool, table string
 
 	layout.LeadingDiamond = leading
 	layout.TrailingDiamond = trailing
+	layout.Style = ""
 	layout.LeadingStyle = ""
 	layout.TrailingStyle = ""
 	layout.LeadingSeparator = ""
@@ -305,6 +320,7 @@ func normalizeSegmentSeparators(raw map[string]any, name string) error {
 	leadingSeparator, _ := raw["leading_separator"].(string)
 	trailingStyle, _ := raw["trailing_style"].(string)
 	trailingSeparator, _ := raw["trailing_separator"].(string)
+	styleValue, _ := raw["style"].(string)
 
 	if leadingStyle != "" && leadingSeparator != "" {
 		return fmt.Errorf("%s cannot define both leading_style and leading_separator", name)
@@ -312,6 +328,17 @@ func normalizeSegmentSeparators(raw map[string]any, name string) error {
 
 	if trailingStyle != "" && trailingSeparator != "" {
 		return fmt.Errorf("%s cannot define both trailing_style and trailing_separator", name)
+	}
+
+	if isSeparatorAlias(styleValue) {
+		if leadingStyle != "" || trailingStyle != "" || leadingSeparator != "" || trailingSeparator != "" {
+			return fmt.Errorf("%s cannot define style together with explicit leading/trailing separator settings", name)
+		}
+
+		// Shortcut behavior: style defines trailing separator style, leading remains flat.
+		trailingStyle = styleValue
+		// Alias styles compile to diamond rendering with normalized separators.
+		raw["style"] = string(Diamond)
 	}
 
 	leading, err := resolveSeparator(leadingStyle, leadingSeparator, false, true)
@@ -366,6 +393,15 @@ func resolveSeparator(style, separator string, rightAligned, leading bool) (stri
 	}
 
 	return rightGlyph, nil
+}
+
+func isSeparatorAlias(style string) bool {
+	if style == "" {
+		return false
+	}
+
+	_, ok := separatorAliases[strings.ToLower(style)]
+	return ok
 }
 
 func hasScalarFields(table map[string]any) bool {

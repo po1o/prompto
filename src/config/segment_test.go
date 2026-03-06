@@ -310,3 +310,43 @@ func TestEvaluateNeeds(t *testing.T) {
 		assert.Equal(t, tc.Needs, tc.Segment.Needs, tc.Case)
 	}
 }
+
+func TestGetPendingTextDefaults(t *testing.T) {
+	segment := &Segment{}
+	enabled, text, background := segment.GetPendingText("", nil)
+
+	assert.True(t, enabled)
+	assert.Equal(t, "\uf254 ...", text)
+	assert.Equal(t, color.Ansi(""), background)
+}
+
+func TestGetPendingTextUsesGlobalConfigOverrides(t *testing.T) {
+	segment := &Segment{}
+	cfg := &Config{
+		RenderPendingIcon:       "⌛ ",
+		RenderPendingBackground: "red",
+	}
+
+	enabled, text, background := segment.GetPendingText("cached", cfg)
+
+	assert.True(t, enabled)
+	assert.Equal(t, "⌛ cached", text)
+	assert.Equal(t, color.Ansi("red"), background)
+}
+
+func TestGetPendingTextUsesSegmentOverrides(t *testing.T) {
+	segment := &Segment{
+		RenderPendingIcon:       "⏱ ",
+		RenderPendingBackground: "blue",
+	}
+	cfg := &Config{
+		RenderPendingIcon:       "⌛ ",
+		RenderPendingBackground: "red",
+	}
+
+	enabled, text, background := segment.GetPendingText("cached", cfg)
+
+	assert.True(t, enabled)
+	assert.Equal(t, "⏱ cached", text)
+	assert.Equal(t, color.Ansi("blue"), background)
+}

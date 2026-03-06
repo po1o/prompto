@@ -13,6 +13,8 @@ type RenderRequest struct {
 	Repaint   bool
 }
 
+const renderCompletePayload = "__omp_render_complete__"
+
 type RenderResponse struct {
 	Bundle   PromptBundle
 	Type     string
@@ -39,7 +41,7 @@ func NewService(registry *EngineRegistry, gate *ReloadGate, renderer promptBundl
 func (service *Service) StartRender(request RenderRequest) RenderResponse {
 	service.mu.Lock()
 	existing, ok := service.renders[request.SessionID]
-	if ok && existing != nil {
+	if ok && existing != nil && !request.Repaint {
 		existing.Complete()
 	}
 	service.mu.Unlock()
@@ -108,4 +110,28 @@ func (service *Service) SessionCount() int {
 
 func (service *Service) SessionHub(sessionID string) *SessionUpdateHub {
 	return service.runtime.SessionHub(sessionID)
+}
+
+func (service *Service) Reset() {
+	service.mu.Lock()
+	activeRenders := make([]*ActiveRender, 0, len(service.renders))
+	for sessionID, active := range service.renders {
+		activeRenders = append(activeRenders, active)
+		delete(service.renders, sessionID)
+	}
+	service.mu.Unlock()
+
+	for _, active := range activeRenders {
+		if active == nil {
+			continue
+		}
+
+		active.Complete()
+	}
+
+	if service.runtime == nil {
+		return
+	}
+
+	service.runtime.Reset()
 }

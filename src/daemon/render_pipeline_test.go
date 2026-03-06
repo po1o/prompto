@@ -13,28 +13,28 @@ import (
 )
 
 type rendererStub struct {
-	renderedCalls []bool
+	renderedCalls []string
 	callCount     int
 	mu            sync.Mutex
-	lastRepaint   bool
+	lastPrimary   string
 }
 
-func (renderer *rendererStub) Render(_ *prompt.Engine, repaint bool) PromptBundle {
+func (renderer *rendererStub) Bundle(_ *prompt.Engine, primary string) PromptBundle {
 	renderer.mu.Lock()
 	defer renderer.mu.Unlock()
 
 	renderer.callCount++
-	renderer.lastRepaint = repaint
-	renderer.renderedCalls = append(renderer.renderedCalls, repaint)
+	renderer.lastPrimary = primary
+	renderer.renderedCalls = append(renderer.renderedCalls, primary)
 	return PromptBundle{
 		Primary: "render",
 	}
 }
 
-func (renderer *rendererStub) Calls() []bool {
+func (renderer *rendererStub) Calls() []string {
 	renderer.mu.Lock()
 	defer renderer.mu.Unlock()
-	out := make([]bool, len(renderer.renderedCalls))
+	out := make([]string, len(renderer.renderedCalls))
 	copy(out, renderer.renderedCalls)
 	return out
 }
@@ -52,7 +52,7 @@ func TestRenderPipelineStartRendersInitialBundle(t *testing.T) {
 	require.NotNil(t, active)
 
 	calls := renderer.Calls()
-	require.Equal(t, []bool{false}, calls)
+	require.Equal(t, []string{""}, calls)
 
 	active.Complete()
 }
@@ -83,7 +83,7 @@ func TestRenderPipelineNextRendersAfterUpdate(t *testing.T) {
 	require.Equal(t, "render", update.Bundle.Primary)
 
 	calls := renderer.Calls()
-	require.Equal(t, []bool{false, true}, calls)
+	require.Equal(t, []string{"", ""}, calls)
 }
 
 func TestActiveRenderNextHandlesNil(t *testing.T) {

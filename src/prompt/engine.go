@@ -29,6 +29,9 @@ type Engine struct {
 	folderCache           map[string]segmentRenderCache
 	activeSegment         *config.Segment
 	previousActiveSegment *config.Segment
+	pendingSegments       map[string]bool
+	cachedValues          map[string]string
+	segmentCacheKeys      map[string]string
 	Overflow              config.Overflow
 	rprompt               string
 	prompt                strings.Builder
@@ -37,6 +40,7 @@ type Engine struct {
 	currentLineLength     int
 	cacheMu               sync.Mutex
 	sharedProviderMu      sync.Mutex
+	streamingMu           sync.Mutex
 	stateMu               sync.Mutex
 	Plain                 bool
 	forceRender           bool
@@ -210,78 +214,7 @@ func (e *Engine) getTitleTemplateText() string {
 
 func (e *Engine) renderBlock(block *config.Block, cancelNewline bool) bool {
 	blockText, length := e.writeBlockSegments(block)
-
-	// do not print anything when we don't have any text unless forced
-	if !block.Force && length == 0 {
-		return false
-	}
-
-	defer func() {
-		e.applyPowerShellBleedPatch()
-	}()
-
-	// do not print a newline to avoid a leading space
-	// when we're printing the first primary prompt in
-	// the shell
-	if block.Newline && !cancelNewline {
-		e.writeNewline()
-	}
-
-	switch block.Type {
-	case config.Prompt:
-		if block.Alignment == config.Left {
-			e.currentLineLength += length
-			e.write(blockText)
-			return true
-		}
-
-		if block.Alignment != config.Right {
-			return false
-		}
-
-		space, OK := e.canWriteRightBlock(length, false)
-
-		// we can't print the right block as there's not enough room available
-		if !OK {
-			e.Overflow = block.Overflow
-
-			switch e.Overflow {
-			case config.Break:
-				e.writeNewline()
-			case config.Hide:
-				// make sure to fill if needed
-				if padText, OK := e.shouldFill(block.Filler, space+length-e.currentLineLength); OK {
-					e.write(padText)
-				}
-
-				e.currentLineLength = 0
-				return true
-			}
-		}
-
-		defer func() {
-			e.currentLineLength = 0
-			e.Overflow = ""
-		}()
-
-		// validate if we have a filler and fill if needed
-		if padText, OK := e.shouldFill(block.Filler, space); OK {
-			e.write(padText)
-			e.write(blockText)
-			return true
-		}
-
-		if space > 0 {
-			e.write(strings.Repeat(" ", space))
-		}
-
-		e.write(blockText)
-	case config.RPrompt:
-		e.rprompt = blockText
-		e.rpromptLength = length
-	}
-
-	return true
+	return e.renderBlockWithText(block, blockText, length, cancelNewline)
 }
 
 func (e *Engine) applyPowerShellBleedPatch() {

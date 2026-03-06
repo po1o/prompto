@@ -68,36 +68,37 @@ type Environment interface {
 }
 
 type Flags struct {
-	Type          string
-	PipeStatus    string
-	ConfigPath    string
-	PSWD          string
-	Shell         string
-	ShellVersion  string
-	PWD           string
-	AbsolutePWD   string
-	VimMode       string
-	ErrorCode     int
-	PromptCount   int
-	Column        int
-	TerminalWidth int
-	ExecutionTime float64
-	StackCount    int
-	ConfigHash    uint64
-	JobCount      int
-	HasExtra      bool
-	Strict        bool
-	Debug         bool
-	Cleared       bool
-	NoExitCode    bool
-	Init          bool
-	Migrate       bool
-	Eval          bool
-	Escape        bool
-	IsPrimary     bool
-	Plain         bool
-	Force         bool
-	Daemon        bool
+	Type           string
+	PipeStatus     string
+	ConfigPath     string
+	PSWD           string
+	Shell          string
+	ShellVersion   string
+	PWD            string
+	AbsolutePWD    string
+	VimMode        string
+	ErrorCode      int
+	PromptCount    int
+	Column         int
+	TerminalWidth  int
+	ExecutionTime  float64
+	StackCount     int
+	ConfigHash     uint64
+	JobCount       int
+	HasExtra       bool
+	Strict         bool
+	Debug          bool
+	Cleared        bool
+	NoExitCode     bool
+	Init           bool
+	Migrate        bool
+	Eval           bool
+	Escape         bool
+	IsPrimary      bool
+	Plain          bool
+	Force          bool
+	Daemon         bool
+	SegmentToggles map[string]bool
 }
 
 type CommandError struct {

@@ -98,3 +98,89 @@ func TestServiceCompleteSessionRemovesActiveHandle(t *testing.T) {
 	require.Equal(t, 0, active)
 	require.False(t, reloading)
 }
+
+func TestServiceStartRenderRepaintReattachesActiveRender(t *testing.T) {
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	})
+	service := NewService(registry, nil, &rendererStub{})
+
+	service.StartRender(RenderRequest{SessionID: "session-a", Flags: &runtime.Flags{}, Repaint: false})
+	firstContext, firstID, ok := registry.GetActiveRender("session-a")
+	require.True(t, ok)
+
+	service.StartRender(RenderRequest{SessionID: "session-a", Flags: &runtime.Flags{VimMode: "normal"}, Repaint: true})
+	secondContext, secondID, ok := registry.GetActiveRender("session-a")
+	require.True(t, ok)
+
+	require.Same(t, firstContext, secondContext)
+	require.Equal(t, firstID, secondID)
+}
+
+func TestServiceRepaintKeepsContextAndStreamsPendingUpdates(t *testing.T) {
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	})
+	service := NewService(registry, nil, &rendererStub{})
+	sessionID := "session-a"
+
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	firstContext, renderID, ok := registry.GetActiveRender(sessionID)
+	require.True(t, ok)
+
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{VimMode: "normal"}, Repaint: true})
+	secondContext, secondID, ok := registry.GetActiveRender(sessionID)
+	require.True(t, ok)
+	require.Same(t, firstContext, secondContext)
+	require.Equal(t, renderID, secondID)
+
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		service.SessionHub(sessionID).Publish("path.main", renderID)
+		service.SessionHub(sessionID).Publish(renderCompletePayload, renderID)
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	update, ok := service.NextUpdate(ctx, sessionID, 0)
+	require.True(t, ok)
+	require.Equal(t, "path.main", update.Segment)
+}
+
+func TestServiceRapidRepaintDoesNotCreateNewRenderContext(t *testing.T) {
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	})
+	service := NewService(registry, nil, &rendererStub{})
+	sessionID := "session-a"
+
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	baseContext, baseID, ok := registry.GetActiveRender(sessionID)
+	require.True(t, ok)
+
+	for i := range 200 {
+		service.StartRender(RenderRequest{
+			SessionID: sessionID,
+			Flags:     &runtime.Flags{VimMode: "normal"},
+			Repaint:   true,
+		})
+
+		ctx, renderID, exists := registry.GetActiveRender(sessionID)
+		require.True(t, exists)
+		require.Same(t, baseContext, ctx)
+		require.Equal(t, baseID, renderID)
+		require.Nil(t, ctx.Err(), "repaint %d should not cancel active render context", i)
+	}
+
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		service.SessionHub(sessionID).Publish("path.main", baseID)
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	update, ok := service.NextUpdate(ctx, sessionID, 0)
+	require.True(t, ok)
+	require.Equal(t, "path.main", update.Segment)
+}

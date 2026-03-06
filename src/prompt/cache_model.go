@@ -26,7 +26,7 @@ func (e *Engine) applySegmentCacheBeforeExecute(segment *config.Segment) (reused
 		return false
 	}
 
-	entry, found, cacheKey, strategy, explicit := e.getSegmentCache(segment)
+	entry, found, explicit := e.getSegmentCache(segment)
 	if !found {
 		return false
 	}
@@ -43,8 +43,6 @@ func (e *Engine) applySegmentCacheBeforeExecute(segment *config.Segment) (reused
 		e.applySegmentCacheEntry(segment, entry)
 		e.markSegmentDone(segment)
 		e.markSegmentRendered(segment, entry.RenderedAt)
-		_ = cacheKey
-		_ = strategy
 		return true
 	}
 
@@ -102,7 +100,7 @@ func (e *Engine) storeSegmentCache(segment *config.Segment, renderedAt time.Time
 	e.cacheMu.Unlock()
 }
 
-func (e *Engine) getSegmentCache(segment *config.Segment) (segmentRenderCache, bool, string, config.Strategy, bool) {
+func (e *Engine) getSegmentCache(segment *config.Segment) (segmentRenderCache, bool, bool) {
 	cacheKey, strategy := e.cacheKeyForSegment(segment)
 	explicit := segment.Cache != nil
 
@@ -112,17 +110,17 @@ func (e *Engine) getSegmentCache(segment *config.Segment) (segmentRenderCache, b
 	switch strategy {
 	case config.Session:
 		entry, ok := e.sessionCache[cacheKey]
-		return entry, ok, cacheKey, strategy, explicit
+		return entry, ok, explicit
 	case config.Folder:
 		entry, ok := e.folderCache[cacheKey]
-		return entry, ok, cacheKey, strategy, explicit
+		return entry, ok, explicit
 	case config.Device:
 		deviceCacheMu.Lock()
 		entry, ok := deviceCache[cacheKey]
 		deviceCacheMu.Unlock()
-		return entry, ok, cacheKey, strategy, explicit
+		return entry, ok, explicit
 	default:
-		return segmentRenderCache{}, false, cacheKey, strategy, explicit
+		return segmentRenderCache{}, false, explicit
 	}
 }
 

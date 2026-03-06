@@ -89,6 +89,12 @@ func printLn(lt logType, args ...string) {
 	str += Text(args[0])
 	str += parseArgs(args...)
 	log.WriteString(str.String())
+
+	outputMu.Lock()
+	defer outputMu.Unlock()
+	if outputFile != nil {
+		_, _ = outputFile.WriteString(str.String())
+	}
 }
 
 func parseArgs(args ...string) Text {
