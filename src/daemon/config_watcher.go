@@ -10,7 +10,7 @@ import (
 )
 
 // ConfigWatcher watches config files for changes using fsnotify.
-// When a file changes, it invalidates the corresponding cache entry.
+// When a file changes, it notifies the daemon to reload.
 //
 // We watch directories rather than files directly because editors using
 // atomic saves (vim, neovim, etc.) delete/rename the original file and
@@ -18,7 +18,6 @@ import (
 // inode changes, so we'd miss the CREATE event for the new file.
 type ConfigWatcher struct {
 	watcher     *fsnotify.Watcher
-	cache       *ConfigCache
 	onChange    func(string)
 	files       map[string]string
 	watchedDirs map[string]bool
@@ -27,7 +26,7 @@ type ConfigWatcher struct {
 }
 
 // NewConfigWatcher creates a new config watcher.
-func NewConfigWatcher(cache *ConfigCache, onChange func(string)) (*ConfigWatcher, error) {
+func NewConfigWatcher(onChange func(string)) (*ConfigWatcher, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -35,7 +34,6 @@ func NewConfigWatcher(cache *ConfigCache, onChange func(string)) (*ConfigWatcher
 
 	cw := &ConfigWatcher{
 		watcher:     watcher,
-		cache:       cache,
 		onChange:    onChange,
 		files:       make(map[string]string),
 		watchedDirs: make(map[string]bool),
@@ -146,7 +144,7 @@ func (cw *ConfigWatcher) handleEvent(event fsnotify.Event) {
 		return
 	}
 
-	// Any modification event (WRITE, CREATE, REMOVE, RENAME) invalidates the cache.
+	// Any modification event (WRITE, CREATE, REMOVE, RENAME) triggers reload.
 	// - WRITE: file was modified in place
 	// - CREATE: new file appeared (final step of atomic save)
 	// - REMOVE/RENAME: file was deleted or renamed away (atomic save in progress,
@@ -156,7 +154,6 @@ func (cw *ConfigWatcher) handleEvent(event fsnotify.Event) {
 	// The directory watch persists across atomic saves.
 	if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Remove|fsnotify.Rename) != 0 {
 		log.Debugf("config file changed (%s): %s", event.Op, event.Name)
-		cw.cache.Invalidate(configPath)
 		if cw.onChange != nil {
 			cw.onChange(configPath)
 		}

@@ -29,7 +29,6 @@ type Server struct {
 	lockFile       *LockFile
 	grpcServer     *grpc.Server
 	core           *Daemon
-	configCache    *ConfigCache
 	configWatcher  *ConfigWatcher
 	binaryWatcher  *BinaryWatcher
 	deviceCache    *DeviceCache
@@ -59,10 +58,8 @@ func NewServer(configPath string) (*Server, error) {
 	}
 	server.core = NewFromConfigWithDeviceCache(resolvedPath, nil, server.deviceCache)
 
-	configCache := NewConfigCache()
-	configWatcher, err := NewConfigWatcher(configCache, server.requestConfigReload)
+	configWatcher, err := NewConfigWatcher(server.requestConfigReload)
 	if err == nil {
-		server.configCache = configCache
 		server.configWatcher = configWatcher
 		server.refreshConfigWatches()
 		go server.configReloadWorker()
@@ -290,7 +287,7 @@ func (server *Server) configReloadWorker() {
 		case <-server.done:
 			return
 		case <-server.configReloadCh:
-			if server.configCache == nil || server.configPath == "" {
+			if server.configPath == "" {
 				continue
 			}
 
@@ -322,7 +319,7 @@ func (server *Server) requestConfigReload(configPath string) {
 }
 
 func (server *Server) refreshConfigWatches() {
-	if server.configWatcher == nil || server.configCache == nil || server.configPath == "" {
+	if server.configWatcher == nil || server.configPath == "" {
 		return
 	}
 
@@ -331,7 +328,6 @@ func (server *Server) refreshConfigWatches() {
 		return
 	}
 
-	server.configCache.Set(server.configPath, cfg, cfg.FilePaths)
 	_ = server.configWatcher.Watch(server.configPath, cfg.FilePaths)
 }
 

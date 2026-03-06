@@ -24,13 +24,8 @@ func init() {
 }
 
 const (
-	JSON string = "json"
 	YAML string = "yaml"
-	TOML string = "toml"
-
-	TML   string = "tml"
-	YML   string = "yml"
-	JSONC string = "jsonc"
+	YML  string = "yml"
 
 	AUTOUPGRADE   = "upgrade"
 	UPGRADENOTICE = "notice"
@@ -87,7 +82,6 @@ type Config struct {
 	Tooltips                []*Segment             `json:"tooltips,omitempty" toml:"tooltips,omitempty" yaml:"tooltips,omitempty"`
 	hash                    uint64
 	DaemonTimeout           int  `json:"daemon_timeout,omitempty" toml:"daemon_timeout,omitempty" yaml:"daemon_timeout,omitempty"`
-	MigrateGlyphs           bool `json:"-" toml:"-" yaml:"-"`
 	Async                   bool `json:"async,omitempty" toml:"async,omitempty" yaml:"async,omitempty"`
 	ShellIntegration        bool `json:"shell_integration,omitempty" toml:"shell_integration,omitempty" yaml:"shell_integration,omitempty"`
 	FinalSpace              bool `json:"final_space,omitempty" toml:"final_space,omitempty" yaml:"final_space,omitempty"`

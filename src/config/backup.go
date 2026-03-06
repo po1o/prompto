@@ -2,12 +2,9 @@ package config
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
 	"os"
-	"strings"
 
-	toml "github.com/pelletier/go-toml/v2"
 	yaml "go.yaml.in/yaml/v3"
 )
 
@@ -34,41 +31,24 @@ func (cfg *Config) Export(format string) string {
 		cfg.Format = format
 	}
 
-	var result bytes.Buffer
-
-	switch cfg.Format {
-	case YAML:
-		prefix := "# yaml-language-server: $schema=https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json\n\n"
-		yamlEncoder := yaml.NewEncoder(&result)
-
-		err := yamlEncoder.Encode(cfg)
-		if err != nil {
-			return ""
-		}
-
-		return prefix + result.String()
-	case JSON:
-		jsonEncoder := json.NewEncoder(&result)
-		jsonEncoder.SetEscapeHTML(false)
-		jsonEncoder.SetIndent("", "  ")
-		_ = jsonEncoder.Encode(cfg)
-		prefix := "{\n  \"$schema\": \"https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json\","
-		data := strings.Replace(result.String(), "{", prefix, 1)
-		return EscapeGlyphs(data, cfg.MigrateGlyphs)
-	case TOML:
-		tomlEncoder := toml.NewEncoder(&result)
-		tomlEncoder.SetIndentTables(true)
-
-		err := tomlEncoder.Encode(cfg)
-		if err != nil {
-			return ""
-		}
-
-		return result.String()
+	if cfg.Format == "" || cfg.Format == YML {
+		cfg.Format = YAML
 	}
 
-	// unsupported format
-	return ""
+	if cfg.Format != YAML {
+		return ""
+	}
+
+	var result bytes.Buffer
+	prefix := "# yaml-language-server: $schema=https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json\n\n"
+	yamlEncoder := yaml.NewEncoder(&result)
+
+	err := yamlEncoder.Encode(cfg)
+	if err != nil {
+		return ""
+	}
+
+	return prefix + result.String()
 }
 
 func (cfg *Config) Write(format string) {
