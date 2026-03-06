@@ -144,7 +144,7 @@ func (e *Engine) writeCompiledPrimaryPrompt() {
 		}
 
 		if i < len(e.CompiledConfig.RPrompt) {
-			right := e.compiledLayoutBlock(&e.CompiledConfig.RPrompt[i], config.Prompt, config.Right, false)
+			right := e.compiledLayoutBlock(&e.CompiledConfig.RPrompt[i], config.RPrompt, config.Right, false)
 			if i < len(e.CompiledConfig.Prompt) {
 				right.Filler = e.CompiledConfig.Prompt[i].Filler
 			}

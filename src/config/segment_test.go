@@ -8,11 +8,28 @@ import (
 	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
 	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
 	"github.com/jandedobbeleer/oh-my-posh/src/segments"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
 
 	toml "github.com/pelletier/go-toml/v2"
 	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v3"
 )
+
+type panicCacheKeyWriter struct{}
+
+func (panicCacheKeyWriter) Enabled() bool { return true }
+
+func (panicCacheKeyWriter) Template() string { return "" }
+
+func (panicCacheKeyWriter) SetText(string) {}
+
+func (panicCacheKeyWriter) SetIndex(int) {}
+
+func (panicCacheKeyWriter) Text() string { return "" }
+
+func (panicCacheKeyWriter) Init(options.Provider, runtime.Environment) {}
+
+func (panicCacheKeyWriter) CacheKey() (string, bool) { panic("cache key should not be called") }
 
 const (
 	cwd = "Projects/oh-my-posh"
@@ -349,4 +366,17 @@ func TestGetPendingTextUsesSegmentOverrides(t *testing.T) {
 	assert.True(t, enabled)
 	assert.Equal(t, "⏱ cached", text)
 	assert.Equal(t, color.Ansi("blue"), background)
+}
+
+func TestDaemonCacheKeySkipsWriterCacheKeyWhenNoExplicitCache(t *testing.T) {
+	env := new(mock.Environment)
+	env.On("Pwd").Return("/tmp")
+
+	segment := &Segment{
+		Alias:  "git",
+		writer: panicCacheKeyWriter{},
+		env:    env,
+	}
+
+	assert.Equal(t, "daemon_cache_git_/tmp", segment.DaemonCacheKey())
 }

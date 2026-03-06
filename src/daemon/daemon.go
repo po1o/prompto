@@ -14,6 +14,7 @@ import (
 type Daemon struct {
 	service     *Service
 	sessions    *SessionManager
+	deviceCache *DeviceCache
 	idleTimeout time.Duration
 	stopped     atomic.Bool
 	idleToken   uint64
@@ -21,19 +22,36 @@ type Daemon struct {
 }
 
 func New(renderer promptBundleRenderer) *Daemon {
-	return NewWithIdleTimeout(5*time.Minute, renderer)
+	return NewWithIdleTimeoutAndDeviceCache(5*time.Minute, renderer, nil)
 }
 
 func NewFromConfig(configPath string, renderer promptBundleRenderer) *Daemon {
 	cfg := config.Load(configPath)
-	return NewWithIdleTimeout(cfg.GetDaemonIdleTimeout(), renderer)
+	return NewWithIdleTimeoutAndDeviceCache(cfg.GetDaemonIdleTimeout(), renderer, nil)
 }
 
 func NewWithIdleTimeout(idleTimeout time.Duration, renderer promptBundleRenderer) *Daemon {
+	return NewWithIdleTimeoutAndDeviceCache(idleTimeout, renderer, nil)
+}
+
+func NewFromConfigWithDeviceCache(configPath string, renderer promptBundleRenderer, deviceCache *DeviceCache) *Daemon {
+	cfg := config.Load(configPath)
+	return NewWithIdleTimeoutAndDeviceCache(cfg.GetDaemonIdleTimeout(), renderer, deviceCache)
+}
+
+func NewWithIdleTimeoutAndDeviceCache(idleTimeout time.Duration, renderer promptBundleRenderer, deviceCache *DeviceCache) *Daemon {
+	if deviceCache == nil {
+		deviceCache = NewDeviceCache()
+	}
+
 	registry := NewEngineRegistry(prompt.New)
 	gate := NewReloadGate()
+	service := NewService(registry, gate, renderer)
+	service.pipeline.deviceCache = newPromptDeviceCacheBridge(deviceCache)
+
 	daemon := &Daemon{
-		service:     NewService(registry, gate, renderer),
+		service:     service,
+		deviceCache: deviceCache,
 		idleTimeout: idleTimeout,
 	}
 	daemon.sessions = NewSessionManager(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
@@ -43,6 +61,10 @@ func NewWithIdleTimeout(idleTimeout time.Duration, renderer promptBundleRenderer
 	daemon.mu.Unlock()
 
 	return daemon
+}
+
+func (daemon *Daemon) DeviceCache() *DeviceCache {
+	return daemon.deviceCache
 }
 
 func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {

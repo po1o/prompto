@@ -33,7 +33,7 @@ func NewService(registry *EngineRegistry, gate *ReloadGate, renderer promptBundl
 	sessionRuntime := NewSessionRenderRuntime(registry, gate)
 	return &Service{
 		runtime:  sessionRuntime,
-		pipeline: NewRenderPipeline(sessionRuntime, renderer),
+		pipeline: NewRenderPipeline(sessionRuntime, renderer, nil),
 		renders:  make(map[string]*ActiveRender),
 	}
 }

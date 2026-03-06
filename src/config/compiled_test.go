@@ -58,8 +58,8 @@ git.main:
 
 	require.Len(t, cfg.RPrompt, 1)
 	assert.Equal(t, []string{"git.main"}, cfg.RPrompt[0].Segments)
-	assert.Equal(t, "\uE0B0", cfg.RPrompt[0].LeadingDiamond)
-	assert.Equal(t, "\uE0B2", cfg.RPrompt[0].TrailingDiamond)
+	assert.Equal(t, "\uE0B2", cfg.RPrompt[0].LeadingDiamond)
+	assert.Equal(t, "\uE0B0", cfg.RPrompt[0].TrailingDiamond)
 	assert.Empty(t, cfg.RPrompt[0].LeadingStyle)
 	assert.Empty(t, cfg.RPrompt[0].TrailingStyle)
 	assert.Empty(t, cfg.RPrompt[0].LeadingSeparator)
@@ -102,8 +102,8 @@ session:
 	assert.Equal(t, "\uE0B0", cfg.Prompt[0].TrailingDiamond)
 
 	require.Len(t, cfg.RPrompt, 1)
-	assert.Equal(t, "", cfg.RPrompt[0].LeadingDiamond)
-	assert.Equal(t, "\uE0B2", cfg.RPrompt[0].TrailingDiamond)
+	assert.Equal(t, "\uE0B2", cfg.RPrompt[0].LeadingDiamond)
+	assert.Equal(t, "", cfg.RPrompt[0].TrailingDiamond)
 }
 
 func TestParseCompiledYAMLStyleShortcutOnSegments(t *testing.T) {
@@ -258,4 +258,49 @@ session:
 	_, err := ParseCompiledYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "cannot define style together with explicit leading/trailing separator settings")
+}
+
+func TestParseCompiledYAMLAllowsVimModeTopLevelConfig(t *testing.T) {
+	raw := `
+version: 4
+vim-mode:
+  enabled: true
+  cursor_shape: true
+
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	cfg, err := ParseCompiledYAML([]byte(raw))
+	require.NoError(t, err)
+	require.Len(t, cfg.Prompt, 1)
+	require.Contains(t, cfg.Segments, "session")
+}
+
+func TestParseCompiledYAMLInfersVimSegmentType(t *testing.T) {
+	raw := `
+vim-mode:
+  enabled: true
+
+prompt:
+  - segments: ["session"]
+
+rprompt:
+  - segments: ["vim"]
+
+session:
+  type: "session"
+
+vim:
+  style: "powerline"
+  template: "{{ if .Normal }} NORMAL {{ end }}"
+`
+
+	cfg, err := ParseCompiledYAML([]byte(raw))
+	require.NoError(t, err)
+	require.Contains(t, cfg.Segments, "vim")
+	assert.Equal(t, VIM, cfg.Segments["vim"].Type)
 }

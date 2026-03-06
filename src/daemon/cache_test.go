@@ -34,6 +34,18 @@ func TestDeviceCacheDefaultTTLIsUsedWhenTTLIsNonPositive(t *testing.T) {
 	require.False(t, ok)
 }
 
+func TestDeviceCacheNegativeTTLNeverExpires(t *testing.T) {
+	cache := NewDeviceCache()
+	cache.SetDefaultTTL(10 * time.Millisecond)
+	cache.Set("path.main", SegmentRenderValue{Text: "x"}, -1*time.Second)
+
+	time.Sleep(40 * time.Millisecond)
+
+	value, ok := cache.Get("path.main")
+	require.True(t, ok)
+	require.Equal(t, "x", value.Text)
+}
+
 func TestDeviceCacheDeleteAndClear(t *testing.T) {
 	cache := NewDeviceCache()
 	cache.Set("a", SegmentRenderValue{Text: "a"}, time.Minute)

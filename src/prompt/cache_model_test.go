@@ -1,6 +1,8 @@
 package prompt
 
 import (
+	"os"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -16,6 +18,21 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+type testDeviceCache struct {
+	entries map[string]DeviceCacheEntry
+	lastTTL time.Duration
+}
+
+func (store *testDeviceCache) Get(key string) (DeviceCacheEntry, bool) {
+	value, ok := store.entries[key]
+	return value, ok
+}
+
+func (store *testDeviceCache) Set(key string, value DeviceCacheEntry, ttl time.Duration) {
+	store.lastTTL = ttl
+	store.entries[key] = value
+}
 
 type countingProvider struct {
 	count *int32
@@ -129,6 +146,83 @@ func TestImplicitCacheAlwaysRecomputes(t *testing.T) {
 	require.Equal(t, int32(2), atomic.LoadInt32(&count))
 }
 
+func TestImplicitGitCacheKeyUsesRepoRootAcrossSubdirectories(t *testing.T) {
+	repoRoot := t.TempDir()
+	require.NoError(t, os.Mkdir(filepath.Join(repoRoot, ".git"), 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Join(repoRoot, "a", "b"), 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Join(repoRoot, "c", "d"), 0o755))
+
+	firstPwd := filepath.Join(repoRoot, "a", "b")
+	secondPwd := filepath.Join(repoRoot, "c", "d")
+
+	firstEngine := newCacheTestEngineWithPwd(t, firstPwd)
+	secondEngine := newCacheTestEngineWithPwd(t, secondPwd)
+
+	firstSegment := &config.Segment{Type: config.GIT, Alias: "git"}
+	secondSegment := &config.Segment{Type: config.GIT, Alias: "git"}
+	require.NoError(t, firstSegment.MapSegmentWithWriter(firstEngine.Env))
+	require.NoError(t, secondSegment.MapSegmentWithWriter(secondEngine.Env))
+
+	firstKey, firstStrategy := firstEngine.cacheKeyForSegment(firstSegment)
+	secondKey, secondStrategy := secondEngine.cacheKeyForSegment(secondSegment)
+
+	require.Equal(t, config.Folder, firstStrategy)
+	require.Equal(t, config.Folder, secondStrategy)
+	require.Equal(t, firstKey, secondKey)
+	require.Contains(t, firstKey, repoRoot)
+}
+
+func TestStoreSegmentCacheUsesInjectedDeviceCacheForFolderStrategy(t *testing.T) {
+	var count int32
+	engine := newCacheTestEngine(&count)
+	cacheStore := &testDeviceCache{
+		entries: map[string]DeviceCacheEntry{},
+	}
+	engine.SetDeviceCache(cacheStore)
+
+	segment := &config.Segment{
+		Type:     config.TEXT,
+		Alias:    "text.main",
+		Template: "A",
+	}
+	require.NoError(t, segment.MapSegmentWithWriter(engine.Env))
+	segment.Enabled = true
+	segment.SetText("cached")
+
+	renderedAt := time.Now()
+	engine.storeSegmentCache(segment, renderedAt)
+
+	require.Empty(t, engine.folderCache)
+	require.NotEmpty(t, cacheStore.entries)
+	require.Equal(t, time.Duration(0), cacheStore.lastTTL)
+}
+
+func TestStoreSegmentCacheUsesExplicitDurationForInjectedDeviceCache(t *testing.T) {
+	var count int32
+	engine := newCacheTestEngine(&count)
+	cacheStore := &testDeviceCache{
+		entries: map[string]DeviceCacheEntry{},
+	}
+	engine.SetDeviceCache(cacheStore)
+
+	segment := &config.Segment{
+		Type:     config.TEXT,
+		Alias:    "text.main",
+		Template: "A",
+		Cache: &config.Cache{
+			Strategy: config.Folder,
+			Duration: cache.ONEDAY,
+		},
+	}
+	require.NoError(t, segment.MapSegmentWithWriter(engine.Env))
+	segment.Enabled = true
+	segment.SetText("cached")
+
+	engine.storeSegmentCache(segment, time.Now())
+
+	require.Equal(t, 24*time.Hour, cacheStore.lastTTL)
+}
+
 func newCacheTestEngine(count *int32) *Engine {
 	flags := &runtime.Flags{
 		Shell:         shell.GENERIC,
@@ -161,5 +255,27 @@ func newCacheTestEngine(count *int32) *Engine {
 		segmentStates: make(map[string]*segmentAsyncState),
 		sessionCache:  make(map[string]segmentRenderCache),
 		folderCache:   make(map[string]segmentRenderCache),
+	}
+}
+
+func newCacheTestEngineWithPwd(t *testing.T, pwd string) *Engine {
+	t.Helper()
+
+	flags := &runtime.Flags{
+		Shell:         shell.GENERIC,
+		TerminalWidth: 80,
+		PWD:           pwd,
+	}
+
+	env := &runtime.Terminal{}
+	env.Init(flags)
+
+	return &Engine{
+		Env:            env,
+		Config:         &config.Config{},
+		CompiledConfig: &config.CompiledConfig{},
+		segmentStates:  make(map[string]*segmentAsyncState),
+		sessionCache:   make(map[string]segmentRenderCache),
+		folderCache:    make(map[string]segmentRenderCache),
 	}
 }

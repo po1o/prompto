@@ -45,7 +45,7 @@ func TestRenderPipelineStartRendersInitialBundle(t *testing.T) {
 	})
 	sessionRuntime := NewSessionRenderRuntime(registry, nil)
 	renderer := &rendererStub{}
-	pipeline := NewRenderPipeline(sessionRuntime, renderer)
+	pipeline := NewRenderPipeline(sessionRuntime, renderer, nil)
 
 	bundle, active := pipeline.Start("session-a", &runtime.Flags{}, false)
 	require.Equal(t, "render", bundle.Primary)
@@ -63,7 +63,7 @@ func TestRenderPipelineNextRendersAfterUpdate(t *testing.T) {
 	})
 	sessionRuntime := NewSessionRenderRuntime(registry, nil)
 	renderer := &rendererStub{}
-	pipeline := NewRenderPipeline(sessionRuntime, renderer)
+	pipeline := NewRenderPipeline(sessionRuntime, renderer, nil)
 
 	_, active := pipeline.Start("session-a", &runtime.Flags{}, false)
 	defer active.Complete()
@@ -90,4 +90,28 @@ func TestActiveRenderNextHandlesNil(t *testing.T) {
 	var active *ActiveRender
 	_, ok := active.Next(context.Background(), 0)
 	require.False(t, ok)
+}
+
+func TestApplyRenderFlagsNonRepaintUpdatesWorkingDirectory(t *testing.T) {
+	term := &runtime.Terminal{}
+	term.Init(&runtime.Flags{PWD: "/tmp/first", VimMode: "insert"})
+	engine := &prompt.Engine{Env: term}
+
+	applyRenderFlags(engine, &runtime.Flags{PWD: "/tmp/second", VimMode: "normal"}, false)
+
+	require.Equal(t, "/tmp/second", term.Pwd())
+	require.Equal(t, "/tmp/second", term.Flags().PWD)
+	require.Equal(t, "normal", term.Flags().VimMode)
+}
+
+func TestApplyRenderFlagsRepaintOnlyUpdatesVimMode(t *testing.T) {
+	term := &runtime.Terminal{}
+	term.Init(&runtime.Flags{PWD: "/tmp/first", VimMode: "insert"})
+	engine := &prompt.Engine{Env: term}
+
+	applyRenderFlags(engine, &runtime.Flags{PWD: "/tmp/second", VimMode: "normal"}, true)
+
+	require.Equal(t, "/tmp/first", term.Pwd())
+	require.Equal(t, "/tmp/first", term.Flags().PWD)
+	require.Equal(t, "normal", term.Flags().VimMode)
 }

@@ -50,13 +50,14 @@ func NewServer(configPath string) (*Server, error) {
 	}
 
 	server := &Server{
-		core:           NewFromConfig(resolvedPath, nil),
+		core:           nil,
 		configPath:     resolvedPath,
 		lockFile:       lockFile,
 		done:           make(chan struct{}),
 		deviceCache:    NewDeviceCache(),
 		segmentToggles: make(map[string]map[string]bool),
 	}
+	server.core = NewFromConfigWithDeviceCache(resolvedPath, nil, server.deviceCache)
 
 	configCache := NewConfigCache()
 	configWatcher, err := NewConfigWatcher(configCache)

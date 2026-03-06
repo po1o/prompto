@@ -177,16 +177,22 @@ func normalizePromptLayout(layout *PromptLayout, rightAligned bool, table string
 			return fmt.Errorf("%s uses unknown style alias %q", table, layout.Style)
 		}
 
-		// Shortcut behavior: style defines trailing separator style, leading remains flat.
-		layout.TrailingStyle = layout.Style
+		// Shortcut behavior:
+		// - left aligned lines use trailing separators
+		// - right aligned lines use leading separators
+		if rightAligned {
+			layout.LeadingStyle = layout.Style
+		} else {
+			layout.TrailingStyle = layout.Style
+		}
 	}
 
-	leading, err := resolveSeparator(layout.LeadingStyle, layout.LeadingSeparator, rightAligned, true)
+	leading, err := resolveSeparator(layout.LeadingStyle, layout.LeadingSeparator, true)
 	if err != nil {
 		return fmt.Errorf("%s leading separator: %w", table, err)
 	}
 
-	trailing, err := resolveSeparator(layout.TrailingStyle, layout.TrailingSeparator, rightAligned, false)
+	trailing, err := resolveSeparator(layout.TrailingStyle, layout.TrailingSeparator, false)
 	if err != nil {
 		return fmt.Errorf("%s trailing separator: %w", table, err)
 	}
@@ -210,9 +216,16 @@ func decodeCompiledSegmentTables(doc map[string]any, segmentsByName map[string]*
 		"transient_prompt":  true,
 		"transient_rprompt": true,
 	}
+	reservedTables := map[string]bool{
+		"vim-mode": true,
+	}
 
 	for key, value := range doc {
 		if lineTables[key] {
+			continue
+		}
+
+		if reservedTables[key] {
 			continue
 		}
 
@@ -341,12 +354,12 @@ func normalizeSegmentSeparators(raw map[string]any, name string) error {
 		raw["style"] = string(Diamond)
 	}
 
-	leading, err := resolveSeparator(leadingStyle, leadingSeparator, false, true)
+	leading, err := resolveSeparator(leadingStyle, leadingSeparator, true)
 	if err != nil {
 		return fmt.Errorf("%s leading separator: %w", name, err)
 	}
 
-	trailing, err := resolveSeparator(trailingStyle, trailingSeparator, false, false)
+	trailing, err := resolveSeparator(trailingStyle, trailingSeparator, false)
 	if err != nil {
 		return fmt.Errorf("%s trailing separator: %w", name, err)
 	}
@@ -367,7 +380,7 @@ func normalizeSegmentSeparators(raw map[string]any, name string) error {
 	return nil
 }
 
-func resolveSeparator(style, separator string, rightAligned, leading bool) (string, error) {
+func resolveSeparator(style, separator string, leading bool) (string, error) {
 	if separator != "" {
 		return separator, nil
 	}
@@ -383,10 +396,6 @@ func resolveSeparator(style, separator string, rightAligned, leading bool) (stri
 
 	leftGlyph := pair.left
 	rightGlyph := pair.right
-
-	if rightAligned {
-		leftGlyph, rightGlyph = rightGlyph, leftGlyph
-	}
 
 	if leading {
 		return leftGlyph, nil

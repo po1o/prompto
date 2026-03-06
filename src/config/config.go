@@ -70,6 +70,7 @@ type Config struct {
 	Maps                    *maps.Config           `json:"maps,omitempty" toml:"maps,omitempty" yaml:"maps,omitempty"`
 	Upgrade                 *upgrade.Config        `json:"upgrade,omitempty" toml:"upgrade,omitempty" yaml:"upgrade,omitempty"`
 	Vim                     *VimConfig             `json:"vim,omitempty" toml:"vim,omitempty" yaml:"vim,omitempty"`
+	VimMode                 *VimConfig             `json:"vim-mode,omitempty" toml:"vim-mode,omitempty" yaml:"vim-mode,omitempty"`
 	Extends                 string                 `json:"extends,omitempty" toml:"extends,omitempty" yaml:"extends,omitempty"`
 	FilePaths               []string               `json:"-" toml:"-" yaml:"-"`
 	AccentColor             color.Ansi             `json:"accent_color,omitempty" toml:"accent_color,omitempty" yaml:"accent_color,omitempty"`
@@ -211,8 +212,14 @@ func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features
 		}
 	}
 
-	if cfg.Vim != nil {
-		feats |= cfg.vimFeatures()
+	vimConfig := cfg.Vim
+	vimConfigured := vimConfig != nil && (vimConfig.Enabled || vimConfig.CursorShape || vimConfig.CursorBlink)
+	if !vimConfigured {
+		vimConfig = cfg.VimMode
+	}
+
+	if vimConfig != nil {
+		feats |= cfg.vimFeatures(vimConfig)
 	}
 
 	return feats
@@ -246,12 +253,12 @@ func (cfg *Config) upgradeFeatures() shell.Features {
 	return feats
 }
 
-func (cfg *Config) vimFeatures() shell.Features {
+func (cfg *Config) vimFeatures(vimCfg *VimConfig) shell.Features {
 	var feats shell.Features
 
-	cursorControl := cfg.Vim.CursorShape || cfg.Vim.CursorBlink
+	cursorControl := vimCfg.CursorShape || vimCfg.CursorBlink
 
-	if cfg.Vim.Enabled || cursorControl {
+	if vimCfg.Enabled || cursorControl {
 		log.Debug("vim mode enabled")
 		feats |= shell.VimMode
 	}
@@ -261,7 +268,7 @@ func (cfg *Config) vimFeatures() shell.Features {
 		feats |= shell.VimCursorShape
 	}
 
-	if cfg.Vim.CursorBlink {
+	if vimCfg.CursorBlink {
 		log.Debug("vim cursor blink enabled")
 		feats |= shell.VimCursorBlink
 	}

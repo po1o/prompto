@@ -16,6 +16,13 @@ type segmentRenderCache struct {
 	Background color.Ansi
 }
 
+type DeviceCacheEntry = segmentRenderCache
+
+type DeviceCache interface {
+	Get(key string) (DeviceCacheEntry, bool)
+	Set(key string, value DeviceCacheEntry, ttl time.Duration)
+}
+
 var (
 	deviceCacheMu sync.Mutex
 	deviceCache   = make(map[string]segmentRenderCache)
@@ -32,6 +39,10 @@ func (e *Engine) applySegmentCacheBeforeExecute(segment *config.Segment) (reused
 	}
 
 	if !explicit {
+		if !e.ensureSegmentWriter(segment) {
+			return false
+		}
+
 		segment.SetText(entry.Text)
 		segment.Foreground = entry.Foreground
 		segment.Background = entry.Background
@@ -88,11 +99,21 @@ func (e *Engine) storeSegmentCache(segment *config.Segment, renderedAt time.Time
 		}
 		e.sessionCache[cacheKey] = entry
 	case config.Folder:
+		if e.deviceCache != nil {
+			e.deviceCache.Set(cacheKey, entry, segmentCacheTTL(segment))
+			break
+		}
+
 		if e.folderCache == nil {
 			e.folderCache = make(map[string]segmentRenderCache)
 		}
 		e.folderCache[cacheKey] = entry
 	case config.Device:
+		if e.deviceCache != nil {
+			e.deviceCache.Set(cacheKey, entry, segmentCacheTTL(segment))
+			break
+		}
+
 		deviceCacheMu.Lock()
 		deviceCache[cacheKey] = entry
 		deviceCacheMu.Unlock()
@@ -112,9 +133,19 @@ func (e *Engine) getSegmentCache(segment *config.Segment) (segmentRenderCache, b
 		entry, ok := e.sessionCache[cacheKey]
 		return entry, ok, explicit
 	case config.Folder:
+		if e.deviceCache != nil {
+			entry, ok := e.deviceCache.Get(cacheKey)
+			return entry, ok, explicit
+		}
+
 		entry, ok := e.folderCache[cacheKey]
 		return entry, ok, explicit
 	case config.Device:
+		if e.deviceCache != nil {
+			entry, ok := e.deviceCache.Get(cacheKey)
+			return entry, ok, explicit
+		}
+
 		deviceCacheMu.Lock()
 		entry, ok := deviceCache[cacheKey]
 		deviceCacheMu.Unlock()
@@ -126,7 +157,7 @@ func (e *Engine) getSegmentCache(segment *config.Segment) (segmentRenderCache, b
 
 func (e *Engine) cacheKeyForSegment(segment *config.Segment) (string, config.Strategy) {
 	if segment.Cache == nil {
-		return segment.Name() + "::" + e.Env.Pwd(), config.Folder
+		return segment.DaemonCacheKey(), config.Folder
 	}
 
 	switch segment.Cache.Strategy {
@@ -137,11 +168,15 @@ func (e *Engine) cacheKeyForSegment(segment *config.Segment) (string, config.Str
 	case config.Folder:
 		fallthrough
 	default:
-		return segment.Name() + "::" + e.Env.Pwd(), config.Folder
+		return segment.Name() + "::" + segment.FolderKey(), config.Folder
 	}
 }
 
 func (e *Engine) applySegmentCacheEntry(segment *config.Segment, entry segmentRenderCache) {
+	if !e.ensureSegmentWriter(segment) {
+		return
+	}
+
 	segment.Enabled = true
 	segment.SetText(entry.Text)
 	if entry.Foreground != "" {
@@ -152,9 +187,26 @@ func (e *Engine) applySegmentCacheEntry(segment *config.Segment, entry segmentRe
 	}
 }
 
+func (e *Engine) ensureSegmentWriter(segment *config.Segment) bool {
+	err := segment.MapSegmentWithWriter(e.Env)
+	return err == nil
+}
+
 func (e *Engine) executeWithoutLegacySegmentCache(segment *config.Segment) {
 	original := segment.Cache
 	segment.Cache = nil
 	segment.Execute(e.Env)
 	segment.Cache = original
+}
+
+func (e *Engine) SetDeviceCache(cacheStore DeviceCache) {
+	e.deviceCache = cacheStore
+}
+
+func segmentCacheTTL(segment *config.Segment) time.Duration {
+	if segment == nil || segment.Cache == nil || segment.Cache.Duration.IsEmpty() {
+		return 0
+	}
+
+	return time.Duration(segment.Cache.Duration.Seconds()) * time.Second
 }

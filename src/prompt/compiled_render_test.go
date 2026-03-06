@@ -34,16 +34,14 @@ func TestPrimaryUsesCompiledLayoutOrderAndFiller(t *testing.T) {
 	})
 
 	got := engine.Primary()
+	rgot := engine.RPrompt()
 	iAB := strings.Index(got, "AB")
-	iR := strings.Index(got, "R")
 	iNewlineC := strings.Index(got, "\nC")
 
 	require.GreaterOrEqual(t, iAB, 0)
-	require.GreaterOrEqual(t, iR, 0)
 	require.GreaterOrEqual(t, iNewlineC, 0)
-	require.True(t, iAB < iR)
-	require.True(t, iR < iNewlineC)
-	require.Contains(t, got, ".")
+	require.True(t, iAB < iNewlineC)
+	require.Equal(t, "R", rgot)
 }
 
 func TestSecondaryUsesCompiledLayout(t *testing.T) {
@@ -60,6 +58,29 @@ func TestSecondaryUsesCompiledLayout(t *testing.T) {
 
 	got := engine.ExtraPrompt(Secondary)
 	require.Equal(t, "S1\nS2", got)
+}
+
+func TestPrimaryMirrorsRightAlignedDiamondSegmentSeparators(t *testing.T) {
+	engine := newCompiledTestEngine(t, &config.CompiledConfig{
+		RPrompt: []config.PromptLayout{
+			{Segments: []string{"right_git"}},
+		},
+		Segments: map[string]*config.Segment{
+			"right_git": {
+				Type:            config.TEXT,
+				Alias:           "right_git",
+				Style:           config.Diamond,
+				Template:        "R",
+				LeadingDiamond:  "",
+				TrailingDiamond: "\uE0B0",
+			},
+		},
+	})
+
+	_ = engine.Primary()
+	rgot := engine.RPrompt()
+	require.Contains(t, rgot, "\uE0B2R")
+	require.NotContains(t, rgot, "R\uE0B0")
 }
 
 func newCompiledTestEngine(t *testing.T, compiled *config.CompiledConfig) *Engine {

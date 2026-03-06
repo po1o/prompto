@@ -353,6 +353,8 @@ const (
 	UNITY SegmentType = "unity"
 	// UPGRADE lets you know if you can upgrade Oh My Posh
 	UPGRADE SegmentType = "upgrade"
+	// VIM writes the current vim mode
+	VIM SegmentType = "vim"
 	// V writes the active vlang version
 	V SegmentType = "v"
 	// VALA writes the active vala version
@@ -475,6 +477,7 @@ var Segments = map[SegmentType]func() SegmentWriter{
 	UMBRACO:         func() SegmentWriter { return &segments.Umbraco{} },
 	UNITY:           func() SegmentWriter { return &segments.Unity{} },
 	UPGRADE:         func() SegmentWriter { return &segments.Upgrade{} },
+	VIM:             func() SegmentWriter { return &segments.Vim{} },
 	V:               func() SegmentWriter { return &segments.V{} },
 	VALA:            func() SegmentWriter { return &segments.Vala{} },
 	WAKATIME:        func() SegmentWriter { return &segments.Wakatime{} },

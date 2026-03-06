@@ -32,6 +32,7 @@ type Engine struct {
 	pendingSegments       map[string]bool
 	cachedValues          map[string]string
 	segmentCacheKeys      map[string]string
+	streamingBlocks       []*config.Block
 	Overflow              config.Overflow
 	rprompt               string
 	prompt                strings.Builder
@@ -44,6 +45,7 @@ type Engine struct {
 	stateMu               sync.Mutex
 	Plain                 bool
 	forceRender           bool
+	deviceCache           DeviceCache
 }
 
 const (

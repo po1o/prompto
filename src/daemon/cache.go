@@ -16,6 +16,7 @@ type SegmentRenderValue struct {
 
 type deviceCacheEntry struct {
 	expiresAt time.Time
+	infinite  bool
 	value     SegmentRenderValue
 }
 
@@ -49,13 +50,23 @@ func (cache *DeviceCache) Set(key string, value SegmentRenderValue, ttl time.Dur
 	defer cache.mu.Unlock()
 
 	effectiveTTL := ttl
-	if effectiveTTL <= 0 {
+	if effectiveTTL == 0 {
 		effectiveTTL = cache.defaultTTL
 	}
+
+	infinite := effectiveTTL < 0
 
 	cache.entries[key] = deviceCacheEntry{
 		value:     value,
 		expiresAt: time.Now().Add(effectiveTTL),
+		infinite:  infinite,
+	}
+
+	if infinite {
+		cache.entries[key] = deviceCacheEntry{
+			value:    value,
+			infinite: true,
+		}
 	}
 }
 
@@ -67,7 +78,7 @@ func (cache *DeviceCache) Get(key string) (SegmentRenderValue, bool) {
 		return SegmentRenderValue{}, false
 	}
 
-	if time.Now().After(entry.expiresAt) {
+	if !entry.infinite && time.Now().After(entry.expiresAt) {
 		cache.mu.Lock()
 		delete(cache.entries, key)
 		cache.mu.Unlock()
@@ -101,6 +112,10 @@ func (cache *DeviceCache) EvictExpired() {
 	defer cache.mu.Unlock()
 
 	for key, entry := range cache.entries {
+		if entry.infinite {
+			continue
+		}
+
 		if now.After(entry.expiresAt) {
 			delete(cache.entries, key)
 		}

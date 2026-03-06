@@ -66,7 +66,62 @@ func cacheKey(sh string) string {
 }
 
 func cacheValue(env runtime.Environment) string {
-	return fmt.Sprintf("%d%s", env.Flags().ConfigHash, build.Version)
+	executable, err := getExecutablePath(env)
+	if err != nil {
+		executable = "unknown"
+	}
+
+	initSig := initCommandSignature(env.Flags())
+	scriptFingerprint := shellScriptFingerprint(env.Flags().Shell)
+
+	return fmt.Sprintf(
+		"%d%s|exe=%s|init=%s|script=%d",
+		env.Flags().ConfigHash,
+		build.Version,
+		executable,
+		initSig,
+		scriptFingerprint,
+	)
+}
+
+func initCommandSignature(flags *runtime.Flags) string {
+	return fmt.Sprintf(
+		"shell=%s|config=%s|strict=%t|daemon=%t",
+		flags.Shell,
+		flags.ConfigPath,
+		flags.Strict,
+		flags.Daemon,
+	)
+}
+
+func shellScriptFingerprint(sh string) uint64 {
+	template := shellTemplate(sh)
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(template))
+	return h.Sum64()
+}
+
+func shellTemplate(sh string) string {
+	switch sh {
+	case PWSH:
+		return pwshInit
+	case ZSH:
+		return zshInit
+	case BASH:
+		return bashInit
+	case FISH:
+		return fishInit
+	case CMD:
+		return cmdInit
+	case NU:
+		return nuInit
+	case ELVISH:
+		return elvishInit
+	case XONSH:
+		return xonshInit
+	default:
+		return ""
+	}
 }
 
 func InitScriptName(flags *runtime.Flags) string {

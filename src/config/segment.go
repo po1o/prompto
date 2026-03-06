@@ -395,20 +395,46 @@ func (segment *Segment) cacheKeyAndStore() (string, cache.Store) {
 // DaemonCacheKey returns a cache key for daemon mode.
 func (segment *Segment) DaemonCacheKey() string {
 	format := "daemon_cache_%s"
-	if segment.Cache != nil && segment.Cache.Strategy == Session {
+	if segment.Cache == nil {
+		return fmt.Sprintf(format, strings.Join([]string{segment.Name(), segment.FolderKey()}, "_"))
+	}
+
+	if segment.Cache.Strategy == Session {
 		return fmt.Sprintf(format, segment.Name())
 	}
 
-	return fmt.Sprintf(format, strings.Join([]string{segment.Name(), segment.folderKey()}, "_"))
+	return fmt.Sprintf(format, strings.Join([]string{segment.Name(), segment.FolderKey()}, "_"))
 }
 
-func (segment *Segment) folderKey() string {
-	key, ok := segment.writer.CacheKey()
-	if !ok {
-		return segment.env.Pwd()
+func (segment *Segment) folderKey() (key string) {
+	if segment.env == nil {
+		return ""
 	}
 
-	return key
+	key = segment.env.Pwd()
+
+	defer func() {
+		if recover() == nil {
+			return
+		}
+		key = segment.env.Pwd()
+	}()
+
+	if segment.writer == nil {
+		return key
+	}
+
+	cacheKey, ok := segment.writer.CacheKey()
+	if !ok || len(cacheKey) == 0 {
+		return key
+	}
+
+	return cacheKey
+}
+
+// FolderKey returns the legacy folder-scoped cache key for a segment.
+func (segment *Segment) FolderKey() string {
+	return segment.folderKey()
 }
 
 func (segment *Segment) string() string {

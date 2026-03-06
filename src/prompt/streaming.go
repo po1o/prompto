@@ -45,6 +45,7 @@ func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, up
 	e.pendingSegments = make(map[string]bool)
 	e.cachedValues = make(map[string]string)
 	e.segmentCacheKeys = make(map[string]string)
+	e.streamingBlocks = e.resolveStreamingBlocks()
 
 	segmentsToExecute, completed := e.prepareStreamingSegments()
 	results := e.startStreamingExecutions(ctx, segmentsToExecute)
@@ -87,7 +88,12 @@ func (e *Engine) prepareStreamingSegments() ([]streamingSegment, map[string]bool
 	segmentsToExecute := make([]streamingSegment, 0, 32)
 	completed := make(map[string]bool)
 
-	for blockIndex, block := range e.Config.Blocks {
+	blocks := e.streamingBlocks
+	if len(blocks) == 0 {
+		blocks = e.Config.Blocks
+	}
+
+	for blockIndex, block := range blocks {
 		for segmentIndex, segment := range block.Segments {
 			key := segmentKey(blockIndex, segmentIndex, segment)
 			_ = segment.MapSegmentWithWriter(e.Env)
@@ -284,7 +290,16 @@ func (e *Engine) PrimaryRepaint() string {
 		e.segmentCacheKeys = make(map[string]string)
 	}
 
-	for blockIndex, block := range e.Config.Blocks {
+	if len(e.streamingBlocks) == 0 {
+		e.streamingBlocks = e.resolveStreamingBlocks()
+	}
+
+	blocks := e.streamingBlocks
+	if len(blocks) == 0 {
+		blocks = e.Config.Blocks
+	}
+
+	for blockIndex, block := range blocks {
 		for segmentIndex, segment := range block.Segments {
 			key := segmentKey(blockIndex, segmentIndex, segment)
 			if segment.Type == config.SegmentType("vim") {
@@ -368,11 +383,6 @@ func (e *Engine) renderStreamingPrompt() string {
 }
 
 func (e *Engine) writePrimaryPromptStreaming(needsPrimaryRPrompt bool) {
-	if e.hasCompiledPrimaryLayout() {
-		e.writeCompiledPrimaryPrompt()
-		return
-	}
-
 	if e.Config.ShellIntegration {
 		exitCode, _ := e.Env.StatusCodes()
 		e.write(terminal.CommandFinished(exitCode, e.Env.Flags().NoExitCode))
@@ -382,7 +392,12 @@ func (e *Engine) writePrimaryPromptStreaming(needsPrimaryRPrompt bool) {
 	cycle = &e.Config.Cycle
 	var cancelNewline, didRender bool
 
-	for i, block := range e.Config.Blocks {
+	blocks := e.streamingBlocks
+	if len(blocks) == 0 {
+		blocks = e.Config.Blocks
+	}
+
+	for i, block := range blocks {
 		if i == 0 {
 			row, _ := e.Env.CursorPosition()
 			cancelNewline = e.Env.Flags().Cleared || e.Env.Flags().PromptCount == 1 || row == 1
@@ -392,7 +407,7 @@ func (e *Engine) writePrimaryPromptStreaming(needsPrimaryRPrompt bool) {
 			cancelNewline = !didRender
 		}
 
-		if block.Type == config.RPrompt && !needsPrimaryRPrompt {
+		if block.Type == config.RPrompt && !needsPrimaryRPrompt && !e.hasCompiledPrimaryLayout() {
 			continue
 		}
 
@@ -421,6 +436,14 @@ func (e *Engine) writePrimaryPromptStreaming(needsPrimaryRPrompt bool) {
 	}
 
 	e.pwd()
+}
+
+func (e *Engine) resolveStreamingBlocks() []*config.Block {
+	if e.hasCompiledPrimaryLayout() {
+		return e.compiledPrimaryBlocks()
+	}
+
+	return e.Config.Blocks
 }
 
 func (e *Engine) renderBlockStreaming(block *config.Block, blockIndex int, cancelNewline bool) bool {

@@ -40,18 +40,20 @@ func (renderer defaultPromptBundleRenderer) Bundle(engine *prompt.Engine, primar
 }
 
 type RenderPipeline struct {
-	runtime  *SessionRenderRuntime
-	renderer promptBundleRenderer
+	runtime     *SessionRenderRuntime
+	renderer    promptBundleRenderer
+	deviceCache prompt.DeviceCache
 }
 
-func NewRenderPipeline(sessionRuntime *SessionRenderRuntime, renderer promptBundleRenderer) *RenderPipeline {
+func NewRenderPipeline(sessionRuntime *SessionRenderRuntime, renderer promptBundleRenderer, deviceCache prompt.DeviceCache) *RenderPipeline {
 	if renderer == nil {
 		renderer = defaultPromptBundleRenderer{}
 	}
 
 	return &RenderPipeline{
-		runtime:  sessionRuntime,
-		renderer: renderer,
+		runtime:     sessionRuntime,
+		renderer:    renderer,
+		deviceCache: deviceCache,
 	}
 }
 
@@ -65,8 +67,10 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 	engine := handle.Engine()
 	primary := ""
 	if engine != nil && engine.Config != nil {
+		engine.SetDeviceCache(pipeline.deviceCache)
+		applyRenderFlags(engine, flags, repaint)
+
 		if repaint && handle.Reattached() {
-			applyRepaintFlags(engine, flags)
 			primary = engine.PrimaryRepaint()
 			if len(engine.PendingSegments()) == 0 && handle.Hub() != nil {
 				handle.Hub().Publish(renderCompletePayload, handle.RenderID())
@@ -106,7 +110,7 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 	}
 }
 
-func applyRepaintFlags(engine *prompt.Engine, flags *runtimePkg.Flags) {
+func applyRenderFlags(engine *prompt.Engine, flags *runtimePkg.Flags, repaint bool) {
 	if engine == nil || flags == nil || engine.Env == nil {
 		return
 	}
@@ -116,7 +120,19 @@ func applyRepaintFlags(engine *prompt.Engine, flags *runtimePkg.Flags) {
 		return
 	}
 
-	currentFlags.VimMode = flags.VimMode
+	if repaint {
+		currentFlags.VimMode = flags.VimMode
+		return
+	}
+
+	*currentFlags = *flags
+
+	term, ok := engine.Env.(*runtimePkg.Terminal)
+	if !ok {
+		return
+	}
+
+	term.Init(currentFlags)
 }
 
 func (active *ActiveRender) Next(updateContext context.Context, after uint64) (PromptUpdate, bool) {

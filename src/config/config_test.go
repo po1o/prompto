@@ -274,6 +274,38 @@ func TestFeaturesVim(t *testing.T) {
 	}
 }
 
+func TestFeaturesVimModeAlias(t *testing.T) {
+	env := &mock.Environment{}
+	env.On("Shell").Return(shell.ZSH)
+
+	cfg := &Config{
+		Upgrade: &upgrade.Config{},
+		VimMode: &VimConfig{
+			Enabled:     true,
+			CursorShape: true,
+		},
+	}
+
+	got := cfg.Features(env, false)
+	assert.Equal(t, shell.VimMode|shell.VimCursorShape, got)
+}
+
+func TestFeaturesVimModeAliasWinsWhenVimSectionIsEmpty(t *testing.T) {
+	env := &mock.Environment{}
+	env.On("Shell").Return(shell.ZSH)
+
+	cfg := &Config{
+		Upgrade: &upgrade.Config{},
+		Vim:     &VimConfig{},
+		VimMode: &VimConfig{
+			Enabled: true,
+		},
+	}
+
+	got := cfg.Features(env, false)
+	assert.Equal(t, shell.VimMode, got)
+}
+
 func TestGetDaemonIdleTimeout(t *testing.T) {
 	tests := []struct {
 		name     string
