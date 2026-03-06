@@ -49,7 +49,8 @@ func newBinaryWatcher(binPath string, onChange func(), debounceWindow time.Durat
 		return nil, err
 	}
 
-	// Also track the resolved path when available so we catch updates done via symlink swaps.
+	// Also track the resolved path when available so we catch updates done against
+	// the real binary target (common with Homebrew and other symlink-based installs).
 	resolved, err := filepath.EvalSymlinks(binPath)
 	if err == nil {
 		if err := bw.addTargetPath(resolved); err != nil {
@@ -91,6 +92,8 @@ func (bw *BinaryWatcher) addTargetPath(path string) error {
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
+	// Directory might not exist yet during install/upgrade windows.
+	// We still keep the target path so later events can match once the dir appears.
 
 	if err == nil {
 		bw.watchedDirs[dir] = true
@@ -120,6 +123,7 @@ func (bw *BinaryWatcher) eventLoop(onChange func(), debounceWindow time.Duration
 				continue
 			}
 
+			// Binary replacement across platforms often manifests as rename/remove/create sequences.
 			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Rename|fsnotify.Remove) == 0 {
 				continue
 			}

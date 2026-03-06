@@ -9,7 +9,9 @@ type UpdateSnapshot struct {
 }
 
 type SessionUpdateHub struct {
-	waiters  []updateWaiter
+	// waiters are blocked subscribers waiting for sequence > after.
+	waiters []updateWaiter
+	// updates keeps ordered history so late subscribers can catch up without polling.
 	updates  []UpdateSnapshot
 	sequence uint64
 	mu       sync.Mutex
@@ -38,6 +40,8 @@ func (hub *SessionUpdateHub) Publish(payload string, renderID ...uint64) UpdateS
 		RenderID: id,
 	}
 	hub.updates = append(hub.updates, snapshot)
+	// Split waiters into ready vs still-pending under lock, then notify outside lock.
+	// This avoids sending on channels while holding the mutex.
 	ready := make([]chan UpdateSnapshot, 0, len(hub.waiters))
 	pending := make([]updateWaiter, 0, len(hub.waiters))
 	for _, waiter := range hub.waiters {

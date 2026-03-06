@@ -67,6 +67,7 @@ func (cw *ConfigWatcher) Watch(configPath string, filePaths []string) error {
 	for _, filePath := range filePaths {
 		// Helper to add a file to watch
 		addWatch := func(path string) {
+			// Paths are absolute here (from config.Parse), so map keying is stable.
 			// Skip if already tracking this file
 			if _, ok := cw.files[path]; ok {
 				return

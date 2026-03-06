@@ -3,6 +3,7 @@ package daemon
 import "context"
 
 type StreamRelay struct {
+	// hub contains all updates ever published for one session.
 	hub *SessionUpdateHub
 }
 
@@ -18,6 +19,7 @@ func (relay *StreamRelay) Next(ctx context.Context, after, renderID uint64) (Upd
 	currentAfter := after
 
 	for {
+		// Subscribe(after) returns immediately if history already has a newer event.
 		update := relay.hub.Subscribe(currentAfter)
 
 		select {
@@ -30,6 +32,7 @@ func (relay *StreamRelay) Next(ctx context.Context, after, renderID uint64) (Upd
 				currentAfter = snapshot.Sequence
 			}
 
+			// renderID filter prevents old canceled render generations from leaking into stream.
 			if renderID == 0 || snapshot.RenderID == 0 || snapshot.RenderID == renderID {
 				return snapshot, true
 			}

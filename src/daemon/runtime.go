@@ -8,9 +8,12 @@ import (
 )
 
 type SessionRenderHandle struct {
+	// request holds gate accounting + render coordinator state.
 	request *RequestHandle
-	relay   *StreamRelay
-	hub     *SessionUpdateHub
+	// relay reads ordered updates from hub and filters by render ID.
+	relay *StreamRelay
+	// hub receives segment completion events for this session.
+	hub *SessionUpdateHub
 }
 
 func (h *SessionRenderHandle) Engine() *prompt.Engine {
@@ -64,6 +67,7 @@ func (h *SessionRenderHandle) Reattached() bool {
 func (h *SessionRenderHandle) Complete() {
 	engine := h.Engine()
 	if engine != nil {
+		// Detach callback so old/canceled renders stop publishing updates.
 		ClearSegmentUpdates(engine)
 	}
 
@@ -73,7 +77,9 @@ func (h *SessionRenderHandle) Complete() {
 }
 
 type SessionRenderRuntime struct {
+	// requests coordinates reload gating and render admission.
 	requests *RequestManager
+	// sessions stores hubs + engine lifecycle for each session ID.
 	sessions *PromptSessionStore
 }
 

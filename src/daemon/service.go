@@ -23,10 +23,13 @@ type RenderResponse struct {
 }
 
 type Service struct {
-	runtime  *SessionRenderRuntime
+	// runtime owns request gating and per-session hubs/engines.
+	runtime *SessionRenderRuntime
+	// pipeline executes actual prompt rendering strategy (full render vs repaint).
 	pipeline *RenderPipeline
-	renders  map[string]*ActiveRender
-	mu       sync.Mutex
+	// renders keeps the currently active render stream handle by session.
+	renders map[string]*ActiveRender
+	mu      sync.Mutex
 }
 
 func NewService(registry *EngineRegistry, gate *ReloadGate, renderer promptBundleRenderer) *Service {
@@ -42,6 +45,7 @@ func (service *Service) StartRender(request RenderRequest) RenderResponse {
 	service.mu.Lock()
 	existing, ok := service.renders[request.SessionID]
 	if ok && existing != nil && !request.Repaint {
+		// Non-repaint starts a new render generation; cancel the previous one.
 		existing.Complete()
 	}
 	service.mu.Unlock()
@@ -88,6 +92,7 @@ func (service *Service) CompleteSession(sessionID string) {
 	service.mu.Unlock()
 
 	if ok && active != nil {
+		// Ensure request gate "active" counter is released.
 		active.Complete()
 	}
 

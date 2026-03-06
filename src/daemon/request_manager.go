@@ -7,9 +7,12 @@ import (
 )
 
 type RequestHandle struct {
-	Render        *RenderHandle
+	// Render is the active generation metadata for one session request.
+	Render *RenderHandle
+	// releaseActive decrements ReloadGate active counter.
 	releaseActive func()
-	once          sync.Once
+	// once guarantees gate release and cancellation happen exactly once.
+	once sync.Once
 }
 
 func (h *RequestHandle) Complete() {
@@ -29,7 +32,9 @@ func (h *RequestHandle) Complete() {
 }
 
 type RequestManager struct {
-	gate        *ReloadGate
+	// gate blocks new requests during reload and waits for active requests.
+	gate *ReloadGate
+	// coordinator handles session engine reuse + cancel/reattach behavior.
 	coordinator *RenderCoordinator
 }
 

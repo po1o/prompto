@@ -8,6 +8,7 @@ import (
 )
 
 type RenderHandle struct {
+	// Context is canceled when this render generation is superseded.
 	Context    context.Context
 	Engine     *prompt.Engine
 	registry   *EngineRegistry
@@ -46,6 +47,7 @@ func (c *RenderCoordinator) StartRender(sessionID string, flags *runtime.Flags, 
 	engine := c.registry.GetOrCreateEngine(sessionID, flags)
 
 	if repaint {
+		// Repaint keeps ongoing async work alive and reuses the same render generation.
 		ctx, renderID, ok := c.registry.GetActiveRender(sessionID)
 		if ok {
 			return &RenderHandle{
@@ -60,6 +62,7 @@ func (c *RenderCoordinator) StartRender(sessionID string, flags *runtime.Flags, 
 	}
 
 	if !repaint {
+		// A new render request replaces prior work for that session.
 		c.registry.CancelActiveRender(sessionID)
 	}
 

@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"hash"
 	"hash/fnv"
 	"os"
 	"path/filepath"
@@ -68,10 +69,6 @@ func resolveConfigLocation(config string) string {
 	return abs
 }
 
-type hashWriter interface {
-	Write(p []byte) (n int, err error)
-}
-
 func Parse(configFile string) (*Config, error) {
 	defer log.Trace(time.Now())
 
@@ -88,6 +85,7 @@ func Parse(configFile string) (*Config, error) {
 
 	defer configDSC.Save()
 
+	// Hash is used as lightweight config identity for change detection/caching.
 	h := fnv.New64a()
 
 	cfg, err := read(configFile, h)
@@ -100,6 +98,7 @@ func Parse(configFile string) (*Config, error) {
 	filePaths := []string{configFile}
 
 	for cfg.Extends != "" {
+		// Resolve relative extends from the current config directory.
 		cfg.Extends = resolvePath(cfg.Extends, parentFolder)
 		filePaths = append(filePaths, cfg.Extends)
 		base, err := read(cfg.Extends, h)
@@ -152,7 +151,7 @@ func resolvePath(configFile, parentFolder string) string {
 	return filepath.Join(parentFolder, configFile)
 }
 
-func read(configFile string, h hashWriter) (*Config, error) {
+func read(configFile string, h hash.Hash64) (*Config, error) {
 	defer log.Trace(time.Now())
 
 	if configFile == "" {

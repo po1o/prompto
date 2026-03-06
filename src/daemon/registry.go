@@ -12,7 +12,8 @@ import (
 type engineFactory func(flags *runtime.Flags) *prompt.Engine
 
 type sessionState struct {
-	engine       *prompt.Engine
+	engine *prompt.Engine
+	// activeCtx/activeCancel/activeID describe the currently active render generation.
 	activeCtx    context.Context
 	activeCancel context.CancelFunc
 	activeID     uint64
@@ -110,10 +111,7 @@ func (registry *EngineRegistry) CancelActiveRender(sessionID string) {
 		return
 	}
 
-	cancel := state.activeCancel
-	state.activeCtx = nil
-	state.activeCancel = nil
-	state.activeID = 0
+	cancel := registry.clearActiveLocked(state)
 	registry.mu.Unlock()
 	cancel()
 }
@@ -127,10 +125,7 @@ func (registry *EngineRegistry) CancelRenderIf(sessionID string, renderID uint64
 		return
 	}
 
-	cancel := state.activeCancel
-	state.activeCtx = nil
-	state.activeCancel = nil
-	state.activeID = 0
+	cancel := registry.clearActiveLocked(state)
 	registry.mu.Unlock()
 	cancel()
 }
@@ -152,9 +147,7 @@ func (registry *EngineRegistry) ClearActiveRenderIf(sessionID string, renderID u
 		return
 	}
 
-	state.activeCtx = nil
-	state.activeCancel = nil
-	state.activeID = 0
+	_ = registry.clearActiveLocked(state)
 }
 
 func (registry *EngineRegistry) RemoveSession(sessionID string) {
@@ -167,4 +160,16 @@ func (registry *EngineRegistry) Reset() {
 	registry.mu.Lock()
 	registry.sessions = make(map[string]*sessionState)
 	registry.mu.Unlock()
+}
+
+func (registry *EngineRegistry) clearActiveLocked(state *sessionState) context.CancelFunc {
+	if state == nil {
+		return nil
+	}
+
+	cancel := state.activeCancel
+	state.activeCtx = nil
+	state.activeCancel = nil
+	state.activeID = 0
+	return cancel
 }

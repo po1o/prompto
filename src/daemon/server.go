@@ -24,15 +24,18 @@ import (
 
 type Server struct {
 	ipc.UnimplementedDaemonServiceServer
-	listener       net.Listener
-	done           chan struct{}
-	lockFile       *LockFile
-	grpcServer     *grpc.Server
-	core           *Daemon
-	configWatcher  *ConfigWatcher
-	binaryWatcher  *BinaryWatcher
-	deviceCache    *DeviceCache
+	listener   net.Listener
+	done       chan struct{}
+	lockFile   *LockFile
+	grpcServer *grpc.Server
+	// core owns render/session state and idle lifecycle.
+	core          *Daemon
+	configWatcher *ConfigWatcher
+	binaryWatcher *BinaryWatcher
+	deviceCache   *DeviceCache
+	// configReloadCh is a coalescing signal channel (buffer=1).
 	configReloadCh chan struct{}
+	// segmentToggles keeps per-session runtime toggle state.
 	segmentToggles map[string]map[string]bool
 	configPath     string
 	toggleMu       sync.RWMutex
@@ -48,7 +51,6 @@ func NewServer(configPath string) (*Server, error) {
 	}
 
 	server := &Server{
-		core:           nil,
 		configPath:     resolvedPath,
 		lockFile:       lockFile,
 		done:           make(chan struct{}),
@@ -67,6 +69,7 @@ func NewServer(configPath string) (*Server, error) {
 
 	binaryPath, err := os.Executable()
 	if err == nil {
+		// If executable is replaced while running, stop; client auto-start path will launch new one.
 		watcher, watchErr := NewBinaryWatcher(binaryPath, func() {
 			server.Stop()
 		})
@@ -282,6 +285,9 @@ func (server *Server) SetLogging(_ context.Context, request *ipc.SetLoggingReque
 }
 
 func (server *Server) configReloadWorker() {
+	// Single consumer for config reload requests.
+	// Reload itself is guarded by ReloadGate (inside server.core.Reload),
+	// so running it from one worker keeps sequencing easy to reason about.
 	for {
 		select {
 		case <-server.done:
@@ -302,6 +308,7 @@ func (server *Server) configReloadWorker() {
 }
 
 func (server *Server) requestConfigReload(configPath string) {
+	// Ignore unrelated watched files. We only reload for this daemon instance's root config.
 	if configPath == "" || configPath != server.configPath {
 		return
 	}
@@ -313,6 +320,8 @@ func (server *Server) requestConfigReload(configPath string) {
 	}
 
 	select {
+	// Buffered channel of size 1 coalesces bursts of fsnotify events.
+	// If a reload is already queued/in progress, extra signals are redundant.
 	case server.configReloadCh <- struct{}{}:
 	default:
 	}
@@ -328,6 +337,8 @@ func (server *Server) refreshConfigWatches() {
 		return
 	}
 
+	// Re-register all resolved files (root + extends + symlink targets).
+	// Watch() is idempotent for already tracked files/dirs.
 	_ = server.configWatcher.Watch(server.configPath, cfg.FilePaths)
 }
 

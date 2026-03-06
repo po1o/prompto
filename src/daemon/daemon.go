@@ -12,13 +12,18 @@ import (
 )
 
 type Daemon struct {
-	service     *Service
-	sessions    *SessionManager
+	// service owns render lifecycle and stream updates for all sessions.
+	service *Service
+	// sessions tracks live shell PIDs so idle shutdown is based on process exits, not RPC churn.
+	sessions *SessionManager
+	// deviceCache is shared across sessions/renders and survives per-session engine resets.
 	deviceCache *DeviceCache
+	// idleTimeout is armed when there are no tracked sessions.
 	idleTimeout time.Duration
 	stopped     atomic.Bool
-	idleToken   uint64
-	mu          sync.Mutex
+	// idleToken invalidates stale timers when activity resumes.
+	idleToken uint64
+	mu        sync.Mutex
 }
 
 func New(renderer promptBundleRenderer) *Daemon {
@@ -56,6 +61,7 @@ func NewWithIdleTimeoutAndDeviceCache(idleTimeout time.Duration, renderer prompt
 	}
 	daemon.sessions = NewSessionManager(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
 
+	// Start the idle timer immediately; it is canceled on first tracked render.
 	daemon.mu.Lock()
 	daemon.scheduleIdleStopLocked()
 	daemon.mu.Unlock()
@@ -72,6 +78,7 @@ func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
 		return RenderResponse{Type: "stopped"}
 	}
 
+	// Any tracked PID render is considered activity and cancels pending idle stop.
 	daemon.registerSessionPID(request)
 
 	return daemon.service.StartRender(request)
@@ -94,6 +101,7 @@ func (daemon *Daemon) CompleteSession(sessionID string) {
 
 	pid, ok := parseSessionPID(sessionID)
 	if ok {
+		// PID-backed sessions are lifecycle-managed by SessionManager callbacks.
 		daemon.sessions.Unregister(pid)
 		return
 	}
@@ -159,6 +167,7 @@ func (daemon *Daemon) scheduleIdleStopLocked() {
 	timeout := daemon.idleTimeout
 
 	time.AfterFunc(timeout, func() {
+		// Token check makes timer cancellation lock-free for callers.
 		daemon.mu.Lock()
 		if daemon.stopped.Load() || daemon.idleToken != token {
 			daemon.mu.Unlock()
@@ -185,6 +194,7 @@ func (daemon *Daemon) registerSessionPID(request RenderRequest) {
 
 	daemon.sessions.Register(pid, "", shellName)
 
+	// Active tracked PID means daemon must not stop for idleness.
 	daemon.mu.Lock()
 	daemon.cancelIdleStopLocked()
 	daemon.mu.Unlock()
