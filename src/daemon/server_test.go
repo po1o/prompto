@@ -130,6 +130,18 @@ func TestResolveServerConfigPathFallsBackToHomeDotConfig(t *testing.T) {
 	require.Equal(t, filepath.Clean(expected), filepath.Clean(resolved))
 }
 
+func TestMakePromptResponseIncludesRightTransientWhenPresent(t *testing.T) {
+	response := makePromptResponse("update", "request-1", &PromptBundle{
+		Primary:    "left",
+		RPrompt:    "right",
+		Transient:  "transient-left",
+		RTransient: "transient-right",
+	})
+
+	require.NotNil(t, response)
+	require.Equal(t, "transient-right", response.Prompts["rtransient"].Text)
+}
+
 func startTestServer(t *testing.T, configPath string) *Server {
 	t.Helper()
 

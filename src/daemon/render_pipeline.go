@@ -9,11 +9,12 @@ import (
 )
 
 type PromptBundle struct {
-	Extras    map[string]string
-	Primary   string
-	RPrompt   string
-	Secondary string
-	Transient string
+	Extras     map[string]string
+	Primary    string
+	RPrompt    string
+	RTransient string
+	Secondary  string
+	Transient  string
 }
 
 type PromptUpdate struct {
@@ -33,10 +34,11 @@ func (renderer defaultPromptBundleRenderer) Bundle(engine *prompt.Engine, primar
 	}
 
 	return PromptBundle{
-		Primary:   primary,
-		RPrompt:   engine.StreamingRPrompt(),
-		Secondary: engine.ExtraPrompt(prompt.Secondary),
-		Transient: engine.ExtraPrompt(prompt.Transient),
+		Primary:    primary,
+		RPrompt:    engine.StreamingRPrompt(),
+		RTransient: engine.TransientRPrompt(),
+		Secondary:  engine.ExtraPrompt(prompt.Secondary),
+		Transient:  engine.ExtraPrompt(prompt.Transient),
 	}
 }
 

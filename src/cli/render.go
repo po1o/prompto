@@ -212,7 +212,7 @@ func outputPrompts(resp *ipc.PromptResponse) {
 	// so we must send empty values to clear stale prompts (e.g., git segment
 	// persisting after leaving a repo).
 	alwaysOutput := map[string]bool{"primary": true, "right": true}
-	promptTypes := []string{"primary", "right", "secondary", "transient", "debug", "valid", "error"}
+	promptTypes := []string{"primary", "right", "secondary", "transient", "rtransient", "debug", "valid", "error"}
 
 	for _, pt := range promptTypes {
 		if p, ok := resp.Prompts[pt]; ok {

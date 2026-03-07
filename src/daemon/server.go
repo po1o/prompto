@@ -166,7 +166,7 @@ func (server *Server) RenderPrompt(
 	lastBundle := initial.Bundle
 	sequence := initial.Sequence
 
-	if err := stream.Send(makePromptResponse("update", request.RequestId, initial.Bundle)); err != nil {
+	if err := stream.Send(makePromptResponse("update", request.RequestId, &initial.Bundle)); err != nil {
 		return err
 	}
 
@@ -182,12 +182,12 @@ func (server *Server) RenderPrompt(
 		}
 
 		lastBundle = update.Bundle
-		if err := stream.Send(makePromptResponse("update", request.RequestId, update.Bundle)); err != nil {
+		if err := stream.Send(makePromptResponse("update", request.RequestId, &update.Bundle)); err != nil {
 			return err
 		}
 	}
 
-	return stream.Send(makePromptResponse("complete", request.RequestId, lastBundle))
+	return stream.Send(makePromptResponse("complete", request.RequestId, &lastBundle))
 }
 
 func (server *Server) ToggleSegment(
@@ -340,7 +340,11 @@ func defaultServerConfigPath() string {
 	return config.DefaultPath()
 }
 
-func makePromptResponse(responseType, requestID string, bundle PromptBundle) *ipc.PromptResponse {
+func makePromptResponse(responseType, requestID string, bundle *PromptBundle) *ipc.PromptResponse {
+	if bundle == nil {
+		bundle = &PromptBundle{}
+	}
+
 	prompts := map[string]*ipc.Prompt{
 		"primary": {Text: bundle.Primary},
 		"right":   {Text: bundle.RPrompt},
@@ -352,6 +356,10 @@ func makePromptResponse(responseType, requestID string, bundle PromptBundle) *ip
 
 	if bundle.Transient != "" {
 		prompts["transient"] = &ipc.Prompt{Text: bundle.Transient}
+	}
+
+	if bundle.RTransient != "" {
+		prompts["rtransient"] = &ipc.Prompt{Text: bundle.RTransient}
 	}
 
 	for name, text := range bundle.Extras {

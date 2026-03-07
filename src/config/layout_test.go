@@ -107,6 +107,32 @@ session:
 	assert.Equal(t, "", cfg.RPrompt[0].TrailingDiamond)
 }
 
+func TestParseLayoutYAMLStyleShortcutOnPromptLinesRoundedThin(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+    style: "rounded_thin"
+
+rprompt:
+  - segments: ["session"]
+    style: "rounded_thin"
+
+session:
+  type: "session"
+`
+
+	cfg, err := ParseLayoutYAML([]byte(raw))
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Prompt, 1)
+	assert.Equal(t, "", cfg.Prompt[0].LeadingDiamond)
+	assert.Equal(t, "\uE0B5", cfg.Prompt[0].TrailingDiamond)
+
+	require.Len(t, cfg.RPrompt, 1)
+	assert.Equal(t, "\uE0B7", cfg.RPrompt[0].LeadingDiamond)
+	assert.Equal(t, "", cfg.RPrompt[0].TrailingDiamond)
+}
+
 func TestParseLayoutYAMLStyleShortcutOnSegments(t *testing.T) {
 	raw := `
 prompt:

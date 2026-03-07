@@ -260,6 +260,7 @@ var separatorAliases = map[string]separatorPair{
 	"powerline":      {left: "\uE0B2", right: "\uE0B0"},
 	"powerline_thin": {left: "\uE0B3", right: "\uE0B1"},
 	"rounded":        {left: "\uE0B6", right: "\uE0B4"},
+	"rounded_thin":   {left: "\uE0B7", right: "\uE0B5"},
 	"slant":          {left: "\uE0BA", right: "\uE0BC"},
 	"block":          {left: "\uE0B8", right: "\uE0BE"},
 	"flame":          {left: "\uE0C0", right: "\uE0C1"},

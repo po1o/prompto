@@ -286,14 +286,15 @@ func IsRunning() bool {
 
 // PromptResult contains the rendered prompts from a daemon response.
 type PromptResult struct {
-	Primary   string
-	Right     string
-	Secondary string
-	Transient string
-	Debug     string
-	Tooltip   string
-	Valid     string
-	Error     string
+	Primary    string
+	Right      string
+	Secondary  string
+	Transient  string
+	RTransient string
+	Debug      string
+	Tooltip    string
+	Valid      string
+	Error      string
 }
 
 // ExtractPrompts converts a PromptResponse into a PromptResult.
@@ -314,6 +315,9 @@ func ExtractPrompts(resp *ipc.PromptResponse) *PromptResult {
 	}
 	if p, ok := resp.Prompts["transient"]; ok {
 		result.Transient = p.Text
+	}
+	if p, ok := resp.Prompts["rtransient"]; ok {
+		result.RTransient = p.Text
 	}
 	if p, ok := resp.Prompts["debug"]; ok {
 		result.Debug = p.Text

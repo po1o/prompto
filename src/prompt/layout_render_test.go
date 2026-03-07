@@ -60,6 +60,27 @@ func TestSecondaryUsesLayout(t *testing.T) {
 	require.Equal(t, "S1\nS2", got)
 }
 
+func TestTransientUsesLayoutLeftAndRight(t *testing.T) {
+	engine := newLayoutTestEngine(t, &config.LayoutConfig{
+		TransientPrompt: []config.PromptLayout{
+			{Segments: []string{"transient_left"}},
+		},
+		TransientRPrompt: []config.PromptLayout{
+			{Segments: []string{"transient_right"}},
+		},
+		Segments: map[string]*config.Segment{
+			"transient_left":  {Type: config.TEXT, Alias: "transient_left", Template: "TL"},
+			"transient_right": {Type: config.TEXT, Alias: "transient_right", Template: "TR"},
+		},
+	})
+
+	left := engine.ExtraPrompt(Transient)
+	right := engine.TransientRPrompt()
+
+	require.Equal(t, "TL", left)
+	require.Equal(t, "TR", right)
+}
+
 func TestPrimaryMirrorsRightAlignedDiamondSegmentSeparators(t *testing.T) {
 	engine := newLayoutTestEngine(t, &config.LayoutConfig{
 		RPrompt: []config.PromptLayout{

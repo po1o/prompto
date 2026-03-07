@@ -178,8 +178,9 @@ function _prompto_zle-line-init() {
   if [[ $_prompto_daemon_mode == 1 ]]; then
     # Only apply transient prompt when configured and non-empty.
     # If no transient segment is configured, keep the current primary prompt.
-    if [[ $_prompto_transient_enabled == 1 ]] && [[ -n ${_prompto_transient_prompt-} ]]; then
+    if [[ $_prompto_transient_enabled == 1 ]] && [[ -n ${_prompto_transient_prompt-}${_prompto_transient_rprompt-} ]]; then
       PS1=$_prompto_transient_prompt
+      RPROMPT=${_prompto_transient_rprompt-}
     fi
   else
     # We need this workaround because when the `filler` is set,
@@ -247,6 +248,7 @@ function _prompto_create_widget() {
 _prompto_daemon_mode=0
 _prompto_daemon_fd=
 _prompto_transient_prompt=
+_prompto_transient_rprompt=
 _prompto_transient_enabled=0
 
 # Vim mode variables
@@ -414,6 +416,9 @@ function _prompto_daemon_parse_line() {
       ;;
     transient)
       _prompto_transient_prompt=$text
+      ;;
+    rtransient)
+      _prompto_transient_rprompt=$text
       ;;
   esac
 }

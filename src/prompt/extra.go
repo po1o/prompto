@@ -16,17 +16,33 @@ func (e *Engine) ExtraPrompt(promptType ExtraPromptType) string {
 	e.resetSharedProviders()
 
 	if promptType == Secondary && e.hasLayoutSecondary() {
-		return e.renderLayoutExtra(e.LayoutConfig.SecondaryPrompt)
+		return e.renderLayoutExtra(e.LayoutConfig.SecondaryPrompt, false)
 	}
 
 	if promptType == Transient && e.hasLayoutTransient() {
-		return e.renderLayoutExtra(e.LayoutConfig.TransientPrompt)
+		return e.renderLayoutExtra(e.LayoutConfig.TransientPrompt, true)
 	}
 
 	return ""
 }
 
-func (e *Engine) renderLayoutExtra(layouts []config.PromptLayout) string {
+func (e *Engine) TransientRPrompt() string {
+	e.resetSharedProviders()
+
+	if !e.hasLayoutTransient() || len(e.LayoutConfig.TransientRPrompt) == 0 {
+		return ""
+	}
+
+	line := e.layoutBlock(&e.LayoutConfig.TransientRPrompt[0], config.RPrompt, config.Right, false)
+	text, length := e.writeBlockSegments(line)
+	if length == 0 {
+		return ""
+	}
+
+	return text
+}
+
+func (e *Engine) renderLayoutExtra(layouts []config.PromptLayout, finalSpace bool) string {
 	didRender := false
 	for i := range layouts {
 		block := e.layoutBlock(&layouts[i], config.Prompt, config.Left, i != 0)
@@ -38,6 +54,10 @@ func (e *Engine) renderLayoutExtra(layouts []config.PromptLayout) string {
 		if e.renderBlock(block, cancelNewline) {
 			didRender = true
 		}
+	}
+
+	if finalSpace && e.Config != nil && e.Config.FinalSpace {
+		e.write(" ")
 	}
 
 	return e.string()
