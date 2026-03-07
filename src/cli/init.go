@@ -31,7 +31,7 @@ func init() {
 
 func createInitCmd() *cobra.Command {
 	initCmd := &cobra.Command{
-		Use:   "init [bash|zsh|fish|powershell|pwsh|nu]",
+		Use:   "init [bash|zsh|fish|powershell|pwsh]",
 		Short: "Initialize your shell and config",
 		Long: `Initialize your shell and config.
 

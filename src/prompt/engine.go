@@ -442,13 +442,12 @@ func New(flags *runtime.Flags) *Engine {
 	cfg := config.Get(flags.ConfigPath, reload)
 	if cfg.Layout == nil {
 		cfg.Layout = &config.LayoutConfig{}
-		cfg.Blocks = nil
 	}
 	layoutCfg := cfg.Layout
 
 	template.Init(env, cfg.Var, cfg.Maps)
 
-	flags.HasExtra = cfg.SecondaryPrompt != nil || cfg.TransientPrompt != nil
+	flags.HasExtra = cfg.HasSecondary || cfg.HasTransient || cfg.ValidLine != nil || cfg.ErrorLine != nil || cfg.DebugPrompt != nil
 
 	// when we print using https://github.com/akinomyoga/ble.sh, this needs to be unescaped for certain prompts
 	sh := env.Shell()

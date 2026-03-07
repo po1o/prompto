@@ -23,23 +23,29 @@ type PromptUpdate struct {
 }
 
 type promptBundleRenderer interface {
-	Bundle(*prompt.Engine, string) PromptBundle
+	Bundle(*prompt.Engine, string, bool) PromptBundle
 }
 
 type defaultPromptBundleRenderer struct{}
 
-func (renderer defaultPromptBundleRenderer) Bundle(engine *prompt.Engine, primary string) PromptBundle {
+func (renderer defaultPromptBundleRenderer) Bundle(engine *prompt.Engine, primary string, includeExtras bool) PromptBundle {
 	if engine == nil {
 		return PromptBundle{}
 	}
 
-	return PromptBundle{
-		Primary:    primary,
-		RPrompt:    engine.StreamingRPrompt(),
-		RTransient: engine.TransientRPrompt(),
-		Secondary:  engine.ExtraPrompt(prompt.Secondary),
-		Transient:  engine.ExtraPrompt(prompt.Transient),
+	bundle := PromptBundle{
+		Primary: primary,
+		RPrompt: engine.StreamingRPrompt(),
 	}
+
+	if !includeExtras {
+		return bundle
+	}
+
+	bundle.RTransient = engine.TransientRPrompt()
+	bundle.Secondary = engine.ExtraPrompt(prompt.Secondary)
+	bundle.Transient = engine.ExtraPrompt(prompt.Transient)
+	return bundle
 }
 
 type RenderPipeline struct {
@@ -95,7 +101,7 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 				handle.Hub().Publish(renderCompletePayload, handle.RenderID())
 			}
 
-			bundle := pipeline.renderer.Bundle(engine, primary)
+			bundle := pipeline.renderer.Bundle(engine, primary, false)
 			return bundle, &ActiveRender{
 				handle:   handle,
 				renderer: pipeline.renderer,
@@ -123,7 +129,7 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 		}
 	}
 
-	bundle := pipeline.renderer.Bundle(engine, primary)
+	bundle := pipeline.renderer.Bundle(engine, primary, false)
 	return bundle, &ActiveRender{
 		handle:   handle,
 		renderer: pipeline.renderer,
@@ -214,7 +220,7 @@ func (active *ActiveRender) Next(updateContext context.Context, after uint64) (P
 
 	return PromptUpdate{
 		Snapshot: snapshot,
-		Bundle:   active.renderer.Bundle(engine, primary),
+		Bundle:   active.renderer.Bundle(engine, primary, snapshot.Payload == renderCompletePayload),
 	}, true
 }
 

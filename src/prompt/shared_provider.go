@@ -7,8 +7,7 @@ import (
 )
 
 type sharedExecutionResult struct {
-	Text    string
-	Enabled bool
+	Source *config.Segment
 }
 
 type sharedSegmentProvider interface {
@@ -38,22 +37,24 @@ func (provider *onceProvider[T]) Get() (T, error) {
 	return provider.out, provider.err
 }
 
-type textSharedProvider struct{}
+type stateSharedProvider struct{}
 
-func (provider *textSharedProvider) Execute(e *Engine, source *config.Segment) (sharedExecutionResult, error) {
+func (provider *stateSharedProvider) Execute(e *Engine, source *config.Segment) (sharedExecutionResult, error) {
 	source.Execute(e.Env)
 	return sharedExecutionResult{
-		Text:    source.Text(),
-		Enabled: source.Enabled,
+		Source: source,
 	}, nil
 }
 
 func defaultSharedProviderFactories() map[config.SegmentType]sharedProviderFactory {
-	return map[config.SegmentType]sharedProviderFactory{
-		config.TEXT: func() sharedSegmentProvider {
-			return &textSharedProvider{}
-		},
+	factories := make(map[config.SegmentType]sharedProviderFactory, len(config.Segments))
+	for segmentType := range config.Segments {
+		factories[segmentType] = func() sharedSegmentProvider {
+			return &stateSharedProvider{}
+		}
 	}
+
+	return factories
 }
 
 func (e *Engine) resetSharedProviders() {

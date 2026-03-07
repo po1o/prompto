@@ -315,6 +315,15 @@ func Write(background, foreground color.Ansi, txt string) {
 
 	for i := 0; i < len(runes); i++ {
 		s := runes[i]
+
+		if end, ok := shellClockTokenEnd(i); ok {
+			for j := i; j <= end; j++ {
+				writeRaw(runes[j])
+			}
+			i = end
+			continue
+		}
+
 		// ignore everything which isn't overriding
 		if s != '<' {
 			write(s)
@@ -420,6 +429,61 @@ func write(s rune) {
 	}
 
 	builder.WriteRune(s)
+}
+
+func writeRaw(s rune) {
+	if isInvisible {
+		return
+	}
+
+	if isHyperlink {
+		builder.WriteRune(s)
+		return
+	}
+
+	length += runewidth.RuneWidth(s)
+	builder.WriteRune(s)
+}
+
+func shellClockTokenEnd(start int) (int, bool) {
+	if Interactive || Plain || isHyperlink {
+		return 0, false
+	}
+
+	switch Shell {
+	case shell.ZSH:
+		if !hasRunePrefix(start, []rune{'%', 'D', '{'}) {
+			return 0, false
+		}
+	case shell.BASH:
+		if !hasRunePrefix(start, []rune{'\\', 'D', '{'}) {
+			return 0, false
+		}
+	default:
+		return 0, false
+	}
+
+	for i := start + 3; i < len(runes); i++ {
+		if runes[i] == '}' {
+			return i, true
+		}
+	}
+
+	return 0, false
+}
+
+func hasRunePrefix(start int, prefix []rune) bool {
+	if start+len(prefix) > len(runes) {
+		return false
+	}
+
+	for i := range prefix {
+		if runes[start+i] != prefix[i] {
+			return false
+		}
+	}
+
+	return true
 }
 
 func writeSegmentColors() {

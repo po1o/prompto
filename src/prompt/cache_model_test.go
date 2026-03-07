@@ -42,8 +42,7 @@ func (provider *countingProvider) Execute(e *Engine, source *config.Segment) (sh
 	atomic.AddInt32(provider.count, 1)
 	source.Execute(e.Env)
 	return sharedExecutionResult{
-		Text:    source.Text(),
-		Enabled: source.Enabled,
+		Source: source,
 	}, nil
 }
 

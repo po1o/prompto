@@ -45,51 +45,48 @@ const (
 
 // VimConfig holds vim mode settings.
 type VimConfig struct {
-	Enabled     bool `json:"enabled,omitempty" toml:"enabled,omitempty" yaml:"enabled,omitempty"`
-	CursorShape bool `json:"cursor_shape,omitempty" toml:"cursor_shape,omitempty" yaml:"cursor_shape,omitempty"`
-	CursorBlink bool `json:"cursor_blink,omitempty" toml:"cursor_blink,omitempty" yaml:"cursor_blink,omitempty"`
+	Enabled     bool `yaml:"enabled,omitempty"`
+	CursorShape bool `yaml:"cursor_shape,omitempty"`
+	CursorBlink bool `yaml:"cursor_blink,omitempty"`
 }
 
 // Config holds all the theme for rendering the prompt
 type Config struct {
-	Palette                 color.Palette          `json:"palette,omitempty" toml:"palette,omitempty" yaml:"palette,omitempty"`
-	DebugPrompt             *Segment               `json:"debug_prompt,omitempty" toml:"debug_prompt,omitempty" yaml:"debug_prompt,omitempty"`
-	Var                     map[string]any         `json:"var,omitempty" toml:"var,omitempty" yaml:"var,omitempty"`
-	Palettes                *color.Palettes        `json:"palettes,omitempty" toml:"palettes,omitempty" yaml:"palettes,omitempty"`
-	ValidLine               *Segment               `json:"valid_line,omitempty" toml:"valid_line,omitempty" yaml:"valid_line,omitempty"`
-	SecondaryPrompt         *Segment               `json:"secondary_prompt,omitempty" toml:"secondary_prompt,omitempty" yaml:"secondary_prompt,omitempty"`
-	TransientPrompt         *Segment               `json:"transient_prompt,omitempty" toml:"transient_prompt,omitempty" yaml:"transient_prompt,omitempty"`
-	ErrorLine               *Segment               `json:"error_line,omitempty" toml:"error_line,omitempty" yaml:"error_line,omitempty"`
-	Maps                    *maps.Config           `json:"maps,omitempty" toml:"maps,omitempty" yaml:"maps,omitempty"`
-	Upgrade                 *upgrade.Config        `json:"upgrade,omitempty" toml:"upgrade,omitempty" yaml:"upgrade,omitempty"`
-	VimMode                 *VimConfig             `json:"vim-mode,omitempty" toml:"vim-mode,omitempty" yaml:"vim-mode,omitempty"`
-	Extends                 string                 `json:"extends,omitempty" toml:"extends,omitempty" yaml:"extends,omitempty"`
-	FilePaths               []string               `json:"-" toml:"-" yaml:"-"`
-	AccentColor             color.Ansi             `json:"accent_color,omitempty" toml:"accent_color,omitempty" yaml:"accent_color,omitempty"`
-	DaemonIdleTimeout       string                 `json:"daemon_idle_timeout,omitempty" toml:"daemon_idle_timeout,omitempty" yaml:"daemon_idle_timeout,omitempty"`
-	RenderPendingIcon       string                 `json:"render_pending_icon,omitempty" toml:"render_pending_icon,omitempty" yaml:"render_pending_icon,omitempty"`
-	RenderPendingBackground color.Ansi             `json:"render_pending_background,omitempty" toml:"render_pending_background,omitempty" yaml:"render_pending_background,omitempty"`
-	ConsoleTitleTemplate    string                 `json:"console_title_template,omitempty" toml:"console_title_template,omitempty" yaml:"console_title_template,omitempty"`
-	PWD                     string                 `json:"pwd,omitempty" toml:"pwd,omitempty" yaml:"pwd,omitempty"`
-	Source                  string                 `json:"-" toml:"-" yaml:"-"`
-	Format                  string                 `json:"-" toml:"-" yaml:"-"`
-	TerminalBackground      color.Ansi             `json:"terminal_background,omitempty" toml:"terminal_background,omitempty" yaml:"terminal_background,omitempty"`
-	ToolTipsAction          Action                 `json:"tooltips_action,omitempty" toml:"tooltips_action,omitempty" yaml:"tooltips_action,omitempty"`
-	Blocks                  []*Block               `json:"blocks,omitempty" toml:"blocks,omitempty" yaml:"blocks,omitempty"`
-	Cycle                   color.Cycle            `json:"cycle,omitempty" toml:"cycle,omitempty" yaml:"cycle,omitempty"`
-	ITermFeatures           terminal.ITermFeatures `json:"iterm_features,omitempty" toml:"iterm_features,omitempty" yaml:"iterm_features,omitempty"`
-	Tooltips                []*Segment             `json:"tooltips,omitempty" toml:"tooltips,omitempty" yaml:"tooltips,omitempty"`
+	Palette                 color.Palette          `yaml:"palette,omitempty"`
+	DebugPrompt             *Segment               `yaml:"debug_prompt,omitempty"`
+	Var                     map[string]any         `yaml:"var,omitempty"`
+	Palettes                *color.Palettes        `yaml:"palettes,omitempty"`
+	ValidLine               *Segment               `yaml:"valid_line,omitempty"`
+	HasSecondary            bool                   `yaml:"-"`
+	HasTransient            bool                   `yaml:"-"`
+	ErrorLine               *Segment               `yaml:"error_line,omitempty"`
+	Maps                    *maps.Config           `yaml:"maps,omitempty"`
+	Upgrade                 *upgrade.Config        `yaml:"upgrade,omitempty"`
+	VimMode                 *VimConfig             `yaml:"vim-mode,omitempty"`
+	FilePaths               []string               `yaml:"-"`
+	AccentColor             color.Ansi             `yaml:"accent_color,omitempty"`
+	DaemonIdleTimeout       string                 `yaml:"daemon_idle_timeout,omitempty"`
+	RenderPendingIcon       string                 `yaml:"render_pending_icon,omitempty"`
+	RenderPendingBackground color.Ansi             `yaml:"render_pending_background,omitempty"`
+	ConsoleTitleTemplate    string                 `yaml:"console_title_template,omitempty"`
+	PWD                     string                 `yaml:"pwd,omitempty"`
+	Source                  string                 `yaml:"-"`
+	Format                  string                 `yaml:"-"`
+	TerminalBackground      color.Ansi             `yaml:"terminal_background,omitempty"`
+	ToolTipsAction          Action                 `yaml:"tooltips_action,omitempty"`
+	Cycle                   color.Cycle            `yaml:"cycle,omitempty"`
+	ITermFeatures           terminal.ITermFeatures `yaml:"iterm_features,omitempty"`
+	Tooltips                []*Segment             `yaml:"tooltips,omitempty"`
 	hash                    uint64
-	Layout                  *LayoutConfig `json:"-" toml:"-" yaml:"-"`
-	DaemonTimeout           int           `json:"daemon_timeout,omitempty" toml:"daemon_timeout,omitempty" yaml:"daemon_timeout,omitempty"`
-	Async                   bool          `json:"async,omitempty" toml:"async,omitempty" yaml:"async,omitempty"`
-	ShellIntegration        bool          `json:"shell_integration,omitempty" toml:"shell_integration,omitempty" yaml:"shell_integration,omitempty"`
-	FinalSpace              bool          `json:"final_space,omitempty" toml:"final_space,omitempty" yaml:"final_space,omitempty"`
-	UpgradeNotice           bool          `json:"-" toml:"-" yaml:"-"`
-	extended                bool
-	PatchPwshBleed          bool `json:"patch_pwsh_bleed,omitempty" toml:"patch_pwsh_bleed,omitempty" yaml:"patch_pwsh_bleed,omitempty"`
-	AutoUpgrade             bool `json:"-" toml:"-" yaml:"-"`
-	EnableCursorPositioning bool `json:"enable_cursor_positioning,omitempty" toml:"enable_cursor_positioning,omitempty" yaml:"enable_cursor_positioning,omitempty"`
+	Layout                  *LayoutConfig `yaml:"-"`
+	DaemonTimeout           int           `yaml:"daemon_timeout,omitempty"`
+	Async                   bool          `yaml:"async,omitempty"`
+	ShellIntegration        bool          `yaml:"shell_integration,omitempty"`
+	FinalSpace              bool          `yaml:"final_space,omitempty"`
+	UpgradeNotice           bool          `yaml:"-"`
+	PatchPwshBleed          bool          `yaml:"patch_pwsh_bleed,omitempty"`
+	AutoUpgrade             bool          `yaml:"-"`
+	EnableCursorPositioning bool          `yaml:"enable_cursor_positioning,omitempty"`
 }
 
 func (cfg *Config) MakeColors(env runtime.Environment) color.String {
@@ -126,7 +123,7 @@ func (cfg *Config) getPalette() color.Palette {
 func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features {
 	var feats shell.Features
 
-	asyncShells := []string{shell.BASH, shell.ZSH, shell.FISH, shell.PWSH, shell.NU}
+	asyncShells := []string{shell.BASH, shell.ZSH, shell.FISH, shell.PWSH}
 
 	if cfg.Async && slices.Contains(asyncShells, env.Shell()) {
 		log.Debug("async enabled")
@@ -138,7 +135,7 @@ func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features
 		feats |= shell.Daemon
 	}
 
-	if cfg.TransientPrompt != nil {
+	if cfg.HasTransient {
 		log.Debug("transient prompt enabled")
 		feats |= shell.Transient
 	}
@@ -173,18 +170,17 @@ func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features
 		feats |= shell.PromptMark
 	}
 
-	for i, block := range cfg.Blocks {
-		if (i == 0 && block.Newline) && cfg.EnableCursorPositioning {
-			log.Debug("cursor positioning enabled")
-			feats |= shell.CursorPositioning
-		}
+	if cfg.EnableCursorPositioning && cfg.hasNewlineSegmentInFirstPromptLine() {
+		log.Debug("cursor positioning enabled")
+		feats |= shell.CursorPositioning
+	}
 
-		if block.Type == RPrompt {
-			log.Debug("rprompt enabled")
-			feats |= shell.RPrompt
-		}
+	if cfg.Layout != nil && len(cfg.Layout.RPrompt) > 0 {
+		feats |= shell.RPrompt
+	}
 
-		for _, segment := range block.Segments {
+	if cfg.Layout != nil {
+		for _, segment := range cfg.Layout.Segments {
 			if segment.Type == AZ {
 				source := segment.Options.String(segments.Source, segments.FirstMatch)
 				if strings.Contains(source, segments.Pwsh) {
@@ -203,15 +199,31 @@ func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features
 		}
 	}
 
-	if cfg.Layout != nil && len(cfg.Layout.RPrompt) > 0 {
-		feats |= shell.RPrompt
-	}
-
 	if cfg.VimMode != nil {
 		feats |= cfg.vimFeatures(cfg.VimMode)
 	}
 
 	return feats
+}
+
+func (cfg *Config) hasNewlineSegmentInFirstPromptLine() bool {
+	if cfg == nil || cfg.Layout == nil || len(cfg.Layout.Prompt) == 0 {
+		return false
+	}
+
+	first := cfg.Layout.Prompt[0]
+	for _, name := range first.Segments {
+		segment, ok := cfg.Layout.Segments[name]
+		if !ok {
+			continue
+		}
+
+		if segment.Newline {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (cfg *Config) upgradeFeatures() shell.Features {
@@ -300,7 +312,7 @@ func (cfg *Config) GetDaemonTimeout() time.Duration {
 	return time.Duration(cfg.DaemonTimeout) * time.Millisecond
 }
 
-// toggleSegments processes all segments in all blocks and adds segments
+// toggleSegments processes all layout segments and adds segments
 // with Toggled == true to the toggle cache, effectively toggling them off.
 func (cfg *Config) toggleSegments() {
 	currentToggleSet, _ := cache.Get[map[string]bool](cache.Session, cache.TOGGLECACHE)
@@ -308,16 +320,18 @@ func (cfg *Config) toggleSegments() {
 		currentToggleSet = make(map[string]bool)
 	}
 
-	for _, block := range cfg.Blocks {
-		for _, segment := range block.Segments {
-			if segment.Toggled {
-				segmentName := segment.Alias
-				if segmentName == "" {
-					segmentName = string(segment.Type)
-				}
-
-				currentToggleSet[segmentName] = true
+	if cfg.Layout != nil {
+		for _, segment := range cfg.Layout.Segments {
+			if !segment.Toggled {
+				continue
 			}
+
+			segmentName := segment.Alias
+			if segmentName == "" {
+				segmentName = string(segment.Type)
+			}
+
+			currentToggleSet[segmentName] = true
 		}
 	}
 

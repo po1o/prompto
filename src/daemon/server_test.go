@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/daemon/ipc"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +23,7 @@ func TestServerToggleSegmentIsSessionScoped(t *testing.T) {
 	t.Setenv("XDG_RUNTIME_DIR", socketDir)
 
 	configPath := filepath.Join(t.TempDir(), "daemon-toggle.omp.yaml")
-	config := `
+	configYAML := `
 blocks:
   - type: prompt
     segments:
@@ -33,7 +35,7 @@ blocks:
         template: B
 `
 
-	require.NoError(t, os.WriteFile(configPath, []byte(config), 0o644))
+	require.NoError(t, os.WriteFile(configPath, []byte(configYAML), 0o644))
 
 	server := startTestServer(t, configPath)
 	client := newDaemonServiceClient(t)
@@ -68,7 +70,7 @@ func TestServerSetLoggingWritesFile(t *testing.T) {
 	t.Setenv("XDG_RUNTIME_DIR", socketDir)
 
 	configPath := filepath.Join(t.TempDir(), "daemon-log.omp.yaml")
-	config := `
+	configYAML := `
 blocks:
   - type: prompt
     segments:
@@ -76,7 +78,7 @@ blocks:
         template: LOG
 `
 
-	require.NoError(t, os.WriteFile(configPath, []byte(config), 0o644))
+	require.NoError(t, os.WriteFile(configPath, []byte(configYAML), 0o644))
 
 	logPath := filepath.Join(t.TempDir(), "daemon.log")
 	server := startTestServer(t, configPath)
@@ -128,6 +130,86 @@ func TestResolveServerConfigPathFallsBackToHomeDotConfig(t *testing.T) {
 	resolved := resolveServerConfigPath("")
 	expected := filepath.Join(home, ".config", "prompto", "config.yaml")
 	require.Equal(t, filepath.Clean(expected), filepath.Clean(resolved))
+}
+
+func TestProcessPendingConfigReloadAppliesQueuedReloadBeforeRender(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "daemon-reload.omp.yaml")
+	configBody := `
+prompt:
+  - segments: ["text.main"]
+
+text.main:
+  type: text
+  template: A
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(configBody), 0o644))
+
+	deviceCache := NewDeviceCache()
+	server := &Server{
+		configPath:     configPath,
+		core:           NewFromConfigWithDeviceCache(configPath, nil, deviceCache),
+		deviceCache:    deviceCache,
+		configReloadCh: make(chan struct{}, 1),
+	}
+	t.Cleanup(func() {
+		server.core.Stop()
+		cache.Delete(cache.Device, config.RELOAD)
+	})
+
+	cache.Delete(cache.Device, config.RELOAD)
+	server.requestConfigReload(configPath)
+	server.processPendingConfigReload()
+
+	reloadFlag, ok := cache.Get[bool](cache.Device, config.RELOAD)
+	require.True(t, ok)
+	require.True(t, reloadFlag)
+	require.Equal(t, 0, len(server.configReloadCh))
+}
+
+func TestReloadIfConfigFileUpdatedAppliesReloadWithoutQueuedEvent(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "daemon-reload-mtime.omp.yaml")
+	configBody := `
+prompt:
+  - segments: ["text.main"]
+
+text.main:
+  type: text
+  template: A
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(configBody), 0o644))
+
+	deviceCache := NewDeviceCache()
+	server := &Server{
+		configPath:     configPath,
+		core:           NewFromConfigWithDeviceCache(configPath, nil, deviceCache),
+		deviceCache:    deviceCache,
+		configReloadCh: make(chan struct{}, 1),
+	}
+	t.Cleanup(func() {
+		server.core.Stop()
+		cache.Delete(cache.Device, config.RELOAD)
+	})
+
+	server.captureConfigModTime()
+	cache.Delete(cache.Device, config.RELOAD)
+
+	time.Sleep(15 * time.Millisecond)
+	configBody = `
+prompt:
+  - segments: ["text.main"]
+
+text.main:
+  type: text
+  template: B
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(configBody), 0o644))
+
+	server.reloadIfConfigFileUpdated()
+
+	reloadFlag, ok := cache.Get[bool](cache.Device, config.RELOAD)
+	require.True(t, ok)
+	require.True(t, reloadFlag)
+	require.Equal(t, 0, len(server.configReloadCh))
 }
 
 func TestMakePromptResponseIncludesRightTransientWhenPresent(t *testing.T) {

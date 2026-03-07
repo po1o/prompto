@@ -78,8 +78,7 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 
 				res, sharedErr := sharedProvider.Get()
 				if sharedErr == nil {
-					segment.Enabled = res.Enabled
-					segment.SetText(res.Text)
+					_ = segment.CopyWriterStateFrom(res.Source)
 				}
 
 				e.markSegmentDone(segment)

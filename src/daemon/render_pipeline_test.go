@@ -19,7 +19,7 @@ type rendererStub struct {
 	mu            sync.Mutex
 }
 
-func (renderer *rendererStub) Bundle(_ *prompt.Engine, primary string) PromptBundle {
+func (renderer *rendererStub) Bundle(_ *prompt.Engine, primary string, _ bool) PromptBundle {
 	renderer.mu.Lock()
 	defer renderer.mu.Unlock()
 

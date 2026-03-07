@@ -15,12 +15,21 @@ const (
 func (e *Engine) ExtraPrompt(promptType ExtraPromptType) string {
 	e.resetSharedProviders()
 
-	if promptType == Secondary && e.hasLayoutSecondary() {
-		return e.renderLayoutExtra(e.LayoutConfig.SecondaryPrompt, false)
-	}
-
-	if promptType == Transient && e.hasLayoutTransient() {
-		return e.renderLayoutExtra(e.LayoutConfig.TransientPrompt, true)
+	switch promptType {
+	case Secondary:
+		if e.hasLayoutSecondary() {
+			return e.renderLayoutExtra(e.LayoutConfig.SecondaryPrompt, false)
+		}
+	case Transient:
+		if e.hasLayoutTransient() {
+			return e.renderLayoutExtra(e.LayoutConfig.TransientPrompt, true)
+		}
+	case Valid:
+		return e.renderSingleExtraSegment(e.Config.ValidLine)
+	case Error:
+		return e.renderSingleExtraSegment(e.Config.ErrorLine)
+	case Debug:
+		return e.renderSingleExtraSegment(e.Config.DebugPrompt)
 	}
 
 	return ""
@@ -61,4 +70,28 @@ func (e *Engine) renderLayoutExtra(layouts []config.PromptLayout, finalSpace boo
 	}
 
 	return e.string()
+}
+
+func (e *Engine) renderSingleExtraSegment(segment *config.Segment) string {
+	if segment == nil {
+		return ""
+	}
+
+	cloned := segment.Clone()
+	if cloned.Type == "" {
+		cloned.Type = config.TEXT
+	}
+
+	block := &config.Block{
+		Type:      config.Prompt,
+		Alignment: config.Left,
+		Segments:  []*config.Segment{cloned},
+	}
+
+	text, length := e.writeBlockSegments(block)
+	if length == 0 {
+		return ""
+	}
+
+	return text
 }

@@ -180,8 +180,7 @@ func (e *Engine) executeStreamingSegment(
 		if err := segment.MapSegmentWithWriter(e.Env); err == nil {
 			sharedProvider := e.getOrCreateSharedProvider(segment.Type, sources[segment.Type], providerFactory)
 			if res, sharedErr := sharedProvider.Get(); sharedErr == nil {
-				segment.Enabled = res.Enabled
-				segment.SetText(res.Text)
+				_ = segment.CopyWriterStateFrom(res.Source)
 			}
 		}
 

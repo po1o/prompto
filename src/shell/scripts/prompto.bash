@@ -24,12 +24,24 @@ _prompto_ftcs_marks=0
 # start timer on command start
 PS0='${_prompto_start_time:0:$((_prompto_start_time="$(_prompto_start_timer)",0))}$(_prompto_ftcs_command_start)'
 
-# set secondary prompt
-_prompto_secondary_prompt=(
-    "$_prompto_executable" render secondary \
-        --shell=bash \
-        --shell-version="$BASH_VERSION"
-)
+_prompto_secondary_prompt='> '
+
+function _prompto_render_type() {
+    local prompt_type="$1"
+    shift
+
+    while IFS= read -r line; do
+        case "$line" in
+            "$prompt_type":*)
+                printf '%s\n' "${line#*:}"
+                return 0
+                ;;
+            status:*)
+                return 0
+                ;;
+        esac
+    done < <("$_prompto_executable" render "$@")
+}
 
 function _prompto_set_cursor_position() {
     # not supported in Midnight Commander
@@ -83,7 +95,7 @@ function _prompto_get_primary() {
         prompt='[NOTICE: Prompto prompt is not supported in POSIX mode]\n\u@\h:\w\$ '
     else
         prompt=(
-            "$_prompto_executable" render primary \
+            _prompto_render_type primary \
                 --shell=bash \
                 --shell-version="$BASH_VERSION" \
                 --status="$_prompto_status" \
@@ -108,6 +120,9 @@ function _prompto_get_secondary() {
         # Disable in POSIX mode.
         echo '> '
     else
+        if [[ "$_prompto_secondary_prompt" == '> ' ]]; then
+            _prompto_secondary_prompt=$(_prompto_render_type secondary --shell=bash --shell-version="$BASH_VERSION")
+        fi
         echo "${_prompto_secondary_prompt@P}"
     fi
 }

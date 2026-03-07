@@ -16,18 +16,14 @@ import (
 var scriptPathCache string
 
 func hasScript(env runtime.Environment) (string, bool) {
-	if env.Flags().Debug || env.Flags().Eval || env.Flags().Shell == NU {
+	if env.Flags().Debug || env.Flags().Eval {
 		log.Debug("in debug or eval mode, no script path will be used")
 		return "", false
 	}
 
-	path, err := scriptPath(env)
-	if err != nil {
-		log.Debug("failed to get script path")
-		return "", false
-	}
+	path := scriptPath(env)
 
-	_, err = os.Stat(path)
+	_, err := os.Stat(path)
 	if err != nil {
 		log.Debug("script path does not exist")
 		return "", false
@@ -44,12 +40,9 @@ func hasScript(env runtime.Environment) (string, bool) {
 }
 
 func writeScript(env runtime.Environment, script string) (string, error) {
-	path, err := scriptPath(env)
-	if err != nil {
-		return "", err
-	}
+	path := scriptPath(env)
 
-	err = os.WriteFile(path, []byte(script), 0o644)
+	err := os.WriteFile(path, []byte(script), 0o644)
 	if err != nil {
 		log.Error(err)
 		return "", err
@@ -111,8 +104,6 @@ func shellTemplate(sh string) string {
 		return bashInit
 	case FISH:
 		return fishInit
-	case NU:
-		return nuInit
 	default:
 		return ""
 	}
@@ -138,48 +129,12 @@ func InitScriptName(flags *runtime.Flags) string {
 	return fmt.Sprintf("init.%d.%s", hash, sh)
 }
 
-func scriptPath(env runtime.Environment) (string, error) {
+func scriptPath(env runtime.Environment) string {
 	if len(scriptPathCache) != 0 {
-		return scriptPathCache, nil
+		return scriptPathCache
 	}
 
-	if env.Flags().Shell != NU {
-		scriptPathCache = filepath.Join(cache.Path(), InitScriptName(env.Flags()))
-		log.Debug("init script path for non-nu shell:", scriptPathCache)
-		return scriptPathCache, nil
-	}
-
-	const autoloadDir = "NUAUTOLOADDIR"
-	const fileName = "prompto.nu"
-
-	if dir, OK := cache.Get[string](cache.Device, autoloadDir); OK {
-		scriptPathCache = filepath.Join(dir, fileName)
-		log.Debug("autoload path for nu from cache:", dir)
-		return scriptPathCache, nil
-	}
-
-	autoloadPath, err := env.RunCommand("nu", "-c", "$nu.data-dir | path join vendor autoload")
-	if err != nil || autoloadPath == "" {
-		log.Error(err)
-		return "", err
-	}
-
-	log.Debug("autoload path for nu:", autoloadPath)
-
-	// create the path if non-existent
-	_, err = os.Stat(autoloadPath)
-	if err != nil {
-		log.Debug("autoload path does not exist, creating")
-		err = os.MkdirAll(autoloadPath, 0o700)
-	}
-
-	if err != nil {
-		log.Debugf("failed to create autoload dir %s: %s", autoloadPath, err)
-		return "", err
-	}
-
-	cache.Set(cache.Device, autoloadDir, autoloadPath, cache.INFINITE)
-	scriptPathCache = filepath.Join(autoloadPath, fileName)
-	log.Debug("script path for nu:", scriptPathCache)
-	return scriptPathCache, nil
+	scriptPathCache = filepath.Join(cache.Path(), InitScriptName(env.Flags()))
+	log.Debug("init script path:", scriptPathCache)
+	return scriptPathCache
 }

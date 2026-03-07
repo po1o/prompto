@@ -69,8 +69,6 @@ func (f Features) Lines(shell string) Lines {
 			code = feature.Bash()
 		case FISH:
 			code = feature.Fish()
-		case NU:
-			code = feature.Nu()
 		}
 
 		if len(code) > 0 {

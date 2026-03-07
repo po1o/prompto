@@ -36,59 +36,50 @@ func (s *SegmentStyle) resolve(context any) SegmentStyle {
 }
 
 type Segment struct {
-	writer  SegmentWriter
-	env     runtime.Environment
-	Options options.Map `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty"`
-	// Properties is deprecated, use Options instead. This field exists for TOML backward compatibility
-	// since go-toml/v2 doesn't support custom unmarshalers. It will be migrated to Options after loading.
-	Properties              options.Map `json:"-" toml:"properties,omitempty" yaml:"-"`
-	Cache                   *Cache      `json:"cache,omitempty" toml:"cache,omitempty" yaml:"cache,omitempty"`
-	Alias                   string      `json:"alias,omitempty" toml:"alias,omitempty" yaml:"alias,omitempty"`
+	writer                  SegmentWriter
+	env                     runtime.Environment
+	Options                 options.Map `yaml:"options,omitempty"`
+	Cache                   *Cache      `yaml:"cache,omitempty"`
+	Alias                   string      `yaml:"alias,omitempty"`
 	styleCache              SegmentStyle
 	name                    string
-	LeadingDiamond          string         `json:"leading_diamond,omitempty" toml:"leading_diamond,omitempty" yaml:"leading_diamond,omitempty"`
-	TrailingDiamond         string         `json:"trailing_diamond,omitempty" toml:"trailing_diamond,omitempty" yaml:"trailing_diamond,omitempty"`
-	RenderPendingIcon       string         `json:"render_pending_icon,omitempty" toml:"render_pending_icon,omitempty" yaml:"render_pending_icon,omitempty"`
-	Template                string         `json:"template,omitempty" toml:"template,omitempty" yaml:"template,omitempty"`
-	Foreground              color.Ansi     `json:"foreground,omitempty" toml:"foreground,omitempty" yaml:"foreground,omitempty"`
-	TemplatesLogic          template.Logic `json:"templates_logic,omitempty" toml:"templates_logic,omitempty" yaml:"templates_logic,omitempty"`
-	PowerlineSymbol         string         `json:"powerline_symbol,omitempty" toml:"powerline_symbol,omitempty" yaml:"powerline_symbol,omitempty"`
-	Background              color.Ansi     `json:"background,omitempty" toml:"background,omitempty" yaml:"background,omitempty"`
-	Filler                  string         `json:"filler,omitempty" toml:"filler,omitempty" yaml:"filler,omitempty"`
-	Type                    SegmentType    `json:"type,omitempty" toml:"type,omitempty" yaml:"type,omitempty"`
-	Style                   SegmentStyle   `json:"style,omitempty" toml:"style,omitempty" yaml:"style,omitempty"`
-	LeadingPowerlineSymbol  string         `json:"leading_powerline_symbol,omitempty" toml:"leading_powerline_symbol,omitempty" yaml:"leading_powerline_symbol,omitempty"`
-	RenderPendingBackground color.Ansi     `json:"render_pending_background,omitempty" toml:"render_pending_background,omitempty" yaml:"render_pending_background,omitempty"`
-	ForegroundTemplates     template.List  `json:"foreground_templates,omitempty" toml:"foreground_templates,omitempty" yaml:"foreground_templates,omitempty"`
-	Tips                    []string       `json:"tips,omitempty" toml:"tips,omitempty" yaml:"tips,omitempty"`
-	BackgroundTemplates     template.List  `json:"background_templates,omitempty" toml:"background_templates,omitempty" yaml:"background_templates,omitempty"`
-	Templates               template.List  `json:"templates,omitempty" toml:"templates,omitempty" yaml:"templates,omitempty"`
-	ExcludeFolders          []string       `json:"exclude_folders,omitempty" toml:"exclude_folders,omitempty" yaml:"exclude_folders,omitempty"`
-	IncludeFolders          []string       `json:"include_folders,omitempty" toml:"include_folders,omitempty" yaml:"include_folders,omitempty"`
-	Needs                   []string       `json:"-" toml:"-" yaml:"-"`
-	Timeout                 int            `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty"`
-	MaxWidth                int            `json:"max_width,omitempty" toml:"max_width,omitempty" yaml:"max_width,omitempty"`
-	MinWidth                int            `json:"min_width,omitempty" toml:"min_width,omitempty" yaml:"min_width,omitempty"`
-	Duration                time.Duration  `json:"-" toml:"-" yaml:"-"`
-	NameLength              int            `json:"-" toml:"-" yaml:"-"`
-	Index                   int            `json:"index,omitempty" toml:"index,omitempty" yaml:"index,omitempty"`
-	Interactive             bool           `json:"interactive,omitempty" toml:"interactive,omitempty" yaml:"interactive,omitempty"`
-	Enabled                 bool           `json:"-" toml:"-" yaml:"-"`
-	Newline                 bool           `json:"newline,omitempty" toml:"newline,omitempty" yaml:"newline,omitempty"`
-	InvertPowerline         bool           `json:"invert_powerline,omitempty" toml:"invert_powerline,omitempty" yaml:"invert_powerline,omitempty"`
-	Force                   bool           `json:"force,omitempty" toml:"force,omitempty" yaml:"force,omitempty"`
-	restored                bool           `json:"-" toml:"-" yaml:"-"`
-	Toggled                 bool           `json:"toggled,omitempty" toml:"toggled,omitempty" yaml:"toggled,omitempty"`
+	LeadingDiamond          string         `yaml:"leading_diamond,omitempty"`
+	TrailingDiamond         string         `yaml:"trailing_diamond,omitempty"`
+	RenderPendingIcon       string         `yaml:"render_pending_icon,omitempty"`
+	Template                string         `yaml:"template,omitempty"`
+	Foreground              color.Ansi     `yaml:"foreground,omitempty"`
+	TemplatesLogic          template.Logic `yaml:"templates_logic,omitempty"`
+	PowerlineSymbol         string         `yaml:"powerline_symbol,omitempty"`
+	Background              color.Ansi     `yaml:"background,omitempty"`
+	Filler                  string         `yaml:"filler,omitempty"`
+	Type                    SegmentType    `yaml:"type,omitempty"`
+	Style                   SegmentStyle   `yaml:"style,omitempty"`
+	LeadingPowerlineSymbol  string         `yaml:"leading_powerline_symbol,omitempty"`
+	RenderPendingBackground color.Ansi     `yaml:"render_pending_background,omitempty"`
+	ForegroundTemplates     template.List  `yaml:"foreground_templates,omitempty"`
+	Tips                    []string       `yaml:"tips,omitempty"`
+	BackgroundTemplates     template.List  `yaml:"background_templates,omitempty"`
+	Templates               template.List  `yaml:"templates,omitempty"`
+	ExcludeFolders          []string       `yaml:"exclude_folders,omitempty"`
+	IncludeFolders          []string       `yaml:"include_folders,omitempty"`
+	Needs                   []string       `yaml:"-"`
+	Timeout                 int            `yaml:"timeout,omitempty"`
+	MaxWidth                int            `yaml:"max_width,omitempty"`
+	MinWidth                int            `yaml:"min_width,omitempty"`
+	Duration                time.Duration  `yaml:"-"`
+	NameLength              int            `yaml:"-"`
+	Index                   int            `yaml:"index,omitempty"`
+	Interactive             bool           `yaml:"interactive,omitempty"`
+	Enabled                 bool           `yaml:"-"`
+	Newline                 bool           `yaml:"newline,omitempty"`
+	InvertPowerline         bool           `yaml:"invert_powerline,omitempty"`
+	Force                   bool           `yaml:"force,omitempty"`
+	restored                bool           `yaml:"-"`
+	Toggled                 bool           `yaml:"toggled,omitempty"`
 }
 
-// segmentAlias is used to avoid recursion during unmarshaling
+// segmentAlias avoids recursion during YAML unmarshaling.
 type segmentAlias Segment
-
-// segmentAux is a helper struct that captures the legacy 'properties' field
-type segmentAux struct {
-	Properties options.Map `json:"properties,omitempty" yaml:"properties,omitempty" toml:"properties,omitempty"`
-	*segmentAlias
-}
 
 // Clone returns a copy of the segment with runtime-only state reset.
 // This allows reusing immutable segment config safely across renders.
@@ -113,23 +104,6 @@ func (segment *Segment) Clone() *Segment {
 	return &cloned
 }
 
-func (segment *Segment) UnmarshalJSON(data []byte) error {
-	aux := &segmentAux{
-		segmentAlias: (*segmentAlias)(segment),
-	}
-
-	if err := json.Unmarshal(data, aux); err != nil {
-		return err
-	}
-
-	// Migrate 'properties' to 'options' if present
-	if len(aux.Properties) > 0 && len(segment.Options) == 0 {
-		segment.Options = aux.Properties
-	}
-
-	return nil
-}
-
 func (segment *Segment) UnmarshalYAML(node *yaml.Node) error {
 	// Decode into a map to handle field renaming
 	var raw map[string]any
@@ -152,15 +126,6 @@ func (segment *Segment) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	return modifiedNode.Decode((*segmentAlias)(segment))
-}
-
-// MigratePropertiesToOptions migrates the deprecated Properties field to Options.
-// This is needed for TOML configs since go-toml/v2 doesn't support custom unmarshalers.
-func (segment *Segment) MigratePropertiesToOptions() {
-	if len(segment.Properties) > 0 && len(segment.Options) == 0 {
-		segment.Options = segment.Properties
-		segment.Properties = nil
-	}
 }
 
 func (segment *Segment) Name() string {
@@ -257,6 +222,30 @@ func (segment *Segment) Text() string {
 
 func (segment *Segment) SetText(text string) {
 	segment.writer.SetText(text)
+}
+
+// CopyWriterStateFrom copies runtime writer data from another segment instance of the same type.
+// The target segment must already have its writer initialized via MapSegmentWithWriter.
+func (segment *Segment) CopyWriterStateFrom(source *Segment) error {
+	if segment == nil || source == nil {
+		return nil
+	}
+
+	if segment.writer == nil || source.writer == nil {
+		return nil
+	}
+
+	data, err := json.Marshal(source.writer)
+	if err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(data, segment.writer); err != nil {
+		return err
+	}
+
+	segment.Enabled = source.Enabled
+	return nil
 }
 
 func (segment *Segment) ResolveForeground() color.Ansi {
@@ -507,14 +496,6 @@ func (segment *Segment) evaluateNeeds() {
 
 		segment.Needs = append(segment.Needs, segmentName)
 	}
-}
-
-func (segment *Segment) key() any {
-	if segment.Index > 0 {
-		return segment.Index - 1
-	}
-
-	return segment.Name()
 }
 
 // GetPendingText computes the text to display for a segment in pending state.

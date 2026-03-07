@@ -13,7 +13,6 @@ var supportedShells = []string{
 	shell.FISH,
 	"powershell",
 	shell.PWSH,
-	shell.NU,
 }
 
 func normalizeSupportedShell(value string) (string, error) {
@@ -23,9 +22,9 @@ func normalizeSupportedShell(value string) (string, error) {
 	}
 
 	switch sh {
-	case shell.BASH, shell.ZSH, shell.FISH, shell.PWSH, shell.NU:
+	case shell.BASH, shell.ZSH, shell.FISH, shell.PWSH:
 		return sh, nil
 	default:
-		return "", fmt.Errorf("unsupported shell %q (supported: bash, zsh, fish, powershell, nu)", value)
+		return "", fmt.Errorf("unsupported shell %q (supported: bash, zsh, fish, powershell)", value)
 	}
 }

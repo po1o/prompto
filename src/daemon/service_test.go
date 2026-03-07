@@ -122,7 +122,7 @@ func TestServiceRepaintKeepsContextAndStreamsPendingUpdates(t *testing.T) {
 		return &prompt.Engine{}
 	})
 	service := NewService(registry, nil, &rendererStub{})
-	sessionID := "session-a"
+	sessionID := sessionIDFixture
 
 	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
 	firstContext, renderID, ok := registry.GetActiveRender(sessionID)
@@ -153,7 +153,7 @@ func TestServiceRapidRepaintDoesNotCreateNewRenderContext(t *testing.T) {
 		return &prompt.Engine{}
 	})
 	service := NewService(registry, nil, &rendererStub{})
-	sessionID := "session-a"
+	sessionID := sessionIDFixture
 
 	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
 	baseContext, baseID, ok := registry.GetActiveRender(sessionID)
@@ -183,4 +183,34 @@ func TestServiceRapidRepaintDoesNotCreateNewRenderContext(t *testing.T) {
 	update, ok := service.NextUpdate(ctx, sessionID, 0)
 	require.True(t, ok)
 	require.Equal(t, "path.main", update.Segment)
+}
+
+func TestServiceDeregistersRenderWhenCompleteUpdateArrives(t *testing.T) {
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	})
+	service := NewService(registry, nil, &rendererStub{})
+	sessionID := sessionIDFixture
+
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	_, renderID, ok := registry.GetActiveRender(sessionID)
+	require.True(t, ok)
+	require.Equal(t, 1, service.SessionCount())
+
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		service.SessionHub(sessionID).Publish(renderCompletePayload, renderID)
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	response, ok := service.NextUpdate(ctx, sessionID, 0)
+	require.True(t, ok)
+	require.Equal(t, renderCompletePayload, response.Segment)
+
+	require.Equal(t, 0, service.SessionCount())
+	active, reloading := service.Snapshot()
+	require.Equal(t, 0, active)
+	require.False(t, reloading)
 }

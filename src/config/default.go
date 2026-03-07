@@ -4,7 +4,6 @@ import (
 	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/cli/upgrade"
 	"github.com/po1o/prompto/src/color"
-	"github.com/po1o/prompto/src/segments"
 	"github.com/po1o/prompto/src/segments/options"
 )
 
@@ -17,137 +16,70 @@ func Default(configError error) *Config {
 		exitTemplate = configError.Error()
 	}
 
-	cfg := &Config{
-		hash:       1234567890, // placeholder hash value
-		FinalSpace: true,
-		Blocks: []*Block{
-			{
-				Type:      Prompt,
-				Alignment: Left,
-				Segments: []*Segment{
-					{
-						Type:            SESSION,
-						Style:           Diamond,
-						LeadingDiamond:  "\ue0b6",
-						TrailingDiamond: "\ue0b0",
-						Foreground:      "p:black",
-						Background:      "p:yellow",
-						Template:        " {{ if .SSHSession }}\ueba9 {{ end }}{{ .UserName }} ",
-					},
-					{
-						Type:            PATH,
-						Style:           Powerline,
-						PowerlineSymbol: "\ue0b0",
-						Foreground:      "p:white",
-						Background:      "p:orange",
-						Options: options.Map{
-							options.Style: "folder",
-						},
-						Template: " \uea83 {{ path .Path .Location }} ",
-					},
-					{
-						Type:            GIT,
-						Style:           Powerline,
-						PowerlineSymbol: "\ue0b0",
-						Foreground:      "p:black",
-						Background:      "p:green",
-						BackgroundTemplates: []string{
-							"{{ if or (.Working.Changed) (.Staging.Changed) }}p:yellow{{ end }}",
-							"{{ if and (gt .Ahead 0) (gt .Behind 0) }}p:red{{ end }}",
-							"{{ if gt .Ahead 0 }}#49416D{{ end }}",
-							"{{ if gt .Behind 0 }}#7A306C{{ end }}",
-						},
-						ForegroundTemplates: []string{
-							"{{ if or (.Working.Changed) (.Staging.Changed) }}p:black{{ end }}",
-							"{{ if and (gt .Ahead 0) (gt .Behind 0) }}p:white{{ end }}",
-							"{{ if gt .Ahead 0 }}p:white{{ end }}",
-						},
-						Options: options.Map{
-							segments.BranchTemplate:    "{{ trunc 25 .Branch }}",
-							segments.FetchStatus:       true,
-							segments.FetchUpstreamIcon: true,
-						},
-						Template: " {{ if .UpstreamURL }}{{ url .UpstreamIcon .UpstreamURL }} {{ end }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }} ", //nolint:lll
-					},
-					{
-						Type:            ROOT,
-						Style:           Powerline,
-						PowerlineSymbol: "\ue0b0",
-						Foreground:      "p:white",
-						Background:      "p:yellow",
-						Template:        " \uf0e7 ",
-					},
-					{
-						Type:            STATUS,
-						Style:           Diamond,
-						LeadingDiamond:  "<transparent,background>\ue0b0</>",
-						TrailingDiamond: "\ue0b4",
-						Foreground:      "p:white",
-						Background:      "p:blue",
-						BackgroundTemplates: []string{
-							exitBackgroundTemplate,
-						},
-						Options: options.Map{
-							options.AlwaysEnabled: true,
-						},
-						Template: exitTemplate,
-					},
-				},
+	layout := &LayoutConfig{
+		Prompt: []PromptLayout{
+			{Segments: []string{"session", "path", "status"}},
+		},
+		RPrompt: []PromptLayout{
+			{Segments: []string{"shell", "time"}},
+		},
+		Segments: map[string]*Segment{
+			"session": {
+				Type:            SESSION,
+				Style:           Diamond,
+				LeadingDiamond:  "\ue0b6",
+				TrailingDiamond: "\ue0b0",
+				Foreground:      "p:black",
+				Background:      "p:yellow",
+				Template:        " {{ if .SSHSession }}\ueba9 {{ end }}{{ .UserName }} ",
 			},
-			{
-				Type: RPrompt,
-				Segments: []*Segment{
-					{
-						Type:       NODE,
-						Style:      Plain,
-						Foreground: "p:green",
-						Background: "transparent",
-						Template:   "\ue718 ",
-						Options: options.Map{
-							segments.HomeEnabled:         false,
-							segments.FetchPackageManager: false,
-							segments.DisplayMode:         "files",
-						},
-					},
-					{
-						Type:       GOLANG,
-						Style:      Plain,
-						Foreground: "p:blue",
-						Background: "transparent",
-						Template:   "\ue626 ",
-						Options: options.Map{
-							options.FetchVersion: false,
-						},
-					},
-					{
-						Type:       PYTHON,
-						Style:      Plain,
-						Foreground: "p:yellow",
-						Background: "transparent",
-						Template:   "\ue235 ",
-						Options: options.Map{
-							options.FetchVersion:     false,
-							segments.DisplayMode:     "files",
-							segments.FetchVirtualEnv: false,
-						},
-					},
-					{
-						Type:       SHELL,
-						Style:      Plain,
-						Foreground: "p:white",
-						Background: "transparent",
-						Template:   "in <p:blue><b>{{ .Name }}</b></> ",
-					},
-					{
-						Type:       TIME,
-						Style:      Plain,
-						Foreground: "p:white",
-						Background: "transparent",
-						Template:   "at <p:blue><b>{{ .CurrentDate | date \"15:04:05\" }}</b></>",
-					},
+			"path": {
+				Type:            PATH,
+				Style:           Powerline,
+				PowerlineSymbol: "\ue0b0",
+				Foreground:      "p:white",
+				Background:      "p:orange",
+				Options: options.Map{
+					options.Style: "folder",
 				},
+				Template: " \uea83 {{ path .Path .Location }} ",
+			},
+			"status": {
+				Type:            STATUS,
+				Style:           Diamond,
+				LeadingDiamond:  "<transparent,background>\ue0b0</>",
+				TrailingDiamond: "\ue0b4",
+				Foreground:      "p:white",
+				Background:      "p:blue",
+				BackgroundTemplates: []string{
+					exitBackgroundTemplate,
+				},
+				Options: options.Map{
+					options.AlwaysEnabled: true,
+				},
+				Template: exitTemplate,
+			},
+			"shell": {
+				Type:       SHELL,
+				Style:      Plain,
+				Foreground: "p:white",
+				Background: "transparent",
+				Template:   "in <p:blue><b>{{ .Name }}</b></> ",
+			},
+			"time": {
+				Type:       TIME,
+				Style:      Plain,
+				Foreground: "p:white",
+				Background: "transparent",
+				Template:   "at <p:blue><b>{{ .CurrentDate | date \"15:04:05\" }}</b></>",
 			},
 		},
+	}
+
+	cfg := &Config{
+		hash:                 1234567890, // placeholder hash value
+		FinalSpace:           true,
+		Layout:               layout,
 		ConsoleTitleTemplate: "{{ .Shell }} in {{ .Folder }}",
 		Palette: color.Palette{
 			"black":  "#262B44",
@@ -157,16 +89,6 @@ func Default(configError error) *Config {
 			"red":    "#D81E5B",
 			"white":  "#E0DEF4",
 			"yellow": "#F3AE35",
-		},
-		SecondaryPrompt: &Segment{
-			Foreground: "p:black",
-			Background: "transparent",
-			Template:   "<p:yellow,transparent>\ue0b6</><,p:yellow> > </><p:yellow,transparent>\ue0b0</> ",
-		},
-		TransientPrompt: &Segment{
-			Foreground: "p:black",
-			Background: "transparent",
-			Template:   "<p:yellow,transparent>\ue0b6</><,p:yellow> {{ .Folder }} </><p:yellow,transparent>\ue0b0</> ",
 		},
 		Tooltips: []*Segment{
 			{
@@ -201,6 +123,8 @@ func Default(configError error) *Config {
 			Interval: cache.ONEWEEK,
 		},
 	}
+
+	cfg.toggleSegments()
 
 	return cfg
 }

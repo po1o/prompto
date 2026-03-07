@@ -3,8 +3,8 @@ package config
 import "github.com/po1o/prompto/src/cache"
 
 type Cache struct {
-	Duration cache.Duration `json:"duration,omitempty" toml:"duration,omitempty" yaml:"duration,omitempty"`
-	Strategy Strategy       `json:"strategy,omitempty" toml:"strategy,omitempty" yaml:"strategy,omitempty"`
+	Duration cache.Duration `yaml:"duration,omitempty"`
+	Strategy Strategy       `yaml:"strategy,omitempty"`
 }
 
 type Strategy string

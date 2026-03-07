@@ -1,9 +1,11 @@
 package segments
 
 import (
+	"strings"
 	"time"
 
 	"github.com/po1o/prompto/src/segments/options"
+	"github.com/po1o/prompto/src/shell"
 )
 
 type Time struct {
@@ -11,6 +13,7 @@ type Time struct {
 
 	CurrentDate time.Time
 	Format      string
+	ShellClock  string
 }
 
 const (
@@ -19,15 +22,20 @@ const (
 )
 
 func (t *Time) Template() string {
-	return " {{ .CurrentDate | date .Format }} "
+	return "{{ .CurrentDate | date .Format }}"
 }
 
 func (t *Time) Enabled() bool {
-	// if no date set, use now(unit testing)
 	formatInput := t.options.String(TimeFormat, "15:04:05")
 	t.Format = t.getTimeFormat(formatInput)
+
 	if t.CurrentDate.IsZero() {
 		t.CurrentDate = time.Now()
+	}
+	t.ShellClock = t.CurrentDate.Format(t.Format)
+
+	if shellClock, ok := t.shellClockDisplay(); ok {
+		t.ShellClock = shellClock
 	}
 
 	return true
@@ -63,4 +71,57 @@ func (t *Time) getTimeFormat(format string) string {
 		return timeFormat
 	}
 	return format
+}
+
+func (t *Time) shellClockDisplay() (string, bool) {
+	if t.env == nil {
+		return "", false
+	}
+
+	strftime := goLayoutToStrftime(t.Format)
+	if strftime == "" {
+		return "", false
+	}
+
+	switch t.env.Shell() {
+	case shell.ZSH:
+		return "%D{" + strftime + "}", true
+	case shell.BASH:
+		return "\\D{" + strftime + "}", true
+	case shell.FISH, shell.PWSH:
+		return "__PROMPTO_CLOCK{" + strftime + "}__", true
+	default:
+		return "", false
+	}
+}
+
+func goLayoutToStrftime(layout string) string {
+	if layout == "" {
+		return ""
+	}
+
+	replacer := strings.NewReplacer(
+		"Monday", "%A",
+		"January", "%B",
+		"Mon", "%a",
+		"Jan", "%b",
+		"2006", "%Y",
+		"06", "%y",
+		"15", "%H",
+		"03", "%I",
+		"04", "%M",
+		"05", "%S",
+		"PM", "%p",
+		"pm", "%p",
+		"02", "%d",
+		"01", "%m",
+		"_2", "%e",
+		"2", "%-d",
+		"1", "%-m",
+		"MST", "%Z",
+		"-0700", "%z",
+		"-07", "%z",
+	)
+
+	return replacer.Replace(layout)
 }

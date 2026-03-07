@@ -294,3 +294,27 @@ func TestWriteLength(t *testing.T) {
 		assert.Equal(t, tc.Expected, got, tc.Case)
 	}
 }
+
+func TestWritePreservesZshClockToken(t *testing.T) {
+	Init(shell.ZSH)
+	ParentColors = []*color.Set{}
+	CurrentColors = &color.Set{Foreground: "black", Background: "white"}
+	Colors = &color.Defaults{}
+
+	Write("white", "black", "%D{%H:%M}")
+
+	got, _ := String()
+	assert.Equal(t, "%{\x1b[47m%}%{\x1b[30m%}%D{%H:%M}%{\x1b[0m%}", got)
+}
+
+func TestWritePreservesBashClockToken(t *testing.T) {
+	Init(shell.BASH)
+	ParentColors = []*color.Set{}
+	CurrentColors = &color.Set{Foreground: "black", Background: "white"}
+	Colors = &color.Defaults{}
+
+	Write("white", "black", "\\D{%H:%M}")
+
+	got, _ := String()
+	assert.Equal(t, "\\[\x1b[47m\\]\\[\x1b[30m\\]\\D{%H:%M}\\[\x1b[0m\\]", got)
+}

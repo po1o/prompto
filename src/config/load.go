@@ -131,25 +131,17 @@ func Parse(configFile string) (*Config, error) {
 		log.Error(err)
 	}
 
-	cfg := Default(nil)
-	cfg.Blocks = nil
-	cfg.FilePaths = []string{configFile}
-	cfg.Format = format
-	cfg.Source = configFile
-	cfg.hash = h.Sum64()
-	cfg.Layout = layout
+	cfg := &Config{
+		FilePaths: []string{configFile},
+		Format:    format,
+		Source:    configFile,
+		hash:      h.Sum64(),
+		Layout:    layout,
+	}
 
 	layout.Source = configFile
 	layout.ApplyMetadata(cfg)
 	cfg.toggleSegments()
-
-	if len(layout.Prompt) > 0 {
-		cfg.Blocks = append(cfg.Blocks, &Block{Type: Prompt})
-	}
-
-	if len(layout.RPrompt) > 0 {
-		cfg.Blocks = append(cfg.Blocks, &Block{Type: RPrompt})
-	}
 
 	if cfg.Upgrade == nil {
 		cfg.Upgrade = &upgrade.Config{

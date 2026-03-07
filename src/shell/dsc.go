@@ -97,8 +97,6 @@ func (s *Shell) getShellConfigPath() (string, error) {
 		return filepath.Join(configDir, "config.fish"), nil
 	case PWSH:
 		return cmd.Run(s.Name, "-NoProfile", "-Command", "$PROFILE")
-	case NU:
-		return cmd.Run("nu", "-c", "$nu.config-path")
 	default:
 		return "", fmt.Errorf("unsupported shell type: %s", s.Name)
 	}

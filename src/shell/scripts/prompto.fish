@@ -4,6 +4,8 @@ set --export --global POWERLINE_COMMAND prompto
 set --export --global CONDA_PROMPT_MODIFIER false
 
 set --global _prompto_tooltip_command ''
+set --global _prompto_tooltip_active 0
+set --global _prompto_tooltip_saved_rprompt ''
 set --global _prompto_current_rprompt ''
 set --global _prompto_transient 0
 set --global _prompto_executable ::PROMPTO::
@@ -28,11 +30,12 @@ function _prompto_get_prompt
     if test (count $argv) -eq 0
         return
     end
+    set --local prompt_type $argv[1]
     set --local vim_mode_arg
     if test "$_prompto_vim_mode" = "1"
         set vim_mode_arg "--vim-mode="(_prompto_get_vim_mode)
     end
-    $_prompto_executable render $argv[1] \
+    $_prompto_executable render \
         --shell=fish \
         --shell-version=$FISH_VERSION \
         --status=$_prompto_status \
@@ -41,7 +44,36 @@ function _prompto_get_prompt
         --execution-time=$_prompto_execution_time \
         --stack-count=$_prompto_stack_count \
         $vim_mode_arg \
-        $argv[2..]
+        $argv[2..] | while read -l line
+        if string match -q "$prompt_type:*" -- $line
+            string replace -r '^[^:]*:' '' -- $line
+            break
+        end
+        if string match -q 'status:*' -- $line
+            break
+        end
+    end
+end
+
+function _prompto_expand_shell_clock
+    set --local text "$argv[1]"
+    if test -z "$text"
+        echo -n "$text"
+        return
+    end
+
+    while true
+        set --local fmt (string match -r --groups-only '__PROMPTO_CLOCK\{([^}]*)\}__' -- "$text" | head -n1)
+        if test -z "$fmt"
+            break
+        end
+
+        set --local token "__PROMPTO_CLOCK{$fmt}__"
+        set --local now (date +"$fmt")
+        set text (string replace --all -- "$token" "$now" -- "$text")
+    end
+
+    echo -n "$text"
 end
 
 # NOTE: Input function calls via `commandline --function` are put into a queue and will not be executed until an outer regular function returns. See https://fishshell.com/docs/current/cmds/commandline.html.
@@ -55,14 +87,17 @@ function fish_prompt
     printf \e\[0J
     if test "$_prompto_transient" = 1
         if test "$_prompto_daemon_mode" = "1"
-            echo -n "$_prompto_current_transient"
+            echo -n (_prompto_expand_shell_clock "$_prompto_current_transient")
         else
-            _prompto_get_prompt transient
+            _prompto_get_prompt transient | while read -l line
+                _prompto_expand_shell_clock "$line"
+                echo
+            end
         end
         return
     end
     if test "$_prompto_new_prompt" = 0
-        echo -n "$_prompto_current_prompt"
+        echo -n (_prompto_expand_shell_clock "$_prompto_current_prompt")
         return
     end
     set --global _prompto_status $prompto_status_temp
@@ -107,6 +142,7 @@ function fish_prompt
 
     # The prompt is saved for possible reuse, typically a repaint after clearing the screen buffer.
     set --global _prompto_current_prompt (_prompto_get_prompt primary --cleared=$prompto_cleared | string join \n | string collect)
+    set --global _prompto_current_prompt (_prompto_expand_shell_clock "$_prompto_current_prompt")
 
     echo -n "$_prompto_current_prompt"
 end
@@ -119,12 +155,13 @@ function fish_right_prompt
 
     # Repaint an existing right prompt.
     if test "$_prompto_new_prompt" = 0
-        echo -n "$_prompto_current_rprompt"
+        echo -n (_prompto_expand_shell_clock "$_prompto_current_rprompt")
         return
     end
 
     set --global _prompto_new_prompt 0
     set --global _prompto_current_rprompt (_prompto_get_prompt right | string join '')
+    set --global _prompto_current_rprompt (_prompto_expand_shell_clock "$_prompto_current_rprompt")
 
     echo -n "$_prompto_current_rprompt"
 end
@@ -174,26 +211,85 @@ function _prompto_space_key_handler
     # Get the first word of command line as tip.
     set --local tooltip_command (commandline --current-buffer | string trim -l | string split --allow-empty -f1 ' ' | string collect)
 
-    # Ignore an empty/repeated tooltip command.
-    if test -z "$tooltip_command" || test "$tooltip_command" = "$_prompto_tooltip_command"
+    if test -z "$tooltip_command"
+        _prompto_restore_tooltip_rprompt
+        commandline --function repaint
         return
     end
 
-    set _prompto_tooltip_command $tooltip_command
-    set --local tooltip_prompt (_prompto_get_prompt tooltip --command=$_prompto_tooltip_command | string join '')
+    # Ignore repeated tooltip command.
+    if test "$tooltip_command" = "$_prompto_tooltip_command"
+        return
+    end
+
+    set --local config_arg
+    if test -n "$_prompto_config"
+        set config_arg "--config=$_prompto_config"
+    end
+
+    set --local tooltip_prompt (
+        $_prompto_executable tooltip \
+            $config_arg \
+            --shell=fish \
+            --shell-version=$FISH_VERSION \
+            --pid=$fish_pid \
+            --status=$_prompto_status \
+            --pipestatus="$_prompto_pipestatus" \
+            --no-status=$_prompto_no_status \
+            --execution-time=$_prompto_execution_time \
+            --stack-count=$_prompto_stack_count \
+            --command=$tooltip_command \
+            | string join ''
+    )
 
     if test -z "$tooltip_prompt"
+        _prompto_restore_tooltip_rprompt
+        commandline --function repaint
         return
     end
 
-    # Save the tooltip prompt to avoid unnecessary CLI calls.
+    if test "$_prompto_tooltip_active" != "1"
+        set --global _prompto_tooltip_saved_rprompt "$_prompto_current_rprompt"
+    end
+
+    set --global _prompto_tooltip_active 1
+    set --global _prompto_tooltip_command "$tooltip_command"
+
     set _prompto_current_rprompt $tooltip_prompt
+    set _prompto_current_rprompt (_prompto_expand_shell_clock "$_prompto_current_rprompt")
+    commandline --function repaint
+end
+
+function _prompto_restore_tooltip_rprompt
+    if test "$_prompto_tooltip_active" != "1"
+        return
+    end
+
+    set --global _prompto_current_rprompt "$_prompto_tooltip_saved_rprompt"
+    set --global _prompto_tooltip_saved_rprompt ''
+    set --global _prompto_tooltip_command ''
+    set --global _prompto_tooltip_active 0
+end
+
+function _prompto_tooltip_backspace_key_handler
+    commandline --function backward-delete-char
+    _prompto_restore_tooltip_rprompt
+    commandline --function repaint
+end
+
+function _prompto_tooltip_delete_key_handler
+    commandline --function delete-char
+    _prompto_restore_tooltip_rprompt
     commandline --function repaint
 end
 
 function enable_prompto_tooltips
     bind \x20 _prompto_space_key_handler -M default
     bind \x20 _prompto_space_key_handler -M insert
+    bind \x7f _prompto_tooltip_backspace_key_handler -M default
+    bind \x7f _prompto_tooltip_backspace_key_handler -M insert
+    bind \e\[3~ _prompto_tooltip_delete_key_handler -M default
+    bind \e\[3~ _prompto_tooltip_delete_key_handler -M insert
 end
 
 # transient prompt
@@ -349,15 +445,15 @@ function _prompto_daemon_repaint --on-signal USR1
             set --local text $parts[2]
             switch $type
                 case primary
-                    set --global _prompto_current_prompt $text
+                    set --global _prompto_current_prompt (_prompto_expand_shell_clock "$text")
                 case right
-                    set --global _prompto_current_rprompt $text
+                    set --global _prompto_current_rprompt (_prompto_expand_shell_clock "$text")
                 case transient
                     if test $_prompto_transient_prompt = 1
-                        set --global _prompto_current_transient $text
+                        set --global _prompto_current_transient (_prompto_expand_shell_clock "$text")
                     end
                 case secondary
-                    set --global _prompto_current_secondary $text
+                    set --global _prompto_current_secondary (_prompto_expand_shell_clock "$text")
             end
         end < $_prompto_daemon_prompt_file
     end
@@ -459,12 +555,12 @@ function _prompto_daemon_fish_prompt
     printf \e\[0J
 
     if test "$_prompto_transient" = 1
-        echo -n "$_prompto_current_transient"
+        echo -n (_prompto_expand_shell_clock "$_prompto_current_transient")
         return
     end
 
     if test "$_prompto_new_prompt" = 0
-        echo -n "$_prompto_current_prompt"
+        echo -n (_prompto_expand_shell_clock "$_prompto_current_prompt")
         return
     end
 
@@ -500,7 +596,7 @@ function _prompto_daemon_fish_prompt
     _prompto_daemon_render
 
     # Return cached prompt immediately (will be updated via signal)
-    echo -n "$_prompto_current_prompt"
+    echo -n (_prompto_expand_shell_clock "$_prompto_current_prompt")
 end
 
 function _prompto_daemon_fish_right_prompt
@@ -510,10 +606,10 @@ function _prompto_daemon_fish_right_prompt
     end
 
     if test "$_prompto_new_prompt" = 0
-        echo -n "$_prompto_current_rprompt"
+        echo -n (_prompto_expand_shell_clock "$_prompto_current_rprompt")
         return
     end
 
     set --global _prompto_new_prompt 0
-    echo -n "$_prompto_current_rprompt"
+    echo -n (_prompto_expand_shell_clock "$_prompto_current_rprompt")
 end

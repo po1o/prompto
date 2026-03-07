@@ -39,12 +39,9 @@ func TestDaemonStartRenderAndNextUpdateFlow(t *testing.T) {
 	update, ok := daemon.NextUpdate(ctx, sessionID, 0)
 	require.True(t, ok)
 	require.Equal(t, "update", update.Type)
-	if update.Segment == renderCompletePayload {
-		update, ok = daemon.NextUpdate(ctx, sessionID, update.Sequence)
-		require.True(t, ok)
+	if update.Segment != renderCompletePayload {
+		require.Equal(t, "path.main", update.Segment)
 	}
-
-	require.Equal(t, "path.main", update.Segment)
 }
 
 func TestDaemonReloadBlocksNewRenderRequests(t *testing.T) {

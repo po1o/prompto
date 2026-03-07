@@ -28,10 +28,9 @@ func DSC() *Resource {
 }
 
 type Configuration struct {
-	Format string `json:"format,omitempty" jsonschema:"title=Format,description=The format of the configuration file,enum=yaml,enum=yml"`
-	Source string `json:"source,omitempty" jsonschema:"title=Source,description=The source of the configuration file"`
+	Format string `jsonschema:"title=Format,description=The format of the configuration file,enum=yaml,enum=yml"`
+	Source string `jsonschema:"title=Source,description=The source of the configuration file"`
 	Config
-	resolved bool `json:"-"`
 }
 
 func (s *Resource) Add(configPath string) {
@@ -100,13 +99,6 @@ func (c *Configuration) Equal(config *Configuration) bool {
 func (c *Configuration) Resolve() (*Configuration, bool) {
 	log.Debug("Resolving configuration %s", c.Source)
 
-	if c.resolved {
-		log.Debug("Configuration already resolved")
-		return c, true
-	}
-
-	c.resolved = true
-
 	// we use pwsh as that will never omit any feature
 	data := Load(c.Source)
 	if data == nil {
@@ -116,17 +108,5 @@ func (c *Configuration) Resolve() (*Configuration, bool) {
 
 	c.Config = *data
 	c.Format = data.Format
-
-	// Skip if no extends.
-	if data.Extends == "" {
-		log.Debug("No extends found")
-		return c, false
-	}
-
-	// Resolve the extends configuration
-	parent := &Configuration{
-		Source: data.Extends,
-	}
-
-	return parent, true
+	return c, false
 }

@@ -6,7 +6,6 @@ const (
 	PWSH    = "pwsh"
 	FISH    = "fish"
 	CMD     = "cmd"
-	NU      = "nu"
 	GENERIC = "shell"
 	ELVISH  = "elvish"
 	XONSH   = "xonsh"

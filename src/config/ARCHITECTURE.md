@@ -23,12 +23,9 @@ description: How layout YAML is parsed, normalized, validated, and applied to ru
 - `transient`: extra prompt lines for transient prompt.
 - `rtransient`: right-aligned transient lines.
 
-## Strict Top-Level Keys
-Parser rejects legacy aliases and asks for canonical names:
-- Reject `secondary_prompt` -> use `secondary`.
-- Reject `transient_prompt` -> use `transient`.
-- Reject `transient_rprompt` -> use `rtransient`.
-- Reject top-level `vim` settings -> use `vim-mode`.
+## Top-Level Keys
+Parser consumes canonical layout keys (`prompt`, `rprompt`, `secondary`, `transient`, `rtransient`) and
+top-level metadata/extra prompt keys.
 
 ## Separator Normalization
 `normalizePromptLayouts` and segment normalization convert style shortcuts and explicit separator options into
@@ -39,3 +36,4 @@ final diamonds/separators used by rendering.
 - `vim-mode`, `daemon_timeout`, `daemon_idle_timeout`
 - `render_pending_icon`, `render_pending_background`
 - `console_title_template`, `pwd`, `terminal_background`, `shell_integration`, `final_space`
+- `valid_line`, `error_line`, `debug_prompt`, `tooltips`, `tooltips_action`

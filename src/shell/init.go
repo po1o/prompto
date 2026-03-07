@@ -46,7 +46,6 @@ func getExecutablePath(env runtime.Environment) (string, error) {
 // Init returns the command to initialize prompto for the shell.
 // It writes the init script to the appropriate location and returns
 // a source command or wrapper command depending on the shell.
-// For Nu shell, it writes to the autoload directory and returns empty.
 // For PWSH, it returns a wrapper command that re-invokes prompto.
 func Init(env runtime.Environment, feats Features) string {
 	switch env.Flags().Shell {
@@ -56,8 +55,6 @@ func Init(env runtime.Environment, feats Features) string {
 		}
 
 		return recurseInitCommand(env)
-	case NU:
-		return initNu(env, feats)
 	case ZSH, BASH, FISH:
 		return generateAndSourceScript(env, feats)
 	default:
@@ -131,21 +128,6 @@ func generateAndSourceScript(env runtime.Environment, feats Features) string {
 	return sourceCommand(env, scriptPath, async)
 }
 
-// initNu writes the init script to Nu's autoload directory.
-// It returns empty since Nu automatically loads from the autoload directory.
-func initNu(env runtime.Environment, feats Features) string {
-	script := generateNuScript(env, feats)
-
-	scriptPath, err := writeScript(env, script)
-	if err != nil {
-		return fmt.Sprintf("echo \"Failed to write init script: %s\"", err.Error())
-	}
-
-	log.Debug("nu init script written to:", scriptPath)
-
-	return ""
-}
-
 // generateScript generates the init script content for the current shell.
 func generateScript(env runtime.Environment, feats Features) string {
 	executable, err := getExecutablePath(env)
@@ -175,10 +157,6 @@ func generateScript(env runtime.Environment, feats Features) string {
 		executable = quoteFishStr(executable)
 		configPath = quoteFishStr(configPath)
 		script = fishInit
-	case NU:
-		executable = quoteNuStr(executable)
-		configPath = quoteNuStr(configPath)
-		script = nuInit
 	default:
 		return fmt.Sprintf("echo \"No initialization script available for %s\"", env.Flags().Shell)
 	}
@@ -190,24 +168,6 @@ func generateScript(env runtime.Environment, feats Features) string {
 	).Replace(script)
 
 	return feats.Lines(env.Flags().Shell).String(init)
-}
-
-// generateNuScript generates the init script content specifically for Nu shell.
-func generateNuScript(env runtime.Environment, feats Features) string {
-	executable, err := getExecutablePath(env)
-	if err != nil {
-		return noExe
-	}
-
-	executable = quoteNuStr(executable)
-
-	init := strings.NewReplacer(
-		"::PROMPTO::", executable,
-		"::CONFIG::", quoteNuStr(env.Flags().ConfigPath),
-		"::SESSION_ID::", cache.SessionID(),
-	).Replace(nuInit)
-
-	return feats.Lines(NU).String(init)
 }
 
 // sourceCommand returns the command to source the init script.
@@ -277,8 +237,6 @@ func sessionScript(shell string) string {
 		return fmt.Sprintf("export PROMPTO_SESSION_ID=\"%s\";", cache.SessionID())
 	case FISH:
 		return fmt.Sprintf("set --export --global PROMPTO_SESSION_ID \"%s\";", cache.SessionID())
-	case NU:
-		return fmt.Sprintf("$env.PROMPTO_SESSION_ID = \"%s\";", cache.SessionID())
 	}
 	return ""
 }

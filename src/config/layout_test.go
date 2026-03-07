@@ -78,7 +78,7 @@ git.main:
 	assert.Equal(t, ">", cfg.Segments["path"].TrailingDiamond)
 	assert.Equal(t, GIT, cfg.Segments["git.main"].Type)
 	assert.Equal(t, "git.main", cfg.Segments["git.main"].Alias)
-	assert.Equal(t, float64(20), cfg.Segments["git.main"].Options["branch_max_length"])
+	assert.Equal(t, 20, cfg.Segments["git.main"].Options["branch_max_length"])
 }
 
 func TestParseLayoutYAMLStyleShortcutOnPromptLines(t *testing.T) {
@@ -391,10 +391,14 @@ session:
 	assert.Equal(t, []string{"session"}, cfg.TransientPrompt[0].Segments)
 }
 
-func TestParseLayoutYAMLRejectsSecondaryPromptTopLevelConfig(t *testing.T) {
+func TestParseLayoutYAMLSupportsValidErrorAndDebugPrompts(t *testing.T) {
 	raw := `
-secondary_prompt:
-  - segments: ["session"]
+valid_line:
+  template: "ok"
+error_line:
+  template: "err"
+debug_prompt:
+  template: "dbg"
 
 prompt:
   - segments: ["session"]
@@ -403,60 +407,14 @@ session:
   type: "session"
 `
 
-	_, err := ParseLayoutYAML([]byte(raw))
-	require.Error(t, err)
-	assert.ErrorContains(t, err, "use secondary")
-}
-
-func TestParseLayoutYAMLRejectsTransientPromptTopLevelConfig(t *testing.T) {
-	raw := `
-transient_prompt:
-  - segments: ["session"]
-
-prompt:
-  - segments: ["session"]
-
-session:
-  type: "session"
-`
-
-	_, err := ParseLayoutYAML([]byte(raw))
-	require.Error(t, err)
-	assert.ErrorContains(t, err, "use transient")
-}
-
-func TestParseLayoutYAMLRejectsTransientRPromptTopLevelConfig(t *testing.T) {
-	raw := `
-transient_rprompt:
-  - segments: ["session"]
-
-prompt:
-  - segments: ["session"]
-
-session:
-  type: "session"
-`
-
-	_, err := ParseLayoutYAML([]byte(raw))
-	require.Error(t, err)
-	assert.ErrorContains(t, err, "use rtransient")
-}
-
-func TestParseLayoutYAMLRejectsTopLevelVimConfig(t *testing.T) {
-	raw := `
-vim:
-  enabled: true
-
-prompt:
-  - segments: ["session"]
-
-session:
-  type: "session"
-`
-
-	_, err := ParseLayoutYAML([]byte(raw))
-	require.Error(t, err)
-	assert.ErrorContains(t, err, "use vim-mode")
+	cfg, err := ParseLayoutYAML([]byte(raw))
+	require.NoError(t, err)
+	require.NotNil(t, cfg.ValidLine)
+	require.NotNil(t, cfg.ErrorLine)
+	require.NotNil(t, cfg.DebugPrompt)
+	assert.Equal(t, TEXT, cfg.ValidLine.Type)
+	assert.Equal(t, TEXT, cfg.ErrorLine.Type)
+	assert.Equal(t, TEXT, cfg.DebugPrompt.Type)
 }
 
 func TestLayoutConfigApplyMetadata(t *testing.T) {
@@ -470,6 +428,9 @@ func TestLayoutConfigApplyMetadata(t *testing.T) {
 		VimMode: &VimConfig{
 			Enabled: true,
 		},
+		ValidLine:       &Segment{Template: "ok"},
+		ErrorLine:       &Segment{Template: "err"},
+		DebugPrompt:     &Segment{Template: "dbg"},
 		SecondaryPrompt: []PromptLayout{{Segments: []string{"session"}}},
 		TransientPrompt: []PromptLayout{{Segments: []string{"session"}}},
 	}
@@ -481,6 +442,9 @@ func TestLayoutConfigApplyMetadata(t *testing.T) {
 	assert.Equal(t, "value", target.Var["key"])
 	require.NotNil(t, target.VimMode)
 	assert.True(t, target.VimMode.Enabled)
-	require.NotNil(t, target.SecondaryPrompt)
-	require.NotNil(t, target.TransientPrompt)
+	require.NotNil(t, target.ValidLine)
+	require.NotNil(t, target.ErrorLine)
+	require.NotNil(t, target.DebugPrompt)
+	assert.True(t, target.HasSecondary)
+	assert.True(t, target.HasTransient)
 }

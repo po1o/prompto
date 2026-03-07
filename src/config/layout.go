@@ -1,8 +1,6 @@
 package config
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"maps"
 	"path/filepath"
@@ -16,47 +14,51 @@ import (
 )
 
 type PromptLayout struct {
-	Style             string   `json:"style,omitempty" yaml:"style,omitempty"`
-	Filler            string   `json:"filler,omitempty" yaml:"filler,omitempty"`
-	LeadingStyle      string   `json:"leading_style,omitempty" yaml:"leading_style,omitempty"`
-	TrailingStyle     string   `json:"trailing_style,omitempty" yaml:"trailing_style,omitempty"`
-	LeadingSeparator  string   `json:"leading_separator,omitempty" yaml:"leading_separator,omitempty"`
-	TrailingSeparator string   `json:"trailing_separator,omitempty" yaml:"trailing_separator,omitempty"`
-	LeadingDiamond    string   `json:"leading_diamond,omitempty" yaml:"leading_diamond,omitempty"`
-	TrailingDiamond   string   `json:"trailing_diamond,omitempty" yaml:"trailing_diamond,omitempty"`
-	Segments          []string `json:"segments,omitempty" yaml:"segments,omitempty"`
+	Style             string   `yaml:"style,omitempty"`
+	Filler            string   `yaml:"filler,omitempty"`
+	LeadingStyle      string   `yaml:"leading_style,omitempty"`
+	TrailingStyle     string   `yaml:"trailing_style,omitempty"`
+	LeadingSeparator  string   `yaml:"leading_separator,omitempty"`
+	TrailingSeparator string   `yaml:"trailing_separator,omitempty"`
+	LeadingDiamond    string   `yaml:"leading_diamond,omitempty"`
+	TrailingDiamond   string   `yaml:"trailing_diamond,omitempty"`
+	Segments          []string `yaml:"segments,omitempty"`
 }
 
 type LayoutConfig struct {
-	Palette                 color.Palette          `json:"palette,omitempty" yaml:"palette,omitempty"`
-	Var                     map[string]any         `json:"var,omitempty" yaml:"var,omitempty"`
-	Palettes                *color.Palettes        `json:"palettes,omitempty" yaml:"palettes,omitempty"`
-	Maps                    *configmaps.Config     `json:"maps,omitempty" yaml:"maps,omitempty"`
-	Upgrade                 *upgrade.Config        `json:"upgrade,omitempty" yaml:"upgrade,omitempty"`
-	Cycle                   color.Cycle            `json:"cycle,omitempty" yaml:"cycle,omitempty"`
-	ITermFeatures           terminal.ITermFeatures `json:"iterm_features,omitempty" yaml:"iterm_features,omitempty"`
-	VimMode                 *VimConfig             `json:"vim-mode,omitempty" yaml:"vim-mode,omitempty"`
-	AccentColor             color.Ansi             `json:"accent_color,omitempty" yaml:"accent_color,omitempty"`
-	DaemonIdleTimeout       string                 `json:"daemon_idle_timeout,omitempty" yaml:"daemon_idle_timeout,omitempty"`
-	RenderPendingIcon       string                 `json:"render_pending_icon,omitempty" yaml:"render_pending_icon,omitempty"`
-	RenderPendingBackground color.Ansi             `json:"render_pending_background,omitempty" yaml:"render_pending_background,omitempty"`
-	ConsoleTitleTemplate    string                 `json:"console_title_template,omitempty" yaml:"console_title_template,omitempty"`
-	PWD                     string                 `json:"pwd,omitempty" yaml:"pwd,omitempty"`
-	TerminalBackground      color.Ansi             `json:"terminal_background,omitempty" yaml:"terminal_background,omitempty"`
-	ToolTipsAction          Action                 `json:"tooltips_action,omitempty" yaml:"tooltips_action,omitempty"`
-	DaemonTimeout           int                    `json:"daemon_timeout,omitempty" yaml:"daemon_timeout,omitempty"`
-	Async                   bool                   `json:"async,omitempty" yaml:"async,omitempty"`
-	ShellIntegration        bool                   `json:"shell_integration,omitempty" yaml:"shell_integration,omitempty"`
-	FinalSpace              bool                   `json:"final_space,omitempty" yaml:"final_space,omitempty"`
-	PatchPwshBleed          bool                   `json:"patch_pwsh_bleed,omitempty" yaml:"patch_pwsh_bleed,omitempty"`
-	EnableCursorPositioning bool                   `json:"enable_cursor_positioning,omitempty" yaml:"enable_cursor_positioning,omitempty"`
-	Segments                map[string]*Segment    `json:"-" yaml:"-"`
-	Source                  string                 `json:"-" yaml:"-"`
-	Prompt                  []PromptLayout         `json:"prompt,omitempty" yaml:"prompt,omitempty"`
-	RPrompt                 []PromptLayout         `json:"rprompt,omitempty" yaml:"rprompt,omitempty"`
-	SecondaryPrompt         []PromptLayout         `json:"secondary,omitempty" yaml:"secondary,omitempty"`
-	TransientPrompt         []PromptLayout         `json:"transient,omitempty" yaml:"transient,omitempty"`
-	TransientRPrompt        []PromptLayout         `json:"rtransient,omitempty" yaml:"rtransient,omitempty"`
+	Palette                 color.Palette          `yaml:"palette,omitempty"`
+	Var                     map[string]any         `yaml:"var,omitempty"`
+	Palettes                *color.Palettes        `yaml:"palettes,omitempty"`
+	Maps                    *configmaps.Config     `yaml:"maps,omitempty"`
+	Upgrade                 *upgrade.Config        `yaml:"upgrade,omitempty"`
+	Cycle                   color.Cycle            `yaml:"cycle,omitempty"`
+	ITermFeatures           terminal.ITermFeatures `yaml:"iterm_features,omitempty"`
+	VimMode                 *VimConfig             `yaml:"vim-mode,omitempty"`
+	AccentColor             color.Ansi             `yaml:"accent_color,omitempty"`
+	DaemonIdleTimeout       string                 `yaml:"daemon_idle_timeout,omitempty"`
+	RenderPendingIcon       string                 `yaml:"render_pending_icon,omitempty"`
+	RenderPendingBackground color.Ansi             `yaml:"render_pending_background,omitempty"`
+	ConsoleTitleTemplate    string                 `yaml:"console_title_template,omitempty"`
+	PWD                     string                 `yaml:"pwd,omitempty"`
+	TerminalBackground      color.Ansi             `yaml:"terminal_background,omitempty"`
+	ToolTipsAction          Action                 `yaml:"tooltips_action,omitempty"`
+	Tooltips                []*Segment             `yaml:"tooltips,omitempty"`
+	DebugPrompt             *Segment               `yaml:"debug_prompt,omitempty"`
+	ValidLine               *Segment               `yaml:"valid_line,omitempty"`
+	ErrorLine               *Segment               `yaml:"error_line,omitempty"`
+	DaemonTimeout           int                    `yaml:"daemon_timeout,omitempty"`
+	Async                   bool                   `yaml:"async,omitempty"`
+	ShellIntegration        bool                   `yaml:"shell_integration,omitempty"`
+	FinalSpace              bool                   `yaml:"final_space,omitempty"`
+	PatchPwshBleed          bool                   `yaml:"patch_pwsh_bleed,omitempty"`
+	EnableCursorPositioning bool                   `yaml:"enable_cursor_positioning,omitempty"`
+	Segments                map[string]*Segment    `yaml:"-"`
+	Source                  string                 `yaml:"-"`
+	Prompt                  []PromptLayout         `yaml:"prompt,omitempty"`
+	RPrompt                 []PromptLayout         `yaml:"rprompt,omitempty"`
+	SecondaryPrompt         []PromptLayout         `yaml:"secondary,omitempty"`
+	TransientPrompt         []PromptLayout         `yaml:"transient,omitempty"`
+	TransientRPrompt        []PromptLayout         `yaml:"rtransient,omitempty"`
 }
 
 type layoutRawConfig struct {
@@ -76,6 +78,10 @@ type layoutRawConfig struct {
 	PWD                     string                 `yaml:"pwd"`
 	TerminalBackground      color.Ansi             `yaml:"terminal_background"`
 	ToolTipsAction          Action                 `yaml:"tooltips_action"`
+	Tooltips                []*Segment             `yaml:"tooltips"`
+	DebugPrompt             *Segment               `yaml:"debug_prompt"`
+	ValidLine               *Segment               `yaml:"valid_line"`
+	ErrorLine               *Segment               `yaml:"error_line"`
 	Prompt                  []PromptLayout         `yaml:"prompt"`
 	RPrompt                 []PromptLayout         `yaml:"rprompt"`
 	Secondary               []PromptLayout         `yaml:"secondary"`
@@ -143,6 +149,10 @@ func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
 		PWD:                     raw.PWD,
 		TerminalBackground:      raw.TerminalBackground,
 		ToolTipsAction:          raw.ToolTipsAction,
+		Tooltips:                raw.Tooltips,
+		DebugPrompt:             raw.DebugPrompt,
+		ValidLine:               raw.ValidLine,
+		ErrorLine:               raw.ErrorLine,
 		Prompt:                  raw.Prompt,
 		RPrompt:                 raw.RPrompt,
 		SecondaryPrompt:         raw.Secondary,
@@ -161,13 +171,13 @@ func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
 		return nil, err
 	}
 
-	if err := validateLayoutTopLevelTables(doc); err != nil {
-		return nil, err
-	}
-
 	if err := decodeLayoutSegmentTables(doc, layout.Segments); err != nil {
 		return nil, err
 	}
+
+	normalizeExtraSegment(layout.DebugPrompt)
+	normalizeExtraSegment(layout.ValidLine)
+	normalizeExtraSegment(layout.ErrorLine)
 
 	if err := validateLayoutSegmentRefs(layout); err != nil {
 		return nil, err
@@ -197,6 +207,10 @@ func (cfg *LayoutConfig) ApplyMetadata(target *Config) {
 	target.PWD = cfg.PWD
 	target.TerminalBackground = cfg.TerminalBackground
 	target.ToolTipsAction = cfg.ToolTipsAction
+	target.Tooltips = cfg.Tooltips
+	target.DebugPrompt = cfg.DebugPrompt
+	target.ValidLine = cfg.ValidLine
+	target.ErrorLine = cfg.ErrorLine
 	target.DaemonTimeout = cfg.DaemonTimeout
 	target.Async = cfg.Async
 	target.ShellIntegration = cfg.ShellIntegration
@@ -205,50 +219,12 @@ func (cfg *LayoutConfig) ApplyMetadata(target *Config) {
 	target.EnableCursorPositioning = cfg.EnableCursorPositioning
 
 	if len(cfg.SecondaryPrompt) > 0 {
-		target.SecondaryPrompt = &Segment{}
+		target.HasSecondary = true
 	}
 
 	if len(cfg.TransientPrompt) > 0 {
-		target.TransientPrompt = &Segment{}
+		target.HasTransient = true
 	}
-}
-
-func validateLayoutTopLevelTables(doc map[string]any) error {
-	if _, hasSecondaryPrompt := doc["secondary_prompt"]; hasSecondaryPrompt {
-		return errors.New("top-level secondary_prompt is not supported; use secondary")
-	}
-
-	if _, hasTransientPrompt := doc["transient_prompt"]; hasTransientPrompt {
-		return errors.New("top-level transient_prompt is not supported; use transient")
-	}
-
-	if _, hasTransientRPrompt := doc["transient_rprompt"]; hasTransientRPrompt {
-		return errors.New("top-level transient_rprompt is not supported; use rtransient")
-	}
-
-	rawVim, ok := doc["vim"]
-	if !ok {
-		return nil
-	}
-
-	vimTable, ok := rawVim.(map[string]any)
-	if !ok {
-		return nil
-	}
-
-	if _, hasEnabled := vimTable["enabled"]; hasEnabled {
-		return errors.New("top-level vim is not supported; use vim-mode")
-	}
-
-	if _, hasCursorShape := vimTable["cursor_shape"]; hasCursorShape {
-		return errors.New("top-level vim is not supported; use vim-mode")
-	}
-
-	if _, hasCursorBlink := vimTable["cursor_blink"]; hasCursorBlink {
-		return errors.New("top-level vim is not supported; use vim-mode")
-	}
-
-	return nil
 }
 
 type separatorPair struct {
@@ -399,7 +375,7 @@ func decodeLayoutSegmentTables(doc map[string]any, segmentsByName map[string]*Se
 		for nestedKey, nestedValue := range table {
 			nestedTable, ok := nestedValue.(map[string]any)
 			if !ok {
-				return errors.New("invalid nested segment table")
+				return fmt.Errorf("invalid nested segment table")
 			}
 
 			name := fmt.Sprintf("%s.%s", key, nestedKey)
@@ -447,13 +423,13 @@ func decodeLayoutSegmentTable(name string, raw map[string]any, defaultType Segme
 		}
 	}
 
-	jsonData, err := json.Marshal(copyMap)
+	yamlData, err := yaml.Marshal(copyMap)
 	if err != nil {
 		return err
 	}
 
 	var segment Segment
-	if err := json.Unmarshal(jsonData, &segment); err != nil {
+	if err := yaml.Unmarshal(yamlData, &segment); err != nil {
 		return err
 	}
 
@@ -465,7 +441,6 @@ func decodeLayoutSegmentTable(name string, raw map[string]any, defaultType Segme
 		segment.Alias = name
 	}
 
-	segment.MigratePropertiesToOptions()
 	segmentsByName[name] = &segment
 
 	return nil
@@ -595,18 +570,25 @@ func shouldSkipLayoutTable(name string, table map[string]any) bool {
 		"palettes":       true,
 		"maps":           true,
 		"upgrade":        true,
-		"cache":          true,
 		"var":            true,
 		"cycle":          true,
 		"iterm_features": true,
-		"secondary":      true,
-		"transient":      true,
+		"debug_prompt":   true,
 		"valid_line":     true,
 		"error_line":     true,
-		"debug_prompt":   true,
 	}
 
 	return metadataTables[name]
+}
+
+func normalizeExtraSegment(segment *Segment) {
+	if segment == nil {
+		return
+	}
+
+	if segment.Type == "" {
+		segment.Type = TEXT
+	}
 }
 
 func isKnownSegmentType(segmentType SegmentType) bool {

@@ -81,6 +81,19 @@ func TestTransientUsesLayoutLeftAndRight(t *testing.T) {
 	require.Equal(t, "TR", right)
 }
 
+func TestExtraPromptSupportsValidErrorAndDebug(t *testing.T) {
+	engine := newLayoutTestEngine(t, &config.LayoutConfig{
+		Segments: map[string]*config.Segment{},
+	})
+	engine.Config.ValidLine = &config.Segment{Template: "VALID"}
+	engine.Config.ErrorLine = &config.Segment{Template: "ERROR"}
+	engine.Config.DebugPrompt = &config.Segment{Template: "DEBUG"}
+
+	require.Equal(t, "VALID", engine.ExtraPrompt(Valid))
+	require.Equal(t, "ERROR", engine.ExtraPrompt(Error))
+	require.Equal(t, "DEBUG", engine.ExtraPrompt(Debug))
+}
+
 func TestPrimaryMirrorsRightAlignedDiamondSegmentSeparators(t *testing.T) {
 	engine := newLayoutTestEngine(t, &config.LayoutConfig{
 		RPrompt: []config.PromptLayout{

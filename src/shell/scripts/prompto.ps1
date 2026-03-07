@@ -41,6 +41,7 @@ New-Module -Name "prompto-core" -ScriptBlock {
     $script:PSVersion = $PSVersionTable.PSVersion.ToString()
     $script:TransientPrompt = $false
     $script:TooltipCommand = ''
+    $script:TooltipActive = $false
     $script:JobCount = 0
     $script:SecondaryPromptSet = $false
 
@@ -224,8 +225,8 @@ New-Module -Name "prompto-core" -ScriptBlock {
         $nonFSWD = Get-NonFSWD
         $stackCount = Get-PromptoStackCount
         $terminalWidth = Get-TerminalWidth
-        Invoke-Utf8Prompto @(
-            "render", $Type
+        $output = Invoke-Utf8Prompto @(
+            "render"
             "--shell=$script:ShellName"
             "--shell-version=$script:PSVersion"
             "--status=$script:ErrorCode"
@@ -238,6 +239,67 @@ New-Module -Name "prompto-core" -ScriptBlock {
             if ($script:VimMode) { "--vim-mode=$(Get-VimMode)" }
             if ($Arguments) { $Arguments }
         )
+        $selected = ($output -split "`r?`n" | Where-Object { $_ -like "$Type:*" } | Select-Object -First 1)
+        if (-not $selected) {
+            return ""
+        }
+        Expand-PromptoShellClock @($selected.Substring($selected.IndexOf(':') + 1))
+    }
+
+    function Expand-PromptoShellClock {
+        param([string[]]$Text)
+        if ($null -eq $Text) {
+            return $Text
+        }
+
+        $Text | ForEach-Object {
+            if ($null -eq $_) {
+                return $_
+            }
+
+            [Regex]::Replace($_, '__PROMPTO_CLOCK\{([^}]*)\}__', {
+                param($match)
+                $format = $match.Groups[1].Value
+                try {
+                    Get-Date -UFormat $format
+                }
+                catch {
+                    Get-Date -Format "HH:mm:ss"
+                }
+            })
+        }
+    }
+
+    function Get-PromptoTooltip {
+        param(
+            [string]$Command,
+            [int]$Column
+        )
+
+        if (-not $Command) {
+            return ""
+        }
+
+        $nonFSWD = Get-NonFSWD
+        $stackCount = Get-PromptoStackCount
+        $terminalWidth = Get-TerminalWidth
+        $output = Invoke-Utf8Prompto @(
+            "tooltip"
+            "--shell=$script:ShellName"
+            "--shell-version=$script:PSVersion"
+            "--status=$script:ErrorCode"
+            "--no-status=$script:NoExitCode"
+            "--execution-time=$script:ExecutionTime"
+            "--pswd=$nonFSWD"
+            "--stack-count=$stackCount"
+            "--terminal-width=$terminalWidth"
+            "--job-count=$script:JobCount"
+            "--pid=$PID"
+            "--column=$Column"
+            "--command=$Command"
+        )
+
+        ($output -join "`n")
     }
 
     $promptFunction = {
@@ -265,7 +327,7 @@ New-Module -Name "prompto-core" -ScriptBlock {
         Set-PromptoContext $script:ErrorCode
 
         if (-not $script:SecondaryPromptSet) {
-            $sec = (Invoke-Utf8Prompto @("render", "secondary", "--shell=$script:ShellName")) -join "`n"
+            $sec = (Get-PromptoPrompt "secondary") -join "`n"
             Set-PSReadLineOption -ContinuationPrompt $sec
             $script:SecondaryPromptSet = $true
         }
@@ -320,20 +382,31 @@ New-Module -Name "prompto-core" -ScriptBlock {
                 $command = $command.TrimStart().Split(' ', 2) | Select-Object -First 1
 
                 # Ignore an empty/repeated tooltip command.
-                if (!$command -or ($command -eq $script:TooltipCommand)) {
+                if (!$command) {
+                    if ($script:TooltipActive) {
+                        $script:TooltipActive = $false
+                        $script:TooltipCommand = ''
+                        [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+                    }
+                    return
+                }
+
+                if ($command -eq $script:TooltipCommand) {
                     return
                 }
 
                 $script:TooltipCommand = $command
 
-                $output = (Get-PromptoPrompt "tooltip" @(
-                        "--column=$($Host.UI.RawUI.CursorPosition.X)"
-                        "--command=$command"
-                    )) -join ''
+                $output = (Get-PromptoTooltip -Command $command -Column $Host.UI.RawUI.CursorPosition.X) -join ''
                 if (!$output) {
+                    if ($script:TooltipActive) {
+                        $script:TooltipActive = $false
+                        [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+                    }
                     return
                 }
 
+                $script:TooltipActive = $true
                 Write-Host $output -NoNewline
 
                 # Workaround to prevent the text after cursor from disappearing when the tooltip is printed.
@@ -341,6 +414,24 @@ New-Module -Name "prompto-core" -ScriptBlock {
                 [Microsoft.PowerShell.PSConsoleReadLine]::Undo()
             }
             finally {}
+        }
+
+        Set-PSReadLineKeyHandler -Key Backspace -BriefDescription 'PromptoBackspaceKeyHandler' -ScriptBlock {
+            [Microsoft.PowerShell.PSConsoleReadLine]::BackwardDeleteChar()
+            if ($script:TooltipActive) {
+                $script:TooltipActive = $false
+                $script:TooltipCommand = ''
+                [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+            }
+        }
+
+        Set-PSReadLineKeyHandler -Key Delete -BriefDescription 'PromptoDeleteKeyHandler' -ScriptBlock {
+            [Microsoft.PowerShell.PSConsoleReadLine]::DeleteChar()
+            if ($script:TooltipActive) {
+                $script:TooltipActive = $false
+                $script:TooltipCommand = ''
+                [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()
+            }
         }
     }
 
@@ -409,8 +500,8 @@ New-Module -Name "prompto-core" -ScriptBlock {
     }
 
     function Enable-PromptoLineError {
-        $validLine = (Invoke-Utf8Prompto @("render", "valid", "--shell=$script:ShellName")) -join "`n"
-        $errorLine = (Invoke-Utf8Prompto @("render", "error", "--shell=$script:ShellName")) -join "`n"
+        $validLine = (Get-PromptoPrompt "valid") -join "`n"
+        $errorLine = (Get-PromptoPrompt "error") -join "`n"
         Set-PSReadLineOption -PromptText $validLine, $errorLine
     }
 
@@ -426,6 +517,12 @@ New-Module -Name "prompto-core" -ScriptBlock {
 
             if ((Get-PSReadLineKeyHandler Spacebar).Function -eq 'PromptoSpaceKeyHandler') {
                 Remove-PSReadLineKeyHandler Spacebar
+            }
+            if ((Get-PSReadLineKeyHandler Backspace).Function -eq 'PromptoBackspaceKeyHandler') {
+                Set-PSReadLineKeyHandler Backspace -Function BackwardDeleteChar
+            }
+            if ((Get-PSReadLineKeyHandler Delete).Function -eq 'PromptoDeleteKeyHandler') {
+                Set-PSReadLineKeyHandler Delete -Function DeleteChar
             }
 
             if ((Get-PSReadLineKeyHandler Enter).Function -eq 'PromptoEnterKeyHandler') {
@@ -651,16 +748,16 @@ New-Module -Name "prompto-core" -ScriptBlock {
 
             switch ($type) {
                 "primary" {
-                    $script:DaemonPendingPrompt = $text
+                    $script:DaemonPendingPrompt = (Expand-PromptoShellClock @($text))[0]
                 }
                 "right" {
-                    $script:DaemonPendingRPrompt = $text
+                    $script:DaemonPendingRPrompt = (Expand-PromptoShellClock @($text))[0]
                 }
                 "transient" {
-                    $script:DaemonPendingTransient = $text
+                    $script:DaemonPendingTransient = (Expand-PromptoShellClock @($text))[0]
                 }
                 "secondary" {
-                    $script:DaemonPendingSecondary = $text
+                    $script:DaemonPendingSecondary = (Expand-PromptoShellClock @($text))[0]
                 }
                 "status" {
                     if ($null -ne $script:DaemonPendingPrompt) {

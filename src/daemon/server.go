@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/daemon/ipc"
 	"github.com/po1o/prompto/src/log"
+	"github.com/po1o/prompto/src/prompt"
 	"github.com/po1o/prompto/src/runtime"
 	pathRuntime "github.com/po1o/prompto/src/runtime/path"
 
@@ -39,7 +41,10 @@ type Server struct {
 	segmentToggles map[string]map[string]bool
 	configPath     string
 	toggleMu       sync.RWMutex
-	shutdownOnce   sync.Once
+	reloadMu       sync.Mutex
+	// lastConfigModUnixNano tracks the last applied root config mtime.
+	lastConfigModUnixNano atomic.Int64
+	shutdownOnce          sync.Once
 }
 
 func NewServer(configPath string) (*Server, error) {
@@ -58,6 +63,7 @@ func NewServer(configPath string) (*Server, error) {
 		configReloadCh: make(chan struct{}, 1),
 		segmentToggles: make(map[string]map[string]bool),
 	}
+	server.captureConfigModTime()
 	server.core = NewFromConfigWithDeviceCache(resolvedPath, nil, server.deviceCache)
 
 	configWatcher, err := NewConfigWatcher(server.requestConfigReload)
@@ -136,6 +142,12 @@ func (server *Server) RenderPrompt(
 	request *ipc.PromptRequest,
 	stream grpc.ServerStreamingServer[ipc.PromptResponse],
 ) error {
+	// Apply any already-queued config reload before starting a new render so the
+	// first prompt after save reflects updated config.
+	server.processPendingConfigReload()
+	// Also check config mtime in case render starts before fsnotify event delivery.
+	server.reloadIfConfigFileUpdated()
+
 	if request.Version != ipc.ProtocolVersion {
 		return fmt.Errorf("protocol version mismatch: client=%d server=%d", request.Version, ipc.ProtocolVersion)
 	}
@@ -166,6 +178,12 @@ func (server *Server) RenderPrompt(
 	lastBundle := initial.Bundle
 	sequence := initial.Sequence
 
+	// One-shot prompt types (tooltip/valid/error/debug/etc.) should return the
+	// computed bundle directly and not enter streaming update flow.
+	if flags.Type != "" && flags.Type != prompt.PRIMARY {
+		return stream.Send(makePromptResponse("complete", request.RequestId, &lastBundle))
+	}
+
 	if err := stream.Send(makePromptResponse("update", request.RequestId, &initial.Bundle)); err != nil {
 		return err
 	}
@@ -178,6 +196,7 @@ func (server *Server) RenderPrompt(
 
 		sequence = update.Sequence
 		if update.Segment == renderCompletePayload {
+			lastBundle = update.Bundle
 			break
 		}
 
@@ -273,18 +292,77 @@ func (server *Server) configReloadWorker() {
 		case <-server.done:
 			return
 		case <-server.configReloadCh:
-			if server.configPath == "" {
-				continue
-			}
-
-			server.core.Reload(func() {
-				cache.Set(cache.Device, config.RELOAD, true, cache.INFINITE)
-				server.core.Reset()
-			})
-
-			server.refreshConfigWatches()
+			server.applyConfigReload()
 		}
 	}
+}
+
+func (server *Server) processPendingConfigReload() {
+	if server == nil {
+		return
+	}
+
+	for {
+		select {
+		case <-server.configReloadCh:
+			server.applyConfigReload()
+		default:
+			return
+		}
+	}
+}
+
+func (server *Server) applyConfigReload() {
+	if server == nil || server.configPath == "" {
+		return
+	}
+
+	server.reloadMu.Lock()
+	defer server.reloadMu.Unlock()
+
+	// Cancel in-flight renders first so reload does not block waiting for slow segment completion.
+	server.core.Reset()
+
+	server.core.Reload(func() {
+		cache.Set(cache.Device, config.RELOAD, true, cache.INFINITE)
+	})
+
+	server.refreshConfigWatches()
+	server.captureConfigModTime()
+}
+
+func (server *Server) reloadIfConfigFileUpdated() {
+	if server == nil || server.configPath == "" {
+		return
+	}
+
+	current := configModTimeUnix(server.configPath)
+	if current == 0 {
+		return
+	}
+
+	if current <= server.lastConfigModUnixNano.Load() {
+		return
+	}
+
+	server.applyConfigReload()
+}
+
+func (server *Server) captureConfigModTime() {
+	if server == nil || server.configPath == "" {
+		return
+	}
+
+	server.lastConfigModUnixNano.Store(configModTimeUnix(server.configPath))
+}
+
+func configModTimeUnix(path string) int64 {
+	info, err := os.Stat(path)
+	if err != nil {
+		return 0
+	}
+
+	return info.ModTime().UnixNano()
 }
 
 func (server *Server) requestConfigReload(configPath string) {

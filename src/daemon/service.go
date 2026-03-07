@@ -72,7 +72,12 @@ func (service *Service) NextUpdate(ctx context.Context, sessionID string, after 
 
 	update, ok := active.Next(ctx, after)
 	if !ok {
+		service.releaseActiveRenderIfCurrent(sessionID, active)
 		return RenderResponse{}, false
+	}
+
+	if update.Snapshot.Payload == renderCompletePayload {
+		service.releaseActiveRenderIfCurrent(sessionID, active)
 	}
 
 	return RenderResponse{
@@ -139,4 +144,22 @@ func (service *Service) Reset() {
 	}
 
 	service.runtime.Reset()
+}
+
+func (service *Service) releaseActiveRenderIfCurrent(sessionID string, expected *ActiveRender) {
+	if expected == nil {
+		return
+	}
+
+	service.mu.Lock()
+	current, ok := service.renders[sessionID]
+	if !ok || current != expected {
+		service.mu.Unlock()
+		return
+	}
+
+	delete(service.renders, sessionID)
+	service.mu.Unlock()
+
+	expected.Complete()
 }

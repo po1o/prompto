@@ -12,6 +12,8 @@ export PYENV_VIRTUALENV_DISABLE_PROMPT=1
 _prompto_executable=::PROMPTO::
 _prompto_config=::CONFIG::
 _prompto_tooltip_command=''
+_prompto_tooltip_active=0
+_prompto_tooltip_rprompt=''
 
 # switches to enable/disable features
 _prompto_cursor_positioning=0
@@ -57,7 +59,7 @@ function _prompto_preexec() {
 
 function _prompto_precmd() {
   if [[ -z $_prompto_secondary_prompt ]]; then
-    _prompto_secondary_prompt=$($_prompto_executable render secondary --shell=zsh)
+    _prompto_secondary_prompt=$(_prompto_get_prompt secondary)
   fi
 
   _prompto_status=$?
@@ -67,6 +69,8 @@ function _prompto_precmd() {
   _prompto_execution_time=-1
   _prompto_no_status=true
   _prompto_tooltip_command=''
+  _prompto_tooltip_active=0
+  _prompto_tooltip_rprompt=''
 
   if [ $_prompto_start_time ]; then
     local prompto_now=$($_prompto_executable get millis)
@@ -127,7 +131,7 @@ function _prompto_get_prompt() {
   if [[ $_prompto_vim_mode == 1 ]]; then
     vim_mode_arg="--vim-mode=$(_prompto_get_vim_mode)"
   fi
-  $_prompto_executable render $type \
+  $_prompto_executable render \
     --shell=zsh \
     --shell-version=$ZSH_VERSION \
     --status=$_prompto_status \
@@ -138,7 +142,17 @@ function _prompto_get_prompt() {
     --stack-count=$_prompto_stack_count \
     --terminal-width="${COLUMNS-0}" \
     $vim_mode_arg \
-    ${args[@]}
+    ${args[@]} | while IFS= read -r line; do
+      case "$line" in
+      "$type":*)
+        echo "${line#*:}"
+        return 0
+        ;;
+      status:*)
+        return 0
+        ;;
+      esac
+    done
 }
 
 function _prompto_render_tooltip() {
@@ -151,18 +165,64 @@ function _prompto_render_tooltip() {
   # Get the first word of command line as tip.
   local tooltip_command=${${(MS)BUFFER##[[:graph:]]*}%%[[:space:]]*}
 
-  # Ignore an empty/repeated tooltip command.
-  if [[ -z $tooltip_command ]] || [[ $tooltip_command = "$_prompto_tooltip_command" ]]; then
+  if [[ -z $tooltip_command ]]; then
+    _prompto_restore_tooltip_rprompt
+    zle .reset-prompt
     return
   fi
 
-  _prompto_tooltip_command="$tooltip_command"
-  local tooltip=$(_prompto_get_prompt tooltip --command="$tooltip_command")
+  # Ignore repeated tooltip command.
+  if [[ $tooltip_command = "$_prompto_tooltip_command" ]]; then
+    return
+  fi
+
+  local config_arg=""
+  if [[ -n $_prompto_config ]]; then
+    config_arg="--config=$_prompto_config"
+  fi
+
+  local tooltip=$($_prompto_executable tooltip \
+    $config_arg \
+    --shell=zsh \
+    --shell-version=$ZSH_VERSION \
+    --pid=$$ \
+    --status=$_prompto_status \
+    --pipestatus="${_prompto_pipestatus[*]}" \
+    --no-status=$_prompto_no_status \
+    --execution-time=$_prompto_execution_time \
+    --job-count=$_prompto_job_count \
+    --stack-count=$_prompto_stack_count \
+    --terminal-width="${COLUMNS-0}" \
+    --command="$tooltip_command")
+
   if [[ -z $tooltip ]]; then
+    _prompto_restore_tooltip_rprompt
+    zle .reset-prompt
     return
   fi
 
+  if [[ $_prompto_tooltip_active == 0 ]]; then
+    _prompto_tooltip_rprompt=$RPROMPT
+  fi
+
+  _prompto_tooltip_active=1
+  _prompto_tooltip_command="$tooltip_command"
   RPROMPT=$tooltip
+  zle .reset-prompt
+}
+
+function _prompto_restore_tooltip_rprompt() {
+  if [[ $_prompto_tooltip_active == 0 ]]; then
+    return
+  fi
+
+  RPROMPT=$_prompto_tooltip_rprompt
+  _prompto_tooltip_active=0
+  _prompto_tooltip_command=''
+}
+
+function _prompto_restore_tooltip_on_delete() {
+  _prompto_restore_tooltip_rprompt
   zle .reset-prompt
 }
 
@@ -189,7 +249,8 @@ function _prompto_zle-line-init() {
     if [[ -z $BUFFER ]]; then
       terminal_width_option="--terminal-width=$((${COLUMNS-0} - 1))"
     fi
-    eval "$(_prompto_get_prompt transient --eval $terminal_width_option)"
+    PS1=$(_prompto_get_prompt transient $terminal_width_option)
+    RPROMPT=$(_prompto_get_prompt rtransient $terminal_width_option)
   fi
   zle .reset-prompt
 
@@ -471,6 +532,8 @@ function enable_prompto_tooltips() {
   fi
 
   _prompto_create_widget $widget _prompto_render_tooltip
+  _prompto_create_widget backward-delete-char _prompto_restore_tooltip_on_delete
+  _prompto_create_widget delete-char _prompto_restore_tooltip_on_delete
 }
 
 # Set up vim mode keybindings (oh-my-zsh style)

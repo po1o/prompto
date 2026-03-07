@@ -2,14 +2,12 @@ package cli
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"time"
 
 	"github.com/po1o/prompto/src/daemon"
 	"github.com/po1o/prompto/src/daemon/ipc"
-	"github.com/po1o/prompto/src/prompt"
 	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/runtime/path"
 	"github.com/po1o/prompto/src/shell"
@@ -32,7 +30,6 @@ var (
 	eval          bool
 	cleared       bool
 	jobCount      int
-	command       string
 	shellVersion  string
 	noStatus      bool
 	column        int
@@ -44,7 +41,7 @@ var (
 )
 
 var renderCmd = &cobra.Command{
-	Use:   "render [debug|primary|secondary|transient|right|tooltip|valid|error|preview]",
+	Use:   "render",
 	Short: "Render prompts via the daemon",
 	Long: `Render all prompts via the daemon for faster display.
 
@@ -57,18 +54,7 @@ Output format (one per line):
   right:<text>
   secondary:<text>
   ...`,
-	ValidArgs: []string{
-		prompt.DEBUG,
-		prompt.PRIMARY,
-		prompt.SECONDARY,
-		prompt.TRANSIENT,
-		prompt.RIGHT,
-		prompt.TOOLTIP,
-		prompt.VALID,
-		prompt.ERROR,
-		prompt.PREVIEW,
-	},
-	Args: NoArgsOrOneValidArg,
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		if shellName == "" {
 			shellName = shell.GENERIC
@@ -110,17 +96,6 @@ Output format (one per line):
 			Escape:        escape,
 			Force:         force,
 			VimMode:       renderVimMode,
-			Command:       command,
-		}
-
-		if len(args) > 0 {
-			flags.Type = args[0]
-			flags.IsPrimary = args[0] == prompt.PRIMARY
-			if err := renderTypeViaDaemon(flags, pid, args[0]); err != nil {
-				exitcode = 1
-				fmt.Print("")
-			}
-			return
 		}
 
 		if err := renderViaDaemon(flags, pid, repaint); err != nil {
@@ -144,7 +119,6 @@ func init() {
 	renderCmd.Flags().BoolVar(&eval, "eval", false, "output the prompt for eval")
 	renderCmd.Flags().IntVar(&column, "column", 0, "the column position of the cursor")
 	renderCmd.Flags().IntVar(&jobCount, "job-count", 0, "number of background jobs")
-	renderCmd.Flags().StringVar(&command, "command", "", "tooltip command")
 	renderCmd.Flags().BoolVar(&escape, "escape", true, "escape the ANSI sequences for the shell")
 	renderCmd.Flags().BoolVarP(&force, "force", "f", false, "force rendering the segments")
 	renderCmd.Flags().IntVar(&pid, "pid", 0, "shell process id")
@@ -168,35 +142,6 @@ func renderViaDaemon(flags *runtime.Flags, pid int, repaint bool) error {
 		outputPrompts(resp)
 		return resp.Type != "complete"
 	})
-}
-
-func renderTypeViaDaemon(flags *runtime.Flags, pid int, promptType string) error {
-	silent = true
-	client, err := daemon.ConnectOrStart(startDetachedDaemon)
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), renderTimeout)
-	defer cancel()
-
-	response, err := client.RenderPromptSync(ctx, flags, pid, "", nil, false)
-	if err != nil {
-		return err
-	}
-
-	if response == nil || response.Prompts == nil {
-		return errors.New("no prompts returned")
-	}
-
-	selected, ok := response.Prompts[promptType]
-	if !ok || selected == nil {
-		return errors.New("requested prompt type not returned")
-	}
-
-	fmt.Print(selected.Text)
-	return nil
 }
 
 func outputPrompts(resp *ipc.PromptResponse) {
