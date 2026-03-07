@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"context"
 	"sync/atomic"
 	"testing"
 
@@ -28,12 +29,12 @@ type sharedStateWriter struct {
 	Value     int
 }
 
-func (provider *countingTextProvider) Execute(e *Engine, source *config.Segment) (sharedExecutionResult, error) {
+func (provider *countingTextProvider) Execute(_ context.Context, e *Engine, source *config.Segment) (sharedExecutionResult, bool, error) {
 	atomic.AddInt32(provider.count, 1)
 	source.Execute(e.Env)
 	return sharedExecutionResult{
 		Source: source,
-	}, nil
+	}, true, nil
 }
 
 func TestSharedProviderExecutesTextSegmentOncePerBlock(t *testing.T) {
@@ -160,6 +161,57 @@ func TestSharedProviderResetsBetweenRenders(t *testing.T) {
 	_, _ = engine.writeBlockSegments(block)
 
 	require.Equal(t, int32(2), atomic.LoadInt32(&executionCount))
+}
+
+func TestSharedProviderReusesPrimaryComputationForTransientRightPrompt(t *testing.T) {
+	flags := &runtime.Flags{
+		Shell:         shell.GENERIC,
+		TerminalWidth: 80,
+	}
+
+	env := &runtime.Terminal{}
+	env.Init(flags)
+
+	template.Cache = &cache.Template{
+		SimpleTemplate: cache.SimpleTemplate{
+			Shell: shell.GENERIC,
+		},
+		Segments: maps.NewConcurrent[any](),
+	}
+	template.Init(env, nil, nil)
+
+	terminal.Init(shell.GENERIC)
+	terminal.Colors = &color.Defaults{}
+
+	var executionCount int32
+	engine := &Engine{
+		Env:    env,
+		Config: &config.Config{},
+		LayoutConfig: &config.LayoutConfig{
+			RPrompt: []config.PromptLayout{
+				{Segments: []string{"git.main"}},
+			},
+			TransientRPrompt: []config.PromptLayout{
+				{Segments: []string{"git.transient"}},
+			},
+			Segments: map[string]*config.Segment{
+				"git.main":      {Type: config.TEXT, Alias: "git.main", Template: "MAIN"},
+				"git.transient": {Type: config.TEXT, Alias: "git.transient", Template: "TRANSIENT"},
+			},
+		},
+		sharedProviderFactory: map[config.SegmentType]sharedProviderFactory{
+			config.TEXT: func() sharedSegmentProvider {
+				return &countingTextProvider{count: &executionCount}
+			},
+		},
+	}
+
+	_ = engine.Primary()
+	require.Equal(t, int32(1), atomic.LoadInt32(&executionCount))
+
+	right := engine.TransientRPromptNoReset()
+	require.Equal(t, int32(1), atomic.LoadInt32(&executionCount))
+	require.Contains(t, right, "TRANSIENT")
 }
 
 func TestSharedProviderKeepsPerInstanceTemplateWithSharedTypeState(t *testing.T) {

@@ -42,9 +42,9 @@ func (renderer defaultPromptBundleRenderer) Bundle(engine *prompt.Engine, primar
 		return bundle
 	}
 
-	bundle.RTransient = engine.TransientRPrompt()
-	bundle.Secondary = engine.ExtraPrompt(prompt.Secondary)
-	bundle.Transient = engine.ExtraPrompt(prompt.Transient)
+	bundle.RTransient = engine.TransientRPromptNoReset()
+	bundle.Secondary = engine.ExtraPromptNoReset(prompt.Secondary)
+	bundle.Transient = engine.ExtraPromptNoReset(prompt.Transient)
 	return bundle
 }
 
@@ -78,6 +78,12 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 	handle := pipeline.runtime.StartRequest(sessionID, flags, repaint)
 	engine := handle.Engine()
 	primary := ""
+	if repaint && !handle.Reattached() && (engine == nil || engine.Config == nil) {
+		handle.Complete()
+		bundle := pipeline.renderer.Bundle(engine, primary, false)
+		return bundle, nil
+	}
+
 	if engine != nil && engine.Config != nil {
 		engine.SetDeviceCache(pipeline.deviceCache)
 		applyRenderFlags(engine, flags, repaint)
@@ -97,7 +103,7 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 		if repaint && handle.Reattached() {
 			// Repaint updates vim-mode-driven output without restarting async segment jobs.
 			primary = engine.PrimaryRepaint()
-			if len(engine.PendingSegments()) == 0 && handle.Hub() != nil {
+			if engine.PendingSegmentCount() == 0 && handle.Hub() != nil {
 				handle.Hub().Publish(renderCompletePayload, handle.RenderID())
 			}
 
@@ -106,6 +112,14 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 				handle:   handle,
 				renderer: pipeline.renderer,
 			}
+		}
+
+		if repaint {
+			primary = engine.PrimaryRepaint()
+			handle.Complete()
+
+			bundle := pipeline.renderer.Bundle(engine, primary, false)
+			return bundle, nil
 		}
 
 		timeout := engine.Config.GetDaemonTimeout()
@@ -121,7 +135,7 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 				handle.Hub().Publish(segmentName, renderID)
 			})
 
-			if len(engine.PendingSegments()) == 0 {
+			if engine.PendingSegmentCount() == 0 {
 				handle.Hub().Publish(renderCompletePayload, renderID)
 			}
 		} else {
@@ -203,9 +217,33 @@ func (active *ActiveRender) Next(updateContext context.Context, after uint64) (P
 		return PromptUpdate{}, false
 	}
 
-	snapshot, ok := active.handle.Relay().Next(updateContext, after, active.handle.RenderID())
+	if updateContext == nil {
+		updateContext = context.Background()
+	}
+
+	relayContext := updateContext
+	renderContext := active.handle.Context()
+	if renderContext != nil {
+		var cancel context.CancelFunc
+		relayContext, cancel = context.WithCancel(updateContext)
+		stopCancel := context.AfterFunc(renderContext, cancel)
+		defer stopCancel()
+		defer cancel()
+	}
+
+	snapshot, ok := active.handle.Relay().Next(relayContext, after, active.handle.RenderID())
 	if !ok {
 		return PromptUpdate{}, false
+	}
+
+	if err := updateContext.Err(); err != nil {
+		return PromptUpdate{}, false
+	}
+
+	if renderContext != nil {
+		if err := renderContext.Err(); err != nil {
+			return PromptUpdate{}, false
+		}
 	}
 
 	engine := active.handle.Engine()

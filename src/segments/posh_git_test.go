@@ -40,7 +40,7 @@ func TestPoshGitSegment(t *testing.T) {
 				"RepoName": "prompto",
 				"HasIndex": false,
 				"GitDir": "/Users/bill/Code/prompto/.git",
-				"Upstream": "origin/prompto-git-json",
+				"Upstream": "origin/posh-git-json",
 				"UpstreamGone": false,
 				"HasUntracked": false,
 				"AheadBy": 0,
@@ -67,7 +67,7 @@ func TestPoshGitSegment(t *testing.T) {
 					"Deleted": [],
 					"Unmerged": []
 				},
-				"Branch": "prompto-git-json"
+				"Branch": "posh-git-json"
 			}
 			`,
 			ExpectedString:  "\ue0a0posh-git-json ≡ \uf044 ~2",
@@ -80,7 +80,7 @@ func TestPoshGitSegment(t *testing.T) {
 				"RepoName": "prompto",
 				"HasIndex": false,
 				"GitDir": "/Users/bill/Code/prompto/.git",
-				"Upstream": "origin/prompto-git-json",
+				"Upstream": "origin/posh-git-json",
 				"UpstreamGone": false,
 				"HasUntracked": false,
 				"AheadBy": 1,
@@ -113,7 +113,7 @@ func TestPoshGitSegment(t *testing.T) {
 					"Deleted": [],
 					"Unmerged": []
 				},
-				"Branch": "prompto-git-json"
+				"Branch": "posh-git-json"
 			}
 			`,
 			ExpectedString:  "\ue0a0posh-git-json ↑1 ↓1 \uf044 ~2 | \uf046 -2",
@@ -140,7 +140,7 @@ func TestPoshGitSegment(t *testing.T) {
 					"Deleted": [],
 					"Unmerged": []
 				},
-				"Branch": "prompto-git-json"
+				"Branch": "posh-git-json"
 			}
 			`,
 			ExpectedString:  "\ue0a0posh-git-json ≢",
@@ -160,7 +160,7 @@ func TestPoshGitSegment(t *testing.T) {
 					"Deleted": [],
 					"Unmerged": []
 				},
-				"Branch": "prompto-git-json"
+				"Branch": "posh-git-json"
 			}
 			`,
 			ExpectedString:  "\ue0a0posh-git-json ≢",
@@ -174,7 +174,7 @@ func TestPoshGitSegment(t *testing.T) {
 				"RepoName": "prompto",
 				"GitDir": "/Users/bill/Code/prompto/.git",
 				"Branch": "\ue0a0posh-git-json",
-				"Upstream": "origin/prompto-git-json"
+				"Upstream": "origin/posh-git-json"
 			}
 			`,
 			ExpectedString:    "\uf408",

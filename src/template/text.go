@@ -164,8 +164,7 @@ func (f *fields) init(data any) {
 	}
 
 	val := reflect.TypeOf(data)
-	switch val.Kind() { //nolint:exhaustive
-	case reflect.Struct:
+	if val.Kind() == reflect.Struct {
 		name := val.Name()
 
 		// check if we already know the fields of this struct
@@ -201,7 +200,10 @@ func (f *fields) init(data any) {
 		}
 
 		knownFields.Store(name, f)
-	case reflect.Map:
+		return
+	}
+
+	if val.Kind() == reflect.Map {
 		m, ok := data.(map[string]any)
 		if !ok {
 			return
@@ -209,7 +211,10 @@ func (f *fields) init(data any) {
 		for key := range m {
 			f.add(key)
 		}
-	case reflect.Ptr:
+		return
+	}
+
+	if val.Kind() == reflect.Ptr {
 		f.init(reflect.ValueOf(data).Elem().Interface())
 	}
 }

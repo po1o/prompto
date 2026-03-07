@@ -44,21 +44,44 @@ func NewService(registry *EngineRegistry, gate *ReloadGate, renderer promptBundl
 func (service *Service) StartRender(request RenderRequest) RenderResponse {
 	service.mu.Lock()
 	existing, ok := service.renders[request.SessionID]
+	var staleCompleted *ActiveRender
+	var previous *ActiveRender
+	if ok && existing != nil && service.isCompletedRender(existing) {
+		delete(service.renders, request.SessionID)
+		staleCompleted = existing
+		existing = nil
+		ok = false
+	}
+
 	if ok && existing != nil && !request.Repaint {
 		// Non-repaint starts a new render generation; cancel the previous one.
-		existing.Complete()
+		delete(service.renders, request.SessionID)
+		previous = existing
 	}
 	service.mu.Unlock()
 
+	if staleCompleted != nil {
+		staleCompleted.Complete()
+	}
+	if previous != nil {
+		previous.Complete()
+	}
+
 	bundle, active := service.pipeline.Start(request.SessionID, request.Flags, request.Repaint)
+	sequence := service.currentSequence(request.SessionID)
 
 	service.mu.Lock()
-	service.renders[request.SessionID] = active
+	if active == nil {
+		delete(service.renders, request.SessionID)
+	} else {
+		service.renders[request.SessionID] = active
+	}
 	service.mu.Unlock()
 
 	return RenderResponse{
-		Type:   "initial",
-		Bundle: bundle,
+		Type:     "initial",
+		Bundle:   bundle,
+		Sequence: sequence,
 	}
 }
 
@@ -72,6 +95,10 @@ func (service *Service) NextUpdate(ctx context.Context, sessionID string, after 
 
 	update, ok := active.Next(ctx, after)
 	if !ok {
+		if ctx != nil && ctx.Err() != nil {
+			return RenderResponse{}, false
+		}
+
 		service.releaseActiveRenderIfCurrent(sessionID, active)
 		return RenderResponse{}, false
 	}
@@ -162,4 +189,44 @@ func (service *Service) releaseActiveRenderIfCurrent(sessionID string, expected 
 	service.mu.Unlock()
 
 	expected.Complete()
+}
+
+func (service *Service) currentSequence(sessionID string) uint64 {
+	if service.runtime == nil {
+		return 0
+	}
+
+	hub := service.runtime.SessionHub(sessionID)
+	if hub == nil {
+		return 0
+	}
+
+	snapshot, ok := hub.Last()
+	if !ok {
+		return 0
+	}
+
+	return snapshot.Sequence
+}
+
+func (service *Service) isCompletedRender(active *ActiveRender) bool {
+	if active == nil || active.handle == nil || active.handle.Hub() == nil {
+		return false
+	}
+
+	snapshot, ok := active.handle.Hub().Last()
+	if !ok {
+		return false
+	}
+
+	if snapshot.Payload != renderCompletePayload {
+		return false
+	}
+
+	renderID := active.handle.RenderID()
+	if snapshot.RenderID == 0 || snapshot.RenderID == renderID {
+		return true
+	}
+
+	return false
 }

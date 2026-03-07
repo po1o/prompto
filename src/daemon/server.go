@@ -39,12 +39,19 @@ type Server struct {
 	configReloadCh chan struct{}
 	// segmentToggles keeps per-session runtime toggle state.
 	segmentToggles map[string]map[string]bool
+	primaryStreams map[string]primaryStreamState
 	configPath     string
+	streamMu       sync.Mutex
 	toggleMu       sync.RWMutex
 	reloadMu       sync.Mutex
 	// lastConfigModUnixNano tracks the last applied root config mtime.
 	lastConfigModUnixNano atomic.Int64
 	shutdownOnce          sync.Once
+}
+
+type primaryStreamState struct {
+	cancel    context.CancelFunc
+	requestID string
 }
 
 func NewServer(configPath string) (*Server, error) {
@@ -62,6 +69,7 @@ func NewServer(configPath string) (*Server, error) {
 		deviceCache:    NewDeviceCache(),
 		configReloadCh: make(chan struct{}, 1),
 		segmentToggles: make(map[string]map[string]bool),
+		primaryStreams: make(map[string]primaryStreamState),
 	}
 	server.captureConfigModTime()
 	server.core = NewFromConfigWithDeviceCache(resolvedPath, nil, server.deviceCache)
@@ -153,7 +161,10 @@ func (server *Server) RenderPrompt(
 		return fmt.Errorf("protocol version mismatch: client=%d server=%d", request.Version, ipc.ProtocolVersion)
 	}
 
-	flags := ipc.ProtoToFlags(request.Flags)
+	var flags *runtime.Flags
+	if request.Flags != nil {
+		flags = ipc.ProtoToFlags(request.Flags)
+	}
 	if flags == nil {
 		flags = &runtime.Flags{}
 	}
@@ -165,6 +176,18 @@ func (server *Server) RenderPrompt(
 	sessionID := resolveServerSessionID(request.Pid, request.SessionId)
 
 	flags.SegmentToggles = server.sessionToggles(sessionID)
+
+	streamContext := stream.Context()
+	releaseStream := func() {}
+	if flags.Type == "" || flags.Type == prompt.PRIMARY {
+		var cancel context.CancelFunc
+		streamContext, cancel = context.WithCancel(stream.Context())
+		releaseStream = server.replacePrimaryStream(sessionID, request.RequestId, cancel)
+		defer func() {
+			cancel()
+			releaseStream()
+		}()
+	}
 
 	initial := server.core.StartRender(RenderRequest{
 		SessionID: sessionID,
@@ -185,12 +208,16 @@ func (server *Server) RenderPrompt(
 		return stream.Send(makePromptResponse("complete", request.RequestId, &lastBundle))
 	}
 
+	if err := streamContext.Err(); err != nil {
+		return nil
+	}
+
 	if err := stream.Send(makePromptResponse("update", request.RequestId, &initial.Bundle)); err != nil {
 		return err
 	}
 
 	for {
-		update, ok := server.core.NextUpdate(stream.Context(), sessionID, sequence)
+		update, ok := server.core.NextUpdate(streamContext, sessionID, sequence)
 		if !ok {
 			break
 		}
@@ -202,9 +229,16 @@ func (server *Server) RenderPrompt(
 		}
 
 		lastBundle = update.Bundle
+		if err := streamContext.Err(); err != nil {
+			return nil
+		}
 		if err := stream.Send(makePromptResponse("update", request.RequestId, &update.Bundle)); err != nil {
 			return err
 		}
+	}
+
+	if err := streamContext.Err(); err != nil {
+		return nil
 	}
 
 	return stream.Send(makePromptResponse("complete", request.RequestId, &lastBundle))
@@ -468,6 +502,32 @@ func (server *Server) sessionToggles(sessionID string) map[string]bool {
 	server.toggleMu.Unlock()
 
 	return cloneToggleMap(cloned)
+}
+
+func (server *Server) replacePrimaryStream(sessionID, requestID string, cancel context.CancelFunc) func() {
+	server.streamMu.Lock()
+	previous, ok := server.primaryStreams[sessionID]
+	server.primaryStreams[sessionID] = primaryStreamState{
+		requestID: requestID,
+		cancel:    cancel,
+	}
+	server.streamMu.Unlock()
+
+	if ok && previous.cancel != nil && previous.requestID != requestID {
+		previous.cancel()
+	}
+
+	return func() {
+		server.streamMu.Lock()
+		defer server.streamMu.Unlock()
+
+		current, ok := server.primaryStreams[sessionID]
+		if !ok || current.requestID != requestID {
+			return
+		}
+
+		delete(server.primaryStreams, sessionID)
+	}
 }
 
 func cloneToggleMap(source map[string]bool) map[string]bool {

@@ -22,7 +22,14 @@ type BinaryWatcher struct {
 	done        chan struct{}
 	watchedDirs map[string]bool
 	targetPaths map[string]bool
+	signatures  map[string]binarySignature
 	once        sync.Once
+}
+
+type binarySignature struct {
+	exists  bool
+	size    int64
+	modUnix int64
 }
 
 // NewBinaryWatcher creates a watcher that monitors binPath for changes.
@@ -42,6 +49,7 @@ func newBinaryWatcher(binPath string, onChange func(), debounceWindow time.Durat
 		done:        make(chan struct{}),
 		watchedDirs: make(map[string]bool),
 		targetPaths: make(map[string]bool),
+		signatures:  make(map[string]binarySignature),
 	}
 
 	if err := bw.addTargetPath(binPath); err != nil {
@@ -82,6 +90,7 @@ func (bw *BinaryWatcher) addTargetPath(path string) error {
 
 	cleanPath := filepath.Clean(absPath)
 	bw.targetPaths[cleanPath] = true
+	bw.signatures[cleanPath] = binarySignatureFor(cleanPath)
 
 	dir := filepath.Dir(cleanPath)
 	if bw.watchedDirs[dir] {
@@ -101,6 +110,32 @@ func (bw *BinaryWatcher) addTargetPath(path string) error {
 	}
 
 	return nil
+}
+
+func binarySignatureFor(path string) binarySignature {
+	info, err := os.Stat(path)
+	if err != nil {
+		return binarySignature{}
+	}
+
+	return binarySignature{
+		exists:  true,
+		size:    info.Size(),
+		modUnix: info.ModTime().UnixNano(),
+	}
+}
+
+func (bw *BinaryWatcher) hasBinaryChanged() bool {
+	for path := range bw.targetPaths {
+		current := binarySignatureFor(path)
+		if current == bw.signatures[path] {
+			continue
+		}
+
+		return true
+	}
+
+	return false
 }
 
 // eventLoop processes fsnotify events with debounce.
@@ -135,6 +170,10 @@ func (bw *BinaryWatcher) eventLoop(onChange func(), debounceWindow time.Duration
 				debounce.Stop()
 			}
 			debounce = time.AfterFunc(debounceWindow, func() {
+				if !bw.hasBinaryChanged() {
+					return
+				}
+
 				log.Debug("binary change confirmed, triggering callback")
 				onChange()
 			})

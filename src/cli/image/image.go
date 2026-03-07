@@ -226,7 +226,7 @@ func (ir *Renderer) setOutputPath(config string) {
 	config = filepath.Base(config)
 
 	match := regex.FindNamedRegexMatch(`(\.?)(?P<STR>.*)\.(json|yaml|yml|toml|jsonc)`, config)
-	path := strings.TrimRight(match[str], ".omp")
+	path := strings.TrimSuffix(match[str], ".omp")
 
 	if path == "" {
 		path = "prompt"

@@ -14,7 +14,11 @@ const (
 
 func (e *Engine) ExtraPrompt(promptType ExtraPromptType) string {
 	e.resetSharedProviders()
+	return e.ExtraPromptNoReset(promptType)
+}
 
+// ExtraPromptNoReset renders an extra prompt while reusing the current shared-provider scope.
+func (e *Engine) ExtraPromptNoReset(promptType ExtraPromptType) string {
 	switch promptType {
 	case Secondary:
 		if e.hasLayoutSecondary() {
@@ -37,7 +41,11 @@ func (e *Engine) ExtraPrompt(promptType ExtraPromptType) string {
 
 func (e *Engine) TransientRPrompt() string {
 	e.resetSharedProviders()
+	return e.TransientRPromptNoReset()
+}
 
+// TransientRPromptNoReset renders the transient right prompt while reusing the current shared-provider scope.
+func (e *Engine) TransientRPromptNoReset() string {
 	if !e.hasLayoutTransient() || len(e.LayoutConfig.TransientRPrompt) == 0 {
 		return ""
 	}

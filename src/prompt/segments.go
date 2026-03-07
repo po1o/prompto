@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"context"
 	"time"
 
 	"github.com/po1o/prompto/src/config"
@@ -74,7 +75,7 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 					return
 				}
 
-				sharedProvider := e.getOrCreateSharedProvider(segment.Type, sources[segment.Type], providerFactory)
+				sharedProvider := e.getOrCreateSharedProvider(context.Background(), segment.Type, sources[segment.Type], providerFactory)
 
 				res, sharedErr := sharedProvider.Get()
 				if sharedErr == nil {

@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"sync/atomic"
@@ -38,12 +39,12 @@ type countingProvider struct {
 	count *int32
 }
 
-func (provider *countingProvider) Execute(e *Engine, source *config.Segment) (sharedExecutionResult, error) {
+func (provider *countingProvider) Execute(_ context.Context, e *Engine, source *config.Segment) (sharedExecutionResult, bool, error) {
 	atomic.AddInt32(provider.count, 1)
 	source.Execute(e.Env)
 	return sharedExecutionResult{
 		Source: source,
-	}, nil
+	}, true, nil
 }
 
 func TestExplicitSessionCacheReusesFreshRender(t *testing.T) {

@@ -3,6 +3,7 @@ package prompt
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 	"sync"
 	"time"
@@ -128,7 +129,10 @@ func (e *Engine) prepareStreamingSegments() ([]streamingSegment, map[string]bool
 	return segmentsToExecute, completed
 }
 
-func (e *Engine) startStreamingExecutions(ctx context.Context, segments []streamingSegment) <-chan streamingResult {
+func (e *Engine) startStreamingExecutions(
+	ctx context.Context,
+	segments []streamingSegment,
+) <-chan streamingResult {
 	results := make(chan streamingResult, len(segments))
 	var wg sync.WaitGroup
 
@@ -178,7 +182,7 @@ func (e *Engine) executeStreamingSegment(
 
 	if providerFactory, ok := e.sharedProviderFactory[segment.Type]; ok {
 		if err := segment.MapSegmentWithWriter(e.Env); err == nil {
-			sharedProvider := e.getOrCreateSharedProvider(segment.Type, sources[segment.Type], providerFactory)
+			sharedProvider := e.getOrCreateSharedProvider(ctx, segment.Type, sources[segment.Type], providerFactory)
 			if res, sharedErr := sharedProvider.Get(); sharedErr == nil {
 				_ = segment.CopyWriterStateFrom(res.Source)
 			}
@@ -274,6 +278,13 @@ func (e *Engine) collectStreamingResultsUntil(
 // PrimaryRepaint re-renders prompt state for repaint without starting new computations.
 // Only the vim segment is re-executed. Other segments are served from completed or pending cache state.
 func (e *Engine) PrimaryRepaint() string {
+	e.streamingMu.Lock()
+	defer e.streamingMu.Unlock()
+	e.repaintOnly = true
+	defer func() {
+		e.repaintOnly = false
+	}()
+
 	if e.pendingSegments == nil {
 		e.pendingSegments = make(map[string]bool)
 	}
@@ -300,6 +311,10 @@ func (e *Engine) PrimaryRepaint() string {
 				segment.Execute(e.Env)
 				continue
 			}
+
+			// Repaint can occur without an active streaming render. Ensure writer is initialized
+			// so rendering logic can safely inspect current text/cache state without execution.
+			_ = segment.EnsureWriter(e.Env)
 
 			cacheKey := e.segmentCacheKeys[key]
 			if cacheKey == "" {
@@ -443,7 +458,9 @@ func (e *Engine) writeBlockSegmentsStreaming(block *config.Block, blockIndex int
 	type pendingRestore struct {
 		segment             *config.Segment
 		text                string
+		foreground          color.Ansi
 		background          color.Ansi
+		foregroundTemplates template.List
 		backgroundTemplates template.List
 		enabled             bool
 	}
@@ -462,7 +479,9 @@ func (e *Engine) writeBlockSegmentsStreaming(block *config.Block, blockIndex int
 			restores = append(restores, pendingRestore{
 				segment:             segment,
 				text:                segment.Text(),
+				foreground:          segment.Foreground,
 				background:          segment.Background,
+				foregroundTemplates: segment.ForegroundTemplates,
 				backgroundTemplates: segment.BackgroundTemplates,
 				enabled:             segment.Enabled,
 			})
@@ -473,6 +492,7 @@ func (e *Engine) writeBlockSegmentsStreaming(block *config.Block, blockIndex int
 			} else {
 				segment.Background = "darkGray"
 			}
+			segment.ForegroundTemplates = nil
 			segment.BackgroundTemplates = nil
 			segment.Enabled = true
 
@@ -482,14 +502,24 @@ func (e *Engine) writeBlockSegmentsStreaming(block *config.Block, blockIndex int
 		}
 
 		if segment.Text() != "" && segment.Enabled {
-			origForegroundTemplates := segment.ForegroundTemplates
-			origBackgroundTemplates := segment.BackgroundTemplates
+			restores = append(restores, pendingRestore{
+				segment:             segment,
+				text:                segment.Text(),
+				foreground:          segment.Foreground,
+				background:          segment.Background,
+				foregroundTemplates: segment.ForegroundTemplates,
+				backgroundTemplates: segment.BackgroundTemplates,
+				enabled:             segment.Enabled,
+			})
+
 			segment.ForegroundTemplates = nil
 			segment.BackgroundTemplates = nil
 			segmentIndex++
 			e.writeSegment(block, segment)
-			segment.ForegroundTemplates = origForegroundTemplates
-			segment.BackgroundTemplates = origBackgroundTemplates
+			continue
+		}
+
+		if e.repaintOnly && segment.Type != config.SegmentType("vim") {
 			continue
 		}
 
@@ -512,7 +542,9 @@ func (e *Engine) writeBlockSegmentsStreaming(block *config.Block, blockIndex int
 
 	for _, restore := range restores {
 		restore.segment.SetText(restore.text)
+		restore.segment.Foreground = restore.foreground
 		restore.segment.Background = restore.background
+		restore.segment.ForegroundTemplates = restore.foregroundTemplates
 		restore.segment.BackgroundTemplates = restore.backgroundTemplates
 		restore.segment.Enabled = restore.enabled
 	}
@@ -594,5 +626,21 @@ func (e *Engine) StreamingMu() *sync.Mutex {
 }
 
 func (e *Engine) PendingSegments() map[string]bool {
-	return e.pendingSegments
+	e.streamingMu.Lock()
+	defer e.streamingMu.Unlock()
+
+	if len(e.pendingSegments) == 0 {
+		return map[string]bool{}
+	}
+
+	snapshot := make(map[string]bool, len(e.pendingSegments))
+	maps.Copy(snapshot, e.pendingSegments)
+
+	return snapshot
+}
+
+func (e *Engine) PendingSegmentCount() int {
+	e.streamingMu.Lock()
+	defer e.streamingMu.Unlock()
+	return len(e.pendingSegments)
 }

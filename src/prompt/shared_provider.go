@@ -1,6 +1,7 @@
 package prompt
 
 import (
+	"context"
 	"sync"
 
 	"github.com/po1o/prompto/src/config"
@@ -11,7 +12,7 @@ type sharedExecutionResult struct {
 }
 
 type sharedSegmentProvider interface {
-	Execute(e *Engine, source *config.Segment) (sharedExecutionResult, error)
+	Execute(ctx context.Context, e *Engine, source *config.Segment) (sharedExecutionResult, bool, error)
 }
 
 type sharedProviderFactory func() sharedSegmentProvider
@@ -39,11 +40,15 @@ func (provider *onceProvider[T]) Get() (T, error) {
 
 type stateSharedProvider struct{}
 
-func (provider *stateSharedProvider) Execute(e *Engine, source *config.Segment) (sharedExecutionResult, error) {
-	source.Execute(e.Env)
+func (provider *stateSharedProvider) Execute(ctx context.Context, e *Engine, source *config.Segment) (sharedExecutionResult, bool, error) {
+	completed := e.executeSegmentWithContext(ctx, source)
+	if !completed {
+		return sharedExecutionResult{}, false, nil
+	}
+
 	return sharedExecutionResult{
 		Source: source,
-	}, nil
+	}, true, nil
 }
 
 func defaultSharedProviderFactories() map[config.SegmentType]sharedProviderFactory {
@@ -64,6 +69,7 @@ func (e *Engine) resetSharedProviders() {
 }
 
 func (e *Engine) getOrCreateSharedProvider(
+	ctx context.Context,
 	segmentType config.SegmentType,
 	source *config.Segment,
 	factory sharedProviderFactory,
@@ -81,7 +87,12 @@ func (e *Engine) getOrCreateSharedProvider(
 
 	provider := factory()
 	shared := newOnceProvider(func() (sharedExecutionResult, error) {
-		return provider.Execute(e, source)
+		res, completed, err := provider.Execute(ctx, e, source)
+		if !completed {
+			return sharedExecutionResult{}, context.Canceled
+		}
+
+		return res, err
 	})
 	e.sharedProviders[segmentType] = shared
 	return shared

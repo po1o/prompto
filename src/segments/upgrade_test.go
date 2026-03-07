@@ -1,20 +1,45 @@
 package segments
 
 import (
+	"io"
+	stdhttp "net/http"
+	"strings"
 	"testing"
 
 	"github.com/po1o/prompto/src/build"
 	"github.com/po1o/prompto/src/cache"
-	"github.com/po1o/prompto/src/cli/upgrade"
+	runtimehttp "github.com/po1o/prompto/src/runtime/http"
 	"github.com/po1o/prompto/src/runtime/mock"
 	"github.com/po1o/prompto/src/segments/options"
 
 	"github.com/alecthomas/assert"
 )
 
+type upgradeHTTPClientFunc func(req *stdhttp.Request) (*stdhttp.Response, error)
+
+func (fn upgradeHTTPClientFunc) Do(req *stdhttp.Request) (*stdhttp.Response, error) {
+	return fn(req)
+}
+
 func TestUpgrade(t *testing.T) {
-	ugc := &upgrade.Config{}
-	latest, _ := ugc.FetchLatest()
+	const latest = "1.0.3"
+
+	oldHTTPClient := runtimehttp.HTTPClient
+	runtimehttp.HTTPClient = upgradeHTTPClientFunc(func(_ *stdhttp.Request) (*stdhttp.Response, error) {
+		return &stdhttp.Response{
+			StatusCode: stdhttp.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(latest)),
+		}, nil
+	})
+	t.Cleanup(func() {
+		runtimehttp.HTTPClient = oldHTTPClient
+		cache.DeleteAll(cache.Device)
+	})
+
+	oldVersion := build.Version
+	t.Cleanup(func() {
+		build.Version = oldVersion
+	})
 
 	cases := []struct {
 		Case            string

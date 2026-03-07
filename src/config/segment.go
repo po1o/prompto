@@ -248,6 +248,17 @@ func (segment *Segment) CopyWriterStateFrom(source *Segment) error {
 	return nil
 }
 
+// EnsureWriter initializes the segment writer only when needed.
+// This preserves existing writer state during repaint flows.
+func (segment *Segment) EnsureWriter(env runtime.Environment) error {
+	if segment.writer != nil {
+		segment.env = env
+		return nil
+	}
+
+	return segment.MapSegmentWithWriter(env)
+}
+
 func (segment *Segment) ResolveForeground() color.Ansi {
 	if len(segment.ForegroundTemplates) != 0 {
 		match := segment.ForegroundTemplates.FirstMatch(segment.writer, segment.Foreground.String())

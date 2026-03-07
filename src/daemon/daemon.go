@@ -18,12 +18,12 @@ type Daemon struct {
 	sessions *SessionManager
 	// deviceCache is shared across sessions/renders and survives per-session engine resets.
 	deviceCache *DeviceCache
+	onStop      func()
 	// idleTimeout is armed when there are no tracked sessions.
 	idleTimeout time.Duration
-	stopped     atomic.Bool
 	// idleToken invalidates stale timers when activity resumes.
 	idleToken uint64
-	onStop    func()
+	stopped   atomic.Bool
 	mu        sync.Mutex
 }
 

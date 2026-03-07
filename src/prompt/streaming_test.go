@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -210,4 +211,240 @@ vim:
 	flags.VimMode = "normal"
 	_ = engine.PrimaryRepaint()
 	require.True(t, strings.Contains(engine.StreamingRPrompt(), "NORMAL"), "expected repaint to include NORMAL mode")
+}
+
+func TestPrimaryRepaintSynchronizesStreamingStateAccess(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "repaint-sync.omp.yaml")
+	cfg := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+  style: "plain"
+  template: "L"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	flags := &runtime.Flags{
+		ConfigPath: configPath,
+		Plain:      true,
+		Shell:      shell.GENERIC,
+	}
+	engine := New(flags)
+	_ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+
+	const hold = 80 * time.Millisecond
+	locked := make(chan struct{})
+	go func() {
+		engine.streamingMu.Lock()
+		close(locked)
+		time.Sleep(hold)
+		engine.streamingMu.Unlock()
+	}()
+	<-locked
+
+	start := time.Now()
+	_ = engine.PrimaryRepaint()
+	elapsed := time.Since(start)
+	require.GreaterOrEqual(t, elapsed, hold-(10*time.Millisecond))
+}
+
+type repaintExecutionWriter struct{}
+
+var repaintExecutionCount atomic.Int64
+var repaintTemplateCount atomic.Int64
+var repaintDangerCount atomic.Int64
+
+func (w *repaintExecutionWriter) Enabled() bool {
+	repaintExecutionCount.Add(1)
+	return true
+}
+func (w *repaintExecutionWriter) Template() string {
+	repaintTemplateCount.Add(1)
+	return "X"
+}
+func (w *repaintExecutionWriter) SetText(string)                                 {}
+func (w *repaintExecutionWriter) SetIndex(_ int)                                 {}
+func (w *repaintExecutionWriter) Text() string                                   { return "X" }
+func (w *repaintExecutionWriter) Init(_ options.Provider, _ runtime.Environment) {}
+func (w *repaintExecutionWriter) CacheKey() (string, bool)                       { return "", false }
+
+type repaintTemplateGuardWriter struct {
+	text string
+}
+
+func (w *repaintTemplateGuardWriter) Enabled() bool                                  { return true }
+func (w *repaintTemplateGuardWriter) Template() string                               { return "{{ .Text }}" }
+func (w *repaintTemplateGuardWriter) SetText(text string)                            { w.text = text }
+func (w *repaintTemplateGuardWriter) SetIndex(_ int)                                 {}
+func (w *repaintTemplateGuardWriter) Text() string                                   { return w.text }
+func (w *repaintTemplateGuardWriter) Init(_ options.Provider, _ runtime.Environment) {}
+func (w *repaintTemplateGuardWriter) CacheKey() (string, bool)                       { return "", false }
+func (w *repaintTemplateGuardWriter) Danger() bool {
+	repaintDangerCount.Add(1)
+	return true
+}
+
+func TestPrimaryRepaintDoesNotExecuteNonVimSegments(t *testing.T) {
+	segmentType := config.SegmentType("repaint_execute_guard")
+	previous, hadPrevious := config.Segments[segmentType]
+	config.Segments[segmentType] = func() config.SegmentWriter {
+		return &repaintExecutionWriter{}
+	}
+	t.Cleanup(func() {
+		if hadPrevious {
+			config.Segments[segmentType] = previous
+			return
+		}
+
+		delete(config.Segments, segmentType)
+	})
+	repaintExecutionCount.Store(0)
+	repaintTemplateCount.Store(0)
+
+	configPath := filepath.Join(t.TempDir(), "repaint-non-exec.omp.yaml")
+	cfg := `
+prompt:
+  - segments: ["test.main"]
+
+test.main:
+  type: "repaint_execute_guard"
+  style: "plain"
+  template: "X"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	flags := &runtime.Flags{
+		ConfigPath: configPath,
+		Plain:      true,
+		Shell:      shell.GENERIC,
+	}
+	engine := New(flags)
+	_ = engine.PrimaryRepaint()
+
+	require.Equal(t, int64(0), repaintExecutionCount.Load())
+}
+
+func TestPrimaryRepaintDoesNotRenderNonVimSegmentsWithEmptyText(t *testing.T) {
+	segmentType := config.SegmentType("repaint_render_guard")
+	previous, hadPrevious := config.Segments[segmentType]
+	config.Segments[segmentType] = func() config.SegmentWriter {
+		return &repaintExecutionWriter{}
+	}
+	t.Cleanup(func() {
+		if hadPrevious {
+			config.Segments[segmentType] = previous
+			return
+		}
+
+		delete(config.Segments, segmentType)
+	})
+	repaintExecutionCount.Store(0)
+	repaintTemplateCount.Store(0)
+
+	configPath := filepath.Join(t.TempDir(), "repaint-non-render.omp.yaml")
+	cfg := `
+prompt:
+  - segments: ["test.main"]
+
+test.main:
+  type: "repaint_render_guard"
+  style: "plain"
+  template: "X"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	flags := &runtime.Flags{
+		ConfigPath: configPath,
+		Plain:      true,
+		Shell:      shell.GENERIC,
+	}
+	engine := New(flags)
+	engine.streamingBlocks = engine.resolveStreamingBlocks()
+
+	require.NotEmpty(t, engine.streamingBlocks)
+	segment := engine.streamingBlocks[0].Segments[0]
+	require.NoError(t, segment.MapSegmentWithWriter(engine.Env))
+	segment.Enabled = true
+	segment.SetText("")
+	repaintTemplateCount.Store(0)
+
+	_ = engine.PrimaryRepaint()
+	require.Equal(t, int64(0), repaintTemplateCount.Load())
+}
+
+func TestPrimaryRepaintDoesNotReevaluatePreviousSegmentTemplates(t *testing.T) {
+	guardType := config.SegmentType("repaint_template_guard")
+	guardPrevious, guardHadPrevious := config.Segments[guardType]
+	config.Segments[guardType] = func() config.SegmentWriter {
+		return &repaintTemplateGuardWriter{}
+	}
+	t.Cleanup(func() {
+		if guardHadPrevious {
+			config.Segments[guardType] = guardPrevious
+			return
+		}
+
+		delete(config.Segments, guardType)
+	})
+
+	nextType := config.SegmentType("repaint_template_next")
+	nextPrevious, nextHadPrevious := config.Segments[nextType]
+	config.Segments[nextType] = func() config.SegmentWriter {
+		return &repaintExecutionWriter{}
+	}
+	t.Cleanup(func() {
+		if nextHadPrevious {
+			config.Segments[nextType] = nextPrevious
+			return
+		}
+
+		delete(config.Segments, nextType)
+	})
+
+	repaintDangerCount.Store(0)
+
+	configPath := filepath.Join(t.TempDir(), "repaint-template-guard.omp.yaml")
+	cfg := `
+prompt:
+  - segments: ["test.guard", "test.next"]
+
+test.guard:
+  type: "repaint_template_guard"
+  style: "plain"
+  template: "G"
+  foreground_templates:
+    - '{{ if .Danger }}red{{ end }}'
+
+test.next:
+  type: "repaint_template_next"
+  style: "plain"
+  template: "N"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	flags := &runtime.Flags{
+		ConfigPath: configPath,
+		Plain:      true,
+		Shell:      shell.GENERIC,
+	}
+	engine := New(flags)
+	engine.streamingBlocks = engine.resolveStreamingBlocks()
+
+	require.Len(t, engine.streamingBlocks, 1)
+	require.Len(t, engine.streamingBlocks[0].Segments, 2)
+
+	guardSegment := engine.streamingBlocks[0].Segments[0]
+	require.NoError(t, guardSegment.MapSegmentWithWriter(engine.Env))
+	guardSegment.Enabled = true
+	guardSegment.SetText("G")
+
+	nextSegment := engine.streamingBlocks[0].Segments[1]
+	require.NoError(t, nextSegment.MapSegmentWithWriter(engine.Env))
+	nextSegment.Enabled = true
+	nextSegment.SetText("N")
+
+	_ = engine.PrimaryRepaint()
+	require.Equal(t, int64(0), repaintDangerCount.Load())
 }

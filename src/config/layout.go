@@ -46,12 +46,6 @@ type LayoutConfig struct {
 	DebugPrompt             *Segment               `yaml:"debug_prompt,omitempty"`
 	ValidLine               *Segment               `yaml:"valid_line,omitempty"`
 	ErrorLine               *Segment               `yaml:"error_line,omitempty"`
-	DaemonTimeout           int                    `yaml:"daemon_timeout,omitempty"`
-	Async                   bool                   `yaml:"async,omitempty"`
-	ShellIntegration        bool                   `yaml:"shell_integration,omitempty"`
-	FinalSpace              bool                   `yaml:"final_space,omitempty"`
-	PatchPwshBleed          bool                   `yaml:"patch_pwsh_bleed,omitempty"`
-	EnableCursorPositioning bool                   `yaml:"enable_cursor_positioning,omitempty"`
 	Segments                map[string]*Segment    `yaml:"-"`
 	Source                  string                 `yaml:"-"`
 	Prompt                  []PromptLayout         `yaml:"prompt,omitempty"`
@@ -59,6 +53,12 @@ type LayoutConfig struct {
 	SecondaryPrompt         []PromptLayout         `yaml:"secondary,omitempty"`
 	TransientPrompt         []PromptLayout         `yaml:"transient,omitempty"`
 	TransientRPrompt        []PromptLayout         `yaml:"rtransient,omitempty"`
+	DaemonTimeout           int                    `yaml:"daemon_timeout,omitempty"`
+	Async                   bool                   `yaml:"async,omitempty"`
+	ShellIntegration        bool                   `yaml:"shell_integration,omitempty"`
+	FinalSpace              bool                   `yaml:"final_space,omitempty"`
+	PatchPwshBleed          bool                   `yaml:"patch_pwsh_bleed,omitempty"`
+	EnableCursorPositioning bool                   `yaml:"enable_cursor_positioning,omitempty"`
 }
 
 type layoutRawConfig struct {

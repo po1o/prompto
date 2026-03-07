@@ -1,28 +1,60 @@
 package upgrade
 
 import (
+	"io"
+	stdhttp "net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/po1o/prompto/src/build"
+	runtimehttp "github.com/po1o/prompto/src/runtime/http"
 	"github.com/stretchr/testify/assert"
 )
 
+type httpClientFunc func(req *stdhttp.Request) (*stdhttp.Response, error)
+
+func (fn httpClientFunc) Do(req *stdhttp.Request) (*stdhttp.Response, error) {
+	return fn(req)
+}
+
 func TestCanUpgrade(t *testing.T) {
+	const latest = "3.1.0"
+
+	oldHTTPClient := runtimehttp.HTTPClient
+	runtimehttp.HTTPClient = httpClientFunc(func(_ *stdhttp.Request) (*stdhttp.Response, error) {
+		return &stdhttp.Response{
+			StatusCode: stdhttp.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(latest)),
+		}, nil
+	})
+	t.Cleanup(func() {
+		runtimehttp.HTTPClient = oldHTTPClient
+	})
+
+	oldIsConnected := isConnected
+	isConnected = func() bool { return true }
+	t.Cleanup(func() {
+		isConnected = oldIsConnected
+	})
+
+	oldVersion := build.Version
+	t.Cleanup(func() {
+		build.Version = oldVersion
+		os.Setenv("PROMPTO_INSTALLER", "")
+	})
+
 	ugc := &Config{}
-	latest, _ := ugc.FetchLatest()
 
 	cases := []struct {
 		Case           string
 		CurrentVersion string
 		Installer      string
 		Expected       bool
-		Cache          bool
 	}{
 		{Case: "Up to date", CurrentVersion: latest},
 		{Case: "Outdated Linux", Expected: true, CurrentVersion: "3.0.0"},
 		{Case: "Outdated Darwin", Expected: true, CurrentVersion: "3.0.0"},
-		{Case: "Cached", Cache: true, CurrentVersion: latest},
 		{Case: "Windows Store", Installer: "ws"},
 	}
 

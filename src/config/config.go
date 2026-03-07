@@ -57,36 +57,36 @@ type Config struct {
 	Var                     map[string]any         `yaml:"var,omitempty"`
 	Palettes                *color.Palettes        `yaml:"palettes,omitempty"`
 	ValidLine               *Segment               `yaml:"valid_line,omitempty"`
-	HasSecondary            bool                   `yaml:"-"`
-	HasTransient            bool                   `yaml:"-"`
 	ErrorLine               *Segment               `yaml:"error_line,omitempty"`
 	Maps                    *maps.Config           `yaml:"maps,omitempty"`
 	Upgrade                 *upgrade.Config        `yaml:"upgrade,omitempty"`
 	VimMode                 *VimConfig             `yaml:"vim-mode,omitempty"`
-	FilePaths               []string               `yaml:"-"`
-	AccentColor             color.Ansi             `yaml:"accent_color,omitempty"`
+	Layout                  *LayoutConfig          `yaml:"-"`
+	Source                  string                 `yaml:"-"`
 	DaemonIdleTimeout       string                 `yaml:"daemon_idle_timeout,omitempty"`
 	RenderPendingIcon       string                 `yaml:"render_pending_icon,omitempty"`
 	RenderPendingBackground color.Ansi             `yaml:"render_pending_background,omitempty"`
 	ConsoleTitleTemplate    string                 `yaml:"console_title_template,omitempty"`
 	PWD                     string                 `yaml:"pwd,omitempty"`
-	Source                  string                 `yaml:"-"`
+	AccentColor             color.Ansi             `yaml:"accent_color,omitempty"`
 	Format                  string                 `yaml:"-"`
 	TerminalBackground      color.Ansi             `yaml:"terminal_background,omitempty"`
 	ToolTipsAction          Action                 `yaml:"tooltips_action,omitempty"`
+	FilePaths               []string               `yaml:"-"`
+	Tooltips                []*Segment             `yaml:"tooltips,omitempty"`
 	Cycle                   color.Cycle            `yaml:"cycle,omitempty"`
 	ITermFeatures           terminal.ITermFeatures `yaml:"iterm_features,omitempty"`
-	Tooltips                []*Segment             `yaml:"tooltips,omitempty"`
+	DaemonTimeout           int                    `yaml:"daemon_timeout,omitempty"`
 	hash                    uint64
-	Layout                  *LayoutConfig `yaml:"-"`
-	DaemonTimeout           int           `yaml:"daemon_timeout,omitempty"`
-	Async                   bool          `yaml:"async,omitempty"`
-	ShellIntegration        bool          `yaml:"shell_integration,omitempty"`
-	FinalSpace              bool          `yaml:"final_space,omitempty"`
-	UpgradeNotice           bool          `yaml:"-"`
-	PatchPwshBleed          bool          `yaml:"patch_pwsh_bleed,omitempty"`
-	AutoUpgrade             bool          `yaml:"-"`
-	EnableCursorPositioning bool          `yaml:"enable_cursor_positioning,omitempty"`
+	Async                   bool `yaml:"async,omitempty"`
+	HasTransient            bool `yaml:"-"`
+	ShellIntegration        bool `yaml:"shell_integration,omitempty"`
+	FinalSpace              bool `yaml:"final_space,omitempty"`
+	UpgradeNotice           bool `yaml:"-"`
+	PatchPwshBleed          bool `yaml:"patch_pwsh_bleed,omitempty"`
+	AutoUpgrade             bool `yaml:"-"`
+	EnableCursorPositioning bool `yaml:"enable_cursor_positioning,omitempty"`
+	HasSecondary            bool `yaml:"-"`
 }
 
 func (cfg *Config) MakeColors(env runtime.Environment) color.String {

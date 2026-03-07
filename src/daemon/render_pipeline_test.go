@@ -115,3 +115,20 @@ func TestApplyRenderFlagsRepaintOnlyUpdatesVimMode(t *testing.T) {
 	require.Equal(t, "/tmp/first", term.Flags().PWD)
 	require.Equal(t, "normal", term.Flags().VimMode)
 }
+
+func TestRenderPipelineRepaintWithoutActiveRenderReturnsNoActiveHandle(t *testing.T) {
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	})
+	sessionRuntime := NewSessionRenderRuntime(registry, nil)
+	renderer := &rendererStub{}
+	pipeline := NewRenderPipeline(sessionRuntime, renderer, nil)
+
+	bundle, active := pipeline.Start("session-a", &runtime.Flags{VimMode: "normal"}, true)
+
+	require.Equal(t, "render", bundle.Primary)
+	require.Nil(t, active)
+
+	_, _, ok := registry.GetActiveRender("session-a")
+	require.False(t, ok)
+}

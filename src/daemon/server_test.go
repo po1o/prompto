@@ -224,6 +224,43 @@ func TestMakePromptResponseIncludesRightTransientWhenPresent(t *testing.T) {
 	require.Equal(t, "transient-right", response.Prompts["rtransient"].Text)
 }
 
+func TestServerReplacePrimaryStreamCancelsPrevious(t *testing.T) {
+	server := &Server{
+		primaryStreams: make(map[string]primaryStreamState),
+	}
+
+	firstCanceled := make(chan struct{}, 1)
+	firstRelease := server.replacePrimaryStream("session-a", "request-1", func() {
+		select {
+		case firstCanceled <- struct{}{}:
+		default:
+		}
+	})
+
+	secondRelease := server.replacePrimaryStream("session-a", "request-2", func() {})
+
+	select {
+	case <-firstCanceled:
+	case <-time.After(250 * time.Millisecond):
+		t.Fatal("expected previous primary stream to be canceled")
+	}
+
+	firstRelease()
+
+	server.streamMu.Lock()
+	current, ok := server.primaryStreams["session-a"]
+	server.streamMu.Unlock()
+	require.True(t, ok)
+	require.Equal(t, "request-2", current.requestID)
+
+	secondRelease()
+
+	server.streamMu.Lock()
+	_, ok = server.primaryStreams["session-a"]
+	server.streamMu.Unlock()
+	require.False(t, ok)
+}
+
 func startTestServer(t *testing.T, configPath string) *Server {
 	t.Helper()
 

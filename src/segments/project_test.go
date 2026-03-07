@@ -637,8 +637,12 @@ func TestPowerShellModuleProject(t *testing.T) {
 		})
 		var moduleContent string
 		if tc.HasFiles {
-			content, _ := os.ReadFile("../test/prompto.psd1")
-			moduleContent = string(content)
+			moduleContent = `
+@{
+	RootModule = 'prompto.psm1'
+	ModuleVersion = '1.0.0.0'
+}
+`
 		}
 		env.On("FileContent", "prompto.psd1").Return(moduleContent)
 		pkg := &Project{}

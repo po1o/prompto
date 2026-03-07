@@ -669,7 +669,7 @@ func TestGitCleanSSHURL(t *testing.T) {
 		{Case: "rsync no port, no user", Expected: "https://host.xz/path/to/repo", Upstream: "rsync://host.xz/path/to/repo.git/"},
 		{Case: "git no port, no user", Expected: "https://host.xz/path/to/repo", Upstream: "git://host.xz/path/to/repo.git"},
 		{Case: "gitea no port, no user", Expected: "https://src.example.com/user/repo", Upstream: "_gitea@src.example.com:user/repo.git"},
-		{Case: "git@ with user", Expected: "https://github.com/po1o/prompto", Upstream: "git@github.com:JanDeDobbeleer/prompto"},
+		{Case: "git@ with user", Expected: "https://github.com/po1o/prompto", Upstream: "git@github.com:po1o/prompto"},
 		{Case: "unsupported", Upstream: "\\test\\repo.git"},
 		{Case: "Azure DevOps, https", Expected: "https://dev.azure.com/prompto/prompto/_git/website", Upstream: "https://prompto@dev.azure.com/prompto/prompto/_git/website"},
 		{Case: "Azure DevOps, ssh", Expected: "https://dev.azure.com/prompto/prompto/_git/website", Upstream: "git@ssh.dev.azure.com:v3/prompto/prompto/website"},
@@ -1158,14 +1158,14 @@ func TestGitRemotes(t *testing.T) {
 			Expected: 2,
 			Config: `
 [remote "origin"]
-	url = git@github.com:JanDeDobbeleer/test.git
+	url = git@github.com:po1o/test.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 [remote "upstream"]
 	url = git@github.com:microsoft/test.git
 	fetch = +refs/heads/*:refs/remotes/upstream/*
 `,
 			ExpectedRemotes: map[string]string{
-				"origin":   "https://github.com/JanDeDobbeleer/test",
+				"origin":   "https://github.com/po1o/test",
 				"upstream": "https://github.com/microsoft/test",
 			},
 		},
@@ -1174,11 +1174,11 @@ func TestGitRemotes(t *testing.T) {
 			Expected: 1,
 			Config: `
 [remote "origin"]
-	url = git@github.com:JanDeDobbeleer/test.git
+	url = git@github.com:po1o/test.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 `,
 			ExpectedRemotes: map[string]string{
-				"origin": "https://github.com/JanDeDobbeleer/test",
+				"origin": "https://github.com/po1o/test",
 			},
 		},
 		{
@@ -1192,7 +1192,7 @@ func TestGitRemotes(t *testing.T) {
 			Expected: 3,
 			Config: `
 [remote "origin"]
-	url = git@github.com:JanDeDobbeleer/test.git
+	url = git@github.com:po1o/test.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
 [remote "upstream"]
 	url = https://github.com/microsoft/test.git
@@ -1202,7 +1202,7 @@ func TestGitRemotes(t *testing.T) {
 	fetch = +refs/heads/*:refs/remotes/fork/*
 `,
 			ExpectedRemotes: map[string]string{
-				"origin":   "https://github.com/JanDeDobbeleer/test",
+				"origin":   "https://github.com/po1o/test",
 				"upstream": "https://github.com/microsoft/test.git",
 				"fork":     "https://gitlab.com/user/test",
 			},

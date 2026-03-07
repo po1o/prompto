@@ -46,6 +46,7 @@ type Engine struct {
 	stateMu               sync.Mutex
 	Plain                 bool
 	forceRender           bool
+	repaintOnly           bool
 }
 
 const (
@@ -395,16 +396,13 @@ func (e *Engine) adjustTrailingDiamondColorOverrides() {
 	}
 
 	adjustOverride := func(anchor string, override color.Ansi) {
-		newOverride := override
-		switch override { //nolint:exhaustive
-		case color.Foreground:
-			newOverride = color.ParentForeground
-		case color.Background:
-			newOverride = color.ParentBackground
+		if override != color.Foreground && override != color.Background {
+			return
 		}
 
-		if override == newOverride {
-			return
+		newOverride := color.ParentForeground
+		if override == color.Background {
+			newOverride = color.ParentBackground
 		}
 
 		newAnchor := strings.Replace(match[terminal.ANCHOR], string(override), string(newOverride), 1)

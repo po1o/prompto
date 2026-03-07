@@ -214,3 +214,112 @@ func TestServiceDeregistersRenderWhenCompleteUpdateArrives(t *testing.T) {
 	require.Equal(t, 0, active)
 	require.False(t, reloading)
 }
+
+func TestServiceNextUpdateContextCancelKeepsActiveRender(t *testing.T) {
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	})
+	service := NewService(registry, nil, &rendererStub{})
+	sessionID := sessionIDFixture
+
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	_, renderID, ok := registry.GetActiveRender(sessionID)
+	require.True(t, ok)
+	require.Equal(t, 1, service.SessionCount())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, ok = service.NextUpdate(ctx, sessionID, 0)
+	require.False(t, ok)
+	require.Equal(t, 1, service.SessionCount())
+
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		service.SessionHub(sessionID).Publish("path.main", renderID)
+	}()
+
+	freshCtx, freshCancel := context.WithTimeout(context.Background(), time.Second)
+	defer freshCancel()
+	update, ok := service.NextUpdate(freshCtx, sessionID, 0)
+	require.True(t, ok)
+	require.Equal(t, "path.main", update.Segment)
+}
+
+func TestServiceNextUpdateStopsWhenRenderIsSuperseded(t *testing.T) {
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	})
+	service := NewService(registry, nil, &rendererStub{})
+	sessionID := sessionIDFixture
+
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+
+	firstDone := make(chan bool, 1)
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		_, ok := service.NextUpdate(ctx, sessionID, 0)
+		firstDone <- ok
+	}()
+
+	time.Sleep(20 * time.Millisecond)
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+
+	select {
+	case ok := <-firstDone:
+		require.False(t, ok)
+	case <-time.After(250 * time.Millisecond):
+		t.Fatal("superseded render stream should stop promptly")
+	}
+}
+
+func TestServiceStartRenderRepaintSkipsCompletedActiveRender(t *testing.T) {
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	})
+	service := NewService(registry, nil, &rendererStub{})
+	sessionID := sessionIDFixture
+
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	_, renderID, ok := registry.GetActiveRender(sessionID)
+	require.True(t, ok)
+
+	service.SessionHub(sessionID).Publish(renderCompletePayload, renderID)
+
+	response := service.StartRender(RenderRequest{
+		SessionID: sessionID,
+		Flags:     &runtime.Flags{VimMode: "normal"},
+		Repaint:   true,
+	})
+
+	require.Equal(t, "initial", response.Type)
+	require.Equal(t, uint64(1), response.Sequence)
+	require.Equal(t, 0, service.SessionCount())
+
+	_, _, ok = registry.GetActiveRender(sessionID)
+	require.False(t, ok)
+}
+
+func TestServiceStartRenderReattachStartsAfterCurrentSequence(t *testing.T) {
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	})
+	service := NewService(registry, nil, &rendererStub{})
+	sessionID := sessionIDFixture
+
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	_, renderID, ok := registry.GetActiveRender(sessionID)
+	require.True(t, ok)
+
+	snapshot := service.SessionHub(sessionID).Publish("path.main", renderID)
+
+	response := service.StartRender(RenderRequest{
+		SessionID: sessionID,
+		Flags:     &runtime.Flags{VimMode: "normal"},
+		Repaint:   true,
+	})
+
+	require.Equal(t, "initial", response.Type)
+	require.Equal(t, snapshot.Sequence, response.Sequence)
+}

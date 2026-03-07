@@ -9,6 +9,8 @@ import (
 	"github.com/po1o/prompto/src/runtime/http"
 )
 
+var isConnected = http.IsConnected
+
 const (
 	CACHEKEY = "upgrade_check"
 
@@ -31,7 +33,7 @@ func (cfg *Config) Notice() (string, bool) {
 		return "", false
 	}
 
-	if !http.IsConnected() {
+	if !isConnected() {
 		return "", false
 	}
 

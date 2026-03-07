@@ -14,7 +14,6 @@ const (
 
 func (e *Engine) RPrompt() string {
 	e.resetSharedProviders()
-
 	if e.LayoutConfig == nil || len(e.LayoutConfig.RPrompt) == 0 {
 		return ""
 	}
