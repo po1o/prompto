@@ -89,9 +89,6 @@ func (e *Engine) prepareStreamingSegments() ([]streamingSegment, map[string]bool
 	completed := make(map[string]bool)
 
 	blocks := e.streamingBlocks
-	if len(blocks) == 0 {
-		blocks = e.Config.Blocks
-	}
 
 	for blockIndex, block := range blocks {
 		for segmentIndex, segment := range block.Segments {
@@ -295,9 +292,6 @@ func (e *Engine) PrimaryRepaint() string {
 	}
 
 	blocks := e.streamingBlocks
-	if len(blocks) == 0 {
-		blocks = e.Config.Blocks
-	}
 
 	for blockIndex, block := range blocks {
 		for segmentIndex, segment := range block.Segments {
@@ -351,7 +345,7 @@ func (e *Engine) renderStreamingPrompt() string {
 	e.rpromptLength = 0
 
 	needsPrimaryRightPrompt := e.needsPrimaryRightPrompt()
-	if e.hasCompiledPrimaryLayout() {
+	if e.hasLayoutPrimary() {
 		needsPrimaryRightPrompt = false
 	}
 
@@ -393,9 +387,6 @@ func (e *Engine) writePrimaryPromptStreaming(needsPrimaryRPrompt bool) {
 	var cancelNewline, didRender bool
 
 	blocks := e.streamingBlocks
-	if len(blocks) == 0 {
-		blocks = e.Config.Blocks
-	}
 
 	for i, block := range blocks {
 		if i == 0 {
@@ -407,7 +398,7 @@ func (e *Engine) writePrimaryPromptStreaming(needsPrimaryRPrompt bool) {
 			cancelNewline = !didRender
 		}
 
-		if block.Type == config.RPrompt && !needsPrimaryRPrompt && !e.hasCompiledPrimaryLayout() {
+		if block.Type == config.RPrompt && !needsPrimaryRPrompt && !e.hasLayoutPrimary() {
 			continue
 		}
 
@@ -439,11 +430,7 @@ func (e *Engine) writePrimaryPromptStreaming(needsPrimaryRPrompt bool) {
 }
 
 func (e *Engine) resolveStreamingBlocks() []*config.Block {
-	if e.hasCompiledPrimaryLayout() {
-		return e.compiledPrimaryBlocks()
-	}
-
-	return e.Config.Blocks
+	return e.layoutPrimaryBlocks()
 }
 
 func (e *Engine) renderBlockStreaming(block *config.Block, blockIndex int, cancelNewline bool) bool {

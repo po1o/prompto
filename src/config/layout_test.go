@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseCompiledYAMLWithTypedInstances(t *testing.T) {
+func TestParseLayoutYAMLWithTypedInstances(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["session", "path"]
@@ -44,7 +44,7 @@ git.main:
     branch_max_length: 20
 `
 
-	cfg, err := ParseCompiledYAML([]byte(raw))
+	cfg, err := ParseLayoutYAML([]byte(raw))
 	require.NoError(t, err)
 
 	require.Len(t, cfg.Prompt, 1)
@@ -81,7 +81,7 @@ git.main:
 	assert.Equal(t, float64(20), cfg.Segments["git.main"].Options["branch_max_length"])
 }
 
-func TestParseCompiledYAMLStyleShortcutOnPromptLines(t *testing.T) {
+func TestParseLayoutYAMLStyleShortcutOnPromptLines(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["session"]
@@ -95,7 +95,7 @@ session:
   type: "session"
 `
 
-	cfg, err := ParseCompiledYAML([]byte(raw))
+	cfg, err := ParseLayoutYAML([]byte(raw))
 	require.NoError(t, err)
 
 	require.Len(t, cfg.Prompt, 1)
@@ -107,7 +107,7 @@ session:
 	assert.Equal(t, "", cfg.RPrompt[0].TrailingDiamond)
 }
 
-func TestParseCompiledYAMLStyleShortcutOnSegments(t *testing.T) {
+func TestParseLayoutYAMLStyleShortcutOnSegments(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["git"]
@@ -116,7 +116,7 @@ git:
   style: "powerline"
 `
 
-	cfg, err := ParseCompiledYAML([]byte(raw))
+	cfg, err := ParseLayoutYAML([]byte(raw))
 	require.NoError(t, err)
 
 	segment := cfg.Segments["git"]
@@ -126,7 +126,7 @@ git:
 	assert.Equal(t, "\uE0B0", segment.TrailingDiamond)
 }
 
-func TestParseCompiledYAMLReturnsErrorForUnknownSegmentReference(t *testing.T) {
+func TestParseLayoutYAMLReturnsErrorForUnknownSegmentReference(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["missing"]
@@ -135,12 +135,12 @@ session:
   type: "session"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "unknown segment")
 }
 
-func TestParseCompiledYAMLReturnsErrorForInvalidSegmentType(t *testing.T) {
+func TestParseLayoutYAMLReturnsErrorForInvalidSegmentType(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["custom"]
@@ -149,12 +149,12 @@ custom:
   type: "not-real"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "unsupported segment type")
 }
 
-func TestParseCompiledYAMLReturnsErrorWhenTypeCannotBeInferred(t *testing.T) {
+func TestParseLayoutYAMLReturnsErrorWhenTypeCannotBeInferred(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["main"]
@@ -163,12 +163,12 @@ main:
   style: "powerline"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "missing type")
 }
 
-func TestParseCompiledYAMLReturnsErrorForDirectPromptDiamonds(t *testing.T) {
+func TestParseLayoutYAMLReturnsErrorForDirectPromptDiamonds(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["session"]
@@ -178,12 +178,12 @@ session:
   type: "session"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "does not allow leading_diamond/trailing_diamond")
 }
 
-func TestParseCompiledYAMLReturnsErrorForMutuallyExclusiveLineSeparatorConfig(t *testing.T) {
+func TestParseLayoutYAMLReturnsErrorForMutuallyExclusiveLineSeparatorConfig(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["session"]
@@ -194,12 +194,12 @@ session:
   type: "session"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "cannot define both leading_style and leading_separator")
 }
 
-func TestParseCompiledYAMLReturnsErrorForStyleShortcutMixedWithLineOverrides(t *testing.T) {
+func TestParseLayoutYAMLReturnsErrorForStyleShortcutMixedWithLineOverrides(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["session"]
@@ -210,12 +210,12 @@ session:
   type: "session"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "cannot define style together with explicit leading/trailing separator settings")
 }
 
-func TestParseCompiledYAMLReturnsErrorForDirectSegmentDiamonds(t *testing.T) {
+func TestParseLayoutYAMLReturnsErrorForDirectSegmentDiamonds(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["session"]
@@ -225,12 +225,12 @@ session:
   leading_diamond: "<"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "does not allow leading_diamond")
 }
 
-func TestParseCompiledYAMLReturnsErrorForMutuallyExclusiveSegmentSeparatorConfig(t *testing.T) {
+func TestParseLayoutYAMLReturnsErrorForMutuallyExclusiveSegmentSeparatorConfig(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["session"]
@@ -241,12 +241,12 @@ session:
   leading_separator: "<"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "cannot define both leading_style and leading_separator")
 }
 
-func TestParseCompiledYAMLReturnsErrorForStyleShortcutMixedWithSegmentOverrides(t *testing.T) {
+func TestParseLayoutYAMLReturnsErrorForStyleShortcutMixedWithSegmentOverrides(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["session"]
@@ -256,12 +256,12 @@ session:
   leading_style: "rounded"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "cannot define style together with explicit leading/trailing separator settings")
 }
 
-func TestParseCompiledYAMLAllowsVimModeTopLevelConfig(t *testing.T) {
+func TestParseLayoutYAMLAllowsVimModeTopLevelConfig(t *testing.T) {
 	raw := `
 vim-mode:
   enabled: true
@@ -274,13 +274,13 @@ session:
   type: "session"
 `
 
-	cfg, err := ParseCompiledYAML([]byte(raw))
+	cfg, err := ParseLayoutYAML([]byte(raw))
 	require.NoError(t, err)
 	require.Len(t, cfg.Prompt, 1)
 	require.Contains(t, cfg.Segments, "session")
 }
 
-func TestParseCompiledYAMLInfersVimSegmentType(t *testing.T) {
+func TestParseLayoutYAMLInfersVimSegmentType(t *testing.T) {
 	raw := `
 vim-mode:
   enabled: true
@@ -299,13 +299,13 @@ vim:
   template: "{{ if .Normal }} NORMAL {{ end }}"
 `
 
-	cfg, err := ParseCompiledYAML([]byte(raw))
+	cfg, err := ParseLayoutYAML([]byte(raw))
 	require.NoError(t, err)
 	require.Contains(t, cfg.Segments, "vim")
 	assert.Equal(t, VIM, cfg.Segments["vim"].Type)
 }
 
-func TestParseCompiledYAMLAllowsTopLevelMetadataTables(t *testing.T) {
+func TestParseLayoutYAMLAllowsTopLevelMetadataTables(t *testing.T) {
 	raw := `
 palette:
   bg: "#101010"
@@ -330,7 +330,7 @@ session:
   type: "session"
 `
 
-	cfg, err := ParseCompiledYAML([]byte(raw))
+	cfg, err := ParseLayoutYAML([]byte(raw))
 	require.NoError(t, err)
 	require.Len(t, cfg.Prompt, 1)
 	require.Contains(t, cfg.Segments, "session")
@@ -342,7 +342,7 @@ session:
 	assert.Equal(t, "prompto", cfg.Var["app"])
 }
 
-func TestParseCompiledYAMLSupportsSecondaryAndTransient(t *testing.T) {
+func TestParseLayoutYAMLSupportsSecondaryAndTransient(t *testing.T) {
 	raw := `
 secondary:
   - segments: ["session"]
@@ -357,7 +357,7 @@ session:
   type: "session"
 `
 
-	cfg, err := ParseCompiledYAML([]byte(raw))
+	cfg, err := ParseLayoutYAML([]byte(raw))
 	require.NoError(t, err)
 	require.Len(t, cfg.SecondaryPrompt, 1)
 	require.Len(t, cfg.TransientPrompt, 1)
@@ -365,7 +365,7 @@ session:
 	assert.Equal(t, []string{"session"}, cfg.TransientPrompt[0].Segments)
 }
 
-func TestParseCompiledYAMLRejectsSecondaryPromptTopLevelConfig(t *testing.T) {
+func TestParseLayoutYAMLRejectsSecondaryPromptTopLevelConfig(t *testing.T) {
 	raw := `
 secondary_prompt:
   - segments: ["session"]
@@ -377,12 +377,12 @@ session:
   type: "session"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "use secondary")
 }
 
-func TestParseCompiledYAMLRejectsTransientPromptTopLevelConfig(t *testing.T) {
+func TestParseLayoutYAMLRejectsTransientPromptTopLevelConfig(t *testing.T) {
 	raw := `
 transient_prompt:
   - segments: ["session"]
@@ -394,12 +394,12 @@ session:
   type: "session"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "use transient")
 }
 
-func TestParseCompiledYAMLRejectsTransientRPromptTopLevelConfig(t *testing.T) {
+func TestParseLayoutYAMLRejectsTransientRPromptTopLevelConfig(t *testing.T) {
 	raw := `
 transient_rprompt:
   - segments: ["session"]
@@ -411,12 +411,12 @@ session:
   type: "session"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "use rtransient")
 }
 
-func TestParseCompiledYAMLRejectsTopLevelVimConfig(t *testing.T) {
+func TestParseLayoutYAMLRejectsTopLevelVimConfig(t *testing.T) {
 	raw := `
 vim:
   enabled: true
@@ -428,13 +428,13 @@ session:
   type: "session"
 `
 
-	_, err := ParseCompiledYAML([]byte(raw))
+	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "use vim-mode")
 }
 
-func TestCompiledConfigApplyMetadata(t *testing.T) {
-	compiled := &CompiledConfig{
+func TestLayoutConfigApplyMetadata(t *testing.T) {
+	layout := &LayoutConfig{
 		Palette: color.Palette{
 			"bg": "#000000",
 		},
@@ -449,7 +449,7 @@ func TestCompiledConfigApplyMetadata(t *testing.T) {
 	}
 
 	target := &Config{}
-	compiled.ApplyMetadata(target)
+	layout.ApplyMetadata(target)
 
 	assert.Equal(t, color.Ansi("#000000"), target.Palette["bg"])
 	assert.Equal(t, "value", target.Var["key"])

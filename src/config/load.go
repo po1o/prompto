@@ -1,9 +1,7 @@
 package config
 
 import (
-	"errors"
 	"fmt"
-	"hash"
 	"hash/fnv"
 	"os"
 	"path/filepath"
@@ -15,7 +13,6 @@ import (
 	"github.com/po1o/prompto/src/cli/upgrade"
 	"github.com/po1o/prompto/src/log"
 	"github.com/po1o/prompto/src/runtime/path"
-	yaml "go.yaml.in/yaml/v3"
 )
 
 // Custom error types for config validation
@@ -106,45 +103,53 @@ func Parse(configFile string) (*Config, error) {
 
 	defer configDSC.Save()
 
-	// Hash is used as lightweight config identity for change detection/caching.
 	h := fnv.New64a()
+	format := strings.TrimPrefix(filepath.Ext(configFile), ".")
+	if format == YML {
+		format = YAML
+	}
 
-	cfg, err := read(configFile, h)
+	if format != YAML {
+		log.Errorf("unsupported config file format: %s", format)
+		return nil, ErrInvalidExtension
+	}
+
+	data, err := getData(configFile)
 	if err != nil {
-		log.Errorf("failed to read config: %s", configFile)
-		return nil, err
+		log.Errorf("failed to read config: %v", err)
+		return nil, ErrFileNotFound
 	}
 
-	parentFolder := filepath.Dir(configFile)
-	filePaths := []string{configFile}
-
-	for cfg.Extends != "" {
-		// Resolve relative extends from the current config directory.
-		cfg.Extends = resolvePath(cfg.Extends, parentFolder)
-		filePaths = append(filePaths, cfg.Extends)
-		base, err := read(cfg.Extends, h)
-		if err != nil {
-			log.Errorf("failed to read extended config: %s", cfg.Extends)
-			break
-		}
-
-		configDSC.Add(cfg.Extends)
-
-		err = base.merge(cfg)
-		if err != nil {
-			log.Error(err)
-			break
-		}
-
-		cfg = base
+	layout, err := ParseLayoutYAML(data)
+	if err != nil {
+		log.Errorf("failed to parse layout config: %v", err)
+		return nil, ErrParse
 	}
 
+	_, err = h.Write(data)
+	if err != nil {
+		log.Error(err)
+	}
+
+	cfg := Default(nil)
+	cfg.Blocks = nil
+	cfg.FilePaths = []string{configFile}
+	cfg.Format = format
 	cfg.Source = configFile
-	cfg.FilePaths = filePaths
 	cfg.hash = h.Sum64()
-	cfg.migrateSegmentProperties()
+	cfg.Layout = layout
 
+	layout.Source = configFile
+	layout.ApplyMetadata(cfg)
 	cfg.toggleSegments()
+
+	if len(layout.Prompt) > 0 {
+		cfg.Blocks = append(cfg.Blocks, &Block{Type: Prompt})
+	}
+
+	if len(layout.RPrompt) > 0 {
+		cfg.Blocks = append(cfg.Blocks, &Block{Type: RPrompt})
+	}
 
 	if cfg.Upgrade == nil {
 		cfg.Upgrade = &upgrade.Config{
@@ -160,61 +165,6 @@ func Parse(configFile string) (*Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func resolvePath(configFile, parentFolder string) string {
-	configFile = path.ReplaceTildePrefixWithHomeDir(configFile)
-
-	if filepath.IsAbs(configFile) {
-		return configFile
-	}
-
-	return filepath.Join(parentFolder, configFile)
-}
-
-func read(configFile string, h hash.Hash64) (*Config, error) {
-	defer log.Trace(time.Now())
-
-	if configFile == "" {
-		log.Debug("no config file specified, using default")
-		return Default(nil), nil
-	}
-
-	var cfg Config
-	cfg.Source = configFile
-	format := strings.TrimPrefix(filepath.Ext(configFile), ".")
-	if format == YML {
-		format = YAML
-	}
-	cfg.Format = format
-
-	data, err := getData(configFile)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			log.Errorf("config file not found: %v", err)
-			return nil, ErrFileNotFound
-		}
-		log.Errorf("failed to read config: %v", err)
-		return nil, ErrFileNotFound
-	}
-
-	if cfg.Format != YAML {
-		log.Errorf("unsupported config file format: %s", cfg.Format)
-		return nil, ErrInvalidExtension
-	}
-
-	parseErr := yaml.Unmarshal(data, &cfg)
-	if parseErr != nil {
-		log.Errorf("failed to parse config: %v", parseErr)
-		return nil, ErrParse
-	}
-
-	_, err = h.Write(data)
-	if err != nil {
-		log.Error(err)
-	}
-
-	return &cfg, nil
 }
 
 func getData(configFile string) ([]byte, error) {

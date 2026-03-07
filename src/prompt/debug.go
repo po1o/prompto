@@ -43,7 +43,7 @@ func (e *Engine) PrintDebug(startTime time.Time, version string) string {
 	var segments []*config.Segment
 	segments = append(segments, consoleTitle)
 
-	for _, block := range e.Config.Blocks {
+	for _, block := range e.layoutPrimaryBlocks() {
 		for _, segment := range block.Segments {
 			segments = append(segments, segment)
 			if segment.NameLength > largestSegmentNameLength {

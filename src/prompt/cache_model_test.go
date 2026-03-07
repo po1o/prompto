@@ -244,9 +244,9 @@ func newCacheTestEngine(count *int32) *Engine {
 	terminal.Colors = &color.Defaults{}
 
 	return &Engine{
-		Env:            env,
-		Config:         &config.Config{},
-		CompiledConfig: &config.CompiledConfig{},
+		Env:          env,
+		Config:       &config.Config{},
+		LayoutConfig: &config.LayoutConfig{},
 		sharedProviderFactory: map[config.SegmentType]sharedProviderFactory{
 			config.TEXT: func() sharedSegmentProvider {
 				return &countingProvider{count: count}
@@ -271,11 +271,11 @@ func newCacheTestEngineWithPwd(t *testing.T, pwd string) *Engine {
 	env.Init(flags)
 
 	return &Engine{
-		Env:            env,
-		Config:         &config.Config{},
-		CompiledConfig: &config.CompiledConfig{},
-		segmentStates:  make(map[string]*segmentAsyncState),
-		sessionCache:   make(map[string]segmentRenderCache),
-		folderCache:    make(map[string]segmentRenderCache),
+		Env:           env,
+		Config:        &config.Config{},
+		LayoutConfig:  &config.LayoutConfig{},
+		segmentStates: make(map[string]*segmentAsyncState),
+		sessionCache:  make(map[string]segmentRenderCache),
+		folderCache:   make(map[string]segmentRenderCache),
 	}
 }

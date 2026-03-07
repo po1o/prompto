@@ -27,7 +27,7 @@ type Engine struct {
 	Config                *config.Config
 	sessionCache          map[string]segmentRenderCache
 	sharedProviders       map[config.SegmentType]*onceProvider[sharedExecutionResult]
-	CompiledConfig        *config.CompiledConfig
+	LayoutConfig          *config.LayoutConfig
 	previousActiveSegment *config.Segment
 	pendingSegments       map[string]bool
 	cachedValues          map[string]string
@@ -440,23 +440,15 @@ func New(flags *runtime.Flags) *Engine {
 
 	reload, _ := cache.Get[bool](cache.Device, config.RELOAD)
 	cfg := config.Get(flags.ConfigPath, reload)
-
-	var compiledCfg *config.CompiledConfig
-	if flags.ConfigPath != "" {
-		compiled, err := config.LoadCompiled(flags.ConfigPath)
-		if err == nil {
-			compiledCfg = compiled
-			compiledCfg.ApplyMetadata(cfg)
-		}
+	if cfg.Layout == nil {
+		cfg.Layout = &config.LayoutConfig{}
+		cfg.Blocks = nil
 	}
+	layoutCfg := cfg.Layout
 
 	template.Init(env, cfg.Var, cfg.Maps)
 
-	flags.HasExtra = cfg.DebugPrompt != nil ||
-		cfg.SecondaryPrompt != nil ||
-		cfg.TransientPrompt != nil ||
-		cfg.ValidLine != nil ||
-		cfg.ErrorLine != nil
+	flags.HasExtra = cfg.SecondaryPrompt != nil || cfg.TransientPrompt != nil
 
 	// when we print using https://github.com/akinomyoga/ble.sh, this needs to be unescaped for certain prompts
 	sh := env.Shell()
@@ -474,7 +466,7 @@ func New(flags *runtime.Flags) *Engine {
 		Env:                   env,
 		Plain:                 flags.Plain,
 		forceRender:           flags.Force || len(env.Getenv("PROMPTO_FORCE_RENDER")) > 0,
-		CompiledConfig:        compiledCfg,
+		LayoutConfig:          layoutCfg,
 		sharedProviderFactory: defaultSharedProviderFactories(),
 		segmentStates:         make(map[string]*segmentAsyncState),
 		sessionCache:          make(map[string]segmentRenderCache),

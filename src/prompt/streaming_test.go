@@ -64,15 +64,15 @@ func TestPrimaryStreamingLongSegmentReturnsPendingThenUpdates(t *testing.T) {
 	configPath := filepath.Join(t.TempDir(), "slow-streaming.omp.yaml")
 	cfg := `
 daemon_timeout: 50
-blocks:
-  - type: prompt
-    segments:
-      - type: slow_test
-        alias: slow.main
-        template: SLOW
-        style: plain
-        foreground: "#ffffff"
-        background: "#000000"
+prompt:
+  - segments: ["slow.main"]
+
+slow.main:
+  type: "slow_test"
+  template: "SLOW"
+  style: "plain"
+  foreground: "#ffffff"
+  background: "#000000"
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
 
@@ -116,8 +116,8 @@ blocks:
 	require.Empty(t, engine.PendingSegments())
 }
 
-func TestPrimaryStreamingCompiledLayoutReturnsPendingThenUpdates(t *testing.T) {
-	segmentType := config.SegmentType("slow_test_compiled")
+func TestPrimaryStreamingLayoutReturnsPendingThenUpdates(t *testing.T) {
+	segmentType := config.SegmentType("slow_test_layout")
 	previous, hadPrevious := config.Segments[segmentType]
 	config.Segments[segmentType] = func() config.SegmentWriter { return &slowWriter{} }
 	t.Cleanup(func() {
@@ -136,7 +136,7 @@ prompt:
   - segments: ["slow.main"]
 
 slow.main:
-  type: "slow_test_compiled"
+  type: "slow_test_layout"
   style: "plain"
   template: "SLOW"
 `
@@ -177,7 +177,7 @@ slow.main:
 	}, 2*time.Second, 20*time.Millisecond)
 }
 
-func TestPrimaryRepaintCompiledLayoutReEvaluatesVimSegment(t *testing.T) {
+func TestPrimaryRepaintLayoutReEvaluatesVimSegment(t *testing.T) {
 	configPath := filepath.Join(t.TempDir(), "vim-repaint.omp.yaml")
 	cfg := `
 prompt:

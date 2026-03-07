@@ -29,7 +29,7 @@ var (
 )
 
 func (e *Engine) applySegmentCacheBeforeExecute(segment *config.Segment) (reused bool) {
-	if e.CompiledConfig == nil {
+	if e.LayoutConfig == nil {
 		return false
 	}
 
@@ -79,7 +79,7 @@ func (e *Engine) applySegmentCacheBeforeExecute(segment *config.Segment) (reused
 }
 
 func (e *Engine) storeSegmentCache(segment *config.Segment, renderedAt time.Time) {
-	if e.CompiledConfig == nil || !segment.Enabled {
+	if e.LayoutConfig == nil || !segment.Enabled {
 		return
 	}
 

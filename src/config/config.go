@@ -80,11 +80,12 @@ type Config struct {
 	ITermFeatures           terminal.ITermFeatures `json:"iterm_features,omitempty" toml:"iterm_features,omitempty" yaml:"iterm_features,omitempty"`
 	Tooltips                []*Segment             `json:"tooltips,omitempty" toml:"tooltips,omitempty" yaml:"tooltips,omitempty"`
 	hash                    uint64
-	DaemonTimeout           int  `json:"daemon_timeout,omitempty" toml:"daemon_timeout,omitempty" yaml:"daemon_timeout,omitempty"`
-	Async                   bool `json:"async,omitempty" toml:"async,omitempty" yaml:"async,omitempty"`
-	ShellIntegration        bool `json:"shell_integration,omitempty" toml:"shell_integration,omitempty" yaml:"shell_integration,omitempty"`
-	FinalSpace              bool `json:"final_space,omitempty" toml:"final_space,omitempty" yaml:"final_space,omitempty"`
-	UpgradeNotice           bool `json:"-" toml:"-" yaml:"-"`
+	Layout                  *LayoutConfig `json:"-" toml:"-" yaml:"-"`
+	DaemonTimeout           int           `json:"daemon_timeout,omitempty" toml:"daemon_timeout,omitempty" yaml:"daemon_timeout,omitempty"`
+	Async                   bool          `json:"async,omitempty" toml:"async,omitempty" yaml:"async,omitempty"`
+	ShellIntegration        bool          `json:"shell_integration,omitempty" toml:"shell_integration,omitempty" yaml:"shell_integration,omitempty"`
+	FinalSpace              bool          `json:"final_space,omitempty" toml:"final_space,omitempty" yaml:"final_space,omitempty"`
+	UpgradeNotice           bool          `json:"-" toml:"-" yaml:"-"`
 	extended                bool
 	PatchPwshBleed          bool `json:"patch_pwsh_bleed,omitempty" toml:"patch_pwsh_bleed,omitempty" yaml:"patch_pwsh_bleed,omitempty"`
 	AutoUpgrade             bool `json:"-" toml:"-" yaml:"-"`
@@ -202,6 +203,10 @@ func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features
 		}
 	}
 
+	if cfg.Layout != nil && len(cfg.Layout.RPrompt) > 0 {
+		feats |= shell.RPrompt
+	}
+
 	if cfg.VimMode != nil {
 		feats |= cfg.vimFeatures(cfg.VimMode)
 	}
@@ -293,16 +298,6 @@ func (cfg *Config) GetDaemonTimeout() time.Duration {
 	}
 
 	return time.Duration(cfg.DaemonTimeout) * time.Millisecond
-}
-
-// migrateSegmentProperties migrates the deprecated Properties field to Options for all segments.
-// This is needed for TOML configs since go-toml/v2 doesn't support custom unmarshalers.
-func (cfg *Config) migrateSegmentProperties() {
-	for _, block := range cfg.Blocks {
-		for _, segment := range block.Segments {
-			segment.MigratePropertiesToOptions()
-		}
-	}
 }
 
 // toggleSegments processes all segments in all blocks and adds segments

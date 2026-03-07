@@ -1,14 +1,6 @@
 package prompt
 
-import (
-	"fmt"
-
-	"github.com/po1o/prompto/src/color"
-	"github.com/po1o/prompto/src/config"
-	"github.com/po1o/prompto/src/shell"
-	"github.com/po1o/prompto/src/template"
-	"github.com/po1o/prompto/src/terminal"
-)
+import "github.com/po1o/prompto/src/config"
 
 type ExtraPromptType int
 
@@ -23,107 +15,21 @@ const (
 func (e *Engine) ExtraPrompt(promptType ExtraPromptType) string {
 	e.resetSharedProviders()
 
-	if promptType == Secondary && e.hasCompiledSecondaryLayout() {
-		return e.renderCompiledExtra(e.CompiledConfig.SecondaryPrompt)
+	if promptType == Secondary && e.hasLayoutSecondary() {
+		return e.renderLayoutExtra(e.LayoutConfig.SecondaryPrompt)
 	}
 
-	if promptType == Transient && e.hasCompiledTransientLayout() {
-		return e.renderCompiledExtra(e.CompiledConfig.TransientPrompt)
+	if promptType == Transient && e.hasLayoutTransient() {
+		return e.renderLayoutExtra(e.LayoutConfig.TransientPrompt)
 	}
 
-	var prompt *config.Segment
-
-	switch promptType {
-	case Debug:
-		prompt = e.Config.DebugPrompt
-	case Transient:
-		prompt = e.Config.TransientPrompt
-	case Valid:
-		prompt = e.Config.ValidLine
-	case Error:
-		prompt = e.Config.ErrorLine
-	case Secondary:
-		prompt = e.Config.SecondaryPrompt
-	}
-
-	if prompt == nil {
-		prompt = &config.Segment{}
-	}
-
-	getTemplate := func(template string) string {
-		if len(template) != 0 {
-			return template
-		}
-		switch promptType { //nolint: exhaustive
-		case Debug:
-			return "[DBG]: "
-		case Transient:
-			return "{{ .Shell }}> "
-		case Secondary:
-			return "> "
-		default:
-			return ""
-		}
-	}
-
-	promptText, err := template.Render(getTemplate(prompt.Template), nil)
-	if err != nil {
-		promptText = err.Error()
-	}
-
-	if promptType == Transient && prompt.Newline {
-		promptText = fmt.Sprintf("%s%s", e.getNewline(), promptText)
-	}
-
-	if promptType == Transient && e.Config.ShellIntegration {
-		exitCode, _ := e.Env.StatusCodes()
-		e.write(terminal.CommandFinished(exitCode, e.Env.Flags().NoExitCode))
-		e.write(terminal.PromptStart())
-	}
-
-	foreground := color.Ansi(prompt.ForegroundTemplates.FirstMatch(nil, string(prompt.Foreground)))
-	background := color.Ansi(prompt.BackgroundTemplates.FirstMatch(nil, string(prompt.Background)))
-	terminal.SetColors(background, foreground)
-	terminal.Write(background, foreground, promptText)
-
-	str, length := terminal.String()
-
-	if promptType == Transient && len(prompt.Filler) != 0 {
-		consoleWidth, err := e.Env.TerminalWidth()
-		if err == nil || consoleWidth != 0 {
-			if padText, OK := e.shouldFill(prompt.Filler, consoleWidth-length); OK {
-				str += padText
-			}
-		}
-	}
-
-	switch e.Env.Shell() {
-	case shell.ZSH:
-		if promptType == Transient {
-			if !e.Env.Flags().Eval {
-				break
-			}
-
-			prompt := fmt.Sprintf("PS1=%s", shell.QuotePosixStr(str))
-			// empty RPROMPT
-			prompt += "\nRPROMPT=''"
-			return prompt
-		}
-	case shell.PWSH:
-		if promptType == Transient {
-			// clear the line afterwards to prevent text from being written on the same line
-			// see https://github.com/po1o/prompto/issues/3628
-			return str + terminal.ClearAfter()
-		}
-	}
-
-	return str
+	return ""
 }
 
-func (e *Engine) renderCompiledExtra(layouts []config.PromptLayout) string {
+func (e *Engine) renderLayoutExtra(layouts []config.PromptLayout) string {
 	didRender := false
 	for i := range layouts {
-		block := e.compiledLayoutBlock(&layouts[i], config.Prompt, config.Left, i != 0)
+		block := e.layoutBlock(&layouts[i], config.Prompt, config.Left, i != 0)
 		cancelNewline := !didRender
 		if i == 0 {
 			cancelNewline = false

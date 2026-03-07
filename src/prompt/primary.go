@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/shell"
 	"github.com/po1o/prompto/src/terminal"
@@ -13,10 +12,7 @@ import (
 func (e *Engine) Primary() string {
 	e.resetSharedProviders()
 
-	needsPrimaryRightPrompt := e.needsPrimaryRightPrompt()
-	if e.hasCompiledPrimaryLayout() {
-		needsPrimaryRightPrompt = false
-	}
+	needsPrimaryRightPrompt := false
 
 	e.writePrimaryPrompt(needsPrimaryRightPrompt)
 
@@ -49,72 +45,11 @@ func (e *Engine) Primary() string {
 }
 
 func (e *Engine) writePrimaryPrompt(needsPrimaryRPrompt bool) {
-	if e.hasCompiledPrimaryLayout() {
-		e.writeCompiledPrimaryPrompt()
-		return
-	}
-
-	if e.Config.ShellIntegration {
-		exitCode, _ := e.Env.StatusCodes()
-		e.write(terminal.CommandFinished(exitCode, e.Env.Flags().NoExitCode))
-		e.write(terminal.PromptStart())
-	}
-
-	// cache a pointer to the color cycle
-	cycle = &e.Config.Cycle
-	var cancelNewline, didRender bool
-
-	for i, block := range e.Config.Blocks {
-		// do not print a leading newline when we're at the first row and the prompt is cleared
-		if i == 0 {
-			row, _ := e.Env.CursorPosition()
-			cancelNewline = e.Env.Flags().Cleared || e.Env.Flags().PromptCount == 1 || row == 1
-		}
-
-		// skip setting a newline when we didn't print anything yet
-		if i != 0 {
-			cancelNewline = !didRender
-		}
-
-		if block.Type == config.RPrompt && !needsPrimaryRPrompt {
-			continue
-		}
-
-		if e.renderBlock(block, cancelNewline) {
-			didRender = true
-		}
-
-		if e.Config.ToolTipsAction.IsDefault() {
-			continue
-		}
-
-		cache.Set(cache.Session, RPromptKey, e.rprompt, cache.INFINITE)
-		cache.Set(cache.Session, RPromptLengthKey, e.rpromptLength, cache.INFINITE)
-	}
-
-	if len(e.Config.ConsoleTitleTemplate) > 0 && !e.Env.Flags().Plain {
-		title := e.getTitleTemplateText()
-		e.write(terminal.FormatTitle(title))
-	}
-
-	if e.Config.FinalSpace {
-		e.write(" ")
-		e.currentLineLength++
-	}
-
-	if e.Config.ITermFeatures != nil && e.isIterm() {
-		host, _ := e.Env.Host()
-		e.write(terminal.RenderItermFeatures(e.Config.ITermFeatures, e.Env.Shell(), e.Env.Pwd(), e.Env.User(), host))
-	}
-
-	if e.Config.ShellIntegration {
-		e.write(terminal.CommandStart())
-	}
-
-	e.pwd()
+	_ = needsPrimaryRPrompt
+	e.writeLayoutPrimaryPrompt()
 }
 
-func (e *Engine) writeCompiledPrimaryPrompt() {
+func (e *Engine) writeLayoutPrimaryPrompt() {
 	if e.Config.ShellIntegration {
 		exitCode, _ := e.Env.StatusCodes()
 		e.write(terminal.CommandFinished(exitCode, e.Env.Flags().NoExitCode))
@@ -124,7 +59,7 @@ func (e *Engine) writeCompiledPrimaryPrompt() {
 	cycle = &e.Config.Cycle
 	var cancelNewline, didRender bool
 
-	lineCount := max(len(e.CompiledConfig.RPrompt), len(e.CompiledConfig.Prompt))
+	lineCount := max(len(e.LayoutConfig.RPrompt), len(e.LayoutConfig.Prompt))
 
 	for i := range lineCount {
 		if i == 0 {
@@ -136,17 +71,17 @@ func (e *Engine) writeCompiledPrimaryPrompt() {
 			cancelNewline = !didRender
 		}
 
-		if i < len(e.CompiledConfig.Prompt) {
-			left := e.compiledLayoutBlock(&e.CompiledConfig.Prompt[i], config.Prompt, config.Left, i != 0)
+		if i < len(e.LayoutConfig.Prompt) {
+			left := e.layoutBlock(&e.LayoutConfig.Prompt[i], config.Prompt, config.Left, i != 0)
 			if e.renderBlock(left, cancelNewline) {
 				didRender = true
 			}
 		}
 
-		if i < len(e.CompiledConfig.RPrompt) {
-			right := e.compiledLayoutBlock(&e.CompiledConfig.RPrompt[i], config.RPrompt, config.Right, false)
-			if i < len(e.CompiledConfig.Prompt) {
-				right.Filler = e.CompiledConfig.Prompt[i].Filler
+		if i < len(e.LayoutConfig.RPrompt) {
+			right := e.layoutBlock(&e.LayoutConfig.RPrompt[i], config.RPrompt, config.Right, false)
+			if i < len(e.LayoutConfig.Prompt) {
+				right.Filler = e.LayoutConfig.Prompt[i].Filler
 			}
 
 			if e.renderBlock(right, true) {

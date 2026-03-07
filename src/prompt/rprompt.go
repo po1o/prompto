@@ -15,34 +15,12 @@ const (
 func (e *Engine) RPrompt() string {
 	e.resetSharedProviders()
 
-	if e.CompiledConfig != nil && len(e.CompiledConfig.RPrompt) > 0 {
-		line := e.compiledLayoutBlock(&e.CompiledConfig.RPrompt[0], config.RPrompt, config.Right, false)
-		text, length := e.writeBlockSegments(line)
-
-		if length == 0 {
-			return ""
-		}
-
-		e.rpromptLength = length
-		return text
-	}
-
-	var rprompt *config.Block
-
-	for _, block := range e.Config.Blocks {
-		if block.Type != config.RPrompt {
-			continue
-		}
-
-		rprompt = block
-		break
-	}
-
-	if rprompt == nil {
+	if e.LayoutConfig == nil || len(e.LayoutConfig.RPrompt) == 0 {
 		return ""
 	}
 
-	text, length := e.writeBlockSegments(rprompt)
+	line := e.layoutBlock(&e.LayoutConfig.RPrompt[0], config.RPrompt, config.Right, false)
+	text, length := e.writeBlockSegments(line)
 
 	// do not print anything when we don't have any text
 	if length == 0 {

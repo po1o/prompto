@@ -27,41 +27,69 @@ type PromptLayout struct {
 	Segments          []string `json:"segments,omitempty" yaml:"segments,omitempty"`
 }
 
-type CompiledConfig struct {
-	Palette          color.Palette          `json:"palette,omitempty" yaml:"palette,omitempty"`
-	Var              map[string]any         `json:"var,omitempty" yaml:"var,omitempty"`
-	Palettes         *color.Palettes        `json:"palettes,omitempty" yaml:"palettes,omitempty"`
-	Maps             *configmaps.Config     `json:"maps,omitempty" yaml:"maps,omitempty"`
-	Upgrade          *upgrade.Config        `json:"upgrade,omitempty" yaml:"upgrade,omitempty"`
-	Cycle            color.Cycle            `json:"cycle,omitempty" yaml:"cycle,omitempty"`
-	ITermFeatures    terminal.ITermFeatures `json:"iterm_features,omitempty" yaml:"iterm_features,omitempty"`
-	VimMode          *VimConfig             `json:"vim-mode,omitempty" yaml:"vim-mode,omitempty"`
-	Segments         map[string]*Segment    `json:"-" yaml:"-"`
-	Source           string                 `json:"-" yaml:"-"`
-	Prompt           []PromptLayout         `json:"prompt,omitempty" yaml:"prompt,omitempty"`
-	RPrompt          []PromptLayout         `json:"rprompt,omitempty" yaml:"rprompt,omitempty"`
-	SecondaryPrompt  []PromptLayout         `json:"secondary,omitempty" yaml:"secondary,omitempty"`
-	TransientPrompt  []PromptLayout         `json:"transient,omitempty" yaml:"transient,omitempty"`
-	TransientRPrompt []PromptLayout         `json:"rtransient,omitempty" yaml:"rtransient,omitempty"`
+type LayoutConfig struct {
+	Palette                 color.Palette          `json:"palette,omitempty" yaml:"palette,omitempty"`
+	Var                     map[string]any         `json:"var,omitempty" yaml:"var,omitempty"`
+	Palettes                *color.Palettes        `json:"palettes,omitempty" yaml:"palettes,omitempty"`
+	Maps                    *configmaps.Config     `json:"maps,omitempty" yaml:"maps,omitempty"`
+	Upgrade                 *upgrade.Config        `json:"upgrade,omitempty" yaml:"upgrade,omitempty"`
+	Cycle                   color.Cycle            `json:"cycle,omitempty" yaml:"cycle,omitempty"`
+	ITermFeatures           terminal.ITermFeatures `json:"iterm_features,omitempty" yaml:"iterm_features,omitempty"`
+	VimMode                 *VimConfig             `json:"vim-mode,omitempty" yaml:"vim-mode,omitempty"`
+	AccentColor             color.Ansi             `json:"accent_color,omitempty" yaml:"accent_color,omitempty"`
+	DaemonIdleTimeout       string                 `json:"daemon_idle_timeout,omitempty" yaml:"daemon_idle_timeout,omitempty"`
+	RenderPendingIcon       string                 `json:"render_pending_icon,omitempty" yaml:"render_pending_icon,omitempty"`
+	RenderPendingBackground color.Ansi             `json:"render_pending_background,omitempty" yaml:"render_pending_background,omitempty"`
+	ConsoleTitleTemplate    string                 `json:"console_title_template,omitempty" yaml:"console_title_template,omitempty"`
+	PWD                     string                 `json:"pwd,omitempty" yaml:"pwd,omitempty"`
+	TerminalBackground      color.Ansi             `json:"terminal_background,omitempty" yaml:"terminal_background,omitempty"`
+	ToolTipsAction          Action                 `json:"tooltips_action,omitempty" yaml:"tooltips_action,omitempty"`
+	DaemonTimeout           int                    `json:"daemon_timeout,omitempty" yaml:"daemon_timeout,omitempty"`
+	Async                   bool                   `json:"async,omitempty" yaml:"async,omitempty"`
+	ShellIntegration        bool                   `json:"shell_integration,omitempty" yaml:"shell_integration,omitempty"`
+	FinalSpace              bool                   `json:"final_space,omitempty" yaml:"final_space,omitempty"`
+	PatchPwshBleed          bool                   `json:"patch_pwsh_bleed,omitempty" yaml:"patch_pwsh_bleed,omitempty"`
+	EnableCursorPositioning bool                   `json:"enable_cursor_positioning,omitempty" yaml:"enable_cursor_positioning,omitempty"`
+	Segments                map[string]*Segment    `json:"-" yaml:"-"`
+	Source                  string                 `json:"-" yaml:"-"`
+	Prompt                  []PromptLayout         `json:"prompt,omitempty" yaml:"prompt,omitempty"`
+	RPrompt                 []PromptLayout         `json:"rprompt,omitempty" yaml:"rprompt,omitempty"`
+	SecondaryPrompt         []PromptLayout         `json:"secondary,omitempty" yaml:"secondary,omitempty"`
+	TransientPrompt         []PromptLayout         `json:"transient,omitempty" yaml:"transient,omitempty"`
+	TransientRPrompt        []PromptLayout         `json:"rtransient,omitempty" yaml:"rtransient,omitempty"`
 }
 
-type compiledRawConfig struct {
-	Palette       color.Palette          `yaml:"palette"`
-	Var           map[string]any         `yaml:"var"`
-	Palettes      *color.Palettes        `yaml:"palettes"`
-	Maps          *configmaps.Config     `yaml:"maps"`
-	Upgrade       *upgrade.Config        `yaml:"upgrade"`
-	Cycle         color.Cycle            `yaml:"cycle"`
-	ITermFeatures terminal.ITermFeatures `yaml:"iterm_features"`
-	VimMode       *VimConfig             `yaml:"vim-mode"`
-	Prompt        []PromptLayout         `yaml:"prompt"`
-	RPrompt       []PromptLayout         `yaml:"rprompt"`
-	Secondary     []PromptLayout         `yaml:"secondary"`
-	Transient     []PromptLayout         `yaml:"transient"`
-	RTransient    []PromptLayout         `yaml:"rtransient"`
+type layoutRawConfig struct {
+	Palette                 color.Palette          `yaml:"palette"`
+	Var                     map[string]any         `yaml:"var"`
+	Palettes                *color.Palettes        `yaml:"palettes"`
+	Maps                    *configmaps.Config     `yaml:"maps"`
+	Upgrade                 *upgrade.Config        `yaml:"upgrade"`
+	Cycle                   color.Cycle            `yaml:"cycle"`
+	ITermFeatures           terminal.ITermFeatures `yaml:"iterm_features"`
+	VimMode                 *VimConfig             `yaml:"vim-mode"`
+	AccentColor             color.Ansi             `yaml:"accent_color"`
+	DaemonIdleTimeout       string                 `yaml:"daemon_idle_timeout"`
+	RenderPendingIcon       string                 `yaml:"render_pending_icon"`
+	RenderPendingBackground color.Ansi             `yaml:"render_pending_background"`
+	ConsoleTitleTemplate    string                 `yaml:"console_title_template"`
+	PWD                     string                 `yaml:"pwd"`
+	TerminalBackground      color.Ansi             `yaml:"terminal_background"`
+	ToolTipsAction          Action                 `yaml:"tooltips_action"`
+	Prompt                  []PromptLayout         `yaml:"prompt"`
+	RPrompt                 []PromptLayout         `yaml:"rprompt"`
+	Secondary               []PromptLayout         `yaml:"secondary"`
+	Transient               []PromptLayout         `yaml:"transient"`
+	RTransient              []PromptLayout         `yaml:"rtransient"`
+	DaemonTimeout           int                    `yaml:"daemon_timeout"`
+	Async                   bool                   `yaml:"async"`
+	ShellIntegration        bool                   `yaml:"shell_integration"`
+	FinalSpace              bool                   `yaml:"final_space"`
+	PatchPwshBleed          bool                   `yaml:"patch_pwsh_bleed"`
+	EnableCursorPositioning bool                   `yaml:"enable_cursor_positioning"`
 }
 
-func LoadCompiled(configFile string) (*CompiledConfig, error) {
+func LoadLayout(configFile string) (*LayoutConfig, error) {
 	if configFile == "" {
 		return nil, ErrNoConfig
 	}
@@ -77,7 +105,7 @@ func LoadCompiled(configFile string) (*CompiledConfig, error) {
 		return nil, ErrFileNotFound
 	}
 
-	cfg, err := ParseCompiledYAML(data)
+	cfg, err := ParseLayoutYAML(data)
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +115,8 @@ func LoadCompiled(configFile string) (*CompiledConfig, error) {
 	return cfg, nil
 }
 
-func ParseCompiledYAML(data []byte) (*CompiledConfig, error) {
-	var raw compiledRawConfig
+func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
+	var raw layoutRawConfig
 	if err := yaml.Unmarshal(data, &raw); err != nil {
 		return nil, ErrParse
 	}
@@ -98,43 +126,57 @@ func ParseCompiledYAML(data []byte) (*CompiledConfig, error) {
 		return nil, ErrParse
 	}
 
-	compiled := &CompiledConfig{
-		Palette:          raw.Palette,
-		Var:              raw.Var,
-		Palettes:         raw.Palettes,
-		Maps:             raw.Maps,
-		Upgrade:          raw.Upgrade,
-		Cycle:            raw.Cycle,
-		ITermFeatures:    raw.ITermFeatures,
-		VimMode:          raw.VimMode,
-		Prompt:           raw.Prompt,
-		RPrompt:          raw.RPrompt,
-		SecondaryPrompt:  raw.Secondary,
-		TransientPrompt:  raw.Transient,
-		TransientRPrompt: raw.RTransient,
-		Segments:         make(map[string]*Segment),
+	layout := &LayoutConfig{
+		Palette:                 raw.Palette,
+		Var:                     raw.Var,
+		Palettes:                raw.Palettes,
+		Maps:                    raw.Maps,
+		Upgrade:                 raw.Upgrade,
+		Cycle:                   raw.Cycle,
+		ITermFeatures:           raw.ITermFeatures,
+		VimMode:                 raw.VimMode,
+		AccentColor:             raw.AccentColor,
+		DaemonIdleTimeout:       raw.DaemonIdleTimeout,
+		RenderPendingIcon:       raw.RenderPendingIcon,
+		RenderPendingBackground: raw.RenderPendingBackground,
+		ConsoleTitleTemplate:    raw.ConsoleTitleTemplate,
+		PWD:                     raw.PWD,
+		TerminalBackground:      raw.TerminalBackground,
+		ToolTipsAction:          raw.ToolTipsAction,
+		Prompt:                  raw.Prompt,
+		RPrompt:                 raw.RPrompt,
+		SecondaryPrompt:         raw.Secondary,
+		TransientPrompt:         raw.Transient,
+		TransientRPrompt:        raw.RTransient,
+		DaemonTimeout:           raw.DaemonTimeout,
+		Async:                   raw.Async,
+		ShellIntegration:        raw.ShellIntegration,
+		FinalSpace:              raw.FinalSpace,
+		PatchPwshBleed:          raw.PatchPwshBleed,
+		EnableCursorPositioning: raw.EnableCursorPositioning,
+		Segments:                make(map[string]*Segment),
 	}
 
-	if err := normalizePromptLayouts(compiled); err != nil {
+	if err := normalizePromptLayouts(layout); err != nil {
 		return nil, err
 	}
 
-	if err := validateCompiledTopLevelTables(doc); err != nil {
+	if err := validateLayoutTopLevelTables(doc); err != nil {
 		return nil, err
 	}
 
-	if err := decodeCompiledSegmentTables(doc, compiled.Segments); err != nil {
+	if err := decodeLayoutSegmentTables(doc, layout.Segments); err != nil {
 		return nil, err
 	}
 
-	if err := validateCompiledSegmentRefs(compiled); err != nil {
+	if err := validateLayoutSegmentRefs(layout); err != nil {
 		return nil, err
 	}
 
-	return compiled, nil
+	return layout, nil
 }
 
-func (cfg *CompiledConfig) ApplyMetadata(target *Config) {
+func (cfg *LayoutConfig) ApplyMetadata(target *Config) {
 	if target == nil || cfg == nil {
 		return
 	}
@@ -147,6 +189,20 @@ func (cfg *CompiledConfig) ApplyMetadata(target *Config) {
 	target.Cycle = cfg.Cycle
 	target.ITermFeatures = cfg.ITermFeatures
 	target.VimMode = cfg.VimMode
+	target.AccentColor = cfg.AccentColor
+	target.DaemonIdleTimeout = cfg.DaemonIdleTimeout
+	target.RenderPendingIcon = cfg.RenderPendingIcon
+	target.RenderPendingBackground = cfg.RenderPendingBackground
+	target.ConsoleTitleTemplate = cfg.ConsoleTitleTemplate
+	target.PWD = cfg.PWD
+	target.TerminalBackground = cfg.TerminalBackground
+	target.ToolTipsAction = cfg.ToolTipsAction
+	target.DaemonTimeout = cfg.DaemonTimeout
+	target.Async = cfg.Async
+	target.ShellIntegration = cfg.ShellIntegration
+	target.FinalSpace = cfg.FinalSpace
+	target.PatchPwshBleed = cfg.PatchPwshBleed
+	target.EnableCursorPositioning = cfg.EnableCursorPositioning
 
 	if len(cfg.SecondaryPrompt) > 0 {
 		target.SecondaryPrompt = &Segment{}
@@ -157,7 +213,7 @@ func (cfg *CompiledConfig) ApplyMetadata(target *Config) {
 	}
 }
 
-func validateCompiledTopLevelTables(doc map[string]any) error {
+func validateLayoutTopLevelTables(doc map[string]any) error {
 	if _, hasSecondaryPrompt := doc["secondary_prompt"]; hasSecondaryPrompt {
 		return errors.New("top-level secondary_prompt is not supported; use secondary")
 	}
@@ -211,7 +267,7 @@ var separatorAliases = map[string]separatorPair{
 	"lego":           {left: "\uE0CE", right: "\uE0CF"},
 }
 
-func normalizePromptLayouts(cfg *CompiledConfig) error {
+func normalizePromptLayouts(cfg *LayoutConfig) error {
 	for i := range cfg.Prompt {
 		if err := normalizePromptLayout(&cfg.Prompt[i], false, "prompt"); err != nil {
 			return err
@@ -298,7 +354,7 @@ func normalizePromptLayout(layout *PromptLayout, rightAligned bool, table string
 	return nil
 }
 
-func decodeCompiledSegmentTables(doc map[string]any, segmentsByName map[string]*Segment) error {
+func decodeLayoutSegmentTables(doc map[string]any, segmentsByName map[string]*Segment) error {
 	lineTables := map[string]bool{
 		"prompt":     true,
 		"rprompt":    true,
@@ -325,11 +381,11 @@ func decodeCompiledSegmentTables(doc map[string]any, segmentsByName map[string]*
 		}
 
 		if hasScalarFields(table) {
-			if shouldSkipCompiledTable(key, table) {
+			if shouldSkipLayoutTable(key, table) {
 				continue
 			}
 
-			if err := decodeCompiledSegmentTable(key, table, "", segmentsByName); err != nil {
+			if err := decodeLayoutSegmentTable(key, table, "", segmentsByName); err != nil {
 				return err
 			}
 			continue
@@ -346,7 +402,7 @@ func decodeCompiledSegmentTables(doc map[string]any, segmentsByName map[string]*
 			}
 
 			name := fmt.Sprintf("%s.%s", key, nestedKey)
-			if err := decodeCompiledSegmentTable(name, nestedTable, SegmentType(key), segmentsByName); err != nil {
+			if err := decodeLayoutSegmentTable(name, nestedTable, SegmentType(key), segmentsByName); err != nil {
 				return err
 			}
 		}
@@ -355,7 +411,7 @@ func decodeCompiledSegmentTables(doc map[string]any, segmentsByName map[string]*
 	return nil
 }
 
-func decodeCompiledSegmentTable(name string, raw map[string]any, defaultType SegmentType, segmentsByName map[string]*Segment) error {
+func decodeLayoutSegmentTable(name string, raw map[string]any, defaultType SegmentType, segmentsByName map[string]*Segment) error {
 	if _, exists := segmentsByName[name]; exists {
 		return fmt.Errorf("duplicate segment instance: %s", name)
 	}
@@ -517,7 +573,7 @@ func hasScalarFields(table map[string]any) bool {
 	return false
 }
 
-func shouldSkipCompiledTable(name string, table map[string]any) bool {
+func shouldSkipLayoutTable(name string, table map[string]any) bool {
 	if _, explicitType := table["type"]; explicitType {
 		return false
 	}
@@ -557,7 +613,7 @@ func isKnownSegmentType(segmentType SegmentType) bool {
 	return ok
 }
 
-func validateCompiledSegmentRefs(cfg *CompiledConfig) error {
+func validateLayoutSegmentRefs(cfg *LayoutConfig) error {
 	lines := [][]PromptLayout{
 		cfg.Prompt,
 		cfg.RPrompt,

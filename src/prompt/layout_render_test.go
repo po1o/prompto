@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPrimaryUsesCompiledLayoutOrderAndFiller(t *testing.T) {
-	engine := newCompiledTestEngine(t, &config.CompiledConfig{
+func TestPrimaryUsesLayoutOrderAndFiller(t *testing.T) {
+	engine := newLayoutTestEngine(t, &config.LayoutConfig{
 		Prompt: []config.PromptLayout{
 			{Segments: []string{"left_a", "left_b"}, Filler: "."},
 			{Segments: []string{"left_c"}},
@@ -44,8 +44,8 @@ func TestPrimaryUsesCompiledLayoutOrderAndFiller(t *testing.T) {
 	require.Equal(t, "R", rgot)
 }
 
-func TestSecondaryUsesCompiledLayout(t *testing.T) {
-	engine := newCompiledTestEngine(t, &config.CompiledConfig{
+func TestSecondaryUsesLayout(t *testing.T) {
+	engine := newLayoutTestEngine(t, &config.LayoutConfig{
 		SecondaryPrompt: []config.PromptLayout{
 			{Segments: []string{"sec_a"}},
 			{Segments: []string{"sec_b"}},
@@ -61,7 +61,7 @@ func TestSecondaryUsesCompiledLayout(t *testing.T) {
 }
 
 func TestPrimaryMirrorsRightAlignedDiamondSegmentSeparators(t *testing.T) {
-	engine := newCompiledTestEngine(t, &config.CompiledConfig{
+	engine := newLayoutTestEngine(t, &config.LayoutConfig{
 		RPrompt: []config.PromptLayout{
 			{Segments: []string{"right_git"}},
 		},
@@ -83,7 +83,7 @@ func TestPrimaryMirrorsRightAlignedDiamondSegmentSeparators(t *testing.T) {
 	require.NotContains(t, rgot, "R\uE0B0")
 }
 
-func newCompiledTestEngine(t *testing.T, compiled *config.CompiledConfig) *Engine {
+func newLayoutTestEngine(t *testing.T, layout *config.LayoutConfig) *Engine {
 	flags := &runtime.Flags{
 		Shell:         shell.GENERIC,
 		TerminalWidth: 80,
@@ -109,9 +109,9 @@ func newCompiledTestEngine(t *testing.T, compiled *config.CompiledConfig) *Engin
 	})
 
 	return &Engine{
-		Env:            env,
-		Config:         &config.Config{},
-		CompiledConfig: compiled,
-		Plain:          true,
+		Env:          env,
+		Config:       &config.Config{},
+		LayoutConfig: layout,
+		Plain:        true,
 	}
 }

@@ -23,24 +23,12 @@ func (e *Engine) Preview() string {
 		printPrompt("Right", right)
 	}
 
-	if e.Config.SecondaryPrompt != nil {
+	if e.hasLayoutSecondary() {
 		printPrompt("Secondary", e.ExtraPrompt(Secondary))
 	}
 
-	if e.Config.TransientPrompt != nil {
+	if e.hasLayoutTransient() {
 		printPrompt("Transient", e.ExtraPrompt(Transient))
-	}
-
-	if e.Config.DebugPrompt != nil {
-		printPrompt("Debug", e.ExtraPrompt(Debug))
-	}
-
-	if e.Config.ValidLine != nil {
-		printPrompt("Valid", e.ExtraPrompt(Valid))
-	}
-
-	if e.Config.ErrorLine != nil {
-		printPrompt("Error", e.ExtraPrompt(Error))
 	}
 
 	builder.WriteString("\n")

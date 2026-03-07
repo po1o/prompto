@@ -2,31 +2,31 @@ package prompt
 
 import "github.com/po1o/prompto/src/config"
 
-func (e *Engine) hasCompiledPrimaryLayout() bool {
-	if e.CompiledConfig == nil {
+func (e *Engine) hasLayoutPrimary() bool {
+	if e.LayoutConfig == nil {
 		return false
 	}
 
-	return len(e.CompiledConfig.Prompt) > 0 || len(e.CompiledConfig.RPrompt) > 0
+	return len(e.LayoutConfig.Prompt) > 0 || len(e.LayoutConfig.RPrompt) > 0
 }
 
-func (e *Engine) hasCompiledSecondaryLayout() bool {
-	if e.CompiledConfig == nil {
+func (e *Engine) hasLayoutSecondary() bool {
+	if e.LayoutConfig == nil {
 		return false
 	}
 
-	return len(e.CompiledConfig.SecondaryPrompt) > 0
+	return len(e.LayoutConfig.SecondaryPrompt) > 0
 }
 
-func (e *Engine) hasCompiledTransientLayout() bool {
-	if e.CompiledConfig == nil {
+func (e *Engine) hasLayoutTransient() bool {
+	if e.LayoutConfig == nil {
 		return false
 	}
 
-	return len(e.CompiledConfig.TransientPrompt) > 0 || len(e.CompiledConfig.TransientRPrompt) > 0
+	return len(e.LayoutConfig.TransientPrompt) > 0 || len(e.LayoutConfig.TransientRPrompt) > 0
 }
 
-func (e *Engine) compiledLayoutBlock(layout *config.PromptLayout, blockType config.BlockType, alignment config.BlockAlignment, newline bool) *config.Block {
+func (e *Engine) layoutBlock(layout *config.PromptLayout, blockType config.BlockType, alignment config.BlockAlignment, newline bool) *config.Block {
 	block := &config.Block{
 		Type:            blockType,
 		Alignment:       alignment,
@@ -37,7 +37,7 @@ func (e *Engine) compiledLayoutBlock(layout *config.PromptLayout, blockType conf
 	}
 
 	for _, name := range layout.Segments {
-		segmentDef, ok := e.CompiledConfig.Segments[name]
+		segmentDef, ok := e.LayoutConfig.Segments[name]
 		if !ok {
 			continue
 		}
@@ -56,24 +56,24 @@ func (e *Engine) compiledLayoutBlock(layout *config.PromptLayout, blockType conf
 	return block
 }
 
-func (e *Engine) compiledPrimaryBlocks() []*config.Block {
-	if e.CompiledConfig == nil {
+func (e *Engine) layoutPrimaryBlocks() []*config.Block {
+	if e.LayoutConfig == nil {
 		return nil
 	}
 
-	lineCount := max(len(e.CompiledConfig.RPrompt), len(e.CompiledConfig.Prompt))
+	lineCount := max(len(e.LayoutConfig.RPrompt), len(e.LayoutConfig.Prompt))
 	blocks := make([]*config.Block, 0, lineCount*2)
 
 	for i := range lineCount {
-		if i < len(e.CompiledConfig.Prompt) {
-			left := e.compiledLayoutBlock(&e.CompiledConfig.Prompt[i], config.Prompt, config.Left, i != 0)
+		if i < len(e.LayoutConfig.Prompt) {
+			left := e.layoutBlock(&e.LayoutConfig.Prompt[i], config.Prompt, config.Left, i != 0)
 			blocks = append(blocks, left)
 		}
 
-		if i < len(e.CompiledConfig.RPrompt) {
-			right := e.compiledLayoutBlock(&e.CompiledConfig.RPrompt[i], config.RPrompt, config.Right, false)
-			if i < len(e.CompiledConfig.Prompt) {
-				right.Filler = e.CompiledConfig.Prompt[i].Filler
+		if i < len(e.LayoutConfig.RPrompt) {
+			right := e.layoutBlock(&e.LayoutConfig.RPrompt[i], config.RPrompt, config.Right, false)
+			if i < len(e.LayoutConfig.Prompt) {
+				right.Filler = e.LayoutConfig.Prompt[i].Filler
 			}
 
 			blocks = append(blocks, right)
