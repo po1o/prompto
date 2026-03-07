@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -99,6 +100,7 @@ Output format (one per line):
 		}
 
 		if err := renderViaDaemon(flags, pid, repaint); err != nil {
+			fmt.Fprintln(os.Stderr, err)
 			exitcode = 1
 		}
 	},

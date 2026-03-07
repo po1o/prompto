@@ -23,6 +23,7 @@ type Daemon struct {
 	stopped     atomic.Bool
 	// idleToken invalidates stale timers when activity resumes.
 	idleToken uint64
+	onStop    func()
 	mu        sync.Mutex
 }
 
@@ -138,13 +139,35 @@ func (daemon *Daemon) Reset() {
 }
 
 func (daemon *Daemon) Stop() {
+	daemon.stop(true)
+}
+
+// StopSilently stops the daemon without triggering the stop callback.
+// This is used by server shutdown code paths to avoid recursive stop calls.
+func (daemon *Daemon) StopSilently() {
+	daemon.stop(false)
+}
+
+// SetOnStop sets a callback invoked when the daemon stops itself.
+func (daemon *Daemon) SetOnStop(callback func()) {
+	daemon.mu.Lock()
+	daemon.onStop = callback
+	daemon.mu.Unlock()
+}
+
+func (daemon *Daemon) stop(notify bool) {
 	if !daemon.stopped.CompareAndSwap(false, true) {
 		return
 	}
 
 	daemon.mu.Lock()
 	daemon.cancelIdleStopLocked()
+	callback := daemon.onStop
 	daemon.mu.Unlock()
+
+	if notify && callback != nil {
+		callback()
+	}
 }
 
 func (daemon *Daemon) cancelIdleStopLocked() {

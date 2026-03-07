@@ -230,6 +230,23 @@ func TestDaemonStopsAfterTrackedProcessActuallyExits(t *testing.T) {
 	}, 3*time.Second, 20*time.Millisecond)
 }
 
+func TestDaemonIdleStopInvokesStopCallback(t *testing.T) {
+	daemon := NewWithIdleTimeout(25*time.Millisecond, &rendererStub{})
+	stopped := make(chan struct{}, 1)
+	daemon.SetOnStop(func() {
+		select {
+		case stopped <- struct{}{}:
+		default:
+		}
+	})
+
+	select {
+	case <-stopped:
+	case <-time.After(300 * time.Millisecond):
+		t.Fatal("daemon stop callback was not invoked")
+	}
+}
+
 func TestCompleteSessionForNonNumericIDDoesNotAffectTrackedPID(t *testing.T) {
 	daemon := NewWithIdleTimeout(200*time.Millisecond, &rendererStub{})
 	trackedSessionID := strconv.Itoa(os.Getpid())

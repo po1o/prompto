@@ -65,6 +65,7 @@ func NewServer(configPath string) (*Server, error) {
 	}
 	server.captureConfigModTime()
 	server.core = NewFromConfigWithDeviceCache(resolvedPath, nil, server.deviceCache)
+	server.core.SetOnStop(server.Stop)
 
 	configWatcher, err := NewConfigWatcher(server.requestConfigReload)
 	if err == nil {
@@ -116,7 +117,7 @@ func (server *Server) Done() <-chan struct{} {
 
 func (server *Server) Stop() {
 	server.shutdownOnce.Do(func() {
-		server.core.Stop()
+		server.core.StopSilently()
 
 		if server.grpcServer != nil {
 			server.grpcServer.GracefulStop()
