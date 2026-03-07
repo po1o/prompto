@@ -167,7 +167,7 @@ function _prompto_render_tooltip() {
 
   if [[ -z $tooltip_command ]]; then
     _prompto_restore_tooltip_rprompt
-    zle .reset-prompt
+    _prompto_reset_prompt_if_zle
     return
   fi
 
@@ -197,7 +197,7 @@ function _prompto_render_tooltip() {
 
   if [[ -z $tooltip ]]; then
     _prompto_restore_tooltip_rprompt
-    zle .reset-prompt
+    _prompto_reset_prompt_if_zle
     return
   fi
 
@@ -411,6 +411,11 @@ function _prompto_daemon_render() {
     config_arg="--config=$_prompto_config"
   fi
 
+  if [[ $repaint_flag != "--repaint" ]]; then
+    _prompto_transient_prompt=
+    _prompto_transient_rprompt=
+  fi
+
   # Clean up any existing fd handler from previous render
   if [[ -n $_prompto_daemon_fd ]]; then
     zle -F $_prompto_daemon_fd
@@ -455,6 +460,22 @@ function _prompto_daemon_render() {
     fi
   done
 
+  # Drain any immediately buffered lines before handing off to the async watcher.
+  # Fast renders can emit the final completion batch right after the initial update batch,
+  # and relying only on zle -F can miss that already-buffered completion.
+  while IFS= read -t 0 -r line <&$fd; do
+    _prompto_daemon_parse_line "$line"
+    if [[ $line != status:* ]]; then
+      continue
+    fi
+
+    _prompto_reset_prompt_if_zle
+    if [[ $line == "status:complete" ]]; then
+      exec {fd}<&-
+      return
+    fi
+  done
+
   # More updates may come - register fd handler for async streaming
   _prompto_daemon_fd=$fd
   zle -F $fd _prompto_daemon_handler
@@ -484,6 +505,12 @@ function _prompto_daemon_parse_line() {
   esac
 }
 
+function _prompto_reset_prompt_if_zle() {
+  if zle; then
+    zle .reset-prompt
+  fi
+}
+
 function _prompto_daemon_handler() {
   local fd=$1
   local line batch_complete=0
@@ -498,7 +525,7 @@ function _prompto_daemon_handler() {
 
   # If we read at least one status line, repaint
   if [[ $batch_complete -eq 1 ]]; then
-    zle .reset-prompt
+    _prompto_reset_prompt_if_zle
   fi
 
   # If the stream ended or we saw the final status, clean up the fd.

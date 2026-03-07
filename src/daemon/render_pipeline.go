@@ -137,9 +137,16 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 
 			if engine.PendingSegmentCount() == 0 {
 				handle.Hub().Publish(renderCompletePayload, renderID)
+				handle.Complete()
+
+				bundle := pipeline.renderer.Bundle(engine, primary, true)
+				return bundle, nil
 			}
 		} else {
 			primary = engine.Primary()
+
+			bundle := pipeline.renderer.Bundle(engine, primary, true)
+			return bundle, nil
 		}
 	}
 

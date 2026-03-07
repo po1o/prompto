@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/po1o/prompto/src/prompt"
 	"github.com/po1o/prompto/src/runtime"
 
 	"github.com/stretchr/testify/require"
@@ -18,9 +19,37 @@ import (
 
 const sessionIDFixture = "session-a"
 
-func TestDaemonStartRenderAndNextUpdateFlow(t *testing.T) {
+func newActiveRenderTestDaemon() *Daemon {
+	daemon := New(&rendererStub{})
+	daemon.service = NewService(NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	}), NewReloadGate(), &rendererStub{})
+	return daemon
+}
+
+func TestDaemonStartRenderCompletesSynchronouslyWhenPrimaryHasNoPendingUpdates(t *testing.T) {
 	daemon := New(&rendererStub{})
 	sessionID := strconv.Itoa(os.Getpid())
+
+	initial := daemon.StartRender(RenderRequest{
+		SessionID: sessionID,
+		Flags:     &runtime.Flags{},
+	})
+	require.Equal(t, "initial", initial.Type)
+	require.Equal(t, "render", initial.Bundle.Primary)
+	require.Equal(t, "transient", initial.Bundle.Transient)
+	require.Equal(t, "rtransient", initial.Bundle.RTransient)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	_, ok := daemon.NextUpdate(ctx, sessionID, 0)
+	require.False(t, ok)
+}
+
+func TestDaemonStartRenderAndNextUpdateFlow(t *testing.T) {
+	daemon := newActiveRenderTestDaemon()
+	sessionID := sessionIDFixture
 
 	initial := daemon.StartRender(RenderRequest{
 		SessionID: sessionID,
@@ -39,9 +68,7 @@ func TestDaemonStartRenderAndNextUpdateFlow(t *testing.T) {
 	update, ok := daemon.NextUpdate(ctx, sessionID, 0)
 	require.True(t, ok)
 	require.Equal(t, "update", update.Type)
-	if update.Segment != renderCompletePayload {
-		require.Equal(t, "path.main", update.Segment)
-	}
+	require.Equal(t, "path.main", update.Segment)
 }
 
 func TestDaemonReloadBlocksNewRenderRequests(t *testing.T) {
@@ -92,7 +119,7 @@ func TestDaemonReloadBlocksNewRenderRequests(t *testing.T) {
 }
 
 func TestDaemonReloadWaitsForActiveRenderCompletion(t *testing.T) {
-	daemon := New(&rendererStub{})
+	daemon := newActiveRenderTestDaemon()
 	sessionID := sessionIDFixture
 
 	daemon.StartRender(RenderRequest{

@@ -33,3 +33,20 @@ _prompto_cursor_shape=1; _prompto_should_change_cursor && _prompto_apply_cursor_
 
 	assert.Equal(t, want, got)
 }
+
+func TestZshDaemonRenderClearsTransientCacheOnNewPrompt(t *testing.T) {
+	assert.Contains(t, zshInit, "if [[ $repaint_flag != \"--repaint\" ]]; then")
+	assert.Contains(t, zshInit, "_prompto_transient_prompt=")
+	assert.Contains(t, zshInit, "_prompto_transient_rprompt=")
+}
+
+func TestZshDaemonRenderDrainsBufferedCompletion(t *testing.T) {
+	assert.Contains(t, zshInit, "while IFS= read -t 0 -r line <&$fd; do")
+	assert.Contains(t, zshInit, "Fast renders can emit the final completion batch right after the initial update batch")
+}
+
+func TestZshDaemonRenderGuardsResetPromptOutsideZLE(t *testing.T) {
+	assert.Contains(t, zshInit, "function _prompto_reset_prompt_if_zle()")
+	assert.Contains(t, zshInit, "if zle; then")
+	assert.Contains(t, zshInit, "_prompto_reset_prompt_if_zle")
+}
