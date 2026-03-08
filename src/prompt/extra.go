@@ -17,6 +17,18 @@ func (e *Engine) ExtraPrompt(promptType ExtraPromptType) string {
 	return e.ExtraPromptNoReset(promptType)
 }
 
+func (e *Engine) StreamingTransientPrompt() string {
+	e.streamingMu.Lock()
+	defer e.streamingMu.Unlock()
+	return e.streamingTransientPromptNoLock()
+}
+
+func (e *Engine) StreamingTransientRPrompt() string {
+	e.streamingMu.Lock()
+	defer e.streamingMu.Unlock()
+	return e.streamingTransientRPromptNoLock()
+}
+
 // ExtraPromptNoReset renders an extra prompt while reusing the current shared-provider scope.
 func (e *Engine) ExtraPromptNoReset(promptType ExtraPromptType) string {
 	switch promptType {
@@ -59,6 +71,44 @@ func (e *Engine) TransientRPromptNoReset() string {
 	return text
 }
 
+func (e *Engine) streamingTransientPromptNoLock() string {
+	if len(e.streamingTransient) == 0 {
+		return e.ExtraPromptNoReset(Transient)
+	}
+
+	didRender := false
+	for i, block := range e.streamingTransient {
+		cancelNewline := !didRender
+		if i == 0 {
+			cancelNewline = false
+		}
+
+		if e.renderBlockWithStreamingState(streamScopeTransient, block, i, cancelNewline) {
+			didRender = true
+		}
+	}
+
+	if e.Config != nil && e.Config.FinalSpace {
+		e.write(" ")
+	}
+
+	return e.string()
+}
+
+func (e *Engine) streamingTransientRPromptNoLock() string {
+	if len(e.streamingRTransient) == 0 {
+		return e.TransientRPromptNoReset()
+	}
+
+	block := e.streamingRTransient[0]
+	text, length := e.writeBlockSegmentsStreaming(streamScopeRTransient, block, 0)
+	if length == 0 {
+		return ""
+	}
+
+	return text
+}
+
 func (e *Engine) renderLayoutExtra(layouts []config.PromptLayout, finalSpace bool) string {
 	didRender := false
 	for i := range layouts {
@@ -78,6 +128,11 @@ func (e *Engine) renderLayoutExtra(layouts []config.PromptLayout, finalSpace boo
 	}
 
 	return e.string()
+}
+
+func (e *Engine) renderBlockWithStreamingState(scope string, block *config.Block, blockIndex int, cancelNewline bool) bool {
+	blockText, length := e.writeBlockSegmentsStreaming(scope, block, blockIndex)
+	return e.renderBlockWithText(block, blockText, length, cancelNewline)
 }
 
 func (e *Engine) renderSingleExtraSegment(segment *config.Segment) string {

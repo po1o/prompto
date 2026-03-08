@@ -22,6 +22,12 @@ type slowWriter struct {
 	delay time.Duration
 }
 
+type countedSlowWriter struct {
+	slowWriter
+}
+
+var countedSlowWriterExecutions atomic.Int32
+
 func (w *slowWriter) Enabled() bool {
 	time.Sleep(w.delay)
 	return true
@@ -47,6 +53,15 @@ func (w *slowWriter) Init(_ options.Provider, _ runtime.Environment) {
 
 func (w *slowWriter) CacheKey() (string, bool) {
 	return "", false
+}
+
+func (w *countedSlowWriter) Enabled() bool {
+	countedSlowWriterExecutions.Add(1)
+	return w.slowWriter.Enabled()
+}
+
+func (w *countedSlowWriter) Init(properties options.Provider, env runtime.Environment) {
+	w.slowWriter.Init(properties, env)
 }
 
 func TestPrimaryStreamingLongSegmentReturnsPendingThenUpdates(t *testing.T) {
@@ -176,6 +191,93 @@ slow.main:
 
 		return seenSegmentUpdate && seenComplete
 	}, 2*time.Second, 20*time.Millisecond)
+}
+
+func TestPrimaryStreamingIncludesTransientPromptsInEveryRenderState(t *testing.T) {
+	segmentType := config.SegmentType("slow_test_transient")
+	previous, hadPrevious := config.Segments[segmentType]
+	config.Segments[segmentType] = func() config.SegmentWriter { return &countedSlowWriter{} }
+	t.Cleanup(func() {
+		if hadPrevious {
+			config.Segments[segmentType] = previous
+			return
+		}
+
+		delete(config.Segments, segmentType)
+	})
+
+	countedSlowWriterExecutions.Store(0)
+
+	configPath := filepath.Join(t.TempDir(), "slow-transient-streaming.omp.yaml")
+	cfg := `
+daemon_timeout: 50
+render_pending_icon: "P:"
+prompt:
+  - segments: ["slow.main"]
+rprompt:
+  - segments: ["slow.right"]
+transient:
+  - segments: ["slow.transient"]
+rtransient:
+  - segments: ["slow.rtransient"]
+
+slow.main:
+  type: "slow_test_transient"
+  template: "MAIN"
+  style: "plain"
+
+slow.right:
+  type: "slow_test_transient"
+  template: "RIGHT"
+  style: "plain"
+
+slow.transient:
+  type: "slow_test_transient"
+  template: "TRANSIENT"
+  style: "plain"
+
+slow.rtransient:
+  type: "slow_test_transient"
+  template: "RTRANSIENT"
+  style: "plain"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	flags := &runtime.Flags{
+		ConfigPath: configPath,
+		Plain:      true,
+		Shell:      shell.GENERIC,
+	}
+	engine := New(flags)
+
+	updates := make(chan string, 16)
+	initial := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(segment string) {
+		updates <- segment
+	})
+
+	require.Contains(t, initial, "P:...")
+	require.Contains(t, engine.StreamingRPrompt(), "P:...")
+	require.Contains(t, engine.StreamingTransientPrompt(), "P:...")
+	require.Contains(t, engine.StreamingTransientRPrompt(), "P:...")
+
+	var seenComplete bool
+	require.Eventually(t, func() bool {
+		select {
+		case update := <-updates:
+			if update == "" {
+				seenComplete = true
+			}
+		default:
+		}
+
+		return seenComplete && engine.PendingSegmentCount() == 0
+	}, 2*time.Second, 20*time.Millisecond)
+
+	require.Contains(t, engine.ReRender(), "MAIN")
+	require.Contains(t, engine.StreamingRPrompt(), "RIGHT")
+	require.Contains(t, engine.StreamingTransientPrompt(), "TRANSIENT")
+	require.Contains(t, engine.StreamingTransientRPrompt(), "RTRANSIENT")
+	require.Equal(t, int32(1), countedSlowWriterExecutions.Load())
 }
 
 func TestPrimaryRepaintLayoutReEvaluatesVimSegment(t *testing.T) {

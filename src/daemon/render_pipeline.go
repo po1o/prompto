@@ -22,13 +22,18 @@ type PromptUpdate struct {
 	Snapshot UpdateSnapshot
 }
 
+type bundleOptions struct {
+	includeSecondary bool
+	includeTransient bool
+}
+
 type promptBundleRenderer interface {
-	Bundle(*prompt.Engine, string, bool) PromptBundle
+	Bundle(*prompt.Engine, string, bundleOptions) PromptBundle
 }
 
 type defaultPromptBundleRenderer struct{}
 
-func (renderer defaultPromptBundleRenderer) Bundle(engine *prompt.Engine, primary string, includeExtras bool) PromptBundle {
+func (renderer defaultPromptBundleRenderer) Bundle(engine *prompt.Engine, primary string, options bundleOptions) PromptBundle {
 	if engine == nil {
 		return PromptBundle{}
 	}
@@ -38,13 +43,15 @@ func (renderer defaultPromptBundleRenderer) Bundle(engine *prompt.Engine, primar
 		RPrompt: engine.StreamingRPrompt(),
 	}
 
-	if !includeExtras {
-		return bundle
+	if options.includeTransient {
+		bundle.Transient = engine.StreamingTransientPrompt()
+		bundle.RTransient = engine.StreamingTransientRPrompt()
 	}
 
-	bundle.RTransient = engine.TransientRPromptNoReset()
-	bundle.Secondary = engine.ExtraPromptNoReset(prompt.Secondary)
-	bundle.Transient = engine.ExtraPromptNoReset(prompt.Transient)
+	if options.includeSecondary {
+		bundle.Secondary = engine.ExtraPromptNoReset(prompt.Secondary)
+	}
+
 	return bundle
 }
 
@@ -80,7 +87,7 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 	primary := ""
 	if repaint && !handle.Reattached() && (engine == nil || engine.Config == nil) {
 		handle.Complete()
-		bundle := pipeline.renderer.Bundle(engine, primary, false)
+		bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{})
 		return bundle, nil
 	}
 
@@ -107,7 +114,7 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 				handle.Hub().Publish(renderCompletePayload, handle.RenderID())
 			}
 
-			bundle := pipeline.renderer.Bundle(engine, primary, false)
+			bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{includeTransient: true})
 			return bundle, &ActiveRender{
 				handle:   handle,
 				renderer: pipeline.renderer,
@@ -118,7 +125,7 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 			primary = engine.PrimaryRepaint()
 			handle.Complete()
 
-			bundle := pipeline.renderer.Bundle(engine, primary, false)
+			bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{includeTransient: true})
 			return bundle, nil
 		}
 
@@ -139,18 +146,29 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 				handle.Hub().Publish(renderCompletePayload, renderID)
 				handle.Complete()
 
-				bundle := pipeline.renderer.Bundle(engine, primary, true)
+				bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{
+					includeSecondary: true,
+					includeTransient: true,
+				})
 				return bundle, nil
 			}
 		} else {
 			primary = engine.Primary()
 
-			bundle := pipeline.renderer.Bundle(engine, primary, true)
+			bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{
+				includeSecondary: true,
+				includeTransient: true,
+			})
 			return bundle, nil
 		}
 	}
 
-	bundle := pipeline.renderer.Bundle(engine, primary, false)
+	options := bundleOptions{}
+	if flags == nil || flags.Type == "" || flags.Type == prompt.PRIMARY {
+		options.includeTransient = true
+	}
+
+	bundle := pipeline.renderer.Bundle(engine, primary, options)
 	return bundle, &ActiveRender{
 		handle:   handle,
 		renderer: pipeline.renderer,
@@ -265,7 +283,10 @@ func (active *ActiveRender) Next(updateContext context.Context, after uint64) (P
 
 	return PromptUpdate{
 		Snapshot: snapshot,
-		Bundle:   active.renderer.Bundle(engine, primary, snapshot.Payload == renderCompletePayload),
+		Bundle: active.renderer.Bundle(engine, primary, bundleOptions{
+			includeSecondary: snapshot.Payload == renderCompletePayload,
+			includeTransient: true,
+		}),
 	}, true
 }
 

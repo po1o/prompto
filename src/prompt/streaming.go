@@ -17,8 +17,19 @@ import (
 	"github.com/po1o/prompto/src/terminal"
 )
 
-func segmentKey(blockIndex, segmentIndex int, segment *config.Segment) string {
-	return fmt.Sprintf("%d:%d:%s", blockIndex, segmentIndex, segment.Name())
+const (
+	streamScopePrimary    = "primary"
+	streamScopeTransient  = "transient"
+	streamScopeRTransient = "rtransient"
+)
+
+func segmentKey(scope string, blockIndex, segmentIndex int, segment *config.Segment) string {
+	return fmt.Sprintf("%s:%d:%d:%s", scope, blockIndex, segmentIndex, segment.Name())
+}
+
+type streamingBlockSet struct {
+	scope  string
+	blocks []*config.Block
 }
 
 type streamingSegment struct {
@@ -47,6 +58,8 @@ func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, up
 	e.cachedValues = make(map[string]string)
 	e.segmentCacheKeys = make(map[string]string)
 	e.streamingBlocks = e.resolveStreamingBlocks()
+	e.streamingTransient = e.resolveStreamingTransientBlocks()
+	e.streamingRTransient = e.resolveStreamingRTransientBlocks()
 
 	segmentsToExecute, completed := e.prepareStreamingSegments()
 	results := e.startStreamingExecutions(ctx, segmentsToExecute)
@@ -89,40 +102,40 @@ func (e *Engine) prepareStreamingSegments() ([]streamingSegment, map[string]bool
 	segmentsToExecute := make([]streamingSegment, 0, 32)
 	completed := make(map[string]bool)
 
-	blocks := e.streamingBlocks
+	for _, set := range e.streamingBlockSets() {
+		for blockIndex, block := range set.blocks {
+			for segmentIndex, segment := range block.Segments {
+				key := segmentKey(set.scope, blockIndex, segmentIndex, segment)
+				_ = segment.MapSegmentWithWriter(e.Env)
+				cacheKey := segment.DaemonCacheKey()
+				e.segmentCacheKeys[key] = cacheKey
 
-	for blockIndex, block := range blocks {
-		for segmentIndex, segment := range block.Segments {
-			key := segmentKey(blockIndex, segmentIndex, segment)
-			_ = segment.MapSegmentWithWriter(e.Env)
-			cacheKey := segment.DaemonCacheKey()
-			e.segmentCacheKeys[key] = cacheKey
+				entry, found, explicit := e.getSegmentCache(segment)
+				if found {
+					if explicit {
+						duration := segment.Cache.Duration
+						if duration.IsEmpty() || duration.Seconds() <= 0 {
+							e.applySegmentCacheEntry(segment, entry)
+							completed[key] = true
+							continue
+						}
 
-			entry, found, explicit := e.getSegmentCache(segment)
-			if found {
-				if explicit {
-					duration := segment.Cache.Duration
-					if duration.IsEmpty() || duration.Seconds() <= 0 {
-						e.applySegmentCacheEntry(segment, entry)
-						completed[key] = true
-						continue
+						age := time.Since(entry.RenderedAt)
+						if age <= time.Duration(duration.Seconds())*time.Second {
+							e.applySegmentCacheEntry(segment, entry)
+							completed[key] = true
+							continue
+						}
 					}
 
-					age := time.Since(entry.RenderedAt)
-					if age <= time.Duration(duration.Seconds())*time.Second {
-						e.applySegmentCacheEntry(segment, entry)
-						completed[key] = true
-						continue
-					}
+					e.cachedValues[key] = entry.Text
 				}
 
-				e.cachedValues[key] = entry.Text
+				segmentsToExecute = append(segmentsToExecute, streamingSegment{
+					segment: segment,
+					key:     key,
+				})
 			}
-
-			segmentsToExecute = append(segmentsToExecute, streamingSegment{
-				segment: segment,
-				key:     key,
-			})
 		}
 	}
 
@@ -301,38 +314,38 @@ func (e *Engine) PrimaryRepaint() string {
 		e.streamingBlocks = e.resolveStreamingBlocks()
 	}
 
-	blocks := e.streamingBlocks
+	for _, set := range e.streamingBlockSets() {
+		for blockIndex, block := range set.blocks {
+			for segmentIndex, segment := range block.Segments {
+				key := segmentKey(set.scope, blockIndex, segmentIndex, segment)
+				if segment.Type == config.SegmentType("vim") {
+					_ = segment.MapSegmentWithWriter(e.Env)
+					segment.Execute(e.Env)
+					continue
+				}
 
-	for blockIndex, block := range blocks {
-		for segmentIndex, segment := range block.Segments {
-			key := segmentKey(blockIndex, segmentIndex, segment)
-			if segment.Type == config.SegmentType("vim") {
-				_ = segment.MapSegmentWithWriter(e.Env)
-				segment.Execute(e.Env)
-				continue
-			}
+				// Repaint can occur without an active streaming render. Ensure writer is initialized
+				// so rendering logic can safely inspect current text/cache state without execution.
+				_ = segment.EnsureWriter(e.Env)
 
-			// Repaint can occur without an active streaming render. Ensure writer is initialized
-			// so rendering logic can safely inspect current text/cache state without execution.
-			_ = segment.EnsureWriter(e.Env)
+				cacheKey := e.segmentCacheKeys[key]
+				if cacheKey == "" {
+					cacheKey = segment.DaemonCacheKey()
+					e.segmentCacheKeys[key] = cacheKey
+				}
 
-			cacheKey := e.segmentCacheKeys[key]
-			if cacheKey == "" {
-				cacheKey = segment.DaemonCacheKey()
-				e.segmentCacheKeys[key] = cacheKey
-			}
+				if e.pendingSegments[key] {
+					entry, found, _ := e.getSegmentCache(segment)
+					if found {
+						e.cachedValues[key] = entry.Text
+					}
+					continue
+				}
 
-			if e.pendingSegments[key] {
 				entry, found, _ := e.getSegmentCache(segment)
 				if found {
-					e.cachedValues[key] = entry.Text
+					e.applySegmentCacheEntry(segment, entry)
 				}
-				continue
-			}
-
-			entry, found, _ := e.getSegmentCache(segment)
-			if found {
-				e.applySegmentCacheEntry(segment, entry)
 			}
 		}
 	}
@@ -448,11 +461,11 @@ func (e *Engine) resolveStreamingBlocks() []*config.Block {
 }
 
 func (e *Engine) renderBlockStreaming(block *config.Block, blockIndex int, cancelNewline bool) bool {
-	blockText, length := e.writeBlockSegmentsStreaming(block, blockIndex)
+	blockText, length := e.writeBlockSegmentsStreaming(streamScopePrimary, block, blockIndex)
 	return e.renderBlockWithText(block, blockText, length, cancelNewline)
 }
 
-func (e *Engine) writeBlockSegmentsStreaming(block *config.Block, blockIndex int) (string, int) {
+func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, blockIndex int) (string, int) {
 	segmentIndex := 0
 
 	type pendingRestore struct {
@@ -468,7 +481,7 @@ func (e *Engine) writeBlockSegmentsStreaming(block *config.Block, blockIndex int
 	restores := make([]pendingRestore, 0, len(block.Segments))
 
 	for segmentPosition, segment := range block.Segments {
-		key := segmentKey(blockIndex, segmentPosition, segment)
+		key := segmentKey(scope, blockIndex, segmentPosition, segment)
 		if e.pendingSegments[key] {
 			cachedVal := e.cachedValues[key]
 			enabled, text, background := segment.GetPendingText(cachedVal, e.Config)
@@ -553,6 +566,53 @@ func (e *Engine) writeBlockSegmentsStreaming(block *config.Block, blockIndex int
 	e.previousActiveSegment = nil
 
 	return terminal.String()
+}
+
+func (e *Engine) streamingBlockSets() []streamingBlockSet {
+	sets := []streamingBlockSet{
+		{
+			scope:  streamScopePrimary,
+			blocks: e.streamingBlocks,
+		},
+	}
+
+	if len(e.streamingTransient) > 0 {
+		sets = append(sets, streamingBlockSet{
+			scope:  streamScopeTransient,
+			blocks: e.streamingTransient,
+		})
+	}
+
+	if len(e.streamingRTransient) > 0 {
+		sets = append(sets, streamingBlockSet{
+			scope:  streamScopeRTransient,
+			blocks: e.streamingRTransient,
+		})
+	}
+
+	return sets
+}
+
+func (e *Engine) resolveStreamingTransientBlocks() []*config.Block {
+	if e.LayoutConfig == nil || len(e.LayoutConfig.TransientPrompt) == 0 {
+		return nil
+	}
+
+	blocks := make([]*config.Block, 0, len(e.LayoutConfig.TransientPrompt))
+	for i := range e.LayoutConfig.TransientPrompt {
+		blocks = append(blocks, e.layoutBlock(&e.LayoutConfig.TransientPrompt[i], config.Prompt, config.Left, i != 0))
+	}
+
+	return blocks
+}
+
+func (e *Engine) resolveStreamingRTransientBlocks() []*config.Block {
+	if e.LayoutConfig == nil || len(e.LayoutConfig.TransientRPrompt) == 0 {
+		return nil
+	}
+
+	block := e.layoutBlock(&e.LayoutConfig.TransientRPrompt[0], config.RPrompt, config.Right, false)
+	return []*config.Block{block}
 }
 
 func (e *Engine) renderBlockWithText(block *config.Block, blockText string, length int, cancelNewline bool) bool {

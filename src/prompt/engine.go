@@ -37,6 +37,8 @@ type Engine struct {
 	rprompt               string
 	prompt                strings.Builder
 	streamingBlocks       []*config.Block
+	streamingRTransient   []*config.Block
+	streamingTransient    []*config.Block
 	Padding               int
 	currentLineLength     int
 	rpromptLength         int

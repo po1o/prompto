@@ -18,26 +18,29 @@ import (
 type rendererStub struct {
 	lastPrimary   string
 	renderedCalls []string
-	includeExtras []bool
+	options       []bundleOptions
 	callCount     int
 	mu            sync.Mutex
 }
 
-func (renderer *rendererStub) Bundle(_ *prompt.Engine, primary string, includeExtras bool) PromptBundle {
+func (renderer *rendererStub) Bundle(_ *prompt.Engine, primary string, options bundleOptions) PromptBundle {
 	renderer.mu.Lock()
 	defer renderer.mu.Unlock()
 
 	renderer.callCount++
 	renderer.lastPrimary = primary
 	renderer.renderedCalls = append(renderer.renderedCalls, primary)
-	renderer.includeExtras = append(renderer.includeExtras, includeExtras)
+	renderer.options = append(renderer.options, options)
 
 	bundle := PromptBundle{
 		Primary: "render",
 	}
-	if includeExtras {
+	if options.includeTransient {
 		bundle.Transient = "transient"
 		bundle.RTransient = "rtransient"
+	}
+	if options.includeSecondary {
+		bundle.Secondary = "secondary"
 	}
 
 	return bundle
@@ -51,11 +54,11 @@ func (renderer *rendererStub) Calls() []string {
 	return out
 }
 
-func (renderer *rendererStub) Extras() []bool {
+func (renderer *rendererStub) Options() []bundleOptions {
 	renderer.mu.Lock()
 	defer renderer.mu.Unlock()
-	out := make([]bool, len(renderer.includeExtras))
-	copy(out, renderer.includeExtras)
+	out := make([]bundleOptions, len(renderer.options))
+	copy(out, renderer.options)
 	return out
 }
 
@@ -69,10 +72,13 @@ func TestRenderPipelineStartRendersInitialBundle(t *testing.T) {
 
 	bundle, active := pipeline.Start("session-a", &runtime.Flags{}, false)
 	require.Equal(t, "render", bundle.Primary)
+	require.Equal(t, "transient", bundle.Transient)
+	require.Equal(t, "rtransient", bundle.RTransient)
 	require.NotNil(t, active)
 
 	calls := renderer.Calls()
 	require.Equal(t, []string{""}, calls)
+	require.Equal(t, []bundleOptions{{includeTransient: true}}, renderer.Options())
 
 	active.Complete()
 }
@@ -101,9 +107,15 @@ func TestRenderPipelineNextRendersAfterUpdate(t *testing.T) {
 	require.Equal(t, uint64(1), update.Snapshot.Sequence)
 	require.Equal(t, "path.main", update.Snapshot.Payload)
 	require.Equal(t, "render", update.Bundle.Primary)
+	require.Equal(t, "transient", update.Bundle.Transient)
+	require.Equal(t, "rtransient", update.Bundle.RTransient)
 
 	calls := renderer.Calls()
 	require.Equal(t, []string{"", ""}, calls)
+	require.Equal(t, []bundleOptions{
+		{includeTransient: true},
+		{includeTransient: true},
+	}, renderer.Options())
 }
 
 func TestActiveRenderNextHandlesNil(t *testing.T) {
@@ -197,7 +209,10 @@ text.rtransient:
 	require.Equal(t, "transient", bundle.Transient)
 	require.Equal(t, "rtransient", bundle.RTransient)
 	require.Nil(t, active)
-	require.Equal(t, []bool{true}, renderer.Extras())
+	require.Equal(t, []bundleOptions{{
+		includeSecondary: true,
+		includeTransient: true,
+	}}, renderer.Options())
 
 	_, _, ok := registry.GetActiveRender("session-a")
 	require.False(t, ok)
