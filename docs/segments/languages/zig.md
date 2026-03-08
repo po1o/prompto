@@ -1,0 +1,109 @@
+---
+title: Zig
+description: Display the currently active Zig version.
+---
+
+## Segment Type
+
+`zig`
+
+## What
+
+Display the currently active [Zig][zig] version.
+
+## Sample Configuration
+
+```yaml
+prompt:
+  - segments: ["zig"]
+
+zig:
+  type: "zig"
+  style: "powerline"
+  powerline_symbol: ""
+  foreground: "#342311"
+  background: "#ffad55"
+  template: "  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
+```
+
+## Options
+
+- `home_enabled`
+  - Type: `boolean`
+  - Default: `false`
+  - Description: display the segment in the HOME folder or not
+- `fetch_version`
+  - Type: `boolean`
+  - Default: `true`
+  - Description: fetch the zig version (`zig version`)
+- `cache_duration`
+  - Type: `string`
+  - Default: `none`
+  - Description: the duration for which the version will be cached. The duration is a string in the format `1h2m3s` and
+    is parsed using the [time.ParseDuration] function from the Go standard library. To disable the cache, use `none`
+- `missing_command_text`
+  - Type: `string`
+  - Description: text to display when the command is missing
+- `display_mode`
+  - Type: `string`
+  - Default: `context`
+  - Description: `always`: the segment is always displayed; `files`: the segment is only displayed when file
+    `extensions` listed are present; `context`: displays the segment when the environment or files is active
+- `version_url_template`
+  - Type: `string`
+  - Description: a go [text/template][go-text-template] [template][templates] that creates the URL of the version info /
+    release notes
+- `extensions`
+  - Type: `[]string`
+  - Default: `*.zig, *.zon`
+  - Description: allows to override the default list of file extensions to validate
+- `folders`
+  - Type: `[]string`
+  - Description: allows to override the list of folder names to validate
+- `tooling`
+  - Type: `[]string`
+  - Default: `zig`
+  - Description: the tooling to use for fetching the version
+
+## Template
+
+### Default Template
+
+```template
+{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
+```
+
+### Properties
+
+- `.Full`
+  - Type: `string`
+  - Description: the full version
+- `.Major`
+  - Type: `string`
+  - Description: major number
+- `.Minor`
+  - Type: `string`
+  - Description: minor number
+- `.Patch`
+  - Type: `string`
+  - Description: patch number
+- `.Prerelease`
+  - Type: `string`
+  - Description: prerelease identifier
+- `.BuildMetadata`
+  - Type: `string`
+  - Description: build identifier
+- `.URL`
+  - Type: `string`
+  - Description: URL of the version info / release notes
+- `.InProjectDir`
+  - Type: `bool`
+  - Description: whether the working directory is within a Zig project
+- `.Error`
+  - Type: `string`
+  - Description: error encountered when fetching the version string
+
+[go-text-template]: https://golang.org/pkg/text/template/
+[templates]: ../../configuration/templates.md
+[zig]: https://ziglang.org/
+[time.ParseDuration]: https://golang.org/pkg/time/#ParseDuration

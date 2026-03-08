@@ -1,0 +1,39 @@
+---
+title: Cli Segments
+description: Segment reference pages for the cli category.
+---
+
+## Pages
+
+- [Angular](./angular.md)
+- [ArgoCD Context](./argocd.md)
+- [Aurelia](./aurelia.md)
+- [Bazel](./bazel.md)
+- [Buf](./buf.md)
+- [Bun](./bun.md)
+- [Cmake](./cmake.md)
+- [Deno](./deno.md)
+- [Docker](./docker.md)
+- [Firebase](./firebase.md)
+- [Flutter](./flutter.md)
+- [GitHub Copilot](./copilot.md)
+- [GitVersion](./gitversion.md)
+- [Helm](./helm.md)
+- [Kubernetes](./kubectl.md)
+- [Maven](./mvn.md)
+- [Nerdbank.GitVersioning](./nbgv.md)
+- [Nix Shell](./nix-shell.md)
+- [NPM](./npm.md)
+- [Nx](./nx.md)
+- [PNPM](./pnpm.md)
+- [Quasar](./quasar.md)
+- [React](./react.md)
+- [Svelte](./svelte.md)
+- [Talosctl Context](./talosctl.md)
+- [Tauri](./tauri.md)
+- [Terraform Context](./terraform.md)
+- [UI5 Tooling](./ui5tooling.md)
+- [Umbraco](./umbraco.md)
+- [Unity](./unity.md)
+- [XMake](./xmake.md)
+- [Yarn](./yarn.md)

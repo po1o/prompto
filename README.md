@@ -1,92 +1,72 @@
-<!-- markdownlint-disable -->
-<p align="center">
-  <img
-    width="400"
-    src="https://raw.githubusercontent.com/jandedobbeleer/prompto/main/website/static/img/logo.png"
-    alt="Prompto logo – Prompt theme engine for any shell"
-  />
-</p>
-<!-- markdownlint-enable -->
+# prompto
 
-![MIT license badge](https://img.shields.io/github/license/JanDeDobbeleer/prompto.svg)
+## What This Is
 
-![Build Status badge](https://img.shields.io/github/actions/workflow/status/jandedobbeleer/prompto/release.yml?branch=main)
+`prompto` is a fork I built mostly for personal use.
 
-[![Release version number badge][release-badge]][release]
+It sits on the shoulders of a giant:
 
-[![Documentation link badge prompto.dev][docs-badge]][docs]
+- [oh-my-posh website](https://ohmyposh.dev/)
+- [oh-my-posh GitHub repository](https://github.com/JanDeDobbeleer/oh-my-posh)
 
-![Number of GitHub Downloads badge](https://img.shields.io/github/downloads/jandedobbeleer/prompto/total?color=pink&label=GitHub%20Downloads)
+This fork is a continuation of ideas explored in
+[oh-my-posh PR #7244](https://github.com/JanDeDobbeleer/oh-my-posh/pull/7244).
 
-This repo was made with love using GitKraken.
+## Big Disclaimer
 
-[![GitKraken shield][kraken]][kraken-ref]
-<!-- markdownlint-disable first-header-h1 -->
+If you are looking for an almost universal, top-notch prompt system, you should use
+[oh-my-posh](https://ohmyposh.dev/), not this fork.
 
-## Sponsors
+That is intentional.
+I do not want to steal users from oh-my-posh or lure people away from it.
 
-[![Documentation link badge prompto.dev][merge-conflict-logo]][merge-conflict]
+## Why This Fork Exists
 
-[Want to become a sponsor?][sponsor-link]
+Not pursuing this path in oh-my-posh was the right approach.
 
-## Join the community
+oh-my-posh has different goals: broad compatibility, a stable user experience, and a configuration model that serves a
+large existing user base.
 
-![Mastodon badge](https://img.shields.io/mastodon/follow/110275292073181892?domain=https%3A%2F%2Fhachyderm.io&label=Mastodon&style=social)
+`prompto` exists so I can take a different direction without forcing that direction upstream.
 
-![Discord badge](https://img.shields.io/discord/1023597603331526656)
+This is not a drop-in replacement for oh-my-posh and it is not trying to compete with it.
 
-What started as the offspring of [prompto2](https://github.com/po1o/prompto2) for PowerShell
-resulted in a cross platform, highly customizable and extensible prompt theme engine. After 4 years of working
-on prompto, a modern and more efficient tool was needed to suit my personal needs.
+## Compatibility
 
-## :heart: Support :heart:
+`prompto` configuration is purposely incompatible with oh-my-posh configuration.
 
-[![Swag][swag-badge]][swag] - Show your love with a t-shirt!
+That incompatibility is deliberate.
+It exists in part to avoid creating a casual migration path for people who should simply keep using oh-my-posh.
 
-[![GitHub][github-badge]][github-sponsors] - One time support, or a recurring donation?
+If you are an oh-my-posh user and you are specifically interested in streaming capabilities, look at
+[oh-my-posh experimental streaming](https://ohmyposh.dev/docs/experimental/streaming).
+That is the better path for oh-my-posh users.
 
-[![Ko-Fi][kofi-badge]][kofi] - No coffee, no code.
+## Shell Support
 
-## Features
-
-* Shell and platform agnostic
-* Easily configurable
-* The __most__ configurable prompt utility
-* Fast
-* Secondary prompt
-* Right prompt
-* Transient prompt
+| Shell | Status | Notes |
+| --- | --- | --- |
+| `zsh` | supported | fully tested on macOS and Linux |
+| `fish` | supported | not fully tested yet |
+| `powershell` / `pwsh` | supported | not fully tested yet |
+| `bash` | partial | limited by shell behavior and may be dropped |
 
 ## Documentation
 
-[![Documentation][docs-badge]][docs]
+There is no separate website for this fork.
+The documentation lives in this repository.
 
-## Reviews
+- [Documentation index](./docs/README.md)
+- [Installation](./docs/installation.md)
+- [Shell initialization](./docs/shell-init.md)
+- [Configuration](./docs/configuration.md)
+- [Configuration reference](./docs/configuration/reference.md)
+- [Segment reference](./docs/segments/README.md)
+- [FAQ](./docs/faq.md)
 
-* [Repo review](https://repo-reviews.github.io//reviews/2023-06-21_TameWizard_JanDeDobbeleer_prompto) by [TameWizard](https://github.com/TameWizard)
+## Project Status
 
-## Thanks
+This is a personal project and it is optimized for my workflow first.
 
-* [Chris Benti](https://github.com/chrisbenti/PS-Config) providing the first influence to start prompto
-* [Keith Dahlby](https://github.com/dahlbyk/prompto-git) for creating prompto-git and making life more enjoyable
-* [Robby Russell](https://github.com/ohmyzsh/ohmyzsh) for creating oh-my-zsh, without him this would probably not be here
-* [Janne Mareike Koschinski](https://github.com/justjanne) for providing information on how to get certain information
-using Go (and the amazing [README](https://github.com/justjanne/powerline-go))
-* [Starship](https://github.com/starship/starship/blob/master/src/init/mod.rs) for doing great things
-
-[kraken]: https://img.shields.io/badge/GitKraken-Legendary%20Git%20Tools-teal?style=plastic&logo=gitkraken
-[kraken-ref]: https://www.gitkraken.com/invite/nQmDPR9D
-[swag-badge]: https://img.shields.io/badge/Swag-Get%20some!-blue
-[swag]: https://swag.prompto.dev
-[github-badge]: https://img.shields.io/badge/-Sponsor-fafbfc?logo=GitHub%20Sponsors
-[github-sponsors]: https://github.com/sponsors/JanDeDobbeleer
-[kofi-badge]: https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee!-%2346b798.svg
-[kofi]: https://ko-fi.com/jandedobbeleer
-[docs-badge]: https://img.shields.io/badge/Docs-prompto.dev-blue
-[docs]: https://prompto.dev
-[release-badge]: https://img.shields.io/github/v/release/jandedobbeleer/prompto?label=Release
-[release]: https://github.com/po1o/prompto/releases/latest
-
-[merge-conflict]: https://www.mergeconflict.fm/
-[merge-conflict-logo]: https://media24.fireside.fm/file/fireside-images-2024/podcasts/images/0/02d84890-e58d-43eb-ab4c-26bcc8524289/cover_small.jpg?v=1
-[sponsor-link]: https://buy.polar.sh/polar_cl_qnmZxboq1IDUJo03mk2Jue6ktqZrCXElnzH2s2xbV2R
+If you need a mature, broadly compatible, general-purpose prompt system, use
+[oh-my-posh](https://ohmyposh.dev/).
