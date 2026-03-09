@@ -3,6 +3,7 @@ package segments
 import (
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/po1o/prompto/src/segments/options"
 	"github.com/po1o/prompto/src/shell"
@@ -78,8 +79,8 @@ func (t *Time) shellClockDisplay() (string, bool) {
 		return "", false
 	}
 
-	strftime := goLayoutToStrftime(t.Format)
-	if strftime == "" {
+	strftime, ok := goLayoutToStrftime(t.Format)
+	if !ok {
 		return "", false
 	}
 
@@ -95,33 +96,86 @@ func (t *Time) shellClockDisplay() (string, bool) {
 	}
 }
 
-func goLayoutToStrftime(layout string) string {
+type shellClockToken struct {
+	goLayout string
+	strftime string
+}
+
+var shellClockTokens = []shellClockToken{
+	{goLayout: "Monday", strftime: "%A"},
+	{goLayout: "January", strftime: "%B"},
+	{goLayout: "2006", strftime: "%Y"},
+	{goLayout: "-0700", strftime: "%z"},
+	{goLayout: "Mon", strftime: "%a"},
+	{goLayout: "Jan", strftime: "%b"},
+	{goLayout: "MST", strftime: "%Z"},
+	{goLayout: "_2", strftime: "%e"},
+	{goLayout: "15", strftime: "%H"},
+	{goLayout: "03", strftime: "%I"},
+	{goLayout: "PM", strftime: "%p"},
+	{goLayout: "02", strftime: "%d"},
+	{goLayout: "01", strftime: "%m"},
+	{goLayout: "06", strftime: "%y"},
+	{goLayout: "05", strftime: "%S"},
+	{goLayout: "04", strftime: "%M"},
+}
+
+var unsupportedShellClockTokens = []string{
+	"-07:00",
+	"Z07:00",
+	"Z0700",
+	".000000000",
+	".999999999",
+	".000000",
+	".999999",
+	".000",
+	".999",
+	"-07",
+	"pm",
+	"1",
+	"2",
+	"3",
+	"4",
+	"5",
+}
+
+func goLayoutToStrftime(layout string) (string, bool) {
 	if layout == "" {
-		return ""
+		return "", false
 	}
 
-	replacer := strings.NewReplacer(
-		"Monday", "%A",
-		"January", "%B",
-		"Mon", "%a",
-		"Jan", "%b",
-		"2006", "%Y",
-		"06", "%y",
-		"15", "%H",
-		"03", "%I",
-		"04", "%M",
-		"05", "%S",
-		"PM", "%p",
-		"pm", "%p",
-		"02", "%d",
-		"01", "%m",
-		"_2", "%e",
-		"2", "%-d",
-		"1", "%-m",
-		"MST", "%Z",
-		"-0700", "%z",
-		"-07", "%z",
-	)
+	var builder strings.Builder
 
-	return replacer.Replace(layout)
+	for len(layout) > 0 {
+		matched := false
+
+		for _, token := range shellClockTokens {
+			if !strings.HasPrefix(layout, token.goLayout) {
+				continue
+			}
+
+			builder.WriteString(token.strftime)
+			layout = layout[len(token.goLayout):]
+			matched = true
+			break
+		}
+
+		if matched {
+			continue
+		}
+
+		for _, token := range unsupportedShellClockTokens {
+			if !strings.HasPrefix(layout, token) {
+				continue
+			}
+
+			return "", false
+		}
+
+		r, size := utf8.DecodeRuneInString(layout)
+		builder.WriteRune(r)
+		layout = layout[size:]
+	}
+
+	return builder.String(), true
 }

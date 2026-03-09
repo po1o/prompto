@@ -103,3 +103,81 @@ func TestTimeShellClockDisplayPlaceholderForFishAndPwsh(t *testing.T) {
 		assert.Equal(t, "__PROMPTO_CLOCK{%H:%M}__", timeSegment.ShellClock)
 	}
 }
+
+func TestGoLayoutToStrftime(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		layout   string
+		expected string
+		ok       bool
+	}{
+		{
+			name:     "simple time",
+			layout:   "15:04:05",
+			expected: "%H:%M:%S",
+			ok:       true,
+		},
+		{
+			name:     "date time zone",
+			layout:   "Mon Jan _2 15:04:05 MST 2006 -0700",
+			expected: "%a %b %e %H:%M:%S %Z %Y %z",
+			ok:       true,
+		},
+		{
+			name:   "kitchen unsupported",
+			layout: time.Kitchen,
+			ok:     false,
+		},
+		{
+			name:   "rfc3339 unsupported",
+			layout: time.RFC3339,
+			ok:     false,
+		},
+		{
+			name:   "fractional seconds unsupported",
+			layout: time.StampMilli,
+			ok:     false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			actual, ok := goLayoutToStrftime(tc.layout)
+			assert.Equal(t, tc.ok, ok)
+			assert.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
+func TestTimeShellClockFallsBackToRenderedValueWhenLayoutIsNotTranslatable(t *testing.T) {
+	t.Parallel()
+
+	currentDate := time.Date(2026, 3, 7, 15, 4, 5, 0, time.UTC)
+	env := new(mock.Environment)
+	env.On("Shell").Return(shell.ZSH)
+
+	timeSegment := &Time{CurrentDate: currentDate}
+	timeSegment.Init(options.Map{
+		TimeFormat: "Kitchen",
+	}, env)
+
+	assert.True(t, timeSegment.Enabled())
+	assert.Equal(t, currentDate.Format(time.Kitchen), timeSegment.ShellClock)
+}
+
+func TestTimeShellClockUsesTimeFormatConstantWhenTranslatable(t *testing.T) {
+	t.Parallel()
+
+	env := new(mock.Environment)
+	env.On("Shell").Return(shell.ZSH)
+
+	timeSegment := &Time{}
+	timeSegment.Init(options.Map{
+		TimeFormat: "DateTime",
+	}, env)
+
+	assert.True(t, timeSegment.Enabled())
+	assert.Equal(t, "%D{%Y-%m-%d %H:%M:%S}", timeSegment.ShellClock)
+}
