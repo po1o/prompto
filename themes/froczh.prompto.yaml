@@ -114,4 +114,4 @@ time:
     options:
         time_format: 15:04:05 | Monday
     style: plain
-    template: '<transparent>  </>{{ .CurrentDate | date .Format }} '
+    template: '<transparent>  </>{{ .LastDate | date .Format }} '

@@ -46,7 +46,7 @@ git:
 time:
   foreground: white
   background: darkGray
-  template: " {{ .CurrentDate | date \"15:04\" }} "
+  template: " {{ .LastDate | date \"15:04\" }} "
 ```
 
 ## Read This in Order

@@ -155,7 +155,7 @@ time:
     options:
         time_format: <#D6DEEB> 15:04:05</> <#79DFE1>|</>  2 Jan, Monday
     style: plain
-    template: '{{ .CurrentDate | date .Format }} <#79DFE1>|</>'
+    template: '{{ .LastDate | date .Format }} <#79DFE1>|</>'
 transient:
     - segments:
         - text.transient

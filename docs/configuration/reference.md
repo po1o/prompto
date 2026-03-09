@@ -285,10 +285,10 @@ git.transient:
 time:
   foreground: white
   background: darkGray
-  template: " {{ .CurrentDate | date \"15:04\" }} "
+  template: " {{ .LastDate | date \"15:04\" }} "
 
 time.transient:
   foreground: darkGray
   background: transparent
-  template: " {{ .CurrentDate | date \"15:04\" }} "
+  template: " {{ .LastDate | date \"15:04\" }} "
 ```

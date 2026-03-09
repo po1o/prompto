@@ -79,4 +79,4 @@ time:
         time_format: 3:04 PM
     powerline_symbol: 
     style: powerline
-    template: '  {{ .CurrentDate | date .Format }} '
+    template: '  {{ .LastDate | date .Format }} '

@@ -90,5 +90,5 @@ time:
     options:
         time_format: "15:04:05"
     style: diamond
-    template: '  {{ .CurrentDate | date .Format }} '
+    template: '  {{ .LastDate | date .Format }} '
     trailing_separator: 

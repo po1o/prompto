@@ -65,7 +65,7 @@ git.short:
 
 time.short:
   type: time
-  template: " {{ .CurrentDate | date \"15:04\" }} "
+  template: " {{ .LastDate | date \"15:04\" }} "
 ```
 
 ## Common Segment Fields
@@ -155,7 +155,7 @@ Hide a segment outside a terminal width range:
 ```yaml
 time:
   min_width: 100
-  template: " {{ .CurrentDate | date \"15:04\" }} "
+  template: " {{ .LastDate | date \"15:04\" }} "
 ```
 
 Rules:

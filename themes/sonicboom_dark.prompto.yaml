@@ -85,5 +85,5 @@ time:
     options:
         time_format: 3:04:05 PM
     style: diamond
-    template: '<#000000>  </>{{ .CurrentDate | date .Format }} '
+    template: '<#000000>  </>{{ .LastDate | date .Format }} '
     trailing_separator: 

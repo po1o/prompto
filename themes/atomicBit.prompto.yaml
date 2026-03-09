@@ -147,4 +147,4 @@ time:
     options:
         time_format: _2,15:04
     style: plain
-    template: <#ffffff>[</>{{ .CurrentDate | date .Format }}<#ffffff>]</>
+    template: <#ffffff>[</>{{ .LastDate | date .Format }}<#ffffff>]</>

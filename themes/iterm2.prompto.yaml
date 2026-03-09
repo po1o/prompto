@@ -97,7 +97,7 @@ time:
     invert_powerline: true
     powerline_symbol: 
     style: powerline
-    template: '<#fff>  </>{{ .CurrentDate | date .Format }} '
+    template: '<#fff>  </>{{ .LastDate | date .Format }} '
 transient:
     - segments:
         - text.transient

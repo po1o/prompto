@@ -146,7 +146,7 @@ time:
         time_format: "15:04:05"
     powerline_symbol: ""
     style: powerline
-    template: ' <p:symbol-color></> {{ dateInZone .Format .CurrentDate "UTC" }} '
+    template: ' <p:symbol-color></> {{ dateInZone .Format .LastDate "UTC" }} '
 time.2:
     background: p:background-color
     foreground: p:timer-text
@@ -154,4 +154,4 @@ time.2:
         time_format: "15:04:05"
     powerline_symbol: ""
     style: powerline
-    template: ' <p:symbol-color></> {{ .CurrentDate | date .Format }} '
+    template: ' <p:symbol-color></> {{ .LastDate | date .Format }} '

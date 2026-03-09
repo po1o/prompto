@@ -52,4 +52,4 @@ text.2:
 time:
     foreground: darkGray
     style: plain
-    template: '[{{ .CurrentDate | date .Format }}]'
+    template: '[{{ .LastDate | date .Format }}]'

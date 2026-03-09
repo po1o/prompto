@@ -128,7 +128,7 @@ time:
     options:
         time_format: "15:04:05"
     style: diamond
-    template: ' {{ .CurrentDate | date .Format }}<#007ACC>  </>'
+    template: ' {{ .LastDate | date .Format }}<#007ACC>  </>'
     trailing_separator: ▓
 transient:
     - segments:

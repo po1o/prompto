@@ -53,7 +53,7 @@ git:
 time:
   foreground: white
   background: darkGray
-  template: " {{ .CurrentDate | date \"15:04\" }} "
+  template: " {{ .LastDate | date \"15:04\" }} "
 ```
 
 ## Step 3: Add Layout Styling
@@ -101,7 +101,7 @@ git.transient:
 time.transient:
   foreground: darkGray
   background: transparent
-  template: " {{ .CurrentDate | date \"15:04\" }} "
+  template: " {{ .LastDate | date \"15:04\" }} "
 ```
 
 ## Step 5: Centralize Colors with a Palette
@@ -135,7 +135,7 @@ git:
 time:
   foreground: p:fg
   background: p:bg_time
-  template: " {{ .CurrentDate | date \"15:04\" }} "
+  template: " {{ .LastDate | date \"15:04\" }} "
 ```
 
 ## Step 6: Tune Slow Segments
@@ -232,7 +232,7 @@ vim:
 time:
   foreground: p:fg
   background: p:gray
-  template: " {{ .CurrentDate | date \"15:04\" }} "
+  template: " {{ .LastDate | date \"15:04\" }} "
 
 path.transient:
   foreground: p:fg
@@ -249,5 +249,5 @@ git.transient:
 time.transient:
   foreground: p:gray
   background: transparent
-  template: " {{ .CurrentDate | date \"15:04\" }} "
+  template: " {{ .LastDate | date \"15:04\" }} "
 ```

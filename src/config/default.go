@@ -71,7 +71,7 @@ func Default(configError error) *Config {
 				Style:      Plain,
 				Foreground: "p:white",
 				Background: "transparent",
-				Template:   "at <p:blue><b>{{ .CurrentDate | date \"15:04:05\" }}</b></>",
+				Template:   "at <p:blue><b>{{ .LastDate | date \"15:04:05\" }}</b></>",
 			},
 		},
 	}

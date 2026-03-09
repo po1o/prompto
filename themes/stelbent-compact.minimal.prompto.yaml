@@ -75,4 +75,4 @@ time:
     options:
         time_format: "15:04:05"
     style: plain
-    template: ' <#757575,>|</> {{ .CurrentDate | date .Format }}'
+    template: ' <#757575,>|</> {{ .LastDate | date .Format }}'

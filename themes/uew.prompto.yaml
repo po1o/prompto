@@ -75,7 +75,7 @@ time:
     options:
         time_format: Monday <#fff>at</> 3:04 PM
     style: diamond
-    template: ' {{ .CurrentDate | date .Format }} '
+    template: ' {{ .LastDate | date .Format }} '
 transient:
     - segments:
         - text.transient

@@ -63,4 +63,4 @@ time:
     foreground: '#fff'
     powerline_symbol: 
     style: powerline
-    template: '<#fff>  </>{{ .CurrentDate | date .Format }} '
+    template: '<#fff>  </>{{ .LastDate | date .Format }} '

@@ -48,4 +48,4 @@ text:
 time:
     foreground: '#ffffff'
     style: plain
-    template: '[{{ .CurrentDate | date .Format }}]'
+    template: '[{{ .LastDate | date .Format }}]'

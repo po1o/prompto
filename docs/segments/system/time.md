@@ -37,45 +37,123 @@ time:
 ### Default Template
 
 ```template
- {{ .CurrentDate | date .Format }}
+{{ .LastDate | date .Format }}
 ```
 
 ### Properties
 
 - `.Format`
   - Type: `string`
-  - Description: The time format (set via `time_format`)
-- `.CurrentDate`
+  - Description: The time format resolved from `time_format`.
+- `.LastDate`
   - Type: `time`
-  - Description: The time to display (testing purpose)
-- `.ShellClock`
+  - Description: The time the previous command finished.
+- `.CurrentDate`
   - Type: `string`
-  - Description: A shell-native live clock string that follows `time_format` when the format can be translated
-    exactly to a portable `strftime` subset. Otherwise it falls back to the already-rendered timestamp string.
+  - Description: The time the current command started. When `time_format` cannot be followed exactly for the
+    current command, this falls back to the same formatted value as `.LastDate`.
 
-## Shell Clock
+## Behavior Difference
 
-The default template uses `.CurrentDate`, so the timestamp is rendered once per prompt.
+The important difference is what the timestamp refers to:
 
-If you want the shell to keep the clock live without re-rendering the prompt, use `.ShellClock` in your template:
+- `.LastDate`: the time the previous command finished
+- `.CurrentDate`: the time the current command started
+
+By prompt type:
+
+| Prompt type | `.LastDate` | `.CurrentDate` |
+| --- | --- | --- |
+| `prompt`, `rprompt` | previous command finished | previous command finished, because there is no current command yet |
+| `transient`, `rtransient` | previous command finished | current command started |
+
+So:
+
+- use `.LastDate` when you want to show when the previous command finished
+- use `.CurrentDate` when you want transient prompts to show when the current command started
+
+### Example: `sleep 3m`
+
+Assume this timeline:
+
+1. Your previous command finishes at `10:00:00`
+2. You wait on the prompt for two minutes
+3. At `10:02:00` you press Enter on `sleep 3m`
+4. The command finishes at `10:05:00`
+
+While you are typing `sleep 3m`, this is still a normal `prompt` / `rprompt`.
+There is no current command yet, so both properties show the same time:
+
+```text
+.LastDate    -> 10:00:00
+.CurrentDate -> 10:00:00
+```
+
+When you press Enter, the transient prompt is shown for the command you just started:
+
+```text
+.LastDate    -> 10:00:00
+.CurrentDate -> 10:02:00
+```
+
+After `sleep 3m` finishes at `10:05:00`, the next normal prompt is shown.
+Again there is no current command yet, so both properties match:
+
+```text
+.LastDate    -> 10:05:00
+.CurrentDate -> 10:05:00
+```
+
+## Choosing The Property
+
+The default template uses `.LastDate`, so the timestamp is rendered once and stays fixed.
+
+If you want transient prompts to show when the current command started, use `.CurrentDate` in your template:
 
 ```yaml
 time:
   type: time
-  template: " {{ .ShellClock }} "
+  template: " {{ .CurrentDate }} "
   options:
     time_format: "15:04:05"
 ```
 
-Behavior by shell:
+This distinction matters most for transient prompts, because they are shown after you press Enter.
 
-- `zsh`: emits `%D{...}`
-- `bash`: emits `\D{...}`
-- `fish` and `pwsh`: emits a placeholder that the init script expands at display time
-- other shells: fall back to a normal rendered string
+## Format Restrictions For `.CurrentDate`
 
-`.ShellClock` only uses the shell-native live clock path when `time_format` can be translated exactly.
-If not, `.ShellClock` falls back to the same rendered value you would get from `.CurrentDate | date .Format`.
+`.CurrentDate` can only follow `time_format` exactly when the format uses this supported subset of Go layout tokens,
+plus literal separators such as `:`, `-`, `/`, spaces, and `T`:
+
+- `2006`, `06`
+- `January`, `Jan`
+- `01`
+- `02`, `_2`
+- `Monday`, `Mon`
+- `15`, `03`
+- `04`
+- `05`
+- `PM`
+- `MST`
+- `-0700`
+
+These formats therefore work well with `.CurrentDate`:
+
+- `15:04:05`
+- `2006-01-02 15:04:05`
+- `Mon Jan _2 15:04:05 MST 2006`
+- `DateTime`
+- `DateOnly`
+- `TimeOnly`
+
+These do not have an exact current-command translation and therefore fall back to the same rendered value as
+`{{ .LastDate | date .Format }}`:
+
+- `1`, `2`, `3`, `4`, `5`
+- `pm`
+- fractional seconds such as `.000` or `.999999999`
+- timezone forms `-07`, `-07:00`, `Z0700`, `Z07:00`
+- predefined formats such as `Kitchen`, `RFC3339`, `RFC3339Nano`, `StampMilli`, `StampMicro`, `StampNano`
 
 ## Syntax
 
@@ -108,41 +186,7 @@ Follows the [golang datetime standard][format]:
 - **Offset**
   - Format: `-0700`, `-07`, `-07:00`, `Z0700`, `Z07:00`
 
-### Formats That `.ShellClock` Can Follow Exactly
-
-The live shell clock path supports these Go layout tokens exactly, plus literal separators such as `:`, `-`, `/`,
-spaces, and `T`:
-
-- `2006`, `06`
-- `January`, `Jan`
-- `01`
-- `02`, `_2`
-- `Monday`, `Mon`
-- `15`, `03`
-- `04`
-- `05`
-- `PM`
-- `MST`
-- `-0700`
-
-These formats therefore work well with `.ShellClock`:
-
-- `15:04:05`
-- `2006-01-02 15:04:05`
-- `Mon Jan _2 15:04:05 MST 2006`
-- `DateTime`
-- `DateOnly`
-- `TimeOnly`
-
-These do not have an exact portable shell-clock translation and therefore fall back to a rendered string:
-
-- `1`, `2`, `3`, `4`, `5`
-- `pm`
-- fractional seconds such as `.000` or `.999999999`
-- timezone forms `-07`, `-07:00`, `Z0700`, `Z07:00`
-- predefined formats such as `Kitchen`, `RFC3339`, `RFC3339Nano`, `StampMilli`, `StampMicro`, `StampNano`
-
-### Predefined formats
+### Predefined Formats
 
 The following predefined date and timestamp [format constants][format-constants] are also available:
 
@@ -190,7 +234,20 @@ The following predefined date and timestamp [format constants][format-constants]
 To display the time in multiple time zones, using [Sprig's Date Functions][sprig-date]:
 
 ```text
-{{ .CurrentDate | date .Format }} {{ dateInZone "15:04Z" .CurrentDate "UTC" }}
+{{ .LastDate | date .Format }} {{ dateInZone "15:04Z" .LastDate "UTC" }}
+```
+
+To display the time the current command started in a transient prompt:
+
+```yaml
+transient:
+  - segments: ["time"]
+
+time:
+  type: time
+  template: " {{ .CurrentDate }} "
+  options:
+    time_format: "15:04:05"
 ```
 
 [format]: https://yourbasic.org/golang/format-parse-string-time-date-example/

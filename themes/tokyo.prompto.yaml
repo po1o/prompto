@@ -113,7 +113,7 @@ time:
     options:
         time_format: 01/02/2006 @ 3:04:05 PM MST
     style: diamond
-    template: '[<#ffffff></> {{ .CurrentDate | date .Format }}]'
+    template: '[<#ffffff></> {{ .LastDate | date .Format }}]'
 valid_line:
     background: transparent
     template: '> '

@@ -14,7 +14,7 @@ import (
 
 func TestTimeSegmentTemplate(t *testing.T) {
 	// set date for unit test
-	currentDate := time.Now()
+	lastDate := time.Now()
 	cases := []struct {
 		Case            string
 		ExpectedString  string
@@ -24,19 +24,19 @@ func TestTimeSegmentTemplate(t *testing.T) {
 		{
 			Case:            "no template",
 			Template:        "",
-			ExpectedString:  currentDate.Format("15:04:05"),
+			ExpectedString:  lastDate.Format("15:04:05"),
 			ExpectedEnabled: true,
 		},
 		{
 			Case:            "time only",
-			Template:        "{{.CurrentDate | date \"15:04:05\"}}",
-			ExpectedString:  currentDate.Format("15:04:05"),
+			Template:        "{{.LastDate | date \"15:04:05\"}}",
+			ExpectedString:  lastDate.Format("15:04:05"),
 			ExpectedEnabled: true,
 		},
 		{
 			Case:            "lowercase",
-			Template:        "{{.CurrentDate | date \"January 02, 2006 15:04:05\" | lower }}",
-			ExpectedString:  strings.ToLower(currentDate.Format("January 02, 2006 15:04:05")),
+			Template:        "{{.LastDate | date \"January 02, 2006 15:04:05\" | lower }}",
+			ExpectedString:  strings.ToLower(lastDate.Format("January 02, 2006 15:04:05")),
 			ExpectedEnabled: true,
 		},
 	}
@@ -46,7 +46,7 @@ func TestTimeSegmentTemplate(t *testing.T) {
 		env.On("Shell").Return(shell.FISH)
 
 		tempus := &Time{
-			CurrentDate: currentDate,
+			LastDate: lastDate,
 		}
 		tempus.Init(options.Map{}, env)
 
@@ -60,7 +60,7 @@ func TestTimeSegmentTemplate(t *testing.T) {
 	}
 }
 
-func TestTimeShellClockDisplayForZsh(t *testing.T) {
+func TestTimeCurrentDateDisplayForZsh(t *testing.T) {
 	env := new(mock.Environment)
 	env.On("Shell").Return(shell.ZSH)
 
@@ -70,10 +70,10 @@ func TestTimeShellClockDisplayForZsh(t *testing.T) {
 	}, env)
 
 	assert.True(t, timeSegment.Enabled())
-	assert.Equal(t, "%D{%H:%M}", timeSegment.ShellClock)
+	assert.Equal(t, "%D{%H:%M}", timeSegment.CurrentDate)
 }
 
-func TestTimeShellClockDisplayForBash(t *testing.T) {
+func TestTimeCurrentDateDisplayForBash(t *testing.T) {
 	env := new(mock.Environment)
 	env.On("Shell").Return(shell.BASH)
 
@@ -83,24 +83,24 @@ func TestTimeShellClockDisplayForBash(t *testing.T) {
 	}, env)
 
 	assert.True(t, timeSegment.Enabled())
-	assert.Equal(t, "\\D{%H:%M}", timeSegment.ShellClock)
+	assert.Equal(t, "\\D{%H:%M}", timeSegment.CurrentDate)
 }
 
-func TestTimeShellClockDisplayPlaceholderForFishAndPwsh(t *testing.T) {
-	currentDate := time.Date(2026, 3, 7, 15, 4, 5, 0, time.UTC)
+func TestTimeCurrentDateDisplayPlaceholderForFishAndPwsh(t *testing.T) {
+	lastDate := time.Date(2026, 3, 7, 15, 4, 5, 0, time.UTC)
 	shellsWithPlaceholder := []string{shell.FISH, shell.PWSH}
 
 	for _, shellName := range shellsWithPlaceholder {
 		env := new(mock.Environment)
 		env.On("Shell").Return(shellName)
 
-		timeSegment := &Time{CurrentDate: currentDate}
+		timeSegment := &Time{LastDate: lastDate}
 		timeSegment.Init(options.Map{
 			TimeFormat: "15:04",
 		}, env)
 
 		assert.True(t, timeSegment.Enabled())
-		assert.Equal(t, "__PROMPTO_CLOCK{%H:%M}__", timeSegment.ShellClock)
+		assert.Equal(t, "__PROMPTO_CLOCK{%H:%M}__", timeSegment.CurrentDate)
 	}
 }
 
@@ -151,23 +151,23 @@ func TestGoLayoutToStrftime(t *testing.T) {
 	}
 }
 
-func TestTimeShellClockFallsBackToRenderedValueWhenLayoutIsNotTranslatable(t *testing.T) {
+func TestTimeCurrentDateFallsBackToRenderedValueWhenLayoutIsNotTranslatable(t *testing.T) {
 	t.Parallel()
 
-	currentDate := time.Date(2026, 3, 7, 15, 4, 5, 0, time.UTC)
+	lastDate := time.Date(2026, 3, 7, 15, 4, 5, 0, time.UTC)
 	env := new(mock.Environment)
 	env.On("Shell").Return(shell.ZSH)
 
-	timeSegment := &Time{CurrentDate: currentDate}
+	timeSegment := &Time{LastDate: lastDate}
 	timeSegment.Init(options.Map{
 		TimeFormat: "Kitchen",
 	}, env)
 
 	assert.True(t, timeSegment.Enabled())
-	assert.Equal(t, currentDate.Format(time.Kitchen), timeSegment.ShellClock)
+	assert.Equal(t, lastDate.Format(time.Kitchen), timeSegment.CurrentDate)
 }
 
-func TestTimeShellClockUsesTimeFormatConstantWhenTranslatable(t *testing.T) {
+func TestTimeCurrentDateUsesTimeFormatConstantWhenTranslatable(t *testing.T) {
 	t.Parallel()
 
 	env := new(mock.Environment)
@@ -179,5 +179,21 @@ func TestTimeShellClockUsesTimeFormatConstantWhenTranslatable(t *testing.T) {
 	}, env)
 
 	assert.True(t, timeSegment.Enabled())
-	assert.Equal(t, "%D{%Y-%m-%d %H:%M:%S}", timeSegment.ShellClock)
+	assert.Equal(t, "%D{%Y-%m-%d %H:%M:%S}", timeSegment.CurrentDate)
+}
+
+func TestTimeLastDateKeepsRenderedTimestamp(t *testing.T) {
+	t.Parallel()
+
+	lastDate := time.Date(2026, 3, 7, 15, 4, 5, 0, time.UTC)
+	env := new(mock.Environment)
+	env.On("Shell").Return(shell.ZSH)
+
+	timeSegment := &Time{LastDate: lastDate}
+	timeSegment.Init(options.Map{
+		TimeFormat: "15:04",
+	}, env)
+
+	assert.True(t, timeSegment.Enabled())
+	assert.Equal(t, lastDate, timeSegment.LastDate)
 }

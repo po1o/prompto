@@ -44,4 +44,4 @@ time:
     background: '#003543'
     foreground: '#ffffff'
     style: plain
-    template: '  {{ .CurrentDate | date .Format }} '
+    template: '  {{ .LastDate | date .Format }} '

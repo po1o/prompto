@@ -100,5 +100,5 @@ time:
     invert_powerline: true
     leading_separator: 
     style: diamond
-    template: '  {{ .CurrentDate | date .Format }} '
+    template: '  {{ .LastDate | date .Format }} '
     trailing_separator: 

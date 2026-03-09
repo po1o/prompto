@@ -159,5 +159,5 @@ time:
     foreground: '#000000'
     invert_powerline: true
     style: diamond
-    template: ' {{ .CurrentDate | date .Format }}  '
+    template: ' {{ .LastDate | date .Format }}  '
     trailing_separator: ─╮

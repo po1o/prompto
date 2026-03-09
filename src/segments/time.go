@@ -12,9 +12,9 @@ import (
 type Time struct {
 	Base
 
-	CurrentDate time.Time
+	LastDate    time.Time
 	Format      string
-	ShellClock  string
+	CurrentDate string
 }
 
 const (
@@ -23,20 +23,20 @@ const (
 )
 
 func (t *Time) Template() string {
-	return "{{ .CurrentDate | date .Format }}"
+	return "{{ .LastDate | date .Format }}"
 }
 
 func (t *Time) Enabled() bool {
 	formatInput := t.options.String(TimeFormat, "15:04:05")
 	t.Format = t.getTimeFormat(formatInput)
 
-	if t.CurrentDate.IsZero() {
-		t.CurrentDate = time.Now()
+	if t.LastDate.IsZero() {
+		t.LastDate = time.Now()
 	}
-	t.ShellClock = t.CurrentDate.Format(t.Format)
+	t.CurrentDate = t.LastDate.Format(t.Format)
 
-	if shellClock, ok := t.shellClockDisplay(); ok {
-		t.ShellClock = shellClock
+	if currentDate, ok := t.currentDateDisplay(); ok {
+		t.CurrentDate = currentDate
 	}
 
 	return true
@@ -74,7 +74,7 @@ func (t *Time) getTimeFormat(format string) string {
 	return format
 }
 
-func (t *Time) shellClockDisplay() (string, bool) {
+func (t *Time) currentDateDisplay() (string, bool) {
 	if t.env == nil {
 		return "", false
 	}
@@ -96,12 +96,12 @@ func (t *Time) shellClockDisplay() (string, bool) {
 	}
 }
 
-type shellClockToken struct {
+type currentDateToken struct {
 	goLayout string
 	strftime string
 }
 
-var shellClockTokens = []shellClockToken{
+var currentDateTokens = []currentDateToken{
 	{goLayout: "Monday", strftime: "%A"},
 	{goLayout: "January", strftime: "%B"},
 	{goLayout: "2006", strftime: "%Y"},
@@ -120,7 +120,7 @@ var shellClockTokens = []shellClockToken{
 	{goLayout: "04", strftime: "%M"},
 }
 
-var unsupportedShellClockTokens = []string{
+var unsupportedCurrentDateTokens = []string{
 	"-07:00",
 	"Z07:00",
 	"Z0700",
@@ -149,7 +149,7 @@ func goLayoutToStrftime(layout string) (string, bool) {
 	for len(layout) > 0 {
 		matched := false
 
-		for _, token := range shellClockTokens {
+		for _, token := range currentDateTokens {
 			if !strings.HasPrefix(layout, token.goLayout) {
 				continue
 			}
@@ -164,7 +164,7 @@ func goLayoutToStrftime(layout string) (string, bool) {
 			continue
 		}
 
-		for _, token := range unsupportedShellClockTokens {
+		for _, token := range unsupportedCurrentDateTokens {
 			if !strings.HasPrefix(layout, token) {
 				continue
 			}

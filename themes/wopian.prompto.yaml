@@ -69,4 +69,4 @@ status:
 time:
     foreground: lightGreen
     style: plain
-    template: ' {{ .CurrentDate | date .Format }} '
+    template: ' {{ .LastDate | date .Format }} '

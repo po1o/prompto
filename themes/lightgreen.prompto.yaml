@@ -123,4 +123,4 @@ time:
     background: '#000000'
     foreground: lightGreen
     style: plain
-    template: '{{ .CurrentDate | date .Format }}'
+    template: '{{ .LastDate | date .Format }}'

@@ -163,7 +163,7 @@ blocks:
             time_format: Mon | 15:04:05
           powerline_symbol: 
           style: powerline
-          template: ' {{ .CurrentDate | date .Format }} '
+          template: ' {{ .LastDate | date .Format }} '
           type: time
         - background: cyan
           foreground: black

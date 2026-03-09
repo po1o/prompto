@@ -207,17 +207,17 @@ text.2:
     template: ❯
 time:
     background_templates:
-        - '{{ if regexMatch "(^(0[6-9])|(1[0-1])):" (.CurrentDate | date .Format) }}p:c-date-time-morning{{ end }}'
-        - '{{ if regexMatch ("(^1[2-4]):") (.CurrentDate | date .Format) }}p:c-date-time-noon{{ end }}'
-        - '{{ if regexMatch ("(^1[5-7]):") (.CurrentDate | date .Format) }}p:c-date-time-afternoon{{ end }}'
-        - '{{ if regexMatch "(^(1[8-9])|(2[0-3])):" (.CurrentDate | date .Format) }}p:c-date-time-evening{{ end }}'
-        - '{{ if regexMatch "^(0[0-5]):" (.CurrentDate | date .Format) }}p:c-date-time-night{{ end }}'
+        - '{{ if regexMatch "(^(0[6-9])|(1[0-1])):" (.LastDate | date .Format) }}p:c-date-time-morning{{ end }}'
+        - '{{ if regexMatch ("(^1[2-4]):") (.LastDate | date .Format) }}p:c-date-time-noon{{ end }}'
+        - '{{ if regexMatch ("(^1[5-7]):") (.LastDate | date .Format) }}p:c-date-time-afternoon{{ end }}'
+        - '{{ if regexMatch "(^(1[8-9])|(2[0-3])):" (.LastDate | date .Format) }}p:c-date-time-evening{{ end }}'
+        - '{{ if regexMatch "^(0[0-5]):" (.LastDate | date .Format) }}p:c-date-time-night{{ end }}'
     foreground: p:c-badge-text
     leading_separator: 
     options:
         time_format: 15:04 (01/02)
     style: diamond
-    template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_DTIME)) }} {{ .CurrentDate | date .Format }}{{ end }}'
+    template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_DTIME)) }} {{ .LastDate | date .Format }}{{ end }}'
     trailing_separator: ' '
 transient:
     - segments:
