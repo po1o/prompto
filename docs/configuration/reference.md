@@ -50,7 +50,7 @@ description: Exhaustive field reference for prompto YAML configs and supported s
 | `error_line` | `Segment` | prompt suffix for invalid input |
 | `async` | bool | enable async shell loading |
 | `shell_integration` | bool | enable shell integration sequences |
-| `final_space` | bool | add a trailing space |
+| `cursor_padding` | bool | add one space between the left prompt and the cursor |
 | `patch_pwsh_bleed` | bool | PowerShell background-bleed workaround |
 | `enable_cursor_positioning` | bool | allow cursor position queries |
 
@@ -226,7 +226,7 @@ palettes:
 ## Canonical Example
 
 ```yaml
-final_space: true
+cursor_padding: true
 render_pending_icon: " "
 render_pending_background: darkGray
 

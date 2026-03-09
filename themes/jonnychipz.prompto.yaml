@@ -6,7 +6,7 @@ az:
     template: '  {{ .Name }} '
     trailing_separator: 
 console_title_template: '{{if .Root}}root :: {{end}}{{.Shell}} :: {{.Folder}}'
-final_space: true
+cursor_padding: true
 git:
     background: '#ffffff'
     foreground: '#000000'
@@ -108,4 +108,3 @@ text.3:
     foreground: '#1a1af5'
     style: plain
     template: ' ❯ '
-version: 4

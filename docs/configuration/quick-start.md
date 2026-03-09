@@ -10,7 +10,7 @@ This page walks from a minimal prompt to a practical multi-part layout with a ri
 ## Step 1: Start with a Single Segment
 
 ```yaml
-final_space: true
+cursor_padding: true
 
 prompt:
   - segments: [path]
@@ -168,7 +168,7 @@ prompto render --shell=zsh --pwd="$PWD" --terminal-width=120
 ## A Practical Full Example
 
 ```yaml
-final_space: true
+cursor_padding: true
 render_pending_icon: " "
 render_pending_background: darkGray
 vim-mode:

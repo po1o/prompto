@@ -231,4 +231,3 @@ time:
     style: diamond
     template: '  {{ .CurrentDate | date .Format }} '
     trailing_separator: 
-version: 4

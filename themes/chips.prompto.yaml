@@ -45,7 +45,7 @@ executiontime:
     style: diamond
     template: "{{ if eq \"False\" (title (default \"False\" .Env.DISABLE_SEGMENT_PRIMARY_EXEC_TIME)) }}\U000F051F {{ .FormattedMs }}.{{ end }}"
     trailing_separator: ' '
-final_space: true
+cursor_padding: true
 git:
     background: p:c-git-normal
     background_templates:
@@ -224,7 +224,6 @@ transient:
         - text.transient
 text.transient:
     template: "{{ if eq \"False\" (title (default \"False\" .Env.DISABLE_SEGMENT_TRANSIENT)) }}<{{ if eq .Code 0 }}p:c-badge-return-success{{ else if or (eq .Code 1) (eq .Code 130) }}p:c-badge-return-fail-term{{ else }}p:c-badge-return-custom{{ end }}></><p:c-badge-text,{{ if eq .Code 0 }}p:c-badge-return-success{{ else if or (eq .Code 1) (eq .Code 130) }}p:c-badge-return-fail-term{{ else }}p:c-badge-return-custom{{ end }}>\U000F005E  {{ if .Segments.Executiontime.Ms }}{{ if eq \"False\" (title (default \"False\" .Env.DISABLE_SEGMENT_TRANSIENT_EXEC_TIME)) }}\U000F051F {{ .Segments.Executiontime.FormattedMs }}  {{ end }}{{ end }}<b>{{ if eq .Code 0 }}OK{{ else if eq .Code 1 }}FAIL{{ else if eq .Code 130 }}TERM{{ else }}Code{{ end }} ({{ .Code }})</b></><{{ if eq .Code 0 }}p:c-badge-return-success{{ else if or (eq .Code 1) (eq .Code 130) }}p:c-badge-return-fail-term{{ else }}p:c-badge-return-custom{{ end }}></> {{ end }}❯ "
-version: 4
 wakatime:
     background_templates:
         - '{{ if lt .CumulativeTotal.Seconds 3600 }}p:c-wakatime-undertime{{ end }}'

@@ -64,7 +64,7 @@ time:
 ## Minimal Working Example
 
 ```yaml
-final_space: true
+cursor_padding: true
 
 prompt:
   - segments: [path]

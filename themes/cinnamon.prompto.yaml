@@ -1,5 +1,5 @@
 $schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
-final_space: true
+cursor_padding: true
 git:
     background: '#de076f'
     foreground: '#ffffff'
@@ -47,4 +47,3 @@ status:
     style: diamond
     template: '  '
     trailing_separator: 
-version: 4

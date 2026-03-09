@@ -77,4 +77,3 @@ time:
     powerline_symbol: 
     style: powerline
     template: '{{ .CurrentDate | date .Format }} '
-version: 4

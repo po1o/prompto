@@ -8,7 +8,7 @@ executiontime:
     style: diamond
     template: '<#000000> </>{{ .FormattedMs }}s '
     trailing_separator: 
-final_space: true
+cursor_padding: true
 git:
     background: '#272727'
     foreground: '#00ff0d'
@@ -87,4 +87,3 @@ time:
     style: diamond
     template: '<#000000>  </>{{ .CurrentDate | date .Format }} '
     trailing_separator: 
-version: 4

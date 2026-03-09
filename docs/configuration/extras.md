@@ -258,9 +258,10 @@ iterm_features:
 
 ## Miscellaneous Top-Level Settings
 
-### `final_space`
+### `cursor_padding`
 
-Add a trailing space to the rendered prompt.
+Add one space between the rendered left prompt and the cursor.
+
 
 ### `pwd`
 

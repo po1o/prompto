@@ -38,4 +38,3 @@ text:
     foreground: '#ffffff'
     style: plain
     template: '<#CB4B16>❯</><#CACA02>❯</><#4E9A06>❯</> '
-version: 4

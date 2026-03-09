@@ -11,7 +11,7 @@ battery:
     style: powerline
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}  '
 console_title_template: '{{ .Shell }} in {{ .Folder }}'
-final_space: true
+cursor_padding: true
 git:
     background: '#d2ff5e'
     background_templates:
@@ -105,4 +105,3 @@ text.transient:
     background: transparent
     foreground: '#FFD700'
     template: "{{if .Root}}⚡ {{end}}\U0001F680 "
-version: 4

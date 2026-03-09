@@ -8,7 +8,7 @@ executiontime:
     style: diamond
     template: '  {{ .FormattedMs }}⠀'
     trailing_separator: 
-final_space: true
+cursor_padding: true
 git:
     background: '#d2ff5e'
     background_templates:
@@ -64,4 +64,3 @@ time:
     powerline_symbol: 
     style: powerline
     template: '<#fff>  </>{{ .CurrentDate | date .Format }} '
-version: 4

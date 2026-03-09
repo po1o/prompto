@@ -4920,9 +4920,9 @@
     "blocks"
   ],
   "properties": {
-    "final_space": {
+    "cursor_padding": {
       "type": "boolean",
-      "title": "Final Space",
+      "title": "Cursor Padding",
       "description": "https://prompto.dev/docs/configuration/general#general-settings",
       "default": true
     },

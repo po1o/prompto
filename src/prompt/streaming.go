@@ -439,7 +439,7 @@ func (e *Engine) writePrimaryPromptStreaming(needsPrimaryRPrompt bool) {
 		e.write(terminal.FormatTitle(title))
 	}
 
-	if e.Config.FinalSpace {
+	if e.Config.CursorPadding {
 		e.write(" ")
 		e.currentLineLength++
 	}

@@ -107,4 +107,3 @@ session:
     style: diamond
     template: '{{ .UserName }} ❯'
     trailing_separator: ' '
-version: 4

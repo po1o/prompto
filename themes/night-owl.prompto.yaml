@@ -94,7 +94,7 @@ executiontime:
     style: diamond
     template: ' {{ .FormattedMs }}'
     trailing_separator: 
-final_space: true
+cursor_padding: true
 flutter:
     background: '#06A4CE'
     foreground: '#ffffff'
@@ -359,4 +359,3 @@ text.transient:
     background: transparent
     foreground: '#d6deeb'
     template: ' '
-version: 4

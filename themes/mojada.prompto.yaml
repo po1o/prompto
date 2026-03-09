@@ -21,7 +21,7 @@ executiontime:
         always_enabled: true
     style: plain
     template: '{{ .FormattedMs }} '
-final_space: true
+cursor_padding: true
 git:
     background: '#fffb38'
     background_templates:
@@ -108,4 +108,3 @@ time:
     style: diamond
     template: ' {{ .CurrentDate | date .Format }} '
     trailing_separator: 
-version: 4

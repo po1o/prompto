@@ -41,4 +41,3 @@ status:
     style: plain
     template: '{{ if gt .Code 0 }}<p:red>({{ .Code }}) </>{{ else }}<p:green>({{ .Code }}) </>{{ end }}> '
 terminal_background: p:background
-version: 4

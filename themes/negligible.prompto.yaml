@@ -72,4 +72,3 @@ time:
     foreground: lightGreen
     style: plain
     template: '| {{ .CurrentDate | date .Format }} '
-version: 4

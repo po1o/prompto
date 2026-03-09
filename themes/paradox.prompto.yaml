@@ -53,4 +53,3 @@ text:
     foreground: '#007ACC'
     style: plain
     template: '❯ '
-version: 4

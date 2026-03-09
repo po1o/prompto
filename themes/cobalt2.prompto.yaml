@@ -1,5 +1,5 @@
 $schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
-final_space: true
+cursor_padding: true
 git:
     background: '#3AD900'
     background_templates:
@@ -27,4 +27,3 @@ prompt:
     - segments:
         - path
         - git
-version: 4

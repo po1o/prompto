@@ -21,7 +21,7 @@ battery:
     style: powerline
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }} '
 console_title_template: '{{ .Shell }} in {{ .Folder }}'
-final_space: true
+cursor_padding: true
 git:
     background: '#fffb38'
     background_templates:
@@ -102,4 +102,3 @@ time:
     style: diamond
     template: '  {{ .CurrentDate | date .Format }} '
     trailing_separator: 
-version: 4

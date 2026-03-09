@@ -81,7 +81,7 @@ type Config struct {
 	Async                   bool `yaml:"async,omitempty"`
 	HasTransient            bool `yaml:"-"`
 	ShellIntegration        bool `yaml:"shell_integration,omitempty"`
-	FinalSpace              bool `yaml:"final_space,omitempty"`
+	CursorPadding           bool `yaml:"cursor_padding,omitempty"`
 	UpgradeNotice           bool `yaml:"-"`
 	PatchPwshBleed          bool `yaml:"patch_pwsh_bleed,omitempty"`
 	AutoUpgrade             bool `yaml:"-"`

@@ -21,7 +21,7 @@ executiontime:
         threshold: 500
     style: powerline
     template: ' {{ .FormattedMs }} '
-final_space: true
+cursor_padding: true
 git:
     background: '#292929'
     foreground: '#D4E157'
@@ -91,4 +91,3 @@ time:
     style: diamond
     template: '{{ .CurrentDate | date .Format }}  '
     trailing_separator: 
-version: 4

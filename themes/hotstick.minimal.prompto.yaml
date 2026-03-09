@@ -1,6 +1,6 @@
 $schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 console_title_template: '{{.Folder}}{{if .Root}} :: root{{end}} :: {{.Shell}}'
-final_space: true
+cursor_padding: true
 git:
     background: green
     background_templates:
@@ -40,4 +40,3 @@ root:
     foreground: yellow
     style: plain
     template: '  '
-version: 4

@@ -19,7 +19,7 @@ executiontime:
         threshold: 100
     style: powerline
     template: '{{ .FormattedMs }}'
-final_space: true
+cursor_padding: true
 git:
     foreground: '#56B6C2'
     options:
@@ -54,4 +54,3 @@ session:
     foreground: '#FFE082'
     style: plain
     template: '@{{ .UserName }} ➜'
-version: 4

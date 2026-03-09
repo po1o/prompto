@@ -19,7 +19,7 @@ azfunc:
     style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 console_title_template: '{{ .Folder }}'
-final_space: true
+cursor_padding: true
 git:
     background: '#98971A'
     background_templates:
@@ -103,4 +103,3 @@ ruby:
     powerline_symbol: 
     style: powerline
     template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
-version: 4

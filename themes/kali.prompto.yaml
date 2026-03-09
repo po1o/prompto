@@ -54,4 +54,3 @@ text:
     foreground: lightBlue
     style: plain
     template: '<{{ if .Root }}lightBlue{{ else }}green{{ end }}>└─</>{{ if .Root }}<lightRed>#</>{{ else }}${{ end }} '
-version: 4

@@ -8,7 +8,7 @@ executiontime:
     powerline_symbol: 
     style: powerline
     template: ' {{ .FormattedMs }} '
-final_space: true
+cursor_padding: true
 git:
     background: '#caffbf'
     background_templates:
@@ -97,4 +97,3 @@ text:
     foreground: '#ffffff'
     style: plain
     template: <#69FF94>❯</>
-version: 5

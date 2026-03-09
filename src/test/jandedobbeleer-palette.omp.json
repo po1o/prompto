@@ -220,7 +220,7 @@
     }
   ],
   "console_title_template": "{{ .Shell }} in {{ .Folder }}",
-  "final_space": true,
+  "cursor_padding": true,
   "palette": {
     "aws-default": "#FFA400",
     "aws-jan": "#F1184C",

@@ -3,7 +3,7 @@ aws:
     foreground: '#b48ead'
     style: plain
     template: <#5e81ac>--[</>{{.Profile}}{{if .Region}}@{{.Region}}{{end}}<#5e81ac>]</>
-final_space: true
+cursor_padding: true
 git:
     foreground: '#b48ead'
     options:
@@ -49,4 +49,3 @@ text:
     foreground: '#5e81ac'
     style: plain
     template: '  '
-version: 4

@@ -78,7 +78,7 @@ func Default(configError error) *Config {
 
 	cfg := &Config{
 		hash:                 1234567890, // placeholder hash value
-		FinalSpace:           true,
+		CursorPadding:        true,
 		Layout:               layout,
 		ConsoleTitleTemplate: "{{ .Shell }} in {{ .Folder }}",
 		Palette: color.Palette{

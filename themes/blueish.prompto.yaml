@@ -9,7 +9,7 @@ battery:
     powerline_symbol: 
     style: powerline
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}  '
-final_space: true
+cursor_padding: true
 git:
     background: '#a2c4e0'
     foreground: '#193549'
@@ -87,4 +87,3 @@ text:
     foreground: '#007ACC'
     style: plain
     template: '➜ '
-version: 4

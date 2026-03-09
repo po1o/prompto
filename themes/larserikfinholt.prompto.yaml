@@ -7,7 +7,7 @@ executiontime:
         always_enabled: true
     style: plain
     template: <transparent></> {{ .FormattedMs }}⠀
-final_space: true
+cursor_padding: true
 git:
     background: '#fffb38'
     background_templates:
@@ -75,4 +75,3 @@ strava:
         refresh_token: "111111111111111111111111111111"
     style: powerline
     template: ' {{.Name}} {{.Ago}} {{.Icon}} '
-version: 4

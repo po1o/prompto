@@ -1,6 +1,6 @@
 $schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 console_title_template: '{{if .Segments.Git.RepoName}} {{.Segments.Git.RepoName}} {{else}} {{.Folder}} {{end}}'
-final_space: true
+cursor_padding: true
 git:
     background: '#95ffa4'
     background_templates:
@@ -76,4 +76,3 @@ time:
         time_format: "15:04:05"
     style: plain
     template: ' <#757575,>|</> {{ .CurrentDate | date .Format }}'
-version: 4

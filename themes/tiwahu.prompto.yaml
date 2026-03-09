@@ -108,4 +108,3 @@ status:
     foreground: '#ff8888'
     style: plain
     template: '{{ if gt .Code 0 }} {{ .Code }} {{ end }}'
-version: 4

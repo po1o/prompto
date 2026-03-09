@@ -7,7 +7,7 @@ aws:
     style: diamond
     template: '  {{.Profile}}{{if .Region}}@{{.Region}}{{end}}'
     trailing_separator: 
-final_space: true
+cursor_padding: true
 git:
     background: '#ffb86c'
     foreground: '#f8f8f2'
@@ -56,4 +56,3 @@ time:
     style: diamond
     template: ' ♥ {{ .CurrentDate | date .Format }} '
     trailing_separator: 
-version: 4

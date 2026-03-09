@@ -7,7 +7,7 @@ executiontime:
         threshold: 0
     style: diamond
     template: ' {{ .FormattedMs }} '
-final_space: true
+cursor_padding: true
 git:
     foreground: '#F62F2E'
     options:
@@ -51,4 +51,3 @@ text:
     foreground: '#FFBD00'
     style: plain
     template: '⮞ '
-version: 4

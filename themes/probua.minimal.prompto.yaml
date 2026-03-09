@@ -30,4 +30,3 @@ status:
         always_enabled: true
     style: plain
     template: '> '
-version: 4

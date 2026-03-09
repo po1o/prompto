@@ -92,4 +92,3 @@ text.transient:
     background: transparent
     foreground: '#FEF5ED'
     template: ' '
-version: 4

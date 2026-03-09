@@ -148,4 +148,3 @@ time:
         time_format: _2,15:04
     style: plain
     template: <#ffffff>[</>{{ .CurrentDate | date .Format }}<#ffffff>]</>
-version: 4

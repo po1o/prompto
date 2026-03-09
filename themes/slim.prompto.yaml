@@ -12,7 +12,7 @@ executiontime:
         threshold: 500
     style: plain
     template: ' {{ .FormattedMs }}<#fafafa>  </>'
-final_space: true
+cursor_padding: true
 git:
     background: '#2f2f2f'
     foreground: '#ffeb3b'
@@ -139,4 +139,3 @@ text.transient:
     background: transparent
     foreground: '#7a7a7a'
     template: ' ~#@❯ '
-version: 4

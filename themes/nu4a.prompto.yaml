@@ -8,7 +8,7 @@ executiontime:
         style: austin
     style: diamond
     template: ' {{ .FormattedMs }} '
-final_space: true
+cursor_padding: true
 git:
     background: '#3feb56'
     foreground: '#193549'
@@ -67,4 +67,3 @@ status:
     style: diamond
     template: '  '
     trailing_separator: 
-version: 4

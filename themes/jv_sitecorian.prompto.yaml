@@ -10,7 +10,7 @@ executiontime:
     style: diamond
     template: ' {{ .FormattedMs }}<#ffffff>  </>'
     trailing_separator: 
-final_space: true
+cursor_padding: true
 git:
     background: '#6f42c1'
     foreground: '#ffffff'
@@ -113,4 +113,3 @@ time:
     style: diamond
     template: ' {{ .CurrentDate | date .Format }}<#ffffff>  </>'
     trailing_separator: 
-version: 4

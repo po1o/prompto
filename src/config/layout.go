@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/po1o/prompto/src/cli/upgrade"
@@ -56,7 +57,7 @@ type LayoutConfig struct {
 	DaemonTimeout           int                    `yaml:"daemon_timeout,omitempty"`
 	Async                   bool                   `yaml:"async,omitempty"`
 	ShellIntegration        bool                   `yaml:"shell_integration,omitempty"`
-	FinalSpace              bool                   `yaml:"final_space,omitempty"`
+	CursorPadding           bool                   `yaml:"cursor_padding,omitempty"`
 	PatchPwshBleed          bool                   `yaml:"patch_pwsh_bleed,omitempty"`
 	EnableCursorPositioning bool                   `yaml:"enable_cursor_positioning,omitempty"`
 }
@@ -67,33 +68,50 @@ type layoutRawConfig struct {
 	Palettes                *color.Palettes        `yaml:"palettes"`
 	Maps                    *configmaps.Config     `yaml:"maps"`
 	Upgrade                 *upgrade.Config        `yaml:"upgrade"`
-	Cycle                   color.Cycle            `yaml:"cycle"`
-	ITermFeatures           terminal.ITermFeatures `yaml:"iterm_features"`
+	CursorPadding           *bool                  `yaml:"cursor_padding"`
 	VimMode                 *VimConfig             `yaml:"vim-mode"`
+	ErrorLine               *Segment               `yaml:"error_line"`
+	ValidLine               *Segment               `yaml:"valid_line"`
+	DebugPrompt             *Segment               `yaml:"debug_prompt"`
 	AccentColor             color.Ansi             `yaml:"accent_color"`
-	DaemonIdleTimeout       string                 `yaml:"daemon_idle_timeout"`
-	RenderPendingIcon       string                 `yaml:"render_pending_icon"`
-	RenderPendingBackground color.Ansi             `yaml:"render_pending_background"`
 	ConsoleTitleTemplate    string                 `yaml:"console_title_template"`
 	PWD                     string                 `yaml:"pwd"`
 	TerminalBackground      color.Ansi             `yaml:"terminal_background"`
 	ToolTipsAction          Action                 `yaml:"tooltips_action"`
+	RenderPendingBackground color.Ansi             `yaml:"render_pending_background"`
+	RenderPendingIcon       string                 `yaml:"render_pending_icon"`
+	DaemonIdleTimeout       string                 `yaml:"daemon_idle_timeout"`
 	Tooltips                []*Segment             `yaml:"tooltips"`
-	DebugPrompt             *Segment               `yaml:"debug_prompt"`
-	ValidLine               *Segment               `yaml:"valid_line"`
-	ErrorLine               *Segment               `yaml:"error_line"`
 	Prompt                  []PromptLayout         `yaml:"prompt"`
 	RPrompt                 []PromptLayout         `yaml:"rprompt"`
 	Secondary               []PromptLayout         `yaml:"secondary"`
 	Transient               []PromptLayout         `yaml:"transient"`
 	RTransient              []PromptLayout         `yaml:"rtransient"`
+	ITermFeatures           terminal.ITermFeatures `yaml:"iterm_features"`
+	Cycle                   color.Cycle            `yaml:"cycle"`
 	DaemonTimeout           int                    `yaml:"daemon_timeout"`
 	Async                   bool                   `yaml:"async"`
 	ShellIntegration        bool                   `yaml:"shell_integration"`
-	FinalSpace              bool                   `yaml:"final_space"`
 	PatchPwshBleed          bool                   `yaml:"patch_pwsh_bleed"`
 	EnableCursorPositioning bool                   `yaml:"enable_cursor_positioning"`
 }
+
+var knownLayoutTopLevelKeys = func() map[string]bool {
+	keys := make(map[string]bool)
+	rawType := reflect.TypeFor[layoutRawConfig]()
+
+	for field := range rawType.Fields() {
+		tag := field.Tag.Get("yaml")
+		key, _, _ := strings.Cut(tag, ",")
+		if key == "" || key == "-" {
+			continue
+		}
+
+		keys[key] = true
+	}
+
+	return keys
+}()
 
 func LoadLayout(configFile string) (*LayoutConfig, error) {
 	if configFile == "" {
@@ -132,6 +150,12 @@ func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
 		return nil, ErrParse
 	}
 
+	if err := validateLayoutTopLevelKeys(doc); err != nil {
+		return nil, err
+	}
+
+	cursorPadding := resolveCursorPadding(&raw)
+
 	layout := &LayoutConfig{
 		Palette:                 raw.Palette,
 		Var:                     raw.Var,
@@ -161,7 +185,7 @@ func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
 		DaemonTimeout:           raw.DaemonTimeout,
 		Async:                   raw.Async,
 		ShellIntegration:        raw.ShellIntegration,
-		FinalSpace:              raw.FinalSpace,
+		CursorPadding:           cursorPadding,
 		PatchPwshBleed:          raw.PatchPwshBleed,
 		EnableCursorPositioning: raw.EnableCursorPositioning,
 		Segments:                make(map[string]*Segment),
@@ -184,6 +208,39 @@ func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
 	}
 
 	return layout, nil
+}
+
+func validateLayoutTopLevelKeys(doc map[string]any) error {
+	for key, value := range doc {
+		if knownLayoutTopLevelKeys[key] {
+			continue
+		}
+
+		table, ok := value.(map[string]any)
+		if !ok {
+			return fmt.Errorf("unknown top-level key %q", key)
+		}
+
+		if hasScalarFields(table) {
+			continue
+		}
+
+		if isKnownSegmentType(SegmentType(key)) {
+			continue
+		}
+
+		return fmt.Errorf("unknown top-level key %q", key)
+	}
+
+	return nil
+}
+
+func resolveCursorPadding(raw *layoutRawConfig) bool {
+	if raw.CursorPadding != nil {
+		return *raw.CursorPadding
+	}
+
+	return true
 }
 
 func (cfg *LayoutConfig) ApplyMetadata(target *Config) {
@@ -214,7 +271,7 @@ func (cfg *LayoutConfig) ApplyMetadata(target *Config) {
 	target.DaemonTimeout = cfg.DaemonTimeout
 	target.Async = cfg.Async
 	target.ShellIntegration = cfg.ShellIntegration
-	target.FinalSpace = cfg.FinalSpace
+	target.CursorPadding = cfg.CursorPadding
 	target.PatchPwshBleed = cfg.PatchPwshBleed
 	target.EnableCursorPositioning = cfg.EnableCursorPositioning
 

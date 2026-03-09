@@ -194,6 +194,81 @@ main:
 	assert.ErrorContains(t, err, "missing type")
 }
 
+func TestParseLayoutYAMLReturnsErrorForUnknownTopLevelScalarKey(t *testing.T) {
+	raw := `
+promt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	_, err := ParseLayoutYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "unknown top-level key")
+	assert.ErrorContains(t, err, "promt")
+}
+
+func TestParseLayoutYAMLReturnsErrorForUnknownTopLevelNestedTable(t *testing.T) {
+	raw := `
+custom:
+  main:
+    style: "powerline"
+`
+
+	_, err := ParseLayoutYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "unknown top-level key")
+	assert.ErrorContains(t, err, "custom")
+}
+
+func TestParseLayoutYAMLDefaultsCursorPaddingToTrue(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	cfg, err := ParseLayoutYAML([]byte(raw))
+	require.NoError(t, err)
+	assert.True(t, cfg.CursorPadding)
+}
+
+func TestParseLayoutYAMLUsesCursorPaddingKey(t *testing.T) {
+	raw := `
+cursor_padding: false
+
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	cfg, err := ParseLayoutYAML([]byte(raw))
+	require.NoError(t, err)
+	assert.False(t, cfg.CursorPadding)
+}
+
+func TestParseLayoutYAMLAllowsKnownNestedSegmentTables(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["git.main"]
+
+git:
+  main:
+    style: "powerline"
+`
+
+	cfg, err := ParseLayoutYAML([]byte(raw))
+	require.NoError(t, err)
+	require.Len(t, cfg.Segments, 1)
+	assert.Equal(t, GIT, cfg.Segments["git.main"].Type)
+	assert.Equal(t, "git.main", cfg.Segments["git.main"].Alias)
+}
+
 func TestParseLayoutYAMLReturnsErrorForDirectPromptDiamonds(t *testing.T) {
 	raw := `
 prompt:

@@ -85,4 +85,3 @@ time:
         time_format: 3:04:05 PM
     style: plain
     template: '<transparent>  </>{{ .CurrentDate | date .Format }} '
-version: 4

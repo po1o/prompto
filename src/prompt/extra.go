@@ -88,7 +88,7 @@ func (e *Engine) streamingTransientPromptNoLock() string {
 		}
 	}
 
-	if e.Config != nil && e.Config.FinalSpace {
+	if e.Config != nil && e.Config.CursorPadding {
 		e.write(" ")
 	}
 
@@ -109,7 +109,7 @@ func (e *Engine) streamingTransientRPromptNoLock() string {
 	return text
 }
 
-func (e *Engine) renderLayoutExtra(layouts []config.PromptLayout, finalSpace bool) string {
+func (e *Engine) renderLayoutExtra(layouts []config.PromptLayout, cursorPadding bool) string {
 	didRender := false
 	for i := range layouts {
 		block := e.layoutBlock(&layouts[i], config.Prompt, config.Left, i != 0)
@@ -123,7 +123,7 @@ func (e *Engine) renderLayoutExtra(layouts []config.PromptLayout, finalSpace boo
 		}
 	}
 
-	if finalSpace && e.Config != nil && e.Config.FinalSpace {
+	if cursorPadding && e.Config != nil && e.Config.CursorPadding {
 		e.write(" ")
 	}
 

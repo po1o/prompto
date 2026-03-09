@@ -1,5 +1,5 @@
 $schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
-final_space: true
+cursor_padding: true
 git:
     background: '#95ffa4'
     foreground: '#193549'
@@ -42,4 +42,3 @@ status:
     powerline_symbol: 
     style: powerline
     template: '  '
-version: 4

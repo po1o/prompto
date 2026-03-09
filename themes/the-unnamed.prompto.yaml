@@ -38,4 +38,3 @@ text:
     foreground: '#FFE45E'
     style: plain
     template: '❯ '
-version: 4

@@ -33,4 +33,3 @@ time:
         time_format: "15:04"
     style: plain
     template: ' {{ .CurrentDate | date .Format }} '
-version: 4

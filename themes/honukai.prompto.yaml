@@ -1,5 +1,5 @@
 $schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
-final_space: true
+cursor_padding: true
 git:
     foreground: '#B8B80A'
     style: plain
@@ -49,4 +49,3 @@ time:
     foreground: '#ffffff'
     style: plain
     template: '[{{ .CurrentDate | date .Format }}]'
-version: 4

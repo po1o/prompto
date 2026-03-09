@@ -15,8 +15,7 @@ func TestParseDoesNotMergeDefaultTooltips(t *testing.T) {
 
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, "config.yaml")
-	content := `version: 4
-prompt:
+	content := `prompt:
   - segments:
       - path
 path:
@@ -42,8 +41,7 @@ func TestParseLoadsYAMLTooltips(t *testing.T) {
 
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, "config.yaml")
-	content := `version: 4
-tooltips_action: replace
+	content := `tooltips_action: replace
 tooltips:
   - type: text
     tips:

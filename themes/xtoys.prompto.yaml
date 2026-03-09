@@ -34,4 +34,3 @@ status:
         always_enabled: true
     style: plain
     template: '<#66CDAA>❯</><#76EEC6>❯</><foreground>❯</> '
-version: 4

@@ -1,6 +1,6 @@
 $schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 console_title_template: '{{ .Folder }}'
-final_space: true
+cursor_padding: true
 git:
     background: '#c19c00'
     background_templates:
@@ -89,4 +89,3 @@ time:
     style: diamond
     template: '  {{ .CurrentDate | date .Format }} '
     trailing_separator: 
-version: 4

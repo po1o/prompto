@@ -33,7 +33,7 @@ executiontime:
         threshold: 0
     style: diamond
     template: '[<#ffffff></> {{ .FormattedMs }}s]'
-final_space: true
+cursor_padding: true
 gcp:
     foreground: '#7eb8da'
     style: diamond
@@ -117,4 +117,3 @@ time:
 valid_line:
     background: transparent
     template: '> '
-version: 4

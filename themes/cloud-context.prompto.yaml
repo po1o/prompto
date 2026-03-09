@@ -155,4 +155,3 @@ time.2:
     powerline_symbol: ""
     style: powerline
     template: ' <p:symbol-color></> {{ .CurrentDate | date .Format }} '
-version: 4

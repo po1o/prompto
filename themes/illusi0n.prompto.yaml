@@ -56,4 +56,3 @@ text.2:
     foreground: '#ff8800'
     style: plain
     template: '❯ '
-version: 4

@@ -1,5 +1,5 @@
 $schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
-final_space: true
+cursor_padding: true
 git:
     foreground: '#D4AAFC'
     options:
@@ -31,4 +31,3 @@ text:
     foreground: '#62ED8B'
     style: plain
     template: ➜
-version: 4

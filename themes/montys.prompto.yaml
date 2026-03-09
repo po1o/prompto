@@ -7,7 +7,7 @@ executiontime:
     powerline_symbol: 
     style: powerline
     template: '  {{ .FormattedMs }} '
-final_space: true
+cursor_padding: true
 git:
     background: '#FCA17D'
     foreground: '#ffffff'
@@ -80,4 +80,3 @@ time:
     powerline_symbol: 
     style: powerline
     template: '  {{ .CurrentDate | date .Format }} '
-version: 4

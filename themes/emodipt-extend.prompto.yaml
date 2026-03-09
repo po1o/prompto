@@ -8,7 +8,7 @@ executiontime:
         style: roundrock
     style: diamond
     template: ' {{ .FormattedMs }} '
-final_space: true
+cursor_padding: true
 git:
     foreground: '#F3C267'
     foreground_templates:
@@ -72,4 +72,3 @@ time:
         time_format: "15:04"
     style: plain
     template: '[{{ .CurrentDate | date .Format }}]'
-version: 4

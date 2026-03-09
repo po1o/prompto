@@ -63,7 +63,7 @@ blocks:
           type: battery
       type: rprompt
 console_title_template:  {{ .Shell }} in {{ if ne .Folder "~"}} {{ .Folder }}{{else}}{{end}}
-final_space: true
+cursor_padding: true
 palette:
     black: '#33395b'
     blue: '#359ddd'
@@ -86,4 +86,3 @@ text.transient:
     foreground: p:white
     style: plain
     template: ' '
-version: 4

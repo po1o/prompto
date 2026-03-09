@@ -36,7 +36,7 @@ Windows: %UserConfigDir%/prompto/config.yaml
 1. Start from a minimal config:
 
 ```yaml
-final_space: true
+cursor_padding: true
 
 prompt:
   - segments: [path]

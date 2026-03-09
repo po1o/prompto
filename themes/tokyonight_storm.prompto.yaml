@@ -1,6 +1,6 @@
 $schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 console_title_template: ' {{ .Folder }} :: {{if .Root}}Admin{{end}}'
-final_space: true
+cursor_padding: true
 git:
     foreground: p:light-sky-blue
     foreground_templates:
@@ -104,4 +104,3 @@ text.transient:
     background: p:t-background
     foreground: p:terminal-blue
     template: '➜ '
-version: 4

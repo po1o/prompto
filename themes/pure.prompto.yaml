@@ -53,4 +53,3 @@ text.transient:
     foreground_templates:
         - '{{ if gt .Code 0 }}#BF616A{{ end }}'
     template: '❯ '
-version: 4
