@@ -358,9 +358,7 @@ func (server *Server) applyConfigReload() {
 	// Cancel in-flight renders first so reload does not block waiting for slow segment completion.
 	server.core.Reset()
 
-	server.core.Reload(func() {
-		cache.Set(cache.Device, config.RELOAD, true, cache.INFINITE)
-	})
+	server.core.Reload(nil)
 
 	server.refreshConfigWatches()
 	server.captureConfigModTime()

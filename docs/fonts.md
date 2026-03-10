@@ -11,24 +11,18 @@ If your terminal does not use a compatible font, you will see rectangles, missin
 ## Recommended Choice
 
 A Nerd Font is the safest default.
-`Meslo` is a practical starting point and is easy to install with the built-in CLI.
+`Meslo` is a practical starting point and is widely available in Nerd Fonts downloads and package managers.
 
-## Install a Font with prompto
+## Install a Font
 
-List and install through the built-in font command:
+`prompto` does not install fonts for you.
+Install the font at the operating-system or terminal level, then point your terminal emulator at that font family.
 
-```bash
-prompto font install
-```
+Typical sources:
 
-Install `Meslo` directly:
-
-```bash
-prompto font install meslo
-```
-
-When running as administrator or root, the font is installed system-wide.
-As a regular user, it is installed into the user font directory.
+- the [Nerd Fonts releases](https://github.com/ryanoasis/nerd-fonts/releases)
+- your system package manager if it packages Nerd Fonts
+- a terminal-specific bundled font picker, when available
 
 ## Host vs Container vs WSL
 

@@ -14,8 +14,6 @@ func TestFishFeatures(t *testing.T) {
 enable_prompto_tooltips
 set --global _prompto_transient_prompt 1
 set --global _prompto_ftcs_marks 1
-"$_prompto_executable" upgrade --auto
-"$_prompto_executable" notice
 set --global _prompto_prompt_mark 1
 enable_prompto_daemon`
 
@@ -33,6 +31,11 @@ set --global _prompto_cursor_blink 1
 set --global _prompto_cursor_shape 1; _prompto_should_change_cursor; and _prompto_apply_cursor_shape`
 
 	assert.Equal(t, want, got)
+}
+
+func TestFishInitDecodesEscapedRenderOutput(t *testing.T) {
+	assert.Contains(t, fishInit, "function _prompto_decode_render_text")
+	assert.Contains(t, fishInit, "_prompto_decode_render_text \"$text\"")
 }
 
 func TestQuoteFishStr(t *testing.T) {

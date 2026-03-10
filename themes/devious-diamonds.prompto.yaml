@@ -1,236 +1,3 @@
-blocks:
-    - alignment: left
-      newline: true
-      segments:
-        - foreground: cyan
-          options:
-            alpine: 
-            arch: 
-            centos: 
-            debian: 
-            elementary: 
-            fedora: 
-            gentoo: 
-            linux: 
-            macos: 
-            manjaro: 
-            mint: 
-            opensuse: 
-            raspbian: 
-            ubuntu: 
-            windows: "\U000F0372"
-          style: diamond
-          template: ' {{ if .WSL }}{{ end }}{{.Icon}}═'
-          type: os
-        - background: green
-          foreground: black
-          leading_diamond: 
-          style: diamond
-          template: '  {{ .Name }} '
-          type: shell
-        - background: magenta
-          foreground: black
-          powerline_symbol: 
-          style: powerline
-          template: " {{ if .SSHSession }}\U000F0318 {{ end }}{{ .UserName }}@{{ .HostName }} "
-          type: session
-        - background: lightRed
-          foreground: black
-          options:
-            fetch_version: true
-          powerline_symbol: 
-          style: powerline
-          template: " \U000F06B2 {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
-          type: angular
-        - background: magenta
-          foreground: white
-          options:
-            fetch_version: true
-          powerline_symbol: 
-          style: powerline
-          template: ' α {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
-          type: aurelia
-        - background: yellow
-          foreground: black
-          options:
-            display_default: false
-          powerline_symbol: 
-          style: powerline
-          template: '  {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} '
-          type: aws
-        - background: lightBlue
-          foreground: black
-          powerline_symbol: 
-          style: powerline
-          template: ' ﴃ Subscription {{ .Name }} ({{ if .EnvironmentName | contains "AzureCloud" }}{{ "Global" }}{{ else }}{{ .EnvironmentName }}{{ end }}) '
-          type: az
-        - background: yellow
-          foreground: black
-          options:
-            display_mode: files
-            fetch_version: false
-          powerline_symbol: 
-          style: powerline
-          template: ' ﴃ {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
-          type: azfunc
-        - background: lightCyan
-          foreground: black
-          options:
-            fetch_version: true
-          powerline_symbol: 
-          style: powerline
-          template: " \U000F07D3 {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
-          type: go
-        - background: lightCyan
-          foreground: black
-          powerline_symbol: 
-          style: powerline
-          template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
-          type: java
-        - background: lightCyan
-          foreground: black
-          options:
-            fetch_version: true
-          powerline_symbol: 
-          style: powerline
-          template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
-          type: julia
-        - background: lightYellow
-          foreground: black
-          powerline_symbol: 
-          style: powerline
-          template: " \U000F0833 {{.Context}}{{if .Namespace}} :: {{.Namespace}}{{end}} "
-          type: kubectl
-        - background: lightGreen
-          foreground: black
-          options:
-            fetch_version: true
-          powerline_symbol: 
-          style: powerline
-          template: " \U000F0399 {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} "
-          type: node
-        - background: lightCyan
-          foreground: black
-          powerline_symbol: 
-          style: powerline
-          template: '  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
-          type: php
-        - background: lightYellow
-          foreground: black
-          powerline_symbol: 
-          style: powerline
-          template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Version }} {{.Version}}{{ end }} {{ if .Name }}{{ .Name }}{{ end }}{{ end }} '
-          type: project
-        - background: lightYellow
-          foreground: black
-          options:
-            display_mode: files
-            fetch_virtual_env: false
-          powerline_symbol: 
-          style: powerline
-          template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
-          type: python
-        - background: red
-          foreground: black
-          options:
-            display_mode: files
-            fetch_version: true
-          powerline_symbol: 
-          style: powerline
-          template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
-          type: ruby
-        - background: lightRed
-          foreground: black
-          options:
-            display_mode: files
-            fetch_version: true
-          powerline_symbol: 
-          style: powerline
-          template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
-          type: rust
-        - background: blue
-          foreground: black
-          options:
-            display_mode: files
-            fetch_version: true
-          powerline_symbol: 
-          style: powerline
-          template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
-          type: swift
-        - background: yellow
-          foreground: black
-          options:
-            time_format: Mon | 15:04:05
-          powerline_symbol: 
-          style: powerline
-          template: ' {{ .LastDate | date .Format }} '
-          type: time
-        - background: cyan
-          foreground: black
-          options:
-            style: austin
-            threshold: 0
-          style: diamond
-          template: ' {{ .FormattedMs }} '
-          trailing_diamond: 
-          type: executiontime
-      type: prompt
-    - alignment: right
-      segments:
-        - background: magenta
-          foreground: black
-          leading_diamond: 
-          options:
-            branch_icon: ' '
-            fetch_status: true
-            fetch_upstream_icon: true
-          style: diamond
-          template: "{{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \U000F0193 {{ .StashCount }}{{ end }}"
-          trailing_diamond: 
-          type: git
-      type: prompt
-    - alignment: left
-      newline: true
-      segments:
-        - foreground: cyan
-          style: plain
-          template: ' ╚'
-          type: text
-        - background: blue
-          background_templates:
-            - '{{ if gt .Code 0 }}red{{ end }}'
-          foreground: black
-          leading_diamond: 
-          options:
-            always_enabled: true
-          style: diamond
-          template: " {{ if gt .Code 0 }}\U000F02D4 {{ else }} {{ end }}{{ if eq ( gt .Code 0 ) .Segments.Path.Writable}} {{ end }}"
-          type: status
-        - background: blue
-          background_templates:
-            - '{{ if not .Writable }}red{{ end }}'
-          foreground: black
-          options:
-            folder_icon: 
-            folder_separator_icon: " \U000F0055 "
-            home_icon: "\U000F02DC"
-            max_depth: 3
-            style: agnoster_short
-          powerline_symbol: 
-          style: powerline
-          template: "{{ if eq ( gt .Code 0 ) .Writable }} {{ end }} {{ .Path }}{{ if not .Writable  }} \U000F0341 {{ end }}{{ if and .Writable .Root }} {{end}} "
-          type: path
-        - background: blue
-          background_templates:
-            - '{{ if and .Segments.Path.Writable (not .Root) }}{{ else }}red{{ end }}'
-          foreground: white
-          options:
-            root_icon: 
-          style: diamond
-          template: '{{ if not .Root }}⠀{{ end }}{{ if and .Root ( not .Segments.Path.Writable ) }} {{ end }}{{ if and .Root .Segments.Path.Writable }}  {{ end }}'
-          trailing_diamond: 
-          type: text
-      type: prompt
 console_title_template: '{{ .Folder }}'
 cursor_padding: true
 palette:
@@ -254,3 +21,255 @@ palette:
     white: '#FFFFFF'
     white-cursorColor-foreground: '#F8F8F2'
     yellow: '#FFCA80'
+prompt:
+    - segments:
+        - os
+        - shell
+        - session
+        - angular
+        - aurelia
+        - aws
+        - az
+        - azfunc
+        - go
+        - java
+        - julia
+        - kubectl
+        - node
+        - php
+        - project
+        - python
+        - ruby
+        - rust
+        - swift
+        - time
+        - executiontime
+    - segments:
+        - text.corner
+        - status
+        - path
+        - text.root
+rprompt:
+    - segments:
+        - git
+angular:
+    background: lightRed
+    foreground: black
+    options:
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: " \U000F06B2 {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
+aws:
+    background: yellow
+    foreground: black
+    options:
+        display_default: false
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} '
+aurelia:
+    background: magenta
+    foreground: white
+    options:
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: ' α {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+az:
+    background: lightBlue
+    foreground: black
+    powerline_symbol: 
+    style: powerline
+    template: ' ﴃ Subscription {{ .Name }} ({{ if .EnvironmentName | contains "AzureCloud" }}{{ "Global" }}{{ else }}{{ .EnvironmentName }}{{ end }}) '
+azfunc:
+    background: yellow
+    foreground: black
+    options:
+        display_mode: files
+        fetch_version: false
+    powerline_symbol: 
+    style: powerline
+    template: ' ﴃ {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+executiontime:
+    background: cyan
+    foreground: black
+    options:
+        style: austin
+        threshold: 0
+    style: diamond
+    template: ' {{ .FormattedMs }} '
+    trailing_separator: 
+git:
+    background: magenta
+    foreground: black
+    leading_separator: 
+    options:
+        branch_icon: ' '
+        fetch_status: true
+        fetch_upstream_icon: true
+    style: diamond
+    template: "{{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \U000F0193 {{ .StashCount }}{{ end }}"
+    trailing_separator: 
+go:
+    background: lightCyan
+    foreground: black
+    options:
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: " \U000F07D3 {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
+java:
+    background: lightCyan
+    foreground: black
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+julia:
+    background: lightCyan
+    foreground: black
+    options:
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+kubectl:
+    background: lightYellow
+    foreground: black
+    powerline_symbol: 
+    style: powerline
+    template: " \U000F0833 {{.Context}}{{if .Namespace}} :: {{.Namespace}}{{end}} "
+node:
+    background: lightGreen
+    foreground: black
+    options:
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: " \U000F0399 {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} "
+os:
+    foreground: cyan
+    options:
+        alpine: 
+        arch: 
+        centos: 
+        debian: 
+        elementary: 
+        fedora: 
+        gentoo: 
+        linux: 
+        macos: 
+        manjaro: 
+        mint: 
+        opensuse: 
+        raspbian: 
+        ubuntu: 
+        windows: "\U000F0372"
+    style: diamond
+    template: ' {{ if .WSL }}{{ end }}{{.Icon}}═'
+path:
+    background: blue
+    background_templates:
+        - '{{ if not .Writable }}red{{ end }}'
+    foreground: black
+    options:
+        folder_icon: 
+        folder_separator_icon: " \U000F0055 "
+        home_icon: "\U000F02DC"
+        max_depth: 3
+        style: agnoster_short
+    powerline_symbol: 
+    style: powerline
+    template: "{{ if eq ( gt .Code 0 ) .Writable }} {{ end }} {{ .Path }}{{ if not .Writable  }} \U000F0341 {{ end }}{{ if and .Writable .Root }} {{end}} "
+php:
+    background: lightCyan
+    foreground: black
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
+project:
+    background: lightYellow
+    foreground: black
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Version }} {{.Version}}{{ end }} {{ if .Name }}{{ .Name }}{{ end }}{{ end }} '
+python:
+    background: lightYellow
+    foreground: black
+    options:
+        display_mode: files
+        fetch_virtual_env: false
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+ruby:
+    background: red
+    foreground: black
+    options:
+        display_mode: files
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+rust:
+    background: lightRed
+    foreground: black
+    options:
+        display_mode: files
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+session:
+    background: magenta
+    foreground: black
+    powerline_symbol: 
+    style: powerline
+    template: " {{ if .SSHSession }}\U000F0318 {{ end }}{{ .UserName }}@{{ .HostName }} "
+shell:
+    background: green
+    foreground: black
+    leading_separator: 
+    style: diamond
+    template: '  {{ .Name }} '
+status:
+    background: blue
+    background_templates:
+        - '{{ if gt .Code 0 }}red{{ end }}'
+    foreground: black
+    leading_separator: 
+    options:
+        always_enabled: true
+    style: diamond
+    template: " {{ if gt .Code 0 }}\U000F02D4 {{ else }} {{ end }}{{ if eq ( gt .Code 0 ) .Segments.Path.Writable}} {{ end }}"
+swift:
+    background: blue
+    foreground: black
+    options:
+        display_mode: files
+        fetch_version: true
+    powerline_symbol: 
+    style: powerline
+    template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
+time:
+    background: yellow
+    foreground: black
+    options:
+        time_format: Mon | 15:04:05
+    powerline_symbol: 
+    style: powerline
+    template: ' {{ .LastDate | date .Format }} '
+text.corner:
+    foreground: cyan
+    style: plain
+    template: ' ╚'
+text.root:
+    background: blue
+    background_templates:
+        - '{{ if and .Segments.Path.Writable (not .Root) }}{{ else }}red{{ end }}'
+    foreground: white
+    options:
+        root_icon: 
+    style: diamond
+    template: '{{ if not .Root }}⠀{{ end }}{{ if and .Root ( not .Segments.Path.Writable ) }} {{ end }}{{ if and .Root .Segments.Path.Writable }}  {{ end }}'
+    trailing_separator: 

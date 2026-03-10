@@ -1,4 +1,3 @@
-$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 git:
     background: '#FFFB38'
     background_templates:

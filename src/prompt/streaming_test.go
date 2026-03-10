@@ -28,6 +28,10 @@ type countedSlowWriter struct {
 
 var countedSlowWriterExecutions atomic.Int32
 
+type blockingInitWriter struct {
+	text string
+}
+
 func (w *slowWriter) Enabled() bool {
 	time.Sleep(w.delay)
 	return true
@@ -62,6 +66,33 @@ func (w *countedSlowWriter) Enabled() bool {
 
 func (w *countedSlowWriter) Init(properties options.Provider, env runtime.Environment) {
 	w.slowWriter.Init(properties, env)
+}
+
+func (w *blockingInitWriter) Enabled() bool {
+	time.Sleep(120 * time.Millisecond)
+	return true
+}
+
+func (w *blockingInitWriter) Template() string {
+	return "BLOCK"
+}
+
+func (w *blockingInitWriter) SetText(text string) {
+	w.text = text
+}
+
+func (w *blockingInitWriter) SetIndex(_ int) {}
+
+func (w *blockingInitWriter) Text() string {
+	return w.text
+}
+
+func (w *blockingInitWriter) Init(_ options.Provider, _ runtime.Environment) {
+	time.Sleep(25 * time.Millisecond)
+}
+
+func (w *blockingInitWriter) CacheKey() (string, bool) {
+	return "", false
 }
 
 func TestPrimaryStreamingLongSegmentReturnsPendingThenUpdates(t *testing.T) {
@@ -278,6 +309,55 @@ slow.rtransient:
 	require.Contains(t, engine.StreamingTransientPrompt(), "TRANSIENT")
 	require.Contains(t, engine.StreamingTransientRPrompt(), "RTRANSIENT")
 	require.Equal(t, int32(1), countedSlowWriterExecutions.Load())
+}
+
+func TestPrimaryStreamingAndRepaintCanOverlap(t *testing.T) {
+	segmentType := config.SegmentType("blocking_init_test")
+	previous, hadPrevious := config.Segments[segmentType]
+	config.Segments[segmentType] = func() config.SegmentWriter { return &blockingInitWriter{} }
+	t.Cleanup(func() {
+		if hadPrevious {
+			config.Segments[segmentType] = previous
+			return
+		}
+
+		delete(config.Segments, segmentType)
+	})
+
+	configPath := filepath.Join(t.TempDir(), "blocking-streaming.omp.yaml")
+	cfg := `
+daemon_timeout: 20
+prompt:
+  - segments: ["blocking.main"]
+
+blocking.main:
+  type: "blocking_init_test"
+  style: "plain"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	flags := &runtime.Flags{
+		ConfigPath: configPath,
+		Plain:      true,
+		Shell:      shell.GENERIC,
+	}
+	engine := New(flags)
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_ = engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, func(string) {})
+	}()
+
+	require.Eventually(t, func() bool {
+		select {
+		case <-done:
+			return true
+		default:
+			_ = engine.PrimaryRepaint()
+			return false
+		}
+	}, 2*time.Second, 10*time.Millisecond)
 }
 
 func TestPrimaryRepaintLayoutReEvaluatesVimSegment(t *testing.T) {

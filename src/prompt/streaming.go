@@ -54,6 +54,7 @@ func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, up
 
 	e.resetSharedProviders()
 
+	e.streamingMu.Lock()
 	e.pendingSegments = make(map[string]bool)
 	e.cachedValues = make(map[string]string)
 	e.segmentCacheKeys = make(map[string]string)
@@ -62,6 +63,7 @@ func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, up
 	e.streamingRTransient = e.resolveStreamingRTransientBlocks()
 
 	segmentsToExecute, completed := e.prepareStreamingSegments()
+	e.streamingMu.Unlock()
 	results := e.startStreamingExecutions(ctx, segmentsToExecute)
 	e.collectStreamingResultsUntil(ctx, timeout, results, completed)
 
@@ -73,11 +75,11 @@ func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, up
 
 		e.pendingSegments[entry.key] = true
 	}
+	initialPrompt := e.renderStreamingPrompt()
+	hasPending := len(e.pendingSegments) > 0
 	e.streamingMu.Unlock()
 
-	initialPrompt := e.renderStreamingPrompt()
-
-	if len(e.pendingSegments) > 0 {
+	if hasPending {
 		go func() {
 			for result := range results {
 				if ctx.Err() != nil {
@@ -594,7 +596,15 @@ func (e *Engine) streamingBlockSets() []streamingBlockSet {
 }
 
 func (e *Engine) resolveStreamingTransientBlocks() []*config.Block {
-	if e.LayoutConfig == nil || len(e.LayoutConfig.TransientPrompt) == 0 {
+	if e.LayoutConfig == nil {
+		return nil
+	}
+
+	if e.shouldInlineTransientRPrompt() {
+		return e.composeLayoutBlocks(e.LayoutConfig.TransientPrompt, e.LayoutConfig.TransientRPrompt, true)
+	}
+
+	if len(e.LayoutConfig.TransientPrompt) == 0 {
 		return nil
 	}
 
@@ -611,6 +621,11 @@ func (e *Engine) resolveStreamingRTransientBlocks() []*config.Block {
 		return nil
 	}
 
+	if e.shouldInlineTransientRPrompt() {
+		block := e.layoutBlock(&e.LayoutConfig.TransientRPrompt[len(e.LayoutConfig.TransientRPrompt)-1], config.RPrompt, config.Right, false)
+		return []*config.Block{block}
+	}
+
 	block := e.layoutBlock(&e.LayoutConfig.TransientRPrompt[0], config.RPrompt, config.Right, false)
 	return []*config.Block{block}
 }
@@ -624,12 +639,12 @@ func (e *Engine) renderBlockWithText(block *config.Block, blockText string, leng
 		e.applyPowerShellBleedPatch()
 	}()
 
-	if block.Newline && !cancelNewline {
-		e.writeNewline()
-	}
-
 	switch block.Type {
 	case config.Prompt:
+		if block.Newline && !cancelNewline {
+			e.writeNewline()
+		}
+
 		if block.Alignment == config.Left {
 			e.currentLineLength += length
 			e.write(blockText)
@@ -674,8 +689,7 @@ func (e *Engine) renderBlockWithText(block *config.Block, blockText string, leng
 
 		e.write(blockText)
 	case config.RPrompt:
-		e.rprompt = blockText
-		e.rpromptLength = length
+		return e.appendRightPromptLine(blockText, length, block.Newline)
 	}
 
 	return true

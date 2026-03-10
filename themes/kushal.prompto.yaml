@@ -1,4 +1,3 @@
-$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 cmake:
     background: '#1E9748'
     foreground: '#E8EAEE'
@@ -58,7 +57,7 @@ os:
         windows: 
     style: diamond
     template: ' {{ if .WSL }} on {{ end }}{{ .Icon }} '
-osc99: true
+pwd: osc99
 path:
     foreground: '#B6D6F2'
     leading_separator: <#00C7FC>  </><#B6D6F2> in </>

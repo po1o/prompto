@@ -18,8 +18,17 @@ func (e *Engine) RPrompt() string {
 		return ""
 	}
 
-	line := e.layoutBlock(&e.LayoutConfig.RPrompt[0], config.RPrompt, config.Right, false)
-	text, length := e.writeBlockSegments(line)
+	if e.shouldInlinePrimaryRPrompt() {
+		text, length := e.renderLayoutRightPrompt(e.LayoutConfig.RPrompt[len(e.LayoutConfig.RPrompt)-1:])
+		if length == 0 {
+			return ""
+		}
+
+		e.rpromptLength = length
+		return text
+	}
+
+	text, length := e.renderLayoutRightPrompt(e.LayoutConfig.RPrompt)
 
 	// do not print anything when we don't have any text
 	if length == 0 {
@@ -39,4 +48,17 @@ func (e *Engine) RPrompt() string {
 	}
 
 	return text
+}
+
+func (e *Engine) renderLayoutRightPrompt(layouts []config.PromptLayout) (string, int) {
+	e.rprompt = ""
+	e.rpromptLength = 0
+
+	for i := range layouts {
+		line := e.layoutBlock(&layouts[i], config.RPrompt, config.Right, i != 0)
+		text, length := e.writeBlockSegments(line)
+		e.appendRightPromptLine(text, length, i != 0)
+	}
+
+	return e.rprompt, e.rpromptLength
 }

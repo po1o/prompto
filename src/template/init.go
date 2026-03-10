@@ -43,7 +43,7 @@ func Init(environment runtime.Environment, vars maps.Simple[any], aliases *maps.
 		return &Text{}
 	})
 
-	if Cache != nil {
+	if Cache != nil && !env.Flags().IsPrimary {
 		return
 	}
 

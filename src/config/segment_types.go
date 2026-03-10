@@ -132,8 +132,6 @@ func init() {
 	gob.Register(&segments.UI5Tooling{})
 	gob.Register(&segments.Umbraco{})
 	gob.Register(&segments.Unity{})
-	gob.Register(&segments.Upgrade{})
-	gob.Register(&segments.UpgradeCache{})
 	gob.Register(&segments.V{})
 	gob.Register(&segments.Vala{})
 	gob.Register(&segments.Wakatime{})
@@ -347,8 +345,6 @@ const (
 	UMBRACO SegmentType = "umbraco"
 	// UNITY writes which Unity version is currently active
 	UNITY SegmentType = "unity"
-	// UPGRADE lets you know if you can upgrade Prompto
-	UPGRADE SegmentType = "upgrade"
 	// VIM writes the current vim mode
 	VIM SegmentType = "vim"
 	// V writes the active vlang version
@@ -471,7 +467,6 @@ var Segments = map[SegmentType]func() SegmentWriter{
 	UI5TOOLING:      func() SegmentWriter { return &segments.UI5Tooling{} },
 	UMBRACO:         func() SegmentWriter { return &segments.Umbraco{} },
 	UNITY:           func() SegmentWriter { return &segments.Unity{} },
-	UPGRADE:         func() SegmentWriter { return &segments.Upgrade{} },
 	VIM:             func() SegmentWriter { return &segments.Vim{} },
 	V:               func() SegmentWriter { return &segments.V{} },
 	VALA:            func() SegmentWriter { return &segments.Vala{} },

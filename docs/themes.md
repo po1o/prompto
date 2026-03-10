@@ -6,7 +6,7 @@ description: Use the bundled themes as starting points for your own local prompt
 ## Where Themes Live
 
 Bundled themes are stored in [`themes/`](../themes).
-They are plain YAML files and are meant to be copied, edited, and adapted.
+They are plain YAML files, and prompto also compiles them into the binary for `config list` and `config set`.
 
 Examples:
 
@@ -17,14 +17,20 @@ Examples:
 ## Recommended Workflow
 
 1. Pick a theme that is visually close to what you want.
-2. Copy it to your local config path.
+2. Write it to the default config path.
 3. Point shell init at that local file.
 4. Edit the copy instead of editing the theme in-place.
 
-Example:
+List the bundled themes:
 
 ```bash
-cp themes/tokyo.prompto.yaml ~/.config/prompto/config.yaml
+prompto config list
+```
+
+Write one to the default config path:
+
+```bash
+prompto config set tokyo
 ```
 
 Then initialize your shell against that file:
@@ -33,12 +39,12 @@ Then initialize your shell against that file:
 eval "$(prompto init zsh --config ~/.config/prompto/config.yaml)"
 ```
 
-## Export the Active Config
+## Render a Theme Preview
 
-If you want a canonical YAML snapshot of the config you are currently using:
+If you want a quick preview image of the config you are currently using:
 
 ```bash
-prompto config export --output ~/.config/prompto/config.yaml
+prompto config image --output ./theme-preview.png
 ```
 
 ## Theme Selection Advice

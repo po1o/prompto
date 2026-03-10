@@ -19,7 +19,6 @@ description: Segment reference pages for the system category.
 - [System Info](./sysinfo.md)
 - [Text](./text.md)
 - [Time](./time.md)
-- [Upgrade notice](./upgrade.md)
 - [Vim Mode](./vim.md)
 - [Windows Registry Key Query](./winreg.md)
 - [WinGet](./winget.md)

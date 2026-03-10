@@ -15,10 +15,6 @@ func (f Features) Bash() Code {
 		return unixCursorPositioning
 	case FTCSMarks:
 		return unixFTCSMarks
-	case Upgrade:
-		return unixUpgrade
-	case Notice:
-		return unixNotice
 	case Daemon:
 		return enablePromptoDaemon
 	case VimMode:

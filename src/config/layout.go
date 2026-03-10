@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/po1o/prompto/src/cli/upgrade"
 	"github.com/po1o/prompto/src/color"
 	configmaps "github.com/po1o/prompto/src/maps"
 	"github.com/po1o/prompto/src/terminal"
@@ -31,7 +30,6 @@ type LayoutConfig struct {
 	Var                     map[string]any         `yaml:"var,omitempty"`
 	Palettes                *color.Palettes        `yaml:"palettes,omitempty"`
 	Maps                    *configmaps.Config     `yaml:"maps,omitempty"`
-	Upgrade                 *upgrade.Config        `yaml:"upgrade,omitempty"`
 	Cycle                   color.Cycle            `yaml:"cycle,omitempty"`
 	ITermFeatures           terminal.ITermFeatures `yaml:"iterm_features,omitempty"`
 	VimMode                 *VimConfig             `yaml:"vim-mode,omitempty"`
@@ -67,7 +65,6 @@ type layoutRawConfig struct {
 	Var                     map[string]any         `yaml:"var"`
 	Palettes                *color.Palettes        `yaml:"palettes"`
 	Maps                    *configmaps.Config     `yaml:"maps"`
-	Upgrade                 *upgrade.Config        `yaml:"upgrade"`
 	CursorPadding           *bool                  `yaml:"cursor_padding"`
 	VimMode                 *VimConfig             `yaml:"vim-mode"`
 	ErrorLine               *Segment               `yaml:"error_line"`
@@ -112,6 +109,10 @@ var knownLayoutTopLevelKeys = func() map[string]bool {
 
 	return keys
 }()
+
+var removedLayoutTopLevelKeys = map[string]bool{
+	"upgrade": true,
+}
 
 func LoadLayout(configFile string) (*LayoutConfig, error) {
 	if configFile == "" {
@@ -161,7 +162,6 @@ func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
 		Var:                     raw.Var,
 		Palettes:                raw.Palettes,
 		Maps:                    raw.Maps,
-		Upgrade:                 raw.Upgrade,
 		Cycle:                   raw.Cycle,
 		ITermFeatures:           raw.ITermFeatures,
 		VimMode:                 raw.VimMode,
@@ -212,6 +212,10 @@ func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
 
 func validateLayoutTopLevelKeys(doc map[string]any) error {
 	for key, value := range doc {
+		if removedLayoutTopLevelKeys[key] {
+			return fmt.Errorf("unknown top-level key %q", key)
+		}
+
 		if knownLayoutTopLevelKeys[key] {
 			continue
 		}
@@ -252,7 +256,6 @@ func (cfg *LayoutConfig) ApplyMetadata(target *Config) {
 	target.Var = cfg.Var
 	target.Palettes = cfg.Palettes
 	target.Maps = cfg.Maps
-	target.Upgrade = cfg.Upgrade
 	target.Cycle = cfg.Cycle
 	target.ITermFeatures = cfg.ITermFeatures
 	target.VimMode = cfg.VimMode
@@ -626,7 +629,6 @@ func shouldSkipLayoutTable(name string, table map[string]any) bool {
 		"palette":        true,
 		"palettes":       true,
 		"maps":           true,
-		"upgrade":        true,
 		"var":            true,
 		"cycle":          true,
 		"iterm_features": true,

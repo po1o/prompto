@@ -16,7 +16,7 @@ The current `init` command supports:
 Check what shell you are currently using:
 
 ```bash
-prompto get shell
+prompto shell
 ```
 
 ## General Pattern

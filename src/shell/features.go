@@ -12,8 +12,6 @@ const (
 	Tooltips
 	Transient
 	FTCSMarks
-	Upgrade
-	Notice
 	PromptMark
 	RPrompt
 	CursorPositioning

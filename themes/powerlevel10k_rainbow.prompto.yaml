@@ -1,4 +1,3 @@
-$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 aws:
     background_templates:
         - '{{if contains "default" .Profile}}#FFA400{{end}}'
@@ -158,6 +157,7 @@ time:
     background: '#d3d7cf'
     foreground: '#000000'
     invert_powerline: true
+    leading_separator: ─╮
     style: diamond
     template: ' {{ .LastDate | date .Format }}  '
-    trailing_separator: ─╮
+    trailing_separator: 

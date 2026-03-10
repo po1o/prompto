@@ -1,4 +1,3 @@
-$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 dotnet:
     background: '#7014eb'
     foreground: '#ffffff'

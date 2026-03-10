@@ -49,25 +49,22 @@ Then verify:
 prompto version
 ```
 
-## Upgrade Later
+## Update Later
 
-Once `prompto` is installed in a writable location, you can upgrade with:
+To update `prompto`, replace the binary with a newer release or rebuild from source and overwrite the existing
+executable.
+
+Release-based install:
+
+- download a newer binary from [Latest release](https://github.com/po1o/prompto/releases/latest)
+- replace the existing `prompto` executable on your `PATH`
+
+Source-based install:
 
 ```bash
-prompto upgrade
+cd src
+go build -o "$HOME/opt/go/bin/prompto" .
 ```
-
-You can also enable the notice or automatic upgrade behavior in config:
-
-```yaml
-upgrade:
-  notice: true
-  auto: false
-  interval: 168h
-  source: github
-```
-
-The upgrade settings are documented in [Configuration extras](./configuration/extras.md).
 
 ## Default Config Location
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -216,4 +217,43 @@ text.rtransient:
 
 	_, _, ok := registry.GetActiveRender("session-a")
 	require.False(t, ok)
+}
+
+func TestRenderPipelineRefreshesTemplateGlobalsForReusedPrimaryEngine(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "status.omp.yaml")
+	configYAML := `
+prompt:
+  - segments: ["status"]
+
+status:
+  type: status
+  style: plain
+  options:
+    always_enabled: true
+  template: '{{ if gt .Code 0 }}ERROR{{ else }}OK{{ end }}'
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(configYAML), 0o644))
+
+	registry := NewEngineRegistry(prompt.New)
+	sessionRuntime := NewSessionRenderRuntime(registry, nil)
+	pipeline := NewRenderPipeline(sessionRuntime, nil, nil)
+
+	flags := func(code int) *runtime.Flags {
+		return &runtime.Flags{
+			ConfigPath:    configPath,
+			Shell:         shell.GENERIC,
+			TerminalWidth: 80,
+			Plain:         true,
+			ErrorCode:     code,
+		}
+	}
+
+	success, active := pipeline.Start("session-a", flags(0), false)
+	require.Nil(t, active)
+	require.True(t, strings.Contains(success.Primary, "OK"))
+	require.False(t, strings.Contains(success.Primary, "ERROR"))
+
+	failure, active := pipeline.Start("session-a", flags(1), false)
+	require.Nil(t, active)
+	require.True(t, strings.Contains(failure.Primary, "ERROR"))
 }

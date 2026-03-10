@@ -11,8 +11,6 @@ type Code string
 const (
 	unixFTCSMarks         Code = "_prompto_ftcs_marks=1"
 	unixCursorPositioning Code = "_prompto_cursor_positioning=1"
-	unixUpgrade           Code = `"$_prompto_executable" upgrade --auto`
-	unixNotice            Code = `"$_prompto_executable" notice`
 	enablePromptoDaemon   Code = "enable_prompto_daemon"
 )
 

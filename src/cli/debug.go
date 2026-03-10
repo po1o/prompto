@@ -65,9 +65,10 @@ func createDebugCmd() *cobra.Command {
 			terminal.Plain = plain
 
 			eng := &prompt.Engine{
-				Config: cfg,
-				Env:    env,
-				Plain:  plain,
+				Config:       cfg,
+				Env:          env,
+				LayoutConfig: cfg.Layout,
+				Plain:        plain,
 			}
 
 			fmt.Print(eng.PrintDebug(startTime, build.Version))
@@ -86,10 +87,5 @@ func createDebugCmd() *cobra.Command {
 }
 
 func getDebugConfig(configpath string) *config.Config {
-	if len(configpath) != 0 {
-		return config.Load(configpath)
-	}
-
-	reload, _ := cache.Get[bool](cache.Device, config.RELOAD)
-	return config.Get(configpath, reload)
+	return config.Load(configpath)
 }

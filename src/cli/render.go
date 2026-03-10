@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/po1o/prompto/src/daemon"
@@ -18,6 +19,12 @@ import (
 
 const (
 	renderTimeout = 10 * time.Second
+)
+
+var renderOutputEscaper = strings.NewReplacer(
+	`\`, `\\`,
+	"\n", `\n`,
+	"\r", `\r`,
 )
 
 var (
@@ -35,6 +42,7 @@ var (
 	noStatus      bool
 	column        int
 	escape        bool
+	renderForce   bool
 
 	pid           int
 	repaint       bool
@@ -95,7 +103,7 @@ Output format (one per line):
 			Column:        column,
 			JobCount:      jobCount,
 			Escape:        escape,
-			Force:         force,
+			Force:         renderForce,
 			VimMode:       renderVimMode,
 		}
 
@@ -122,7 +130,7 @@ func init() {
 	renderCmd.Flags().IntVar(&column, "column", 0, "the column position of the cursor")
 	renderCmd.Flags().IntVar(&jobCount, "job-count", 0, "number of background jobs")
 	renderCmd.Flags().BoolVar(&escape, "escape", true, "escape the ANSI sequences for the shell")
-	renderCmd.Flags().BoolVarP(&force, "force", "f", false, "force rendering the segments")
+	renderCmd.Flags().BoolVarP(&renderForce, "force", "f", false, "force rendering the segments")
 	renderCmd.Flags().IntVar(&pid, "pid", 0, "shell process id")
 	renderCmd.Flags().BoolVar(&repaint, "repaint", false, "vim mode repaint (soft cancel, reuse computations)")
 	renderCmd.Flags().StringVar(&renderVimMode, "vim-mode", "", "current vim mode (insert, normal, visual, replace)")
@@ -165,7 +173,7 @@ func outputPrompts(resp *ipc.PromptResponse) {
 		if p, ok := resp.Prompts[pt]; ok {
 			// Always output primary/right; only output others if non-empty
 			if alwaysOutput[pt] || p.Text != "" {
-				fmt.Printf("%s:%s\n", pt, p.Text)
+				fmt.Printf("%s:%s\n", pt, encodeRenderOutputText(p.Text))
 			}
 		}
 	}
@@ -173,4 +181,12 @@ func outputPrompts(resp *ipc.PromptResponse) {
 	// Output status line so shell knows when a batch is complete
 	// "update" = more updates may come, "complete" = all segments done
 	fmt.Printf("status:%s\n", resp.Type)
+}
+
+func encodeRenderOutputText(text string) string {
+	if plain {
+		return text
+	}
+
+	return renderOutputEscaper.Replace(text)
 }

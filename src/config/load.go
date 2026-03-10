@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/po1o/prompto/src/cache"
-	"github.com/po1o/prompto/src/cli/upgrade"
 	"github.com/po1o/prompto/src/log"
 	"github.com/po1o/prompto/src/runtime/path"
 )
@@ -97,12 +95,6 @@ func Parse(configFile string) (*Config, error) {
 
 	configFile = resolveConfigLocation(configFile)
 
-	configDSC := DSC()
-	configDSC.Load()
-	configDSC.Add(configFile)
-
-	defer configDSC.Save()
-
 	h := fnv.New64a()
 	format := strings.TrimPrefix(filepath.Ext(configFile), ".")
 	if format == YML {
@@ -142,19 +134,6 @@ func Parse(configFile string) (*Config, error) {
 	layout.Source = configFile
 	layout.ApplyMetadata(cfg)
 	cfg.toggleSegments()
-
-	if cfg.Upgrade == nil {
-		cfg.Upgrade = &upgrade.Config{
-			Source:        upgrade.CDN,
-			DisplayNotice: cfg.UpgradeNotice,
-			Auto:          cfg.AutoUpgrade,
-			Interval:      cache.ONEWEEK,
-		}
-	}
-
-	if cfg.Upgrade.Interval.IsEmpty() {
-		cfg.Upgrade.Interval = cache.ONEWEEK
-	}
 
 	return cfg, nil
 }

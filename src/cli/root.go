@@ -22,9 +22,6 @@ var (
 
 	// for internal use only
 	silent bool
-
-	// deprecated
-	initialize bool
 )
 
 var RootCmd = &cobra.Command{
@@ -35,11 +32,6 @@ It can use the same configuration everywhere to offer a consistent
 experience, regardless of where you are. For a detailed guide
 on getting started, have a look at the docs at https://prompto.dev`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if initialize {
-			runInit(strings.ToLower(shellName), getFullCommand(cmd, args))
-			return
-		}
-
 		if printVersion {
 			fmt.Println(build.Version)
 			return
@@ -111,10 +103,6 @@ func init() {
 	RootCmd.PersistentFlags().BoolVar(&trace, "trace", false, "enable tracing")
 	RootCmd.PersistentFlags().BoolVar(&plain, "plain", false, "plain text output (no ANSI)")
 	RootCmd.Flags().BoolVar(&printVersion, "version", false, "print the version number and exit")
-
-	// Deprecated flags, should be kept to avoid breaking CLI integration.
-	RootCmd.Flags().BoolVarP(&initialize, "init", "i", false, "init")
-	RootCmd.Flags().StringVarP(&shellName, "shell", "s", "", "shell")
 
 	// Hide flags that are deprecated or for internal use only.
 	_ = RootCmd.PersistentFlags().MarkHidden("silent")

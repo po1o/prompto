@@ -3,12 +3,14 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/cli/image"
 	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/prompt"
 	"github.com/po1o/prompto/src/runtime"
+	"github.com/po1o/prompto/src/runtime/path"
 	"github.com/po1o/prompto/src/shell"
 	"github.com/po1o/prompto/src/template"
 	"github.com/po1o/prompto/src/terminal"
@@ -37,27 +39,22 @@ You can tweak the output by using additional flags:
 
 Example usage:
 
-> prompto config export image --config ~/myconfig.omp.json
+> prompto config image --config ~/.config/prompto/config.yaml
 
 Exports the config to an image file called myconfig.png in the current working directory.
 
-> prompto config export image --config ~/myconfig.omp.json --output ~/mytheme.png
+> prompto config image --config ~/.config/prompto/config.yaml --output ~/mytheme.png
 
 Exports the config to an image file ~/mytheme.png.
 
-> prompto config export image --config ~/myconfig.omp.json --settings ~/.image.settings.json
+> prompto config image --config ~/.config/prompto/config.yaml --settings ~/.image.settings.json
 
 Exports the config to an image file using customized output settings.`,
 	Args: cobra.NoArgs,
 	Run: func(_ *cobra.Command, _ []string) {
 		cache.Init(os.Getenv("PROMPTO_SHELL"))
 
-		err := setConfigFlag()
-		if err != nil {
-			exitcode = 666
-			fmt.Println(err.Error())
-			return
-		}
+		setConfigFlag()
 
 		cfg := config.Load(configFlag)
 
@@ -87,8 +84,9 @@ Exports the config to an image file using customized output settings.`,
 		terminal.Colors = cfg.MakeColors(env)
 
 		eng := &prompt.Engine{
-			Config: cfg,
-			Env:    env,
+			Config:       cfg,
+			Env:          env,
+			LayoutConfig: cfg.Layout,
 		}
 
 		settings, err := image.LoadSettings(colorSettingsFile)
@@ -142,19 +140,21 @@ func init() {
 	_ = imageCmd.Flags().MarkHidden("author")
 	_ = imageCmd.Flags().MarkHidden("background-color")
 
-	exportCmd.AddCommand(imageCmd)
+	configCmd.AddCommand(imageCmd)
 }
 
-func setConfigFlag() error {
-	if configFlag != "" {
-		return nil
+func setConfigFlag() {
+	configFlag = resolveConfigPath()
+}
+
+func cleanOutputPath(output string) string {
+	output = path.ReplaceTildePrefixWithHomeDir(output)
+
+	if !filepath.IsAbs(output) {
+		if absPath, err := filepath.Abs(output); err == nil {
+			output = absPath
+		}
 	}
 
-	configPath, OK := cache.Get[string](cache.Session, config.SourceKey)
-	if !OK {
-		return fmt.Errorf("no config found in session cache, please provide a config using the --config flag")
-	}
-
-	configFlag = configPath
-	return nil
+	return filepath.Clean(output)
 }

@@ -81,6 +81,119 @@ func TestTransientUsesLayoutLeftAndRight(t *testing.T) {
 	require.Equal(t, "TR", right)
 }
 
+func TestPrimaryInlinesMultilineRightPromptIntoPrimary(t *testing.T) {
+	engine := newLayoutTestEngine(t, &config.LayoutConfig{
+		Prompt: []config.PromptLayout{
+			{Segments: []string{"left_1"}},
+			{Segments: []string{"left_2"}},
+		},
+		RPrompt: []config.PromptLayout{
+			{Segments: []string{"right_1"}},
+			{Segments: []string{"right_2"}},
+		},
+		Segments: map[string]*config.Segment{
+			"left_1":  {Type: config.TEXT, Alias: "left_1", Template: "L1"},
+			"left_2":  {Type: config.TEXT, Alias: "left_2", Template: "L2"},
+			"right_1": {Type: config.TEXT, Alias: "right_1", Template: "R1"},
+			"right_2": {Type: config.TEXT, Alias: "right_2", Template: "R2"},
+		},
+	})
+
+	got := engine.Primary()
+
+	require.Contains(t, got, "L1")
+	require.Contains(t, got, "R1")
+	require.Contains(t, got, "L2")
+	require.NotContains(t, got, "R2")
+	require.Equal(t, "R2", engine.RPrompt())
+}
+
+func TestTransientInlinesMultilineRightPromptIntoTransient(t *testing.T) {
+	engine := newLayoutTestEngine(t, &config.LayoutConfig{
+		TransientPrompt: []config.PromptLayout{
+			{Segments: []string{"left_1"}},
+			{Segments: []string{"left_2"}},
+		},
+		TransientRPrompt: []config.PromptLayout{
+			{Segments: []string{"right_1"}},
+			{Segments: []string{"right_2"}},
+		},
+		Segments: map[string]*config.Segment{
+			"left_1":  {Type: config.TEXT, Alias: "left_1", Template: "TL1"},
+			"left_2":  {Type: config.TEXT, Alias: "left_2", Template: "TL2"},
+			"right_1": {Type: config.TEXT, Alias: "right_1", Template: "TR1"},
+			"right_2": {Type: config.TEXT, Alias: "right_2", Template: "TR2"},
+		},
+	})
+
+	got := engine.ExtraPrompt(Transient)
+
+	require.Contains(t, got, "TL1")
+	require.Contains(t, got, "TR1")
+	require.Contains(t, got, "TL2")
+	require.NotContains(t, got, "TR2")
+	require.Equal(t, "TR2", engine.TransientRPrompt())
+}
+
+func TestPrimaryInlineMultilineRightPromptLeavesLastRowInRPrompt(t *testing.T) {
+	flags := &runtime.Flags{
+		Shell:         shell.ZSH,
+		Eval:          true,
+		TerminalWidth: 80,
+	}
+
+	env := &runtime.Terminal{}
+	env.Init(flags)
+
+	template.Cache = &cache.Template{
+		SimpleTemplate: cache.SimpleTemplate{
+			Shell: shell.ZSH,
+		},
+		Segments: maps.NewConcurrent[any](),
+	}
+	template.Init(env, nil, nil)
+
+	originalPlain := terminal.Plain
+	terminal.Init(shell.ZSH)
+	terminal.Colors = &color.Defaults{}
+	terminal.Plain = false
+	t.Cleanup(func() {
+		terminal.Plain = originalPlain
+	})
+
+	engine := &Engine{
+		Env: env,
+		Config: &config.Config{
+			CursorPadding: true,
+		},
+		LayoutConfig: &config.LayoutConfig{
+			Prompt: []config.PromptLayout{
+				{Segments: []string{"left_1"}},
+				{Segments: []string{"left_2"}},
+			},
+			RPrompt: []config.PromptLayout{
+				{Segments: []string{"right_1"}},
+				{Segments: []string{"right_2"}},
+			},
+			Segments: map[string]*config.Segment{
+				"left_1":  {Type: config.TEXT, Alias: "left_1", Template: "L1"},
+				"left_2":  {Type: config.TEXT, Alias: "left_2", Template: "L2"},
+				"right_1": {Type: config.TEXT, Alias: "right_1", Template: "R1"},
+				"right_2": {Type: config.TEXT, Alias: "right_2", Template: "R2"},
+			},
+		},
+	}
+
+	got := engine.Primary()
+	ps1, _, _ := strings.Cut(got, "\nRPROMPT=")
+
+	require.Contains(t, got, "RPROMPT=$'")
+	require.NotContains(t, got, "\x1b7")
+	require.NotContains(t, got, "\x1b8")
+	require.Contains(t, ps1, "R1")
+	require.NotContains(t, ps1, "R2")
+}
+
 func TestExtraPromptSupportsValidErrorAndDebug(t *testing.T) {
 	engine := newLayoutTestEngine(t, &config.LayoutConfig{
 		Segments: map[string]*config.Segment{},

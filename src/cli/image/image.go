@@ -29,6 +29,7 @@ import (
 	"image"
 	"io"
 	"math"
+	httplib "net/http"
 	stdOS "os"
 	"path/filepath"
 	"slices"
@@ -36,9 +37,9 @@ import (
 	"strings"
 
 	"github.com/po1o/prompto/src/cache"
-	font_ "github.com/po1o/prompto/src/cli/font"
 	"github.com/po1o/prompto/src/regex"
 	"github.com/po1o/prompto/src/runtime"
+	runtimehttp "github.com/po1o/prompto/src/runtime/http"
 
 	"github.com/esimov/stackblur-go"
 	"github.com/fogleman/gg"
@@ -248,9 +249,12 @@ func (ir *Renderer) loadDefaultFonts() error {
 		url := "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/Hack.zip"
 		var err error
 
-		data, err = font_.Download(url)
+		data, err = runtimehttp.Download(url, true)
 		if err != nil {
 			return &ConnectionError{reason: err.Error()}
+		}
+		if httplib.DetectContentType(data) != "application/zip" {
+			return fmt.Errorf("%s is not a valid zip file", url)
 		}
 
 		err = stdOS.WriteFile(fontCachePath, data, 0644)

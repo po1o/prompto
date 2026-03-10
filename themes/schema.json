@@ -461,7 +461,6 @@
             "ui5tooling",
             "umbraco",
             "unity",
-            "upgrade",
             "v",
             "vala",
             "wakatime",
@@ -4568,30 +4567,6 @@
           "if": {
             "properties": {
               "type": {
-                "const": "upgrade"
-              }
-            }
-          },
-          "then": {
-            "title": "Upgrade Segment",
-            "description": "https://prompto.dev/docs/segments/system/upgrade",
-            "properties": {
-              "options": {
-                "properties": {
-                  "cache_duration": {
-                    "$ref": "#/definitions/cache_duration",
-                    "default": "168h"
-                  }
-                },
-                "unevaluatedProperties": false
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
                 "const": "v"
               }
             }
@@ -4942,37 +4917,6 @@
       "title": "Enable OSC99/7/51",
       "description": "https://prompto.dev/docs/configuration/general#general-settings",
       "default": ""
-    },
-    "upgrade": {
-      "type": "object",
-      "title": "Enable Upgrade Notice",
-      "description": "https://prompto.dev/docs/configuration/general#general-settings",
-      "default": {
-        "source": "cdn",
-        "auto": false,
-        "notice": false
-      },
-      "properties": {
-        "interval": {
-          "$ref": "#/definitions/cache_duration"
-        },
-        "source": {
-          "type": "string",
-          "enum": [
-            "cdn",
-            "github"
-          ],
-          "default": "cdn"
-        },
-        "auto": {
-          "type": "boolean",
-          "default": false
-        },
-        "notice": {
-          "type": "boolean",
-          "default": false
-        }
-      }
     },
     "patch_pwsh_bleed": {
       "type": "boolean",

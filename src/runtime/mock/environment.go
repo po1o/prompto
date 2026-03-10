@@ -116,8 +116,21 @@ func (env *Environment) Root() bool {
 }
 
 func (env *Environment) Flags() *runtime.Flags {
-	arguments := env.Called()
-	return arguments.Get(0).(*runtime.Flags)
+	for _, expected := range env.ExpectedCalls {
+		if expected.Method != "Flags" {
+			continue
+		}
+
+		arguments := env.Called()
+		flags, _ := arguments.Get(0).(*runtime.Flags)
+		if flags == nil {
+			return &runtime.Flags{}
+		}
+
+		return flags
+	}
+
+	return &runtime.Flags{}
 }
 
 func (env *Environment) BatteryState() (*battery.Info, error) {

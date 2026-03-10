@@ -193,7 +193,7 @@ jobs:
 
           Segment changes (public-facing):
           - ONLY when you see changes to files in the EXACT path src/segments/*.go (excluding *_test.go), these are prompt segments that users configure
-          - Changes to other paths like src/dsc/, src/config/, src/engine/, etc. are NOT segments - they are internal implementation details
+          - Changes to other paths like src/config/, src/prompt/, src/daemon/, etc. are NOT segments - they are internal implementation details
           - A segment is a customizable component users add to their shell prompt (e.g., git status, battery level, current directory)
           - Refer to .github/instructions/segment.md for understanding how segments are structured and what constitutes segment properties vs template properties
           - Mention segment changes by their user-facing name (infer from the file name), not file paths

@@ -11,6 +11,11 @@ import (
 )
 
 func TestYtdma_Authenticate(t *testing.T) {
+	t.Cleanup(func() {
+		cache.DeleteAll(cache.Device)
+		cache.DeleteAll(cache.Session)
+	})
+
 	testCases := []struct {
 		name                 string
 		requestCodeResponse  string
@@ -75,14 +80,13 @@ func TestYtdma_Authenticate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			cache.DeleteAll(cache.Device)
+			cache.DeleteAll(cache.Session)
+
 			env := &runtime_.Environment{}
 
 			env.On("HTTPRequest", codeURL).Return([]byte(tc.requestCodeResponse), tc.requestCodeError)
 			env.On("HTTPRequest", tokenURL).Return([]byte(tc.requestTokenResponse), tc.requestTokenError)
-
-			if tc.shouldSetToken {
-				cache.Set(cache.Device, YTMDATOKEN, tc.expectedToken, cache.INFINITE)
-			}
 
 			ytmda := &Ytmda{
 				model: model{
@@ -99,7 +103,12 @@ func TestYtdma_Authenticate(t *testing.T) {
 				assert.Nil(t, ytmda.err)
 			}
 
-			cache.DeleteAll(cache.Device)
+			token, ok := cache.Get[string](cache.Device, YTMDATOKEN)
+			assert.Equal(t, tc.shouldSetToken, ok)
+			assert.Equal(t, tc.expectedToken, token)
+
+			_, ok = cache.Get[string](cache.Session, YTMDATOKEN)
+			assert.False(t, ok)
 		})
 	}
 }

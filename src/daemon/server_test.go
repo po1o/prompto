@@ -9,9 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/po1o/prompto/src/cache"
-	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/daemon/ipc"
+	"github.com/po1o/prompto/src/runtime"
 	"github.com/stretchr/testify/require"
 )
 
@@ -153,17 +152,28 @@ text.main:
 	}
 	t.Cleanup(func() {
 		server.core.Stop()
-		cache.Delete(cache.Device, config.RELOAD)
 	})
 
-	cache.Delete(cache.Device, config.RELOAD)
 	server.requestConfigReload(configPath)
 	server.processPendingConfigReload()
 
-	reloadFlag, ok := cache.Get[bool](cache.Device, config.RELOAD)
-	require.True(t, ok)
-	require.True(t, reloadFlag)
 	require.Equal(t, 0, len(server.configReloadCh))
+	require.Equal(t, "A", renderServerPrimary(t, server, configPath))
+
+	configBody = `
+prompt:
+  - segments: ["text.main"]
+
+text.main:
+  type: text
+  template: B
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(configBody), 0o644))
+
+	server.requestConfigReload(configPath)
+	server.processPendingConfigReload()
+
+	require.Equal(t, "B", renderServerPrimary(t, server, configPath))
 }
 
 func TestReloadIfConfigFileUpdatedAppliesReloadWithoutQueuedEvent(t *testing.T) {
@@ -187,11 +197,10 @@ text.main:
 	}
 	t.Cleanup(func() {
 		server.core.Stop()
-		cache.Delete(cache.Device, config.RELOAD)
 	})
 
 	server.captureConfigModTime()
-	cache.Delete(cache.Device, config.RELOAD)
+	require.Equal(t, "A", renderServerPrimary(t, server, configPath))
 
 	time.Sleep(15 * time.Millisecond)
 	configBody = `
@@ -206,10 +215,8 @@ text.main:
 
 	server.reloadIfConfigFileUpdated()
 
-	reloadFlag, ok := cache.Get[bool](cache.Device, config.RELOAD)
-	require.True(t, ok)
-	require.True(t, reloadFlag)
 	require.Equal(t, 0, len(server.configReloadCh))
+	require.Equal(t, "B", renderServerPrimary(t, server, configPath))
 }
 
 func TestMakePromptResponseIncludesRightTransientWhenPresent(t *testing.T) {
@@ -322,4 +329,19 @@ func testSocketDir(t *testing.T) string {
 	})
 
 	return directory
+}
+
+func renderServerPrimary(t *testing.T, server *Server, configPath string) string {
+	t.Helper()
+
+	response := server.core.StartRender(RenderRequest{
+		SessionID: "reload-test-session",
+		Flags: &runtime.Flags{
+			ConfigPath: configPath,
+			Plain:      true,
+		},
+	})
+
+	server.core.CompleteSession("reload-test-session")
+	return strings.TrimSpace(response.Bundle.Primary)
 }

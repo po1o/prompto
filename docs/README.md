@@ -97,7 +97,7 @@ The complete model is documented in [Configuration](./configuration.md).
 - Detect the current shell:
 
 ```bash
-prompto get shell
+prompto shell
 ```
 
 - Edit your config with `$EDITOR`:
@@ -106,10 +106,22 @@ prompto get shell
 prompto config edit
 ```
 
-- Export the active config as YAML:
+- List bundled themes:
 
 ```bash
-prompto config export --format yaml
+prompto config list
+```
+
+- Write a bundled theme to the default config path:
+
+```bash
+prompto config set tokyo
+```
+
+- Render a preview image of the active config:
+
+```bash
+prompto config image --output ./prompto-preview.png
 ```
 
 - Inspect prompt timing:

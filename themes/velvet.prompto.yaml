@@ -1,4 +1,3 @@
-$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 console_title_template: '{{ .Shell }} - {{ .Folder }}'
 executiontime:
     background: '#4c1f5e'

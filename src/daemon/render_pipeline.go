@@ -6,6 +6,7 @@ import (
 	runtimePkg "github.com/po1o/prompto/src/runtime"
 
 	"github.com/po1o/prompto/src/prompt"
+	"github.com/po1o/prompto/src/template"
 )
 
 type PromptBundle struct {
@@ -94,6 +95,7 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 	if engine != nil && engine.Config != nil {
 		engine.SetDeviceCache(pipeline.deviceCache)
 		applyRenderFlags(engine, flags, repaint)
+		template.Init(engine.Env, engine.Config.Var, engine.Config.Maps)
 
 		if flags != nil && flags.Type != "" && flags.Type != prompt.PRIMARY {
 			// Non-primary type requests are synchronous one-shots.
@@ -228,6 +230,11 @@ func applyRenderFlags(engine *prompt.Engine, flags *runtimePkg.Flags, repaint bo
 	}
 
 	*currentFlags = *flags
+	currentFlags.IsPrimary = currentFlags.Type == "" || currentFlags.Type == prompt.PRIMARY
+	if engine.Config != nil {
+		currentFlags.HasExtra = engine.Config.HasSecondary || engine.Config.HasTransient ||
+			engine.Config.ValidLine != nil || engine.Config.ErrorLine != nil || engine.Config.DebugPrompt != nil
+	}
 
 	term, ok := engine.Env.(*runtimePkg.Terminal)
 	if !ok {

@@ -13,8 +13,6 @@ func TestZshFeatures(t *testing.T) {
 enable_prompto_tooltips
 _prompto_transient_enabled=1; _prompto_create_widget zle-line-init _prompto_zle-line-init
 _prompto_ftcs_marks=1
-"$_prompto_executable" upgrade --auto
-"$_prompto_executable" notice
 _prompto_cursor_positioning=1
 enable_prompto_daemon`
 
@@ -49,4 +47,9 @@ func TestZshDaemonRenderGuardsResetPromptOutsideZLE(t *testing.T) {
 	assert.Contains(t, zshInit, "function _prompto_reset_prompt_if_zle()")
 	assert.Contains(t, zshInit, "if zle; then")
 	assert.Contains(t, zshInit, "_prompto_reset_prompt_if_zle")
+}
+
+func TestZshInitDecodesEscapedRenderOutput(t *testing.T) {
+	assert.Contains(t, zshInit, "function _prompto_decode_render_text()")
+	assert.Contains(t, zshInit, "_prompto_decode_render_text \"${line#*:}\"")
 }

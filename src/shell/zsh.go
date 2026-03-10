@@ -17,10 +17,6 @@ func (f Features) Zsh() Code {
 		return "_prompto_transient_enabled=1; _prompto_create_widget zle-line-init _prompto_zle-line-init"
 	case FTCSMarks:
 		return unixFTCSMarks
-	case Upgrade:
-		return unixUpgrade
-	case Notice:
-		return unixNotice
 	case Daemon:
 		return enablePromptoDaemon
 	case VimMode:

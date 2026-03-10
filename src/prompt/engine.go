@@ -4,7 +4,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/color"
 	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/log"
@@ -220,6 +219,22 @@ func (e *Engine) getTitleTemplateText() string {
 func (e *Engine) renderBlock(block *config.Block, cancelNewline bool) bool {
 	blockText, length := e.writeBlockSegments(block)
 	return e.renderBlockWithText(block, blockText, length, cancelNewline)
+}
+
+func (e *Engine) appendRightPromptLine(blockText string, length int, newline bool) bool {
+	if !newline && blockText == "" {
+		e.rprompt = ""
+		e.rpromptLength = 0
+		return false
+	}
+
+	if newline {
+		e.rprompt += "\n"
+	}
+
+	e.rprompt += blockText
+	e.rpromptLength = max(e.rpromptLength, length)
+	return true
 }
 
 func (e *Engine) applyPowerShellBleedPatch() {
@@ -438,12 +453,12 @@ func New(flags *runtime.Flags) *Engine {
 	env := &runtime.Terminal{}
 	env.Init(flags)
 
-	reload, _ := cache.Get[bool](cache.Device, config.RELOAD)
-	cfg := config.Get(flags.ConfigPath, reload)
+	cfg := config.Load(flags.ConfigPath)
 	if cfg.Layout == nil {
 		cfg.Layout = &config.LayoutConfig{}
 	}
 	layoutCfg := cfg.Layout
+	flags.IsPrimary = flags.Type == "" || flags.Type == PRIMARY
 
 	template.Init(env, cfg.Var, cfg.Maps)
 

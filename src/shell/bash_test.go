@@ -12,8 +12,6 @@ func TestBashFeatures(t *testing.T) {
 
 	want := `// these are the features
 _prompto_ftcs_marks=1
-"$_prompto_executable" upgrade --auto
-"$_prompto_executable" notice
 _prompto_cursor_positioning=1
 enable_prompto_daemon`
 
@@ -35,8 +33,6 @@ bleopt prompt_ps1_final='$(
         --escape=false
 )'
 _prompto_ftcs_marks=1
-"$_prompto_executable" upgrade --auto
-"$_prompto_executable" notice
 bleopt prompt_rps1='$(
 	"$_prompto_executable" render right \
 		--shell=bash \
@@ -68,6 +64,11 @@ _prompto_cursor_blink=1
 _prompto_cursor_shape=1; _prompto_should_change_cursor && _prompto_apply_cursor_shape`
 
 	assert.Equal(t, want, got)
+}
+
+func TestBashInitDecodesEscapedRenderOutput(t *testing.T) {
+	assert.Contains(t, bashInit, "function _prompto_decode_render_text()")
+	assert.Contains(t, bashInit, "_prompto_decode_render_text \"${line#*:}\"")
 }
 
 func TestQuotePosixStr(t *testing.T) {

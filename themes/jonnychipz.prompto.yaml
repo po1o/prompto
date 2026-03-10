@@ -1,4 +1,3 @@
-$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 az:
     background: '#1a1af5'
     foreground: '#ffffff'

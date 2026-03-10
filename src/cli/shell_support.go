@@ -2,8 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/shell"
 )
 
@@ -27,4 +29,25 @@ func normalizeSupportedShell(value string) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported shell %q (supported: bash, zsh, fish, powershell)", value)
 	}
+}
+
+func resolveInitShell(value string) (string, error) {
+	if strings.TrimSpace(value) != "" {
+		return normalizeSupportedShell(value)
+	}
+
+	flags := &runtime.Flags{
+		Shell: os.Getenv("PROMPTO_SHELL"),
+	}
+
+	env := &runtime.Terminal{}
+	env.Init(flags)
+
+	detected := env.Shell()
+	sh, err := normalizeSupportedShell(detected)
+	if err != nil {
+		return "", fmt.Errorf("could not detect a supported shell automatically (detected %q): %w", detected, err)
+	}
+
+	return sh, nil
 }

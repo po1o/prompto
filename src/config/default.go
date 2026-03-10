@@ -1,77 +1,52 @@
 package config
 
 import (
-	"github.com/po1o/prompto/src/cache"
-	"github.com/po1o/prompto/src/cli/upgrade"
 	"github.com/po1o/prompto/src/color"
 	"github.com/po1o/prompto/src/segments/options"
 )
 
-func Default(configError error) *Config {
-	exitBackgroundTemplate := "{{ if gt .Code 0 }}p:red{{ end }}"
-	exitTemplate := " {{ if gt .Code 0 }}\uf00d{{ else }}\uf00c{{ end }} "
-
-	if configError != nil && configError != ErrNoConfig {
-		exitBackgroundTemplate = "p:red"
-		exitTemplate = configError.Error()
+func defaultConfigErrorText(configError error) string {
+	switch configError {
+	case ErrNoConfig, ErrFileNotFound:
+		return " CONFIG NOT FOUND "
+	case nil:
+		return " CONFIG ERROR "
+	default:
+		return " CONFIG ERROR "
 	}
+}
+
+func Default(configError error) *Config {
+	configErrorText := defaultConfigErrorText(configError)
 
 	layout := &LayoutConfig{
 		Prompt: []PromptLayout{
-			{Segments: []string{"session", "path", "status"}},
+			{Segments: []string{"path"}},
 		},
 		RPrompt: []PromptLayout{
-			{Segments: []string{"shell", "time"}},
+			{Segments: []string{"status"}},
 		},
 		Segments: map[string]*Segment{
-			"session": {
-				Type:            SESSION,
-				Style:           Diamond,
-				LeadingDiamond:  "\ue0b6",
-				TrailingDiamond: "\ue0b0",
-				Foreground:      "p:black",
-				Background:      "p:yellow",
-				Template:        " {{ if .SSHSession }}\ueba9 {{ end }}{{ .UserName }} ",
-			},
 			"path": {
-				Type:            PATH,
-				Style:           Powerline,
-				PowerlineSymbol: "\ue0b0",
-				Foreground:      "p:white",
-				Background:      "p:orange",
+				Type:       PATH,
+				Style:      Plain,
+				Background: "transparent",
 				Options: options.Map{
 					options.Style: "folder",
 				},
-				Template: " \uea83 {{ path .Path .Location }} ",
+				Template: " {{ path .Path .Location }} \ue0b1",
 			},
 			"status": {
 				Type:            STATUS,
 				Style:           Diamond,
-				LeadingDiamond:  "<transparent,background>\ue0b0</>",
+				LeadingDiamond:  "\ue0b6",
 				TrailingDiamond: "\ue0b4",
 				Foreground:      "p:white",
-				Background:      "p:blue",
-				BackgroundTemplates: []string{
-					exitBackgroundTemplate,
-				},
+				Background:      "p:red",
 				Options: options.Map{
 					options.AlwaysEnabled: true,
 				},
-				Template: exitTemplate,
-			},
-			"shell": {
-				Type:       SHELL,
-				Style:      Plain,
-				Foreground: "p:white",
-				Background: "transparent",
-				Template:   "in <p:blue><b>{{ .Name }}</b></> ",
-			},
-			"time": {
-				Type:       TIME,
-				Style:      Plain,
-				Foreground: "p:white",
-				Background: "transparent",
-				Template:   "at <p:blue><b>{{ .LastDate | date \"15:04:05\" }}</b></>",
+				Template: configErrorText,
 			},
 		},
 	}
@@ -117,10 +92,6 @@ func Default(configError error) *Config {
 				},
 				Tips: []string{"az"},
 			},
-		},
-		Upgrade: &upgrade.Config{
-			Source:   upgrade.CDN,
-			Interval: cache.ONEWEEK,
 		},
 	}
 

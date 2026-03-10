@@ -412,11 +412,6 @@ palette:
   bg: "#101010"
   fg: "#f0f0f0"
 
-upgrade:
-  source: "github"
-  auto: false
-  notice: true
-
 maps:
   shell_name:
     zsh: "z"
@@ -436,11 +431,26 @@ session:
 	require.Len(t, cfg.Prompt, 1)
 	require.Contains(t, cfg.Segments, "session")
 	assert.Equal(t, "#101010", string(cfg.Palette["bg"]))
-	require.NotNil(t, cfg.Upgrade)
-	assert.Equal(t, "github", string(cfg.Upgrade.Source))
 	require.NotNil(t, cfg.Maps)
 	assert.Equal(t, "z", cfg.Maps.GetShellName("zsh"))
 	assert.Equal(t, "prompto", cfg.Var["app"])
+}
+
+func TestParseLayoutYAMLRejectsRemovedUpgradeMetadataTable(t *testing.T) {
+	raw := `
+upgrade:
+  source: "github"
+
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	_, err := ParseLayoutYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, `unknown top-level key "upgrade"`)
 }
 
 func TestParseLayoutYAMLSupportsSecondaryAndTransient(t *testing.T) {

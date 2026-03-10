@@ -1,6 +1,6 @@
 ---
 title: Extras and Shell Features
-description: Configure transient prompts, tooltips, vim mode, upgrade behavior, and shell extras.
+description: Configure transient prompts, tooltips, vim mode, daemon behavior, and shell extras.
 ---
 
 ## Scope
@@ -152,30 +152,6 @@ Fields:
 This is the supported form.
 Do not use an old top-level `vim:` table for these settings.
 
-## Upgrade Settings
-
-`upgrade` controls update notices and automatic upgrade checks.
-
-```yaml
-upgrade:
-  notice: true
-  auto: false
-  interval: 168h
-  source: github
-```
-
-Fields:
-
-- `notice`: show an upgrade notice
-- `auto`: perform automatic upgrades
-- `interval`: Go duration string such as `24h`, `168h`, or `30m`
-- `source`: `cdn` or `github`
-
-Notes:
-
-- automatic upgrade will not jump major versions without explicit intent
-- upgrade features are suppressed when async shell loading is enabled
-
 ## Daemon Timing
 
 These settings affect daemon-mode prompt rendering.
@@ -261,7 +237,6 @@ iterm_features:
 ### `cursor_padding`
 
 Add one space between the rendered left prompt and the cursor.
-
 
 ### `pwd`
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/maps"
+	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/runtime/mock"
 
 	"github.com/stretchr/testify/assert"
@@ -171,6 +172,52 @@ func TestRenderTemplate(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, tc.Expected, text, tc.Case)
 	}
+}
+
+func TestInitRefreshesGlobalTemplateCacheForPrimaryRenders(t *testing.T) {
+	envOne := new(mock.Environment)
+	envOne.On("Shell").Return("zsh")
+	envOne.On("StatusCodes").Return(1, "")
+	envOne.On("Root").Return(false)
+	envOne.On("Pwd").Return("/tmp/one")
+	envOne.On("GOOS").Return(runtime.DARWIN)
+	envOne.On("Getenv", "SHLVL").Return("")
+	envOne.On("IsWsl").Return(false)
+	envOne.On("User").Return("polo")
+	envOne.On("Host").Return("gally", nil)
+	envOne.On("Flags").Return(&runtime.Flags{
+		Shell:     "zsh",
+		IsPrimary: true,
+	})
+
+	Cache = nil
+	Init(envOne, nil, nil)
+
+	text, err := Render(`{{ if gt .Code 0 }}{{ reason .Code }}{{ else }}ok{{ end }}`, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "ERROR", text)
+
+	envTwo := new(mock.Environment)
+	envTwo.On("Shell").Return("zsh")
+	envTwo.On("StatusCodes").Return(0, "")
+	envTwo.On("Root").Return(false)
+	envTwo.On("Pwd").Return("/tmp/two")
+	envTwo.On("GOOS").Return(runtime.DARWIN)
+	envTwo.On("Getenv", "SHLVL").Return("")
+	envTwo.On("IsWsl").Return(false)
+	envTwo.On("User").Return("polo")
+	envTwo.On("Host").Return("gally", nil)
+	envTwo.On("Flags").Return(&runtime.Flags{
+		Shell:     "zsh",
+		IsPrimary: true,
+	})
+
+	Init(envTwo, nil, nil)
+
+	text, err = Render(`{{ if gt .Code 0 }}{{ reason .Code }}{{ else }}ok{{ end }}`, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "ok", text)
+	assert.Equal(t, "/tmp/two", Cache.AbsolutePWD)
 }
 
 func TestRenderTemplateEnvVar(t *testing.T) {

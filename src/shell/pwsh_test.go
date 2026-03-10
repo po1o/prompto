@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var allFeatures = Tooltips | LineError | Transient | Jobs | Azure | PoshGit | FTCSMarks | Upgrade | Notice | PromptMark | RPrompt | CursorPositioning | Daemon
+var allFeatures = Tooltips | LineError | Transient | Jobs | Azure | PoshGit | FTCSMarks | PromptMark | RPrompt | CursorPositioning | Daemon
 
 func TestPwshFeatures(t *testing.T) {
 	got := allFeatures.Lines(PWSH).String("")
@@ -20,8 +20,6 @@ Enable-PromptoLineError
 Enable-PromptoTooltips
 Enable-PromptoTransientPrompt
 $global:_promptoFTCSMarks = $true
-& $global:_promptoExecutable upgrade --auto
-& $global:_promptoExecutable notice
 Enable-PromptoDaemon`
 
 	assert.Equal(t, want, got)
@@ -38,6 +36,11 @@ $script:CursorBlink = $true
 $script:CursorShape = $true; Set-VimModeCursorFromState`
 
 	assert.Equal(t, want, got)
+}
+
+func TestPwshInitDecodesEscapedRenderOutput(t *testing.T) {
+	assert.Contains(t, pwshInit, "function Expand-PromptoRenderText")
+	assert.Contains(t, pwshInit, "$text = Expand-PromptoRenderText")
 }
 
 func TestQuotePwshOrElvishStr(t *testing.T) {

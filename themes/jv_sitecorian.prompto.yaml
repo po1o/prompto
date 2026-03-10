@@ -1,4 +1,3 @@
-$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 console_title_template: '{{if .Root}}Admin: {{end}} {{.Folder}}'
 executiontime:
     background: '#2B2B2B'

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/po1o/prompto/src/cache"
-	"github.com/po1o/prompto/src/cli/upgrade"
 	"github.com/po1o/prompto/src/color"
 	"github.com/po1o/prompto/src/runtime/mock"
 	"github.com/po1o/prompto/src/shell"
@@ -112,78 +111,6 @@ func TestGetPalette(t *testing.T) {
 		assert.Equal(t, tc.ExpectedPalette, got, tc.Case)
 	}
 }
-func TestUpgradeFeatures(t *testing.T) {
-	cases := []struct {
-		Case                  string
-		ExpectedFeats         shell.Features
-		UpgradeCacheKeyExists bool
-		AutoUpgrade           bool
-		Force                 bool
-		DisplayNotice         bool
-		AutoUpgradeKey        bool
-		NoticeKey             bool
-	}{
-		{
-			Case:                  "cache exists, no force",
-			UpgradeCacheKeyExists: true,
-			ExpectedFeats:         0,
-		},
-		{
-			Case:          "auto upgrade enabled",
-			AutoUpgrade:   true,
-			ExpectedFeats: shell.Upgrade,
-		},
-		{
-			Case:           "auto upgrade via cache",
-			AutoUpgradeKey: true,
-			ExpectedFeats:  shell.Upgrade,
-		},
-		{
-			Case:          "notice enabled, no auto upgrade",
-			DisplayNotice: true,
-			ExpectedFeats: shell.Notice,
-		},
-		{
-			Case:          "notice via cache, no auto upgrade",
-			NoticeKey:     true,
-			ExpectedFeats: shell.Notice,
-		},
-		{
-			Case:                  "force upgrade ignores cache",
-			UpgradeCacheKeyExists: true,
-			Force:                 true,
-			AutoUpgrade:           true,
-			ExpectedFeats:         shell.Upgrade,
-		},
-	}
-
-	for _, tc := range cases {
-		if tc.UpgradeCacheKeyExists {
-			cache.Set(cache.Device, upgrade.CACHEKEY, "", cache.INFINITE)
-		}
-
-		if tc.AutoUpgradeKey {
-			cache.Set(cache.Device, AUTOUPGRADE, true, cache.INFINITE)
-		}
-
-		if tc.NoticeKey {
-			cache.Set(cache.Device, UPGRADENOTICE, true, cache.INFINITE)
-		}
-
-		cfg := &Config{
-			Upgrade: &upgrade.Config{
-				Auto:          tc.AutoUpgrade,
-				Force:         tc.Force,
-				DisplayNotice: tc.DisplayNotice,
-			},
-		}
-
-		got := cfg.upgradeFeatures()
-		assert.Equal(t, tc.ExpectedFeats, got, tc.Case)
-
-		cache.DeleteAll(cache.Device)
-	}
-}
 
 func TestFeaturesDaemon(t *testing.T) {
 	cases := []struct {
@@ -196,7 +123,7 @@ func TestFeaturesDaemon(t *testing.T) {
 			name:     "daemon enabled for zsh",
 			shell:    shell.ZSH,
 			daemon:   true,
-			expected: shell.Daemon,
+			expected: shell.Daemon | shell.Transient,
 		},
 		{
 			name:   "daemon disabled by flag",
@@ -214,12 +141,24 @@ func TestFeaturesDaemon(t *testing.T) {
 		env := &mock.Environment{}
 		env.On("Shell").Return(tc.shell)
 
-		cfg := &Config{
-			Upgrade: &upgrade.Config{},
-		}
+		cfg := &Config{}
 
 		got := cfg.Features(env, tc.daemon)
 		assert.Equal(t, tc.expected, got, tc.name)
+	}
+}
+
+func TestFeaturesDaemonAlwaysEnablesTransientForSupportedShells(t *testing.T) {
+	supportedShells := []string{shell.BASH, shell.ZSH, shell.FISH, shell.PWSH}
+
+	for _, sh := range supportedShells {
+		env := &mock.Environment{}
+		env.On("Shell").Return(sh)
+
+		cfg := &Config{}
+		got := cfg.Features(env, true)
+
+		assert.True(t, got&shell.Transient != 0, sh)
 	}
 }
 
@@ -265,7 +204,6 @@ func TestFeaturesVim(t *testing.T) {
 		env.On("Shell").Return(shell.ZSH)
 
 		cfg := &Config{
-			Upgrade: &upgrade.Config{},
 			VimMode: tc.vim,
 		}
 
@@ -279,7 +217,6 @@ func TestFeaturesVimModeAlias(t *testing.T) {
 	env.On("Shell").Return(shell.ZSH)
 
 	cfg := &Config{
-		Upgrade: &upgrade.Config{},
 		VimMode: &VimConfig{
 			Enabled:     true,
 			CursorShape: true,
@@ -295,7 +232,6 @@ func TestFeaturesVimModeUsesOnlyVimModeKey(t *testing.T) {
 	env.On("Shell").Return(shell.ZSH)
 
 	cfg := &Config{
-		Upgrade: &upgrade.Config{},
 		VimMode: &VimConfig{
 			Enabled: true,
 		},

@@ -62,7 +62,7 @@ $env:VIRTUAL_ENV_DISABLE_PROMPT = 1
 For `bash`, richer prompt behavior such as right prompt and transient prompt depends on `ble.sh`.
 Without it, keep expectations to a conventional left prompt.
 
-## PowerShell Prompt Rendering Looks Wrong After an Upgrade
+## PowerShell Prompt Rendering Looks Wrong After Replacing the Binary
 
 Check these first:
 
@@ -72,15 +72,15 @@ Check these first:
 
 If needed, switch init to the `--eval` form documented in [Shell initialization](./shell-init.md).
 
-## I Want to Inspect the Current Config as Parsed by prompto
+## I Want to Render a Preview of the Current Config
 
-Export it:
+Render it to an image:
 
 ```bash
-prompto config export --format yaml
+prompto config image --output ./prompto-preview.png
 ```
 
-This is useful when you suspect a config merge, migration, or formatting issue.
+This is useful when you want to compare theme changes visually without reconfiguring your shell.
 
 ## I Want to Toggle a Segment Without Editing the Config
 
@@ -88,12 +88,6 @@ Use the toggle command:
 
 ```bash
 prompto toggle git
-```
-
-Check the current toggled state:
-
-```bash
-prompto get toggles
 ```
 
 You can also mark a segment with `toggled: true` so it starts disabled by default.

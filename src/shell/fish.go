@@ -19,10 +19,6 @@ func (f Features) Fish() Code {
 		return "set --global _prompto_prompt_mark 1"
 	case Tooltips:
 		return "enable_prompto_tooltips"
-	case Upgrade:
-		return unixUpgrade
-	case Notice:
-		return unixNotice
 	case Daemon:
 		return enablePromptoDaemon
 	case VimMode:

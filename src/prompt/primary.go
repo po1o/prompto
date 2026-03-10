@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/shell"
 	"github.com/po1o/prompto/src/terminal"
 )
 
 func (e *Engine) Primary() string {
 	e.resetSharedProviders()
+	e.rprompt = ""
+	e.rpromptLength = 0
 
 	needsPrimaryRightPrompt := false
 
@@ -59,9 +60,7 @@ func (e *Engine) writeLayoutPrimaryPrompt() {
 	cycle = &e.Config.Cycle
 	var cancelNewline, didRender bool
 
-	lineCount := max(len(e.LayoutConfig.RPrompt), len(e.LayoutConfig.Prompt))
-
-	for i := range lineCount {
+	for i, block := range e.layoutPrimaryBlocks() {
 		if i == 0 {
 			row, _ := e.Env.CursorPosition()
 			cancelNewline = e.Env.Flags().Cleared || e.Env.Flags().PromptCount == 1 || row == 1
@@ -71,22 +70,8 @@ func (e *Engine) writeLayoutPrimaryPrompt() {
 			cancelNewline = !didRender
 		}
 
-		if i < len(e.LayoutConfig.Prompt) {
-			left := e.layoutBlock(&e.LayoutConfig.Prompt[i], config.Prompt, config.Left, i != 0)
-			if e.renderBlock(left, cancelNewline) {
-				didRender = true
-			}
-		}
-
-		if i < len(e.LayoutConfig.RPrompt) {
-			right := e.layoutBlock(&e.LayoutConfig.RPrompt[i], config.RPrompt, config.Right, false)
-			if i < len(e.LayoutConfig.Prompt) {
-				right.Filler = e.LayoutConfig.Prompt[i].Filler
-			}
-
-			if e.renderBlock(right, true) {
-				didRender = true
-			}
+		if e.renderBlock(block, cancelNewline) {
+			didRender = true
 		}
 	}
 

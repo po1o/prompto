@@ -33,7 +33,7 @@ type Block struct {
 	LeadingDiamond  string         `yaml:"leading_diamond,omitempty"`
 	TrailingDiamond string         `yaml:"trailing_diamond,omitempty"`
 	Segments        []*Segment     `yaml:"segments,omitempty"`
+	Index           int            `yaml:"index,omitempty"`
 	Newline         bool           `yaml:"newline,omitempty"`
 	Force           bool           `yaml:"force,omitempty"`
-	Index           int            `yaml:"index,omitempty"`
 }

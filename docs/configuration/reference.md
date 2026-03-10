@@ -31,7 +31,6 @@ description: Exhaustive field reference for prompto YAML configs and supported s
 | `palettes` | object | named palettes selected by template |
 | `var` | map | user-defined values for templates |
 | `maps` | object | user, host, and shell text remapping |
-| `upgrade` | object | upgrade notice and auto-upgrade settings |
 | `cycle` | `[]Set` | repeating foreground/background pairs |
 | `iterm_features` | `[]string` | iTerm-specific shell integration features |
 | `vim-mode` | object | vim mode and cursor settings |
@@ -176,15 +175,6 @@ palettes:
 | `host_name` | rewrite host names before templates see them |
 | `shell_name` | rewrite shell names before templates see them |
 
-## Upgrade Object
-
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `notice` | bool | show upgrade notice |
-| `auto` | bool | auto-upgrade when allowed |
-| `interval` | duration string | minimum interval between checks |
-| `source` | string | `cdn` or `github` |
-
 ## Supported Segment Types
 
 ### SCM
@@ -194,7 +184,7 @@ palettes:
 ### Shell and system
 
 `connection`, `executiontime`, `exit`, `os`, `path`, `project`, `root`, `session`, `shell`, `status`, `sysinfo`,
-`text`, `time`, `upgrade`, `vim`, `winget`, `winreg`
+`text`, `time`, `vim`, `winget`, `winreg`
 
 ### Cloud and infrastructure
 

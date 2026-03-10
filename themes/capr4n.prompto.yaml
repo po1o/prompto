@@ -1,4 +1,3 @@
-$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 console_title_template: "{{if .Root}} ⚡ {{end}}{{.UserName}} ➔ \U0001F4C1{{.Folder}}"
 executiontime:
     background: '#83769c'

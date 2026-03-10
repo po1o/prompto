@@ -31,20 +31,22 @@ func init() {
 
 func createInitCmd() *cobra.Command {
 	initCmd := &cobra.Command{
-		Use:   "init [bash|zsh|fish|powershell|pwsh]",
+		Use:   "init [shell]",
 		Short: "Initialize your shell and config",
 		Long: `Initialize your shell and config.
+
+When no shell is provided, prompto tries to detect the current shell automatically.
 
 See the documentation to initialize your shell: https://prompto.dev/docs/installation/prompt.`,
 		ValidArgs: supportedShells,
 		Args:      NoArgsOrOneValidArg,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
-				_ = cmd.Help()
+			if len(args) == 1 {
+				runInit(args[0])
 				return
 			}
 
-			runInit(args[0], getFullCommand(cmd, args))
+			runInit("")
 		},
 	}
 
@@ -58,7 +60,7 @@ See the documentation to initialize your shell: https://prompto.dev/docs/install
 	return initCmd
 }
 
-func runInit(sh, command string) {
+func runInit(sh string) {
 	if os.Getenv("CURSOR_AGENT") == "1" {
 		log.Errorf("prompto init is disabled when running inside Cursor agent mode")
 		return
@@ -68,7 +70,7 @@ func runInit(sh, command string) {
 		log.Enable(plain)
 	}
 
-	normalizedShell, err := normalizeSupportedShell(sh)
+	normalizedShell, err := resolveInitShell(sh)
 	if err != nil {
 		log.Error(err)
 		exitcode = 1
@@ -101,7 +103,6 @@ func runInit(sh, command string) {
 	template.Init(env, cfg.Var, cfg.Maps)
 
 	defer func() {
-		cfg.Store()
 		template.SaveCache()
 		if err := cache.Clear(false, shell.InitScriptName(env.Flags())); err != nil {
 			log.Error(err)
@@ -121,14 +122,6 @@ func runInit(sh, command string) {
 	default:
 		output = shell.Init(env, feats)
 	}
-
-	shellDSC := shell.DSC()
-	shellDSC.Load()
-	shellDSC.Add(&shell.Shell{
-		Command: command,
-		Name:    sh,
-	})
-	shellDSC.Save()
 
 	if silent {
 		return

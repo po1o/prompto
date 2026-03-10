@@ -56,8 +56,8 @@ time:
 - [Segments](./configuration/segments.md): segment tables, naming, caching, timeouts, and pending rendering.
 - [Templates](./configuration/templates.md): global fields, helper functions, and cross-segment references.
 - [Colors](./configuration/colors.md): color formats, palettes, color templates, and cycling.
-- [Extras and shell features](./configuration/extras.md): transient prompts, tooltips, vim mode, title, upgrade,
-  daemon settings, and shell-specific behavior.
+- [Extras and shell features](./configuration/extras.md): transient prompts, tooltips, vim mode, title, daemon
+  settings, and shell-specific behavior.
 - [Reference](./configuration/reference.md): exhaustive field reference and supported segment type list.
 - [Segment reference](./segments/README.md): per-segment pages with type-specific options, properties, and examples.
 
@@ -106,4 +106,4 @@ Windows: %UserConfigDir%/prompto/config.yaml
 - Keep your main config local and under version control.
 - Use one named segment per semantic job, then reuse that name in different prompt lines.
 - Start with explicit segment names such as `git`, `git.transient`, and `time.rprompt`.
-- Use `prompto config export --format yaml` when you want a normalized snapshot.
+- Use `prompto config image --output ./prompto-preview.png` when you want a quick visual preview.

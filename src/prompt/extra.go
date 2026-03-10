@@ -38,6 +38,10 @@ func (e *Engine) ExtraPromptNoReset(promptType ExtraPromptType) string {
 		}
 	case Transient:
 		if e.hasLayoutTransient() {
+			if e.shouldInlineTransientRPrompt() {
+				return e.renderPairedLayoutExtra(e.LayoutConfig.TransientPrompt, e.LayoutConfig.TransientRPrompt, true)
+			}
+
 			return e.renderLayoutExtra(e.LayoutConfig.TransientPrompt, true)
 		}
 	case Valid:
@@ -62,8 +66,16 @@ func (e *Engine) TransientRPromptNoReset() string {
 		return ""
 	}
 
-	line := e.layoutBlock(&e.LayoutConfig.TransientRPrompt[0], config.RPrompt, config.Right, false)
-	text, length := e.writeBlockSegments(line)
+	if e.shouldInlineTransientRPrompt() {
+		text, length := e.renderLayoutRightPrompt(e.LayoutConfig.TransientRPrompt[len(e.LayoutConfig.TransientRPrompt)-1:])
+		if length == 0 {
+			return ""
+		}
+
+		return text
+	}
+
+	text, length := e.renderLayoutRightPrompt(e.LayoutConfig.TransientRPrompt)
 	if length == 0 {
 		return ""
 	}
@@ -113,6 +125,26 @@ func (e *Engine) renderLayoutExtra(layouts []config.PromptLayout, cursorPadding 
 	didRender := false
 	for i := range layouts {
 		block := e.layoutBlock(&layouts[i], config.Prompt, config.Left, i != 0)
+		cancelNewline := !didRender
+		if i == 0 {
+			cancelNewline = false
+		}
+
+		if e.renderBlock(block, cancelNewline) {
+			didRender = true
+		}
+	}
+
+	if cursorPadding && e.Config != nil && e.Config.CursorPadding {
+		e.write(" ")
+	}
+
+	return e.string()
+}
+
+func (e *Engine) renderPairedLayoutExtra(leftLayouts, rightLayouts []config.PromptLayout, cursorPadding bool) string {
+	didRender := false
+	for i, block := range e.composeLayoutBlocks(leftLayouts, rightLayouts, true) {
 		cancelNewline := !didRender
 		if i == 0 {
 			cancelNewline = false

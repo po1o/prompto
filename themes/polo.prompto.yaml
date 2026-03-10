@@ -1,0 +1,103 @@
+vim-mode:
+  enabled: true
+  cursor_shape: true
+
+prompt:
+  - segments:
+      - session
+      - path
+
+rprompt:
+  - segments:
+      - git
+      - vim
+
+transient:
+  - leading_style: rounded
+    trailing_style: rounded
+    segments:
+      - path.transient
+
+rtransient:
+  - leading_style: rounded
+    trailing_style: rounded
+    segments:
+      - git.transient
+      - time.transient
+
+session:
+  style: powerline
+  foreground: "#ffff00"
+  background: "#000000"
+  template: "{{ if .SSHSession }} {{ .UserName }}@{{ .HostName }} {{ end }}"
+
+path:
+  style: powerline
+  foreground: "#ffffff"
+  foreground_templates:
+    - "{{ if not .Writable }}#ff5f57{{ end }}"
+  background: blue
+  template: " {{ .Path }} "
+  options:
+    style: powerlevel
+    max_width: 40
+
+path.transient:
+  style: powerline
+  foreground: "#5a5a5a"
+  foreground_templates:
+    - "{{ if not .Writable }}#ff5f57{{ end }}"
+  background: "#80d8ff"
+  template: "{{ .Path }} "
+  options:
+    style: powerlevel
+    max_width: 40
+
+git:
+  style: powerline
+  foreground: "#3a3a3a"
+  render_pending_background: darkGray
+  background_templates:
+    - "{{ if or (.Working.Changed) (.Staging.Changed) }}yellow{{ else }}green{{ end }}"
+  template: '{{ " " }} <#ffffff><b>{{ .HEAD }}</b></>{{ if .Upstream }}({{ .Upstream }}){{ end }}{{ if or (gt .Behind 0) (gt .Ahead 0) }} ⇣{{ .Behind }}⇡{{ .Ahead }}{{ end }}{{ if gt .StashCount 0 }} *{{ .StashCount }}{{ end }}{{ if .Merge }} <#ff0000>merge</>{{ end }}{{ if .Rebase }} <#ff0000>rebase</>{{ end }}{{ if .CherryPick }} <#ff0000>cherry-pick</>{{ end }}{{ if .Revert }} <#ff0000>revert</>{{ end }}{{ if gt .Working.Unmerged 0 }} <#ff0000>~{{ .Working.Unmerged }}</>{{ end }}{{ if .Staging.Changed }} +{{ add .Staging.Added .Staging.Modified .Staging.Deleted }}{{ end }}{{ if gt (add .Working.Modified .Working.Deleted) 0 }} !{{ add .Working.Modified .Working.Deleted }}{{ end }}{{ if gt .Working.Untracked 0 }} ?{{ .Working.Untracked }}{{ end }} {{ .UpstreamIcon}} '
+  options:
+    fetch_status: true
+    fetch_push_status: false
+    fetch_upstream_icon: true
+    branch_icon: ""
+    branch_template: "{{ if gt (len .Branch) 32 }}{{ trunc 12 .Branch }}…{{ substr (sub (len .Branch) 12) (len .Branch) .Branch }}{{ else }}{{ .Branch }}{{ end }}"
+    github_icon: "\uf113"
+    gitlab_icon: "\uf296"
+    bitbucket_icon: "\ue703"
+    git_icon: "\uf1d3"
+
+git.transient:
+  style: powerline
+  foreground: "#3a3a3a"
+  background_templates:
+    - "{{ if or (.Working.Changed) (.Staging.Changed) }}#ffe57f{{ else }}#b9f6ca{{ end }}"
+  template: '{{ " " }} <#808080><b>{{ .HEAD }}</b></>{{ if or (gt .Behind 0) (gt .Ahead 0) }} ⇣{{ .Behind }}⇡{{ .Ahead }}{{ end }}{{ if gt .StashCount 0 }} *{{ .StashCount }}{{ end }}{{ if .Merge }} <#ff0000>merge</>{{ end }}{{ if .Rebase }} <#ff0000>rebase</>{{ end }}{{ if .CherryPick }} <#ff0000>cherry-pick</>{{ end }}{{ if .Revert }} <#ff0000>revert</>{{ end }}{{ if gt .Working.Unmerged 0 }} <#ff0000>~{{ .Working.Unmerged }}</>{{ end }}{{ if .Staging.Changed }} +{{ add .Staging.Added .Staging.Modified .Staging.Deleted }}{{ end }}{{ if gt (add .Working.Modified .Working.Deleted) 0 }} !{{ add .Working.Modified .Working.Deleted }}{{ end }}{{ if gt .Working.Untracked 0 }} ?{{ .Working.Untracked }}{{ end }} {{ .UpstreamIcon}} '
+  options:
+    fetch_status: true
+    fetch_push_status: false
+    fetch_upstream_icon: true
+    branch_icon: ""
+    branch_template: "{{ if gt (len .Branch) 32 }}{{ trunc 12 .Branch }}…{{ substr (sub (len .Branch) 12) (len .Branch) .Branch }}{{ else }}{{ .Branch }}{{ end }}"
+    github_icon: "\uf113"
+    gitlab_icon: "\uf296"
+    bitbucket_icon: "\ue703"
+    git_icon: "\uf1d3"
+
+time.transient:
+  style: powerline
+  foreground: "#ffffff"
+  background: "#7a7a7a"
+  template: " {{ .CurrentDate }} "
+  options:
+    time_format: "15:04"
+
+vim:
+  style: powerline
+  foreground: "#ffffff"
+  background: "#ff5f57"
+  template: "{{ if .Normal }} NORMAL {{ end }}"

@@ -25,10 +25,6 @@ func (f Features) Pwsh() Code {
 		return "$global:_promptoPoshGit = $true"
 	case FTCSMarks:
 		return "$global:_promptoFTCSMarks = $true"
-	case Upgrade:
-		return "& $global:_promptoExecutable upgrade --auto"
-	case Notice:
-		return "& $global:_promptoExecutable notice"
 	case Daemon:
 		return "Enable-PromptoDaemon"
 	case VimMode:

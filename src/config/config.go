@@ -1,14 +1,12 @@
 package config
 
 import (
-	"encoding/gob"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/po1o/prompto/src/cache"
-	"github.com/po1o/prompto/src/cli/upgrade"
 	"github.com/po1o/prompto/src/color"
 	"github.com/po1o/prompto/src/log"
 	"github.com/po1o/prompto/src/maps"
@@ -19,17 +17,9 @@ import (
 	"github.com/po1o/prompto/src/terminal"
 )
 
-func init() {
-	gob.Register(&Config{})
-}
-
 const (
 	YAML string = "yaml"
 	YML  string = "yml"
-
-	AUTOUPGRADE   = "upgrade"
-	UPGRADENOTICE = "notice"
-	RELOAD        = "reload"
 )
 
 type Action string
@@ -59,7 +49,6 @@ type Config struct {
 	ValidLine               *Segment               `yaml:"valid_line,omitempty"`
 	ErrorLine               *Segment               `yaml:"error_line,omitempty"`
 	Maps                    *maps.Config           `yaml:"maps,omitempty"`
-	Upgrade                 *upgrade.Config        `yaml:"upgrade,omitempty"`
 	VimMode                 *VimConfig             `yaml:"vim-mode,omitempty"`
 	Layout                  *LayoutConfig          `yaml:"-"`
 	Source                  string                 `yaml:"-"`
@@ -82,9 +71,7 @@ type Config struct {
 	HasTransient            bool `yaml:"-"`
 	ShellIntegration        bool `yaml:"shell_integration,omitempty"`
 	CursorPadding           bool `yaml:"cursor_padding,omitempty"`
-	UpgradeNotice           bool `yaml:"-"`
 	PatchPwshBleed          bool `yaml:"patch_pwsh_bleed,omitempty"`
-	AutoUpgrade             bool `yaml:"-"`
 	EnableCursorPositioning bool `yaml:"enable_cursor_positioning,omitempty"`
 	HasSecondary            bool `yaml:"-"`
 }
@@ -133,9 +120,10 @@ func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features
 	if daemon && slices.Contains(asyncShells, env.Shell()) {
 		log.Debug("daemon enabled")
 		feats |= shell.Daemon
+		feats |= shell.Transient
 	}
 
-	if cfg.HasTransient {
+	if cfg.HasTransient && !daemon {
 		log.Debug("transient prompt enabled")
 		feats |= shell.Transient
 	}
@@ -148,11 +136,6 @@ func (cfg *Config) Features(env runtime.Environment, daemon bool) shell.Features
 	if cfg.ShellIntegration {
 		log.Debug("shell integration enabled")
 		feats |= shell.FTCSMarks
-	}
-
-	// do not enable upgrade features when async is enabled
-	if feats&shell.Async == 0 {
-		feats |= cfg.upgradeFeatures()
 	}
 
 	if cfg.ErrorLine != nil || cfg.ValidLine != nil {
@@ -224,34 +207,6 @@ func (cfg *Config) hasNewlineSegmentInFirstPromptLine() bool {
 	}
 
 	return false
-}
-
-func (cfg *Config) upgradeFeatures() shell.Features {
-	var feats shell.Features
-
-	autoUpgrade := cfg.Upgrade.Auto
-	if val, OK := cache.Get[bool](cache.Device, AUTOUPGRADE); OK {
-		log.Debug("auto upgrade key found, overriding config")
-		autoUpgrade = val
-	}
-
-	upgradeNotice := cfg.Upgrade.DisplayNotice
-	if val, OK := cache.Get[bool](cache.Device, UPGRADENOTICE); OK {
-		log.Debug("upgrade notice key found, overriding config")
-		upgradeNotice = val
-	}
-
-	if upgradeNotice && !autoUpgrade {
-		log.Debug("notice enabled, no auto upgrade")
-		feats |= shell.Notice
-	}
-
-	if autoUpgrade {
-		log.Debug("auto upgrade enabled")
-		feats |= shell.Upgrade
-	}
-
-	return feats
 }
 
 func (cfg *Config) vimFeatures(vimCfg *VimConfig) shell.Features {

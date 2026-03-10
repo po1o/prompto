@@ -1,4 +1,3 @@
-$schema: https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json
 git:
     background: '#546E7A'
     foreground: '#D4E157'
@@ -37,9 +36,9 @@ rprompt:
 session:
     background: '#546E7A'
     foreground: '#D4E157'
-    leading_separator: 
+    trailing_separator: 
     style: diamond
-    template: ' {{ .UserName }}@{{ .HostName }} <#26C6DA></> '
+    template: ' {{ .UserName }}@{{ .HostName }} <#26C6DA></>'
 status:
     foreground: '#D4E157'
     foreground_templates:
