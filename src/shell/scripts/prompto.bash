@@ -33,7 +33,7 @@ function _prompto_render_type() {
     while IFS= read -r line; do
         case "$line" in
             "$prompt_type":*)
-                printf '%s\n' "${line#*:}"
+                _prompto_decode_render_text "${line#*:}"
                 return 0
                 ;;
             status:*)
@@ -41,6 +41,10 @@ function _prompto_render_type() {
                 ;;
         esac
     done < <("$_prompto_executable" render "$@")
+}
+
+function _prompto_decode_render_text() {
+    printf '%b' "$1"
 }
 
 function _prompto_set_cursor_position() {
@@ -65,7 +69,15 @@ function _prompto_set_cursor_position() {
 }
 
 function _prompto_start_timer() {
-    "$_prompto_executable" get millis
+    if [[ -n ${EPOCHREALTIME-} ]]; then
+        local prompto_epoch_seconds=${EPOCHREALTIME%%.*}
+        local prompto_epoch_fraction=${EPOCHREALTIME#*.}
+        prompto_epoch_fraction="${prompto_epoch_fraction}000"
+        printf '%s%s\n' "$prompto_epoch_seconds" "${prompto_epoch_fraction:0:3}"
+        return
+    fi
+
+    printf '%(%s)T000\n' -1
 }
 
 function _prompto_ftcs_command_start() {
@@ -138,7 +150,7 @@ function _prompto_hook() {
 
     _prompto_execution_time=-1
     if [[ $_prompto_start_time ]]; then
-        local prompto_now=$("$_prompto_executable" get millis)
+        local prompto_now=$(_prompto_start_timer)
         _prompto_execution_time=$((prompto_now - _prompto_start_time))
         _prompto_no_status=false
     fi
@@ -253,7 +265,8 @@ function _prompto_ble_keymap_change() {
 function _prompto_daemon_parse_line() {
     local line="$1"
     local type="${line%%:*}"
-    local text="${line#*:}"
+    local text
+    text=$(_prompto_decode_render_text "${line#*:}")
 
     case "$type" in
         primary)
@@ -340,7 +353,7 @@ function _prompto_daemon_hook() {
 
     _prompto_execution_time=-1
     if [[ $_prompto_start_time ]]; then
-        local prompto_now=$("$_prompto_executable" get millis)
+        local prompto_now=$(_prompto_start_timer)
         _prompto_execution_time=$((prompto_now - _prompto_start_time))
         _prompto_no_status=false
     fi
@@ -362,14 +375,6 @@ function enable_prompto_daemon() {
     if [[ -z "$BLE_VERSION" ]]; then
         return
     fi
-
-    local config_args=()
-    if [[ -n "$_prompto_config" ]]; then
-        config_args=(--config="$_prompto_config")
-    fi
-
-    # Start daemon
-    "$_prompto_executable" daemon start "${config_args[@]}" --silent >/dev/null 2>&1 &
 
     _prompto_daemon_mode=1
 

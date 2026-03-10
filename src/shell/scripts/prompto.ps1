@@ -243,7 +243,17 @@ New-Module -Name "prompto-core" -ScriptBlock {
         if (-not $selected) {
             return ""
         }
-        Expand-PromptoShellClock @($selected.Substring($selected.IndexOf(':') + 1))
+        $text = Expand-PromptoRenderText $selected.Substring($selected.IndexOf(':') + 1)
+        Expand-PromptoShellClock @($text)
+    }
+
+    function Expand-PromptoRenderText {
+        param([string]$Text)
+        if ($null -eq $Text) {
+            return $Text
+        }
+
+        [Regex]::Unescape($Text)
     }
 
     function Expand-PromptoShellClock {
@@ -667,14 +677,6 @@ New-Module -Name "prompto-core" -ScriptBlock {
         if ($script:ConstrainedLanguageMode) {
             return
         }
-
-        $daemonArgs = @("daemon", "start")
-        if ($global:_promptoConfig) {
-            $daemonArgs += @("--config", "`"$global:_promptoConfig`"")
-        }
-
-        # Start daemon if not running
-        Start-Process -FilePath $global:_promptoExecutable -ArgumentList $daemonArgs -WindowStyle Hidden -ErrorAction SilentlyContinue
 
         $script:DaemonMode = $true
 

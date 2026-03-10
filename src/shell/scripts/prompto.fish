@@ -46,13 +46,18 @@ function _prompto_get_prompt
         $vim_mode_arg \
         $argv[2..] | while read -l line
         if string match -q "$prompt_type:*" -- $line
-            string replace -r '^[^:]*:' '' -- $line
+            set --local text (string replace -r '^[^:]*:' '' -- $line)
+            _prompto_decode_render_text "$text"
             break
         end
         if string match -q 'status:*' -- $line
             break
         end
     end
+end
+
+function _prompto_decode_render_text
+    printf '%b' -- "$argv[1]"
 end
 
 function _prompto_expand_shell_clock
@@ -442,18 +447,18 @@ function _prompto_daemon_repaint --on-signal USR1
         while read -l line
             set --local parts (string split -m1 ':' -- $line)
             set --local type $parts[1]
-            set --local text $parts[2]
+            set --local text (_prompto_decode_render_text "$parts[2]")
             switch $type
                 case primary
-                    set --global _prompto_current_prompt (_prompto_expand_shell_clock "$text")
+                    set --global _prompto_current_prompt (_prompto_expand_shell_clock "$text" | string collect)
                 case right
-                    set --global _prompto_current_rprompt (_prompto_expand_shell_clock "$text")
+                    set --global _prompto_current_rprompt (_prompto_expand_shell_clock "$text" | string collect)
                 case transient
                     if test $_prompto_transient_prompt = 1
-                        set --global _prompto_current_transient (_prompto_expand_shell_clock "$text")
+                        set --global _prompto_current_transient (_prompto_expand_shell_clock "$text" | string collect)
                     end
                 case secondary
-                    set --global _prompto_current_secondary (_prompto_expand_shell_clock "$text")
+                    set --global _prompto_current_secondary (_prompto_expand_shell_clock "$text" | string collect)
             end
         end < $_prompto_daemon_prompt_file
     end
@@ -463,14 +468,6 @@ function _prompto_daemon_repaint --on-signal USR1
 end
 
 function enable_prompto_daemon
-    set --local config_arg
-    if test -n "$_prompto_config"
-        set config_arg "--config=$_prompto_config"
-    end
-
-    # Start daemon if not running
-    $_prompto_executable daemon start $config_arg --silent &>/dev/null &
-    disown
     set --global _prompto_daemon_mode 1
     set --global _prompto_daemon_prompt_file /tmp/prompto_fish_prompt_$fish_pid
 

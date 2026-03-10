@@ -11,31 +11,26 @@ func TestDaemonScriptsIncludePIDAndVimModeSupport(t *testing.T) {
 	testCases := []struct {
 		name            string
 		script          string
-		expectedStart   string
 		expectedPIDFlag string
 	}{
 		{
 			name:            "bash",
 			script:          bashInit,
-			expectedStart:   "daemon start",
 			expectedPIDFlag: "--pid=$$",
 		},
 		{
 			name:            "zsh",
 			script:          zshInit,
-			expectedStart:   "daemon start",
 			expectedPIDFlag: "--pid=$$",
 		},
 		{
 			name:            "fish",
 			script:          fishInit,
-			expectedStart:   "daemon start",
 			expectedPIDFlag: "--pid=$parent_pid",
 		},
 		{
 			name:            "pwsh",
 			script:          pwshInit,
-			expectedStart:   "-ArgumentList $daemonArgs",
 			expectedPIDFlag: "--pid=$PID",
 		},
 	}
@@ -43,9 +38,9 @@ func TestDaemonScriptsIncludePIDAndVimModeSupport(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.True(t, strings.Contains(tc.script, "render"), "expected render command in daemon script")
-			assert.True(t, strings.Contains(tc.script, tc.expectedStart), "expected daemon start command")
 			assert.True(t, strings.Contains(tc.script, tc.expectedPIDFlag), "expected shell-specific PID forwarding")
 			assert.True(t, strings.Contains(tc.script, "vim"), "expected vim mode handling in daemon script")
+			assert.NotContains(t, tc.script, "daemon start", "expected daemon renders to rely on render auto-start")
 		})
 	}
 }

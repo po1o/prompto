@@ -49,12 +49,26 @@ function set_promptocontext() {
   return
 }
 
+function _prompto_millis() {
+  zmodload zsh/datetime 2>/dev/null
+  if [[ -n ${EPOCHREALTIME-} ]]; then
+    printf '%d\n' $(( EPOCHREALTIME * 1000 ))
+    return
+  fi
+
+  printf '%(%s)T000\n' -1
+}
+
+function _prompto_decode_render_text() {
+  printf '%b' "$1"
+}
+
 function _prompto_preexec() {
   if [[ $_prompto_ftcs_marks == 1 ]]; then
     printf '\033]133;C\007'
   fi
 
-  _prompto_start_time=$($_prompto_executable get millis)
+  _prompto_start_time=$(_prompto_millis)
 }
 
 function _prompto_precmd() {
@@ -73,7 +87,7 @@ function _prompto_precmd() {
   _prompto_tooltip_rprompt=''
 
   if [ $_prompto_start_time ]; then
-    local prompto_now=$($_prompto_executable get millis)
+    local prompto_now=$(_prompto_millis)
     _prompto_execution_time=$(($prompto_now - $_prompto_start_time))
     _prompto_no_status=false
   fi
@@ -145,7 +159,7 @@ function _prompto_get_prompt() {
     ${args[@]} | while IFS= read -r line; do
       case "$line" in
       "$type":*)
-        echo "${line#*:}"
+        _prompto_decode_render_text "${line#*:}"
         return 0
         ;;
       status:*)
@@ -379,7 +393,7 @@ function _prompto_daemon_precmd() {
   _prompto_tooltip_command=''
 
   if [ $_prompto_start_time ]; then
-    local prompto_now=$($_prompto_executable get millis)
+    local prompto_now=$(_prompto_millis)
     _prompto_execution_time=$(($prompto_now - $_prompto_start_time))
     _prompto_no_status=false
   fi
@@ -484,7 +498,7 @@ function _prompto_daemon_render() {
 function _prompto_daemon_parse_line() {
   local line=$1
   local type=${line%%:*}
-  local text=${line#*:}
+  local text=$(_prompto_decode_render_text "${line#*:}")
 
   case $type in
     primary)
@@ -537,14 +551,6 @@ function _prompto_daemon_handler() {
 }
 
 function enable_prompto_daemon() {
-  local config_arg=""
-  if [[ -n $_prompto_config ]]; then
-    config_arg="--config=$_prompto_config"
-  fi
-
-  # Start daemon if not running
-  $_prompto_executable daemon start $config_arg --silent >/dev/null 2>&1 &!
-
   # Replace precmd with daemon version
   _prompto_daemon_mode=1
   add-zsh-hook -d precmd _prompto_precmd
