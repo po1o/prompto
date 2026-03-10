@@ -311,6 +311,58 @@ slow.rtransient:
 	require.Equal(t, int32(1), countedSlowWriterExecutions.Load())
 }
 
+func TestPrimaryStreamingPendingRTransientPreservesBlockLeadingStyle(t *testing.T) {
+	segmentType := config.SegmentType("slow_test_rtransient_rounded")
+	previous, hadPrevious := config.Segments[segmentType]
+	config.Segments[segmentType] = func() config.SegmentWriter { return &slowWriter{} }
+	t.Cleanup(func() {
+		if hadPrevious {
+			config.Segments[segmentType] = previous
+			return
+		}
+
+		delete(config.Segments, segmentType)
+	})
+
+	configPath := filepath.Join(t.TempDir(), "slow-rtransient-rounded.omp.yaml")
+	cfg := `
+daemon_timeout: 50
+render_pending_icon: "P:"
+rtransient:
+  - leading_style: rounded
+    trailing_style: rounded
+    segments: ["slow.git", "text.time"]
+
+slow.git:
+  type: "slow_test_rtransient_rounded"
+  style: "powerline"
+  template: " GIT "
+  foreground: "#ffffff"
+  background: "#000000"
+
+text.time:
+  type: "text"
+  style: "powerline"
+  template: " TIME "
+  foreground: "#ffffff"
+  background: "#7a7a7a"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	flags := &runtime.Flags{
+		ConfigPath: configPath,
+		Plain:      true,
+		Shell:      shell.GENERIC,
+	}
+	engine := New(flags)
+	_ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+
+	pending := engine.StreamingTransientRPrompt()
+	require.NotEmpty(t, pending)
+	require.True(t, strings.HasPrefix(pending, "\uE0B6"), pending)
+	require.Contains(t, pending, "P:...")
+}
+
 func TestPrimaryStreamingAndRepaintCanOverlap(t *testing.T) {
 	segmentType := config.SegmentType("blocking_init_test")
 	previous, hadPrevious := config.Segments[segmentType]

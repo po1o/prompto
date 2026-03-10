@@ -511,8 +511,7 @@ func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, 
 			segment.BackgroundTemplates = nil
 			segment.Enabled = true
 
-			e.setActiveSegment(segment)
-			e.renderActiveSegment()
+			e.writeSegment(block, segment)
 			continue
 		}
 
