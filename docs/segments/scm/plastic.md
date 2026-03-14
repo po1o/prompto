@@ -1,7 +1,4 @@
----
-title: Plastic SCM
-description: Display Plastic SCM information when in a plastic repository. Also works for subfolders. For maximum compatibility, make sure your `cm` executable is up-to-date (when branch or status information is incorrect for example).
----
+# Plastic SCM
 
 ## Segment Type
 

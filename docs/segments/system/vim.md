@@ -1,7 +1,4 @@
----
-title: Vim Mode
-description: Display the current vim editing mode reported by shell integration.
----
+# Vim Mode
 
 ## Segment Type
 

@@ -1,7 +1,4 @@
----
-title: ArgoCD Context
-description: Display the current ArgoCD context name, user and/or server.
----
+# ArgoCD Context
 
 ## Segment Type
 

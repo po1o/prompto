@@ -1,7 +1,4 @@
----
-title: Bazel
-description: Display the currently active Bazel version.
----
+# Bazel
 
 ## Segment Type
 
@@ -38,8 +35,7 @@ bazel:
 - `cache_duration`
   - Type: `string`
   - Default: `none`
-  - Description: the duration for which the version will be cached. The duration is a string in the format `1h2m3s` and
-    is parsed using the [time.ParseDuration] function from the Go standard library. To disable the cache, use `none`
+  - Description: how long to cache the version. Use values like `30s`, `5m`, or `1h`. Use `none` to disable caching
 - `missing_command_text`
   - Type: `string`
   - Description: text to display when the command is missing
@@ -50,8 +46,7 @@ bazel:
     `extensions` listed are present; `context`: displays the segment when the environment or files is active
 - `version_url_template`
   - Type: `string`
-  - Description: a go [text/template][go-text-template] [template][templates] that creates the URL of the version info
-    documentation
+  - Description: a template that builds the URL of the version information or documentation page
 - `icon`
   - Type: `string`
   - Default: `\ue63a`
@@ -102,6 +97,3 @@ bazel:
   - Description: the icon representing Bazel's logo
 
 [bazel-github]: https://github.com/bazelbuild/bazel
-[go-text-template]: https://golang.org/pkg/text/template/
-[templates]: ../../configuration/templates.md
-[time.ParseDuration]: https://golang.org/pkg/time/#ParseDuration

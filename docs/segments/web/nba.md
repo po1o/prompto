@@ -1,7 +1,4 @@
----
-title: NBA
-description: The NBA segment allows you to display the scheduling and score information for your favorite NBA team!
----
+# NBA
 
 ## Segment Type
 

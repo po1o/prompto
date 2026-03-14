@@ -1,7 +1,4 @@
----
-title: System Segments
-description: Segment reference pages for the system category.
----
+# System Segments
 
 ## Pages
 

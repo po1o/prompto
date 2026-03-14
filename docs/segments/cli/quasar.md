@@ -1,7 +1,4 @@
----
-title: Quasar
-description: Display the currently active Quasar CLI version. Only rendered when the current or parent folder contains a `quasar.config` or `quasar.config.js` file.
----
+# Quasar
 
 ## Segment Type
 
@@ -42,8 +39,7 @@ quasar:
 - `cache_duration`
   - Type: `string`
   - Default: `none`
-  - Description: the duration for which the version will be cached. The duration is a string in the format `1h2m3s` and
-    is parsed using the [time.ParseDuration] function from the Go standard library. To disable the cache, use `none`
+  - Description: how long to cache the version. Use values like `30s`, `5m`, or `1h`. Use `none` to disable caching
 - `display_mode`
   - Type: `string`
   - Default: `context`
@@ -51,8 +47,7 @@ quasar:
     `extensions` listed are present; `context`: displays the segment when the environment or files is active
 - `version_url_template`
   - Type: `string`
-  - Description: a go [text/template][go-text-template] [template][templates] that creates the URL of the version info /
-    release notes
+  - Description: a template that builds the URL of the version information or release notes
 - `fetch_dependencies`
   - Type: `boolean`
   - Default: `false`
@@ -113,7 +108,4 @@ quasar:
   - Type: `boolean`
   - Description: development dependency or not
 
-[go-text-template]: https://golang.org/pkg/text/template/
-[templates]: ../../configuration/templates.md
 [quasar-cli]: https://quasar.dev/start/quasar-cli
-[time.ParseDuration]: https://golang.org/pkg/time/#ParseDuration

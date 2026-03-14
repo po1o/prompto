@@ -1,7 +1,4 @@
----
-title: Umbraco
-description: Display current [Umbraco] Version if found inside the current working directory. The segment will only show based on the following logic
----
+# Umbraco
 
 ## Segment Type
 

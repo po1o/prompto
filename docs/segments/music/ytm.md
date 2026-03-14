@@ -1,7 +1,4 @@
----
-title: YouTube Music
-description: Shows the currently playing song in the YouTube Music Desktop App.
----
+# YouTube Music
 
 ## Segment Type
 

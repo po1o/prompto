@@ -1,7 +1,4 @@
----
-title: Text
-description: Display text.
----
+# Text
 
 ## Segment Type
 

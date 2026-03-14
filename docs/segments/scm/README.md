@@ -1,7 +1,4 @@
----
-title: Scm Segments
-description: Segment reference pages for the scm category.
----
+# Scm Segments
 
 ## Pages
 

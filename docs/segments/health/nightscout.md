@@ -1,7 +1,4 @@
----
-title: Nightscout
-description: Nightscout (CGM in the Cloud) is an open source project that exposes CGM data over HTTP so it can be shown in prompto segments on the command line.
----
+# Nightscout
 
 ## Segment Type
 

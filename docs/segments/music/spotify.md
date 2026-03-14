@@ -1,7 +1,4 @@
----
-title: Spotify
-description: Show the currently playing song in the Spotify client.
----
+# Spotify
 
 ## Segment Type
 

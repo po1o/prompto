@@ -1,7 +1,4 @@
----
-title: System Info
-description: Display SysInfo.
----
+# System Info
 
 ## Segment Type
 

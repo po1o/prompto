@@ -1,7 +1,4 @@
----
-title: Carbon Intensity
-description: Shows the actual and forecast carbon intensity in gCO2/kWh using data from the Carbon Intensity API.
----
+# Carbon Intensity
 
 ## Segment Type
 

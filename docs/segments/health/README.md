@@ -1,7 +1,4 @@
----
-title: Health Segments
-description: Segment reference pages for the health category.
----
+# Health Segments
 
 ## Pages
 

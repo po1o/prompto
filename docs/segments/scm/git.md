@@ -1,7 +1,4 @@
----
-title: Git
-description: Display git information when in a Git repository. Also works for subfolders. For maximum compatibility, make sure your `git` executable is up-to-date (when branch or status information is incorrect for example).
----
+# Git
 
 ## Segment Type
 

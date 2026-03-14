@@ -1,7 +1,4 @@
----
-title: Sapling
-description: Display Sapling information when in a sapling repository.
----
+# Sapling
 
 ## Segment Type
 

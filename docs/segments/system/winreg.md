@@ -1,7 +1,4 @@
----
-title: Windows Registry Key Query
-description: Display the content of the requested Windows registry key.
----
+# Windows Registry Key Query
 
 ## Segment Type
 

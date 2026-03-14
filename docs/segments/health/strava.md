@@ -1,7 +1,4 @@
----
-title: Strava
-description: Strava is a popular activity tracker for bike, run, and other training. The Strava segment shows your last activity and can change color when it is time to get away from your computer and get active.
----
+# Strava
 
 ## Segment Type
 

@@ -1,7 +1,4 @@
----
-title: Colors
-description: Use color names, hex values, palettes, color templates, keywords, and color cycles.
----
+# Colors
 
 ## Supported Color Forms
 

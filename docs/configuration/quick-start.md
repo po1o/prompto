@@ -1,17 +1,13 @@
----
-title: Configuration Quick Start
-description: Build a prompto YAML configuration step by step, starting from a minimal prompt.
----
+# Configuration Quick Start
 
 ## Goal
 
-This page walks from a minimal prompt to a practical multi-part layout with a right prompt and transient prompt.
+This page builds a practical config step by step, starting with a single left prompt and ending with a styled prompt,
+right prompt, and transient prompt.
 
 ## Step 1: Start with a Single Segment
 
 ```yaml
-cursor_padding: true
-
 prompt:
   - segments: [path]
 
@@ -21,7 +17,7 @@ path:
   template: " {{ .Path }} "
 ```
 
-This gives you a single left prompt line containing the current path.
+This gives you one left prompt line with the current path.
 
 ## Step 2: Add a Right Prompt
 
@@ -59,8 +55,9 @@ time:
 ## Step 3: Add Layout Styling
 
 Line-level `style` is a separator shortcut.
-For a left prompt line it becomes the trailing separator.
-For a right prompt line it becomes the leading separator.
+
+- On left prompt lines, it controls the outer trailing separator.
+- On right prompt lines, it controls the outer leading separator.
 
 ```yaml
 prompt:
@@ -72,12 +69,12 @@ rprompt:
     segments: [git, time]
 ```
 
-If you need full control, use `leading_style` and `trailing_style` instead of `style`.
+If you need more control, use `leading_style` and `trailing_style` instead of `style`.
 
 ## Step 4: Add a Transient Prompt
 
 A transient prompt replaces the old primary prompt after you press Enter.
-Use separate segment instances so you can simplify the display.
+Use separate segment instances when you want a simpler display.
 
 ```yaml
 transient:
@@ -168,7 +165,6 @@ prompto render --shell=zsh --pwd="$PWD" --terminal-width=120
 ## A Practical Full Example
 
 ```yaml
-cursor_padding: true
 render_pending_icon: " "
 render_pending_background: darkGray
 vim-mode:

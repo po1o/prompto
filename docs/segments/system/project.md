@@ -1,7 +1,4 @@
----
-title: Project
-description: Display the current version of your project defined in the package file.
----
+# Project
 
 ## Segment Type
 

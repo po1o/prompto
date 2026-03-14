@@ -1,7 +1,4 @@
----
-title: Segments
-description: Segment reference pages converted from the legacy website docs and adapted to the current YAML config model.
----
+# Segments
 
 ## Categories
 

@@ -1,7 +1,4 @@
----
-title: Firebase
-description: Display the current active Firebase project.
----
+# Firebase
 
 ## Segment Type
 

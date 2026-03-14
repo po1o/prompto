@@ -1,7 +1,4 @@
----
-title: Web Segments
-description: Segment reference pages for the web category.
----
+# Web Segments
 
 ## Pages
 

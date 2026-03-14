@@ -1,7 +1,4 @@
----
-title: Jujutsu
-description: Display Jujutsu information when in a Jujutsu repository.
----
+# Jujutsu
 
 ## Segment Type
 

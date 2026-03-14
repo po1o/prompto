@@ -1,7 +1,4 @@
----
-title: Withings
-description: The Withings health ecosystem of connected devices & apps is designed to improve daily wellbeing and long-term health.
----
+# Withings
 
 ## Segment Type
 

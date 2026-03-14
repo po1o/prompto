@@ -1,7 +1,4 @@
----
-title: Shell
-description: Show the current shell name (zsh, PowerShell, bash, ...).
----
+# Shell
 
 ## Segment Type
 

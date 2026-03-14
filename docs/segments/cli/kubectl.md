@@ -1,7 +1,4 @@
----
-title: Kubernetes
-description: Display the currently active Kubernetes context name and namespace name.
----
+# Kubernetes
 
 ## Segment Type
 

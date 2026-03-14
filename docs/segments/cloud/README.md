@@ -1,7 +1,4 @@
----
-title: Cloud Segments
-description: Segment reference pages for the cloud category.
----
+# Cloud Segments
 
 ## Pages
 

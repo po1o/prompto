@@ -1,7 +1,4 @@
----
-title: GitHub Copilot
-description: Display your GitHub Copilot usage statistics and quota information including premium interactions, inline completions, and chat usage. This segment was inspired by Elio Struyf's GitHub Copilot Usage Tauri application.
----
+# GitHub Copilot
 
 ## Segment Type
 

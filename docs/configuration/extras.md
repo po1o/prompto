@@ -1,7 +1,4 @@
----
-title: Extras and Shell Features
-description: Configure transient prompts, tooltips, vim mode, daemon behavior, and shell extras.
----
+# Extras and Shell Features
 
 ## Scope
 
@@ -237,6 +234,7 @@ iterm_features:
 ### `cursor_padding`
 
 Add one space between the rendered left prompt and the cursor.
+This defaults to `true`, so you only need to set it when you want to turn it off.
 
 ### `pwd`
 

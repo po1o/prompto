@@ -1,7 +1,4 @@
----
-title: Path
-description: Display the current path.
----
+# Path
 
 ## Segment Type
 
@@ -155,9 +152,8 @@ you should avoid using a chevron character (`<`/`>`) in the `folder_separator_ic
 
 ### Using regular expressions
 
-For more complicated cases, you can use the `re:` prefix to use a regular expression with a capture group for matching.
-This uses Golang's [regexp] package, so you can use any of the [supported syntax][regexp]. The replacement value will be
-the first capture group, subsequent groups will be ignored.
+For more complicated cases, you can use the `re:` prefix with a capture group.
+The replacement value comes from the first capture group, and any additional capture groups are ignored.
 
 For example, `"re:(C:/[0-9]+/Foo)": "#"` will match `C:\123\Foo\Bar` and replace it with `#\Bar`. The path used for
 matching will always use `/`, regardless of the operating system, allowing cross platform matching.
@@ -275,4 +271,3 @@ of folders specified by `full_length_dirs`, which will be displayed in full. Ins
   - Description: format any path based on the segment's settings (e.g. `{{ .Format .Segments.Git.RelativeDir }}`)
 
 [templates]: ../../configuration/templates.md
-[regexp]: https://pkg.go.dev/regexp/syntax

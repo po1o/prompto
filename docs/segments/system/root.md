@@ -1,7 +1,4 @@
----
-title: Root
-description: Show when the current user is root or when in an elevated shell (Windows).
----
+# Root
 
 ## Segment Type
 

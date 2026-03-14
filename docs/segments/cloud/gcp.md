@@ -1,7 +1,4 @@
----
-title: GCP Context
-description: Display the currently active GCP project, region and account
----
+# GCP Context
 
 ## Segment Type
 

@@ -1,7 +1,4 @@
----
-title: Battery
-description: Battery displays the remaining power percentage for your battery.
----
+# Battery
 
 ## Segment Type
 

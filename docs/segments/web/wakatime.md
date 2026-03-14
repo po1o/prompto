@@ -1,7 +1,4 @@
----
-title: Wakatime
-description: Shows the tracked time on wakatime of the current day
----
+# Wakatime
 
 ## Segment Type
 

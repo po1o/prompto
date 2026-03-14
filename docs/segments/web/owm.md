@@ -1,7 +1,4 @@
----
-title: Open Weather Map
-description: Shows the current weather of a given location with Open Weather Map.
----
+# Open Weather Map
 
 ## Segment Type
 

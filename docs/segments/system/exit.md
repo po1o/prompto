@@ -1,7 +1,4 @@
----
-title: Exit
-description: Display the last known exit code and/or failure reason. The `exit` and `status` segment types use the same writer.
----
+# Exit
 
 ## Segment Type
 

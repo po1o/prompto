@@ -1,7 +1,4 @@
----
-title: Sitecore
-description: Display current [Sitecore] environment. Will not be active when sitecore.json and user.json don't exist.
----
+# Sitecore
 
 ## Segment Type
 

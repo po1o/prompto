@@ -1,7 +1,4 @@
----
-title: Azure Developer CLI
-description: Display the currently active environment in the Azure Developer CLI.
----
+# Azure Developer CLI
 
 ## Segment Type
 

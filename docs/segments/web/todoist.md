@@ -1,7 +1,4 @@
----
-title: Todoist
-description: Displays your daily tasks from Todoist.
----
+# Todoist
 
 ## Segment Type
 

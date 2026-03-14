@@ -1,7 +1,4 @@
----
-title: Execution Time
-description: Displays the execution time of the previously executed command.
----
+# Execution Time
 
 ## Segment Type
 

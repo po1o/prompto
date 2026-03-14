@@ -1,7 +1,4 @@
----
-title: Fossil
-description: Display Fossil information when in a fossil repository.
----
+# Fossil
 
 ## Segment Type
 

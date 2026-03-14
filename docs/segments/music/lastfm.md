@@ -1,7 +1,4 @@
----
-title: LastFM
-description: Show the currently playing song from a LastFM user.
----
+# LastFM
 
 ## Segment Type
 

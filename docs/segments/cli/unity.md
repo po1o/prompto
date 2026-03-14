@@ -1,7 +1,4 @@
----
-title: Unity
-description: Display the currently active Unity and C# versions.
----
+# Unity
 
 ## Segment Type
 

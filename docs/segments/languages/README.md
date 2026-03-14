@@ -1,7 +1,4 @@
----
-title: Languages Segments
-description: Segment reference pages for the languages category.
----
+# Languages Segments
 
 ## Pages
 

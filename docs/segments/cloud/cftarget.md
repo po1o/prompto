@@ -1,7 +1,4 @@
----
-title: Cloud Foundry Target
-description: Display the details of the logged Cloud Foundry endpoint (`cf target` details).
----
+# Cloud Foundry Target
 
 ## Segment Type
 

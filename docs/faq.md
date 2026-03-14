@@ -1,7 +1,4 @@
----
-title: FAQ
-description: Common prompto problems, debugging steps, and operational fixes.
----
+# FAQ
 
 ## The Prompt Is Slow
 

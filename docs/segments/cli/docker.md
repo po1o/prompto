@@ -1,7 +1,4 @@
----
-title: Docker
-description: Display the current Docker context. Will not be active when using the default context.
----
+# Docker
 
 ## Segment Type
 

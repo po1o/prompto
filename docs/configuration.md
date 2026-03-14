@@ -1,24 +1,25 @@
----
-title: Configuration
-description: Overview of the current prompto YAML configuration model, with links to detailed guides.
----
+# Configuration
 
 ## Canonical Format
 
-The current configuration model for this fork is:
+`prompto` uses local YAML configuration files.
 
-- YAML only
-- local file based
-- layout driven through `prompt`, `rprompt`, `secondary`, `transient`, and `rtransient`
+The main top-level layout keys are:
 
-If you are familiar with the older website docs, the main difference is that this fork documents the current layout
-parser rather than the older `blocks` model.
+- `prompt`
+- `rprompt`
+- `secondary`
+- `transient`
+- `rtransient`
+
+If you are coming from older oh-my-posh material, the main difference is that this fork documents the current layout
+model directly instead of the older `blocks` model.
 
 ## Mental Model
 
 A config has two layers:
 
-1. Prompt layout lines place named segments.
+1. Layout lines place named segments.
 2. Top-level segment tables define how each named segment behaves.
 
 ```yaml
@@ -54,18 +55,16 @@ time:
 - [Quick start](./configuration/quick-start.md): build a practical config from scratch.
 - [Layout](./configuration/layout.md): prompt lines, separators, and placement.
 - [Segments](./configuration/segments.md): segment tables, naming, caching, timeouts, and pending rendering.
-- [Templates](./configuration/templates.md): global fields, helper functions, and cross-segment references.
+- [Templates](./configuration/templates.md): write text, conditionals, and cross-segment references.
 - [Colors](./configuration/colors.md): color formats, palettes, color templates, and cycling.
 - [Extras and shell features](./configuration/extras.md): transient prompts, tooltips, vim mode, title, daemon
-  settings, and shell-specific behavior.
+  settings, and shell integration features.
 - [Reference](./configuration/reference.md): exhaustive field reference and supported segment type list.
 - [Segment reference](./segments/README.md): per-segment pages with type-specific options, properties, and examples.
 
 ## Minimal Working Example
 
 ```yaml
-cursor_padding: true
-
 prompt:
   - segments: [path]
 
@@ -94,6 +93,8 @@ path.transient:
   template: " {{ .Folder }} "
 ```
 
+`cursor_padding` is not shown here because the default is already `true`.
+
 ## Default Location
 
 ```text
@@ -103,7 +104,8 @@ Windows: %UserConfigDir%/prompto/config.yaml
 
 ## Practical Advice
 
-- Keep your main config local and under version control.
-- Use one named segment per semantic job, then reuse that name in different prompt lines.
-- Start with explicit segment names such as `git`, `git.transient`, and `time.rprompt`.
+- Start small and add segments one at a time.
+- Give separate jobs separate segment names, for example `git` and `git.transient`.
+- Use palettes once your config grows past a few segments.
+- Keep your real config local and under version control.
 - Use `prompto config image --output ./prompto-preview.png` when you want a quick visual preview.

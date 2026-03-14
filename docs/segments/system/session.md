@@ -1,7 +1,4 @@
----
-title: Session
-description: Show the current user and host name.
----
+# Session
 
 ## Segment Type
 

@@ -1,7 +1,4 @@
----
-title: Helm
-description: Display the version of Helm
----
+# Helm
 
 ## Segment Type
 

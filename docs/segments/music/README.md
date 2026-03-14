@@ -1,7 +1,4 @@
----
-title: Music Segments
-description: Segment reference pages for the music category.
----
+# Music Segments
 
 ## Pages
 

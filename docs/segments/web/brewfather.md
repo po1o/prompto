@@ -1,7 +1,4 @@
----
-title: Brewfather
-description: Calling all brewers! Keep up-to-date with the status of your Brewfather batch directly in your commandline prompt using the brewfather segment!
----
+# Brewfather
 
 ## Segment Type
 

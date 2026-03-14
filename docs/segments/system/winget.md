@@ -1,7 +1,4 @@
----
-title: WinGet
-description: Displays the number of available WinGet package updates. This segment only appears when there are updates available.
----
+# WinGet
 
 ## Segment Type
 

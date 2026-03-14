@@ -1,7 +1,4 @@
----
-title: Azure Subscription
-description: Display the currently active Azure subscription information.
----
+# Azure Subscription
 
 ## Segment Type
 

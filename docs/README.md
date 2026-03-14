@@ -1,25 +1,23 @@
----
-title: Documentation
-description: GitHub-native documentation for installing, configuring, and operating prompto.
----
+# Documentation
 
 ## Overview
 
 This repository keeps the user documentation directly in `docs/`.
-The Markdown files here are the canonical docs for this fork.
+These Markdown files are the source of truth for this fork.
 
 ## Placeholder Notice
 
-Any remaining `prompto.dev` references in older upstream text are legacy placeholders and should not be treated as live
-documentation links for this fork. Use the Markdown files in this `docs/` tree as the source of truth.
+Any remaining `prompto.dev` links in older upstream text are legacy placeholders.
+Do not treat them as working documentation for this fork.
+Use the Markdown files in this repository instead.
 
 ## Start Here
 
 - [Installation](./installation.md): install a binary or build from source.
 - [Shell initialization](./shell-init.md): enable `prompto` in `zsh`, `bash`, `fish`, or PowerShell.
 - [Fonts](./fonts.md): install and configure a Nerd Font.
-- [Themes](./themes.md): use the bundled themes as starting points.
-- [Configuration](./configuration.md): write and understand `prompto` YAML configs.
+- [Themes](./themes.md): browse the bundled themes and copy one into your local config.
+- [Configuration](./configuration.md): understand the YAML model.
 - [Segment reference](./segments/README.md): per-segment docs grouped by category.
 - [FAQ](./faq.md): common operational issues and fixes.
 
@@ -36,8 +34,6 @@ Windows: %UserConfigDir%/prompto/config.yaml
 1. Start from a minimal config:
 
 ```yaml
-cursor_padding: true
-
 prompt:
   - segments: [path]
 
@@ -50,22 +46,22 @@ path:
 1. Initialize your shell:
 
 ```bash
-prompto init zsh
-prompto init bash
-prompto init fish
-prompto init pwsh
+prompto init
 ```
 
+`prompto init` detects the current shell automatically.
+If you want to generate init code for a specific shell, pass it explicitly.
 See [Shell initialization](./shell-init.md) for the exact profile snippets.
 
 ## Configuration Model in One Minute
 
 A `prompto` config has two layers:
 
-- Prompt layout lines such as `prompt`, `rprompt`, `transient`, and `rtransient`.
+- Layout lines such as `prompt`, `rprompt`, `transient`, and `rtransient`.
 - Named segment definitions at the top level, such as `path`, `git`, or `git.transient`.
 
-A layout line places named segments. A segment definition decides how one segment renders.
+A layout line decides where segments appear.
+A segment definition decides how one segment renders.
 
 ```yaml
 prompt:
@@ -90,7 +86,7 @@ git:
   template: " {{ .HEAD }} "
 ```
 
-The complete model is documented in [Configuration](./configuration.md).
+The full model is documented in [Configuration](./configuration.md).
 
 ## Useful Commands
 
@@ -100,7 +96,7 @@ The complete model is documented in [Configuration](./configuration.md).
 prompto shell
 ```
 
-- Edit your config with `$EDITOR`:
+- Edit the active config with `$EDITOR`:
 
 ```bash
 prompto config edit

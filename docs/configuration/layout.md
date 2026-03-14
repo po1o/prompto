@@ -1,7 +1,4 @@
----
-title: Layout
-description: Define prompt lines, right prompts, transient prompts, separators, and multi-line layouts.
----
+# Layout
 
 ## Prompt Families
 

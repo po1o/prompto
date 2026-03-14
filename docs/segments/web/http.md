@@ -1,7 +1,4 @@
----
-title: HTTP
-description: HTTP Request is a simple segment to return any json data from any HTTP call.
----
+# HTTP
 
 ## Segment Type
 

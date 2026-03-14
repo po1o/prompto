@@ -1,7 +1,4 @@
----
-title: Perl
-description: Display the currently active Perl version.
----
+# Perl
 
 ## Segment Type
 
@@ -39,8 +36,7 @@ perl:
 - `cache_duration`
   - Type: `string`
   - Default: `none`
-  - Description: the duration for which the version will be cached. The duration is a string in the format `1h2m3s` and
-    is parsed using the [time.ParseDuration] function from the Go standard library. To disable the cache, use `none`
+  - Description: how long to cache the version. Use values like `30s`, `5m`, or `1h`. Use `none` to disable caching
 - `missing_command_text`
   - Type: `string`
   - Description: text to display when the command is missing
@@ -51,8 +47,7 @@ perl:
     `extensions` listed are present; `context`: displays the segment when the environment or files is active
 - `version_url_template`
   - Type: `string`
-  - Description: a go [text/template][go-text-template] [template][templates] that creates the URL of the version info /
-    release notes
+  - Description: a template that builds the URL of the version information or release notes
 - `extensions`
   - Type: `[]string`
   - Default: `*.pl, *.pm, *.t, .perl-version`
@@ -91,7 +86,4 @@ perl:
   - Type: `string`
   - Description: error encountered when fetching the version string
 
-[go-text-template]: https://golang.org/pkg/text/template/
-[templates]: ../../configuration/templates.md
 [perl]: https://www.perl.org/
-[time.ParseDuration]: https://golang.org/pkg/time/#ParseDuration

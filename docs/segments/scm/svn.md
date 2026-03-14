@@ -1,7 +1,4 @@
----
-title: Subversion
-description: Display Subversion information when in a subversion repository. Also works for subfolders. For maximum compatibility, make sure your `svn` executable is up-to-date (when branch or status information is incorrect for example).
----
+# Subversion
 
 ## Segment Type
 

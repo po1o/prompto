@@ -1,7 +1,4 @@
----
-title: Nerdbank.GitVersioning
-description: Display the Nerdbank.GitVersioning version.
----
+# Nerdbank.GitVersioning
 
 ## Segment Type
 

@@ -1,7 +1,4 @@
----
-title: AWS Context
-description: Display the currently active AWS profile and region.
----
+# AWS Context
 
 ## Segment Type
 

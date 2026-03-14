@@ -1,7 +1,4 @@
----
-title: Mercurial
-description: Display Mercurial information when in a Mercurial repository. For maximum compatibility, make sure your `hg` executable is up-to-date (when branch or status information is incorrect for example).
----
+# Mercurial
 
 ## Segment Type
 

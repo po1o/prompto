@@ -1,7 +1,4 @@
----
-title: Installation
-description: Install prompto from a release or from source, then set up your shell.
----
+# Installation
 
 ## Scope
 

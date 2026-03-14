@@ -1,7 +1,4 @@
----
-title: Talosctl Context
-description: Displays the currently active Talosctl context name.
----
+# Talosctl Context
 
 ## Segment Type
 

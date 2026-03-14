@@ -1,7 +1,4 @@
----
-title: Connection
-description: Show details about the currently connected network.
----
+# Connection
 
 ## Segment Type
 

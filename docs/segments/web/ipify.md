@@ -1,7 +1,4 @@
----
-title: Ipify
-description: Ipify is a simple Public IP Address API, it returns your public IP Address in plain text.
----
+# Ipify
 
 ## Segment Type
 
@@ -42,8 +39,7 @@ ipify:
 - `cache_duration`
   - Type: `string`
   - Default: `24h`
-  - Description: the duration for which the IP will be cached. The duration is a string in the format `1h2m3s` and is
-    parsed using the [time.ParseDuration] function from the Go standard library. To disable the cache, use `none`
+  - Description: how long to cache the IP. Use values like `30s`, `5m`, or `1h`. Use `none` to disable caching
 
 ## Template
 
@@ -60,4 +56,3 @@ ipify:
   - Description: Your external IP address
 
 [ipify]: https://www.ipify.org/
-[time.ParseDuration]: https://golang.org/pkg/time/#ParseDuration

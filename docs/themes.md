@@ -1,7 +1,4 @@
----
-title: Themes
-description: Use the bundled themes as starting points for your own local prompto configuration.
----
+# Themes
 
 ## Where Themes Live
 
@@ -27,7 +24,7 @@ List the bundled themes:
 prompto config list
 ```
 
-Write one to the default config path:
+Write one to the default config path. If a config already exists there, prompto asks before overwriting it:
 
 ```bash
 prompto config set tokyo
@@ -36,7 +33,7 @@ prompto config set tokyo
 Then initialize your shell against that file:
 
 ```bash
-eval "$(prompto init zsh --config ~/.config/prompto/config.yaml)"
+eval "$(prompto init --config ~/.config/prompto/config.yaml)"
 ```
 
 ## Render a Theme Preview

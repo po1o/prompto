@@ -1,7 +1,4 @@
----
-title: Status Code
-description: Displays the last known status code and/or the reason that the last command failed.
----
+# Status Code
 
 ## Segment Type
 

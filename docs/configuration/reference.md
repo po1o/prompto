@@ -1,7 +1,4 @@
----
-title: Configuration Reference
-description: Exhaustive field reference for prompto YAML configs and supported segment types.
----
+# Configuration Reference
 
 ## File Format
 
@@ -11,12 +8,12 @@ description: Exhaustive field reference for prompto YAML configs and supported s
   - macOS/Linux: `${XDG_CONFIG_HOME:-$HOME/.config}/prompto/config.yaml`
   - Windows: `%UserConfigDir%/prompto/config.yaml`
 
-## Compatibility Notes
+## Validation Rules
 
-- `version` may exist in your file, but it is not used by the current parser logic.
-- Unknown scalar top-level keys are ignored.
-- Unknown map-shaped top-level keys may be interpreted as segment tables.
-- Legacy aliases `secondary_prompt`, `transient_prompt`, and `transient_rprompt` are rejected.
+- Unknown top-level keys fail config loading.
+- Top-level segment definitions are the exception because their key is the segment name.
+- Old aliases such as `secondary_prompt`, `transient_prompt`, and `transient_rprompt` are rejected.
+- `cursor_padding` defaults to `true` when omitted.
 
 ## Top-Level Keys
 
@@ -40,7 +37,7 @@ description: Exhaustive field reference for prompto YAML configs and supported s
 | `render_pending_icon` | string | global pending icon |
 | `render_pending_background` | color | global pending background |
 | `console_title_template` | string | terminal title template |
-| `pwd` | string | working-directory OSC integration mode |
+| `pwd` | string | working-directory integration mode |
 | `terminal_background` | color | declared terminal background color |
 | `tooltips_action` | string | `replace`, `extend`, or `prepend` |
 | `tooltips` | `[]Segment` | tooltip segment definitions |
@@ -65,12 +62,12 @@ description: Exhaustive field reference for prompto YAML configs and supported s
 | `leading_separator` | string | explicit leading separator glyph |
 | `trailing_separator` | string | explicit trailing separator glyph |
 
-### Layout Validation Rules
+## Layout Validation Rules
 
 - `style` cannot be combined with explicit leading or trailing style or separator fields.
 - `leading_style` and `leading_separator` are mutually exclusive.
 - `trailing_style` and `trailing_separator` are mutually exclusive.
-- `leading_diamond` and `trailing_diamond` are not allowed in layout YAML input.
+- `leading_diamond` and `trailing_diamond` are not allowed in YAML layout input.
 
 ## Segment Fields
 
@@ -95,14 +92,14 @@ description: Exhaustive field reference for prompto YAML configs and supported s
 | `render_pending_icon` | string | per-segment pending icon override |
 | `render_pending_background` | color | per-segment pending background override |
 | `options` | map | segment-specific options |
-| `cache` | object | segment cache config |
+| `cache` | object | segment cache settings |
 | `interactive` | bool | interactive terminal-writer mode |
 | `timeout` | int | timeout in milliseconds |
 | `min_width` | int | minimum terminal width |
 | `max_width` | int | maximum terminal width |
-| `include_folders` | `[]string` | anchored regex allow-list for current directory |
-| `exclude_folders` | `[]string` | anchored regex deny-list for current directory |
-| `force` | bool | render even if the text would be empty |
+| `include_folders` | `[]string` | anchored regex allow-list for the current directory |
+| `exclude_folders` | `[]string` | anchored regex deny-list for the current directory |
+| `force` | bool | render even if the text would otherwise be empty |
 | `toggled` | bool | start disabled in the toggle cache |
 | `tips` | `[]string` | tooltip trigger words |
 | `newline` | bool | segment requests a newline |
@@ -141,8 +138,6 @@ cache:
   strategy: folder
 ```
 
-### Fields
-
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `duration` | duration string | cache lifetime |
@@ -160,11 +155,9 @@ palettes:
       fg: "#ffffff"
 ```
 
-### Fields
-
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `template` | string | template resolving to the palette name |
+| `template` | string | template that chooses the palette name |
 | `list` | map | named palette definitions |
 
 ## Maps Object
@@ -204,19 +197,18 @@ palettes:
 `brewfather`, `carbonintensity`, `http`, `ipify`, `nba`, `nightscout`, `owm`, `spotify`, `strava`, `todoist`,
 `wakatime`, `withings`, `ytm`, `lastfm`
 
-## Parser Errors You Are Most Likely to Hit
+## Common Parser Errors
 
-- missing segment reference in `segments:`
-- duplicate segment instance names
-- unknown segment type
-- missing `type` when inference fails
-- invalid separator alias
-- invalid mix of `style` with explicit separator fields
+- a segment name listed in `segments:` does not exist
+- two segment definitions normalize to the same name
+- the segment type is unknown
+- type inference fails and `type:` is missing
+- the separator alias is unknown
+- `style` is mixed with explicit separator fields
 
 ## Canonical Example
 
 ```yaml
-cursor_padding: true
 render_pending_icon: " "
 render_pending_background: darkGray
 

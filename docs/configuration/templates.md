@@ -1,14 +1,10 @@
----
-title: Templates
-description: Use Go templates, global fields, helper functions, environment variables, and cross-segment data.
----
+# Templates
 
-## Template Engine
+## What a Template Is
 
-`prompto` templates use Go `text/template` plus:
-
-- [Sprig](https://masterminds.github.io/sprig/)
-- custom helper functions provided by `prompto`
+A template is the text recipe prompto uses to build a segment.
+Plain text stays as-is.
+Anything inside `{{ ... }}` is evaluated.
 
 Templates are used in:
 
@@ -17,40 +13,46 @@ Templates are used in:
 - `foreground_templates`
 - `background_templates`
 - `console_title_template`
-- palette selection templates
+- `palettes.template`
+
+## What Data You Can Use
+
+Templates can read two kinds of data:
+
+- global prompt data, such as the current folder, user, host, shell, and exit code
+- segment-specific data, such as `.Path`, `.HEAD`, `.Profile`, or `.Mode`
+
+If a segment and the global prompt data both define the same field name, the segment field wins.
 
 ## Global Fields
-
-These fields are available in template context globally.
-If a segment has a field with the same name, the segment field wins.
 
 | Field | Meaning |
 | --- | --- |
 | `.Root` | whether the current user is root or admin |
-| `.PWD` | current working directory with `~` expansion |
+| `.PWD` | current working directory with `~` shortening |
 | `.AbsolutePWD` | current working directory without `~` shortening |
-| `.PSWD` | non-filesystem PowerShell working directory when present |
+| `.PSWD` | PowerShell working directory when it is not a normal filesystem path |
 | `.Folder` | current folder name |
-| `.Shell` | current shell name after `maps.shell_name` mapping |
+| `.Shell` | current shell name after `maps.shell_name` rewriting |
 | `.ShellVersion` | shell version |
 | `.SHLVL` | shell nesting level |
-| `.UserName` | current user name after `maps.user_name` mapping |
-| `.HostName` | host name after `maps.host_name` mapping |
+| `.UserName` | current user name after `maps.user_name` rewriting |
+| `.HostName` | host name after `maps.host_name` rewriting |
 | `.Code` | last exit code |
 | `.Jobs` | current background job count when the shell exposes it |
 | `.OS` | operating system or Linux platform string |
 | `.WSL` | whether the shell is running inside WSL |
 | `.PromptCount` | prompt invocation count for this session |
-| `.Version` | `prompto` version |
+| `.Version` | prompto version |
 | `.Var` | values from the top-level `var:` map |
-| `.Segments` | previously rendered segment data available for cross-segment references |
-| `.Segment` | metadata for the current segment |
+| `.Segments` | data from previously rendered segments |
+| `.Segment` | metadata about the segment currently being rendered |
 
 ## Current Segment Metadata
 
 | Field | Meaning |
 | --- | --- |
-| `.Segment.Index` | render index of the current segment |
+| `.Segment.Index` | render order of the current segment |
 | `.Segment.Text` | rendered text of the current segment |
 
 ## Environment Variables
@@ -77,7 +79,7 @@ text.brand:
   template: " {{ .Var.brand }} "
 ```
 
-## Basic Template Examples
+## Basic Examples
 
 ### Conditional text
 
@@ -86,21 +88,30 @@ status:
   template: " {{ if gt .Code 0 }}failed{{ else }}ok{{ end }} "
 ```
 
-### Local variables
+### Transforming text
 
 ```yaml
 path:
-  template: " {{ $name := .Folder }}{{ upper $name }} "
+  template: " {{ upper .Folder }} "
+```
+
+### Reusing the selected `time_format`
+
+```yaml
+time:
+  template: " {{ .LastDate | date .Format }} "
+  options:
+    time_format: "15:04"
 ```
 
 ## Template Lists
 
-`templates` is a list of templates.
-The `templates_logic` field controls how they are combined.
+`templates` lets you provide more than one template.
+`templates_logic` decides how prompto uses the results.
 
 ### `join`
 
-Join every non-empty result:
+Render every non-empty result and concatenate them.
 
 ```yaml
 text.summary:
@@ -114,7 +125,7 @@ text.summary:
 
 ### `first_match`
 
-Use the first non-empty result and stop:
+Use the first non-empty result and stop there.
 
 ```yaml
 text.mode:
@@ -126,28 +137,31 @@ text.mode:
     - " SHELL "
 ```
 
-`foreground_templates` and `background_templates` always behave like first-match fallbacks.
+`foreground_templates` and `background_templates` also use first-match behavior.
 
-## Custom Helper Functions
+## Common Helper Functions
 
-Common helper functions include:
+prompto includes many helper functions.
+These are the ones you are most likely to use directly:
 
 | Function | Purpose |
 | --- | --- |
+| `date` | format a date or time |
+| `dateInZone` | format a date or time in a specific time zone |
 | `secondsRound` | turn seconds into a rounded duration string |
-| `url` | emit a terminal hyperlink |
-| `path` | emit a file hyperlink |
-| `glob` | boolean glob test |
-| `matchP` | regex match test |
-| `findP` | regex find helper |
-| `replaceP` | regex replacement |
-| `random` | choose a random value from a list |
-| `reason` | render a status reason from a code |
+| `url` | create a terminal hyperlink |
+| `path` | create a file hyperlink |
+| `glob` | test text against a glob pattern |
+| `matchP` | test text against a regular expression |
+| `findP` | extract text with a regular expression |
+| `replaceP` | replace text with a regular expression |
+| `random` | choose one value from a list |
+| `reason` | render a status reason from an exit code |
 | `hresult` | convert a status code to HRESULT form |
-| `trunc`, `truncE` | truncate text |
+| `trunc`, `truncE` | shorten text |
 | `readFile` | read a file as text |
 | `stat` | inspect file metadata |
-| `dir`, `base` | path helpers |
+| `dir`, `base` | extract parts of a filesystem path |
 
 Example:
 
@@ -156,23 +170,39 @@ executiontime:
   template: " {{ secondsRound .Ms }} "
 ```
 
+## Reading `|` In a Template
+
+The `|` character passes the value on the left into the expression on the right.
+
+For example:
+
+```template
+{{ .LastDate | date .Format }}
+```
+
+reads as:
+
+- take `.LastDate`
+- format it with `date`
+- use `.Format` as the chosen time format
+
 ## Cross-Segment References
 
-You can use previously rendered segment data from `.Segments`.
-This lets one segment depend on another.
+You can read data from previously rendered segments through `.Segments`.
+This is useful when one segment depends on another.
 
 ```yaml
 status:
   template: " {{ if .Segments.Git.UpstreamGone }}gone{{ else if gt .Code 0 }}failed{{ else }}ok{{ end }} "
 ```
 
-Important constraints:
+Keep these constraints in mind:
 
 - the referenced segment must exist in the config
-- segment references create dependencies between segments
-- use stable names so the dependency graph stays clear
+- the reference name must match the segment's runtime name
+- cross-segment references create dependencies between segments
 
-When you need two different git segments, use different names:
+When you use two instances of the same segment type, give them stable names:
 
 ```yaml
 git:
@@ -182,20 +212,22 @@ git.short:
   template: " {{ .HEAD }} "
 ```
 
-Then reference exactly the one you want.
+Then reference exactly the one you mean.
 
-## Templates in Titles and Palettes
+## Where Else Templates Are Used
 
 Templates are not limited to segment text.
 They also power fields such as:
 
 - `console_title_template`
 - `palettes.template`
-- color template arrays
+- `foreground_templates`
+- `background_templates`
 
 ## Practical Advice
 
-- Keep templates short and move repeated values into `var`.
-- Use `templates_logic: first_match` for fallback logic.
-- Use cross-segment references only when the dependency is explicit and necessary.
+- Keep templates short.
+- Move repeated values into `var`.
+- Use `templates_logic: first_match` for fallback behavior.
+- Use cross-segment references only when the dependency is clear and necessary.
 - Prefer readable templates over dense one-liners.

@@ -1,7 +1,4 @@
----
-title: OS
-description: Display OS specific info - defaults to Icon.
----
+# OS
 
 ## Segment Type
 

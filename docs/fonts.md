@@ -1,7 +1,4 @@
----
-title: Fonts
-description: Install a Nerd Font and configure your terminal so prompto glyphs render correctly.
----
+# Fonts
 
 ## Why Fonts Matter
 

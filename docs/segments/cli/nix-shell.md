@@ -1,7 +1,4 @@
----
-title: Nix Shell
-description: Displays the [nix shell] status if inside a nix-shell environment.
----
+# Nix Shell
 
 ## Segment Type
 

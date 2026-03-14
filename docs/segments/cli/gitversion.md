@@ -1,7 +1,4 @@
----
-title: GitVersion
-description: Display the GitVersion version. We _strongly_ recommend using GitVersion Portable for this.
----
+# GitVersion
 
 ## Segment Type
 

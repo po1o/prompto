@@ -1,7 +1,4 @@
----
-title: Segments
-description: Define segment tables, naming conventions, caching, timeouts, pending rendering, and reuse.
----
+# Segments
 
 ## What a Segment Definition Is
 

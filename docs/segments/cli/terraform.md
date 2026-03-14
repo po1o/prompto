@@ -1,7 +1,4 @@
----
-title: Terraform Context
-description: Display the currently active Terraform Workspace name.
----
+# Terraform Context
 
 ## Segment Type
 

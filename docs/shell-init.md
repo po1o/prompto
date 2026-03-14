@@ -1,7 +1,4 @@
----
-title: Shell Initialization
-description: Enable prompto in supported shells and point it at your local configuration.
----
+# Shell Initialization
 
 ## Supported Shells
 
@@ -21,26 +18,32 @@ prompto shell
 
 ## General Pattern
 
-Initialization always starts from:
+The simplest form is:
 
 ```bash
-prompto init <shell>
+prompto init
 ```
 
-When you want to use a specific config file, pass a local path with `--config`:
+When you run `prompto init` inside a supported shell, prompto detects that shell automatically.
+
+You can still be explicit when you want to generate init code for a specific shell:
 
 ```bash
-prompto init zsh --config ~/.config/prompto/config.yaml
+prompto init zsh
 ```
 
-This fork documents local YAML configs as the authoritative path.
+When you want to use a specific config file, pass it with `--config`:
+
+```bash
+prompto init --config ~/.config/prompto/config.yaml
+```
 
 ## zsh
 
 Add this near the end of `~/.zshrc`:
 
 ```bash
-eval "$(prompto init zsh --config ~/.config/prompto/config.yaml)"
+eval "$(prompto init --config ~/.config/prompto/config.yaml)"
 ```
 
 Reload the shell:
@@ -54,7 +57,7 @@ exec zsh
 Add this near the end of `~/.bashrc` or `~/.bash_profile`:
 
 ```bash
-eval "$(prompto init bash --config ~/.config/prompto/config.yaml)"
+eval "$(prompto init --config ~/.config/prompto/config.yaml)"
 ```
 
 Reload the shell:
@@ -73,7 +76,7 @@ If you only need a primary prompt, the normal init snippet is enough.
 Add this to `~/.config/fish/config.fish`:
 
 ```fish
-prompto init fish --config ~/.config/prompto/config.yaml | source
+prompto init --config ~/.config/prompto/config.yaml | source
 ```
 
 Reload the shell:
@@ -99,7 +102,7 @@ New-Item -Path $PROFILE -Type File -Force
 Add this near the end:
 
 ```powershell
-prompto init pwsh --config ~/.config/prompto/config.yaml | Invoke-Expression
+prompto init --config ~/.config/prompto/config.yaml | Invoke-Expression
 ```
 
 Reload the profile:
@@ -113,16 +116,16 @@ Reload the profile:
 If local script execution is restricted, use `--eval`:
 
 ```powershell
-prompto init pwsh --config ~/.config/prompto/config.yaml --eval | Invoke-Expression
+prompto init --config ~/.config/prompto/config.yaml --eval | Invoke-Expression
 ```
 
 `--eval` is slower because it emits the full script instead of reusing the cached generated file.
 
 ## Useful Flags
 
-- `--config <path>`: use a specific local config file.
-- `--print`: print the init script instead of returning the wrapper command.
-- `--debug`: write the generated script and print init diagnostics.
+- `--config <path>`: use a specific config file.
+- `--print`: print the init script instead of the wrapper command.
+- `--debug`: print init diagnostics and keep the generated script visible.
 - `--strict`: prefer a path that resolves through the executable name instead of the full path.
 - `--eval`: PowerShell-specific fallback for stricter execution environments.
 

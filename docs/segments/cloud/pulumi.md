@@ -1,7 +1,4 @@
----
-title: Pulumi
-description: Display the currently active Pulumi logged-in user, url and stack.
----
+# Pulumi
 
 ## Segment Type
 

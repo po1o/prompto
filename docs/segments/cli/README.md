@@ -1,7 +1,4 @@
----
-title: Cli Segments
-description: Segment reference pages for the cli category.
----
+# Cli Segments
 
 ## Pages
 
