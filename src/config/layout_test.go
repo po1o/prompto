@@ -180,6 +180,23 @@ custom:
 	assert.ErrorContains(t, err, "unsupported segment type")
 }
 
+func TestParseLayoutYAMLReturnsErrorForUnsupportedTimeFormat(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["time"]
+
+time:
+  type: "time"
+  options:
+    time_format: "RFC3339"
+`
+
+	_, err := ParseLayoutYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "unsupported time_format")
+	assert.ErrorContains(t, err, "RFC3339")
+}
+
 func TestParseLayoutYAMLReturnsErrorWhenTypeCannotBeInferred(t *testing.T) {
 	raw := `
 prompt:

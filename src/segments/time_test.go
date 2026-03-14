@@ -1,6 +1,10 @@
 package segments
 
 import (
+	"bufio"
+	"os"
+	"path/filepath"
+	libruntime "runtime"
 	"strings"
 	"testing"
 	"time"
@@ -73,6 +77,17 @@ func TestTimeCurrentDateDisplayForZsh(t *testing.T) {
 	assert.Equal(t, "%D{%H:%M}", timeSegment.CurrentDate)
 }
 
+func TestSupportsTimeFormat(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, SupportsTimeFormat("15:04:05"))
+	assert.True(t, SupportsTimeFormat("3:04 PM"))
+	assert.True(t, SupportsTimeFormat("2 Jan, Monday"))
+	assert.True(t, SupportsTimeFormat("DateTime"))
+	assert.False(t, SupportsTimeFormat("RFC3339"))
+	assert.False(t, SupportsTimeFormat("Monday <#fff>at</> 3:04 PM"))
+}
+
 func TestTimeCurrentDateDisplayForBash(t *testing.T) {
 	env := new(mock.Environment)
 	env.On("Shell").Return(shell.BASH)
@@ -120,15 +135,28 @@ func TestGoLayoutToStrftime(t *testing.T) {
 			ok:       true,
 		},
 		{
+			name:     "unpadded 12 hour",
+			layout:   "3:04 PM",
+			expected: "%-I:%M %p",
+			ok:       true,
+		},
+		{
+			name:     "unpadded day",
+			layout:   "2 Jan, Monday",
+			expected: "%-d %b, %A",
+			ok:       true,
+		},
+		{
 			name:     "date time zone",
 			layout:   "Mon Jan _2 15:04:05 MST 2006 -0700",
 			expected: "%a %b %e %H:%M:%S %Z %Y %z",
 			ok:       true,
 		},
 		{
-			name:   "kitchen unsupported",
-			layout: time.Kitchen,
-			ok:     false,
+			name:     "kitchen supported",
+			layout:   time.Kitchen,
+			expected: "%-I:%M%p",
+			ok:       true,
 		},
 		{
 			name:   "rfc3339 unsupported",
@@ -149,22 +177,6 @@ func TestGoLayoutToStrftime(t *testing.T) {
 			assert.Equal(t, tc.expected, actual)
 		})
 	}
-}
-
-func TestTimeCurrentDateFallsBackToRenderedValueWhenLayoutIsNotTranslatable(t *testing.T) {
-	t.Parallel()
-
-	lastDate := time.Date(2026, 3, 7, 15, 4, 5, 0, time.UTC)
-	env := new(mock.Environment)
-	env.On("Shell").Return(shell.ZSH)
-
-	timeSegment := &Time{LastDate: lastDate}
-	timeSegment.Init(options.Map{
-		TimeFormat: "Kitchen",
-	}, env)
-
-	assert.True(t, timeSegment.Enabled())
-	assert.Equal(t, lastDate.Format(time.Kitchen), timeSegment.CurrentDate)
 }
 
 func TestTimeCurrentDateUsesTimeFormatConstantWhenTranslatable(t *testing.T) {
@@ -196,4 +208,46 @@ func TestTimeLastDateKeepsRenderedTimestamp(t *testing.T) {
 
 	assert.True(t, timeSegment.Enabled())
 	assert.Equal(t, lastDate, timeSegment.LastDate)
+}
+
+func TestBundledThemesUseSupportedTimeFormats(t *testing.T) {
+	t.Parallel()
+
+	_, filename, _, ok := libruntime.Caller(0)
+	assert.True(t, ok)
+
+	themeDir := filepath.Clean(filepath.Join(filepath.Dir(filename), "..", "..", "themes"))
+	entries, err := os.ReadDir(themeDir)
+	assert.NoError(t, err)
+
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".yaml" {
+			continue
+		}
+
+		filePath := filepath.Join(themeDir, entry.Name())
+		file, err := os.Open(filePath)
+		assert.NoError(t, err, filePath)
+		if err != nil {
+			continue
+		}
+
+		func() {
+			defer file.Close()
+
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				line := strings.TrimSpace(scanner.Text())
+				if !strings.HasPrefix(line, "time_format:") {
+					continue
+				}
+
+				format := strings.TrimSpace(strings.TrimPrefix(line, "time_format:"))
+				format = strings.Trim(format, `"`)
+				assert.True(t, SupportsTimeFormat(format), "%s uses unsupported time_format %q", entry.Name(), format)
+			}
+
+			assert.NoError(t, scanner.Err(), filePath)
+		}()
+	}
 }

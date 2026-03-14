@@ -50,8 +50,7 @@ time:
   - Description: The time the previous command finished.
 - `.CurrentDate`
   - Type: `string`
-  - Description: The time the current command started. When `time_format` cannot be followed exactly for the
-    current command, this falls back to the same formatted value as `.LastDate`.
+  - Description: The time the current command started.
 
 ## Behavior Difference
 
@@ -120,75 +119,87 @@ time:
 
 This distinction matters most for transient prompts, because they are shown after you press Enter.
 
-## Format Restrictions For `.CurrentDate`
+## Format Rules
 
-`.CurrentDate` can only follow `time_format` exactly when the format uses this supported subset of Go layout tokens,
-plus literal separators such as `:`, `-`, `/`, spaces, and `T`:
+`.LastDate` and `.CurrentDate` share the same supported `time_format`.
+
+Supported Go layout tokens:
 
 - `2006`, `06`
 - `January`, `Jan`
 - `01`
-- `02`, `_2`
+- `02`, `_2`, `2`
 - `Monday`, `Mon`
-- `15`, `03`
+- `15`, `03`, `3`
 - `04`
 - `05`
 - `PM`
 - `MST`
 - `-0700`
 
-These formats therefore work well with `.CurrentDate`:
+Plain literal text and separators such as spaces, `:`, `-`, `/`, `@`, `|`, `(`, `)`, and icons are also allowed.
 
-- `15:04:05`
-- `2006-01-02 15:04:05`
-- `Mon Jan _2 15:04:05 MST 2006`
+Prompt markup is not part of `time_format`.
+If you want colored text such as `<#fff>at</>`, put it in the segment template instead.
+
+Supported predefined constants:
+
+- `Layout`
+- `ANSIC`
+- `UnixDate`
+- `RubyDate`
+- `RFC822`
+- `RFC822Z`
+- `RFC850`
+- `RFC1123`
+- `RFC1123Z`
+- `Kitchen`
+- `Stamp`
 - `DateTime`
 - `DateOnly`
 - `TimeOnly`
 
-These do not have an exact current-command translation and therefore fall back to the same rendered value as
-`{{ .LastDate | date .Format }}`:
+Unsupported formats fail config validation.
 
-- `1`, `2`, `3`, `4`, `5`
+Common unsupported examples:
+
+- `1`, `4`, `5`
 - `pm`
 - fractional seconds such as `.000` or `.999999999`
 - timezone forms `-07`, `-07:00`, `Z0700`, `Z07:00`
-- predefined formats such as `Kitchen`, `RFC3339`, `RFC3339Nano`, `StampMilli`, `StampMicro`, `StampNano`
+- predefined formats such as `RFC3339`, `RFC3339Nano`, `StampMilli`, `StampMicro`, `StampNano`
+- prompt markup such as `<#fff>...`
 
 ## Syntax
 
-### Formats
-
-Follows the [golang datetime standard][format]:
+### Supported Tokens
 
 - **Year**
   - Format: `06`, `2006`
 - **Month**
-  - Format: `01`, `1`, `Jan`, `January`
+  - Format: `01`, `Jan`, `January`
 - **Day**
-  - Format: `02`, `2`, `_2` (width two, right justified)
+  - Format: `02`, `_2` (width two, right justified), `2`
 - **Weekday**
   - Format: `Mon`, `Monday`
 - **Hours**
   - Format: `03`, `3`, `15`
 - **Minutes**
-  - Format: `04`, `4`
+  - Format: `04`
 - **Seconds**
-  - Format: `05`, `5`
-- **ms μs ns**
-  - Format: `.000`, `.000000`, `.000000000`
-- **ms μs ns** (trailing zeros removed)
-  - Format: `.999`, `.999999`, `.999999999`
+  - Format: `05`
 - **am/pm**
-  - Format: `PM`, `pm`
+  - Format: `PM`
 - **Timezone**
   - Format: `MST`
 - **Offset**
-  - Format: `-0700`, `-07`, `-07:00`, `Z0700`, `Z07:00`
+  - Format: `-0700`
+
+Other plain characters in `time_format` are treated as literal text.
 
 ### Predefined Formats
 
-The following predefined date and timestamp [format constants][format-constants] are also available:
+The following predefined date and timestamp [format constants][format-constants] are supported:
 
 - **Layout**
   - Format: `01/02 03:04:05PM '06 -0700`
@@ -208,20 +219,10 @@ The following predefined date and timestamp [format constants][format-constants]
   - Format: `Mon, 02 Jan 2006 15:04:05 MST`
 - **RFC1123Z**
   - Format: `Mon, 02 Jan 2006 15:04:05 -0700`
-- **RFC3339**
-  - Format: `2006-01-02T15:04:05Z07:00`
-- **RFC3339Nano**
-  - Format: `2006-01-02T15:04:05.999999999Z07:00`
 - **Kitchen**
   - Format: `3:04PM`
 - **Stamp**
   - Format: `Jan _2 15:04:05`
-- **StampMilli**
-  - Format: `Jan _2 15:04:05.000`
-- **StampMicro**
-  - Format: `Jan _2 15:04:05.000000`
-- **StampNano**
-  - Format: `Jan _2 15:04:05.000000000`
 - **DateTime**
   - Format: `2006-01-02 15:04:05`
 - **DateOnly**
@@ -250,6 +251,5 @@ time:
     time_format: "15:04:05"
 ```
 
-[format]: https://yourbasic.org/golang/format-parse-string-time-date-example/
 [format-constants]: https://golang.org/pkg/time/#pkg-constants
 [sprig-date]: https://masterminds.github.io/sprig/date.html

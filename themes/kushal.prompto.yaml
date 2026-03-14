@@ -152,9 +152,9 @@ text.2:
 time:
     foreground: '#F2D3B6'
     options:
-        time_format: <#D6DEEB> 15:04:05</> <#79DFE1>|</>  2 Jan, Monday
+        time_format: "15:04:05"
     style: plain
-    template: '{{ .LastDate | date .Format }} <#79DFE1>|</>'
+    template: '<#D6DEEB></> {{ .LastDate | date .Format }} <#79DFE1>|</>  {{ .LastDate | date "2 Jan, Monday" }} <#79DFE1>|</>'
 transient:
     - segments:
         - text.transient

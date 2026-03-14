@@ -43,6 +43,11 @@ func TestPwshInitDecodesEscapedRenderOutput(t *testing.T) {
 	assert.Contains(t, pwshInit, "$text = Expand-PromptoRenderText")
 }
 
+func TestPwshInitSupportsUnpaddedClockTokens(t *testing.T) {
+	assert.Contains(t, pwshInit, "Replace('%-d', '__PROMPTO_DAY__%d__PROMPTO_END__')")
+	assert.Contains(t, pwshInit, "Replace('%-I', '__PROMPTO_HOUR__%I__PROMPTO_END__')")
+}
+
 func TestQuotePwshOrElvishStr(t *testing.T) {
 	tests := []struct {
 		str      string

@@ -9,6 +9,7 @@ import (
 
 	"github.com/po1o/prompto/src/color"
 	configmaps "github.com/po1o/prompto/src/maps"
+	"github.com/po1o/prompto/src/segments"
 	"github.com/po1o/prompto/src/terminal"
 	yaml "go.yaml.in/yaml/v3"
 )
@@ -501,9 +502,30 @@ func decodeLayoutSegmentTable(name string, raw map[string]any, defaultType Segme
 		segment.Alias = name
 	}
 
+	if err := validateSegmentOptions(&segment); err != nil {
+		return err
+	}
+
 	segmentsByName[name] = &segment
 
 	return nil
+}
+
+func validateSegmentOptions(segment *Segment) error {
+	if segment == nil {
+		return nil
+	}
+
+	if segment.Type != TIME {
+		return nil
+	}
+
+	format := segment.Options.String(segments.TimeFormat, "15:04:05")
+	if segments.SupportsTimeFormat(format) {
+		return nil
+	}
+
+	return fmt.Errorf("segment %s uses unsupported time_format %q", segment.Alias, format)
 }
 
 func normalizeSegmentSeparators(raw map[string]any, name string) error {

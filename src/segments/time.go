@@ -22,13 +22,15 @@ const (
 	TimeFormat options.Option = "time_format"
 )
 
+const defaultTimeFormat = "15:04:05"
+
 func (t *Time) Template() string {
 	return "{{ .LastDate | date .Format }}"
 }
 
 func (t *Time) Enabled() bool {
-	formatInput := t.options.String(TimeFormat, "15:04:05")
-	t.Format = t.getTimeFormat(formatInput)
+	formatInput := t.options.String(TimeFormat, defaultTimeFormat)
+	t.Format = ResolveTimeFormat(formatInput)
 
 	if t.LastDate.IsZero() {
 		t.LastDate = time.Now()
@@ -65,9 +67,9 @@ var timeFormatLookup = map[string]string{
 	"TimeOnly":    time.TimeOnly,    // "15:04:05"
 }
 
-// getTimeFormat returns the time format constant if the input matches a known format name,
-// otherwise returns the input unchanged
-func (t *Time) getTimeFormat(format string) string {
+// ResolveTimeFormat returns the resolved Go time layout when the input matches a supported named format.
+// Otherwise it returns the input unchanged.
+func ResolveTimeFormat(format string) string {
 	if timeFormat, exists := timeFormatLookup[format]; exists {
 		return timeFormat
 	}
@@ -112,8 +114,10 @@ var currentDateTokens = []currentDateToken{
 	{goLayout: "_2", strftime: "%e"},
 	{goLayout: "15", strftime: "%H"},
 	{goLayout: "03", strftime: "%I"},
+	{goLayout: "3", strftime: "%-I"},
 	{goLayout: "PM", strftime: "%p"},
 	{goLayout: "02", strftime: "%d"},
+	{goLayout: "2", strftime: "%-d"},
 	{goLayout: "01", strftime: "%m"},
 	{goLayout: "06", strftime: "%y"},
 	{goLayout: "05", strftime: "%S"},
@@ -133,10 +137,19 @@ var unsupportedCurrentDateTokens = []string{
 	"-07",
 	"pm",
 	"1",
-	"2",
-	"3",
 	"4",
 	"5",
+}
+
+func SupportsTimeFormat(format string) bool {
+	format = ResolveTimeFormat(format)
+
+	if strings.ContainsAny(format, "<>") {
+		return false
+	}
+
+	_, ok := goLayoutToStrftime(format)
+	return ok
 }
 
 func goLayoutToStrftime(layout string) (string, bool) {

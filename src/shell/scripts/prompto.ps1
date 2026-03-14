@@ -271,7 +271,13 @@ New-Module -Name "prompto-core" -ScriptBlock {
                 param($match)
                 $format = $match.Groups[1].Value
                 try {
-                    Get-Date -UFormat $format
+                    $format = $format.Replace('%-d', '__PROMPTO_DAY__%d__PROMPTO_END__')
+                    $format = $format.Replace('%-I', '__PROMPTO_HOUR__%I__PROMPTO_END__')
+
+                    $value = Get-Date -UFormat $format
+                    $value = [Regex]::Replace($value, '__PROMPTO_DAY__0?([0-9]+)__PROMPTO_END__', '$1')
+                    $value = [Regex]::Replace($value, '__PROMPTO_HOUR__0?([0-9]+)__PROMPTO_END__', '$1')
+                    $value
                 }
                 catch {
                     Get-Date -Format "HH:mm:ss"

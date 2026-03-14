@@ -71,10 +71,8 @@ text:
     style: plain
 time:
     foreground: '#BBC4B9'
-    options:
-        time_format: Monday <#fff>at</> 3:04 PM
     style: diamond
-    template: ' {{ .LastDate | date .Format }} '
+    template: ' {{ .LastDate | date "Monday" }} <#fff>at</> {{ .LastDate | date "3:04 PM" }} '
 transient:
     - segments:
         - text.transient
