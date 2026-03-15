@@ -1,19 +1,8 @@
-<!-- markdownlint-disable MD033 MD041 -->
-<table>
-  <tr>
-    <td width="140">
-      <img
-        src="https://raw.githubusercontent.com/po1o/prompto/main/.github/assets/prompto-logo_256.png"
-        alt="prompto logo"
-        width="128"
-      >
-    </td>
-    <td width="100%" align="center">
-      <h1>prompto</h1>
-    </td>
-  </tr>
-</table>
-<!-- markdownlint-enable MD033 MD041 -->
+<!-- markdownlint-disable MD041 -->
+![prompto logo](./.github/assets/prompto-logo_256.png)
+<!-- markdownlint-enable MD041 -->
+
+# prompto
 
 ## What This Is
 
