@@ -8,4 +8,14 @@ concurrency:
 
 jobs:
   commitlint:
-    uses: jandedobbeleer/workflows/.github/workflows/commits.yml@main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit messages
+        uses: wagoid/commitlint-github-action@8c4f58e1a6bc0773ec4081ef08d1b7e9fe15a779
+        with:
+          configFile: .commitlintrc.yml

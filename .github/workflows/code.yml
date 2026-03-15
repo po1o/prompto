@@ -4,7 +4,6 @@ on:
       - 'README.md'
       - 'CONTRIBUTING.md'
       - 'COPYING'
-      - 'website/**'
       - '.github/*.md'
       - '.github/FUNDING.yml'
 
@@ -14,30 +13,92 @@ concurrency:
 
 name: Validate Code
 jobs:
-  test:
+  validate-unix:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            shell: bash
+          - os: macos-latest
+            shell: zsh
     runs-on: ${{ matrix.os }}
     defaults:
       run:
+        shell: ${{ matrix.shell }}
         working-directory: ${{ github.workspace }}/src
     steps:
     - name: Checkout code
       uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
     - name: Install Go 🗳
       uses: ./.github/workflows/composite/bootstrap-go
+    - name: Install Protobuf 🧬
+      uses: ./.github/workflows/composite/bootstrap-protobuf
+    - name: Generate Code
+      run: go generate ./...
+    - name: Verify Generated Code
+      run: |
+        if ! git diff --exit-code -- .; then
+          git --no-pager diff --stat
+          echo "generated files are out of date"
+          exit 1
+        fi
     - name: Golang CI
       uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20
       with:
         working-directory: src
     - name: Fieldalignment
       run: |
+        export PATH="$(go env GOPATH)/bin:$PATH"
         go install golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment@latest
-        fieldalignment "./..."
+        go list ./... | grep -v '/daemon/ipc$' | xargs fieldalignment
     - name: Modernize
       run: |
+        export PATH="$(go env GOPATH)/bin:$PATH"
         go install golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest
-        modernize "./..."
+        go list ./... | grep -v '/daemon/ipc$' | xargs modernize
     - name: Unit Tests
-      run: go test -v ./...
+      run: go test -count=1 -v ./...
+
+  validate-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: ${{ github.workspace }}/src
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+    - name: Install Go 🗳
+      uses: ./.github/workflows/composite/bootstrap-go
+    - name: Install Protobuf 🧬
+      uses: ./.github/workflows/composite/bootstrap-protobuf
+    - name: Generate Code
+      run: go generate ./...
+    - name: Verify Generated Code
+      run: |
+        git diff --quiet -- .
+        if ($LASTEXITCODE -ne 0) {
+          git --no-pager diff --stat
+          Write-Host "generated files are out of date"
+          exit 1
+        }
+    - name: Golang CI
+      uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20
+      with:
+        working-directory: src
+    - name: Fieldalignment
+      run: |
+        $toolDir = Join-Path (go env GOPATH) 'bin'
+        $env:PATH = "$toolDir$([IO.Path]::PathSeparator)$env:PATH"
+        go install golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment@latest
+        $packages = go list ./... | Where-Object { $_ -notmatch '/daemon/ipc$' }
+        $packages | ForEach-Object { fieldalignment $_ }
+    - name: Modernize
+      run: |
+        $toolDir = Join-Path (go env GOPATH) 'bin'
+        $env:PATH = "$toolDir$([IO.Path]::PathSeparator)$env:PATH"
+        go install golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest
+        $packages = go list ./... | Where-Object { $_ -notmatch '/daemon/ipc$' }
+        $packages | ForEach-Object { modernize $_ }
+    - name: Unit Tests
+      run: go test -count=1 -v ./...

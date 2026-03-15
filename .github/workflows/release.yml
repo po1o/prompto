@@ -2,178 +2,63 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - "src/**"
-      - "packages/**"
-      - ".github/workflows/**"
+    tags:
+      - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  changelog:
+  release:
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.changelog.outputs.version }}
-      body: ${{ steps.changelog.outputs.clean_changelog }}
-      tag: ${{ steps.changelog.outputs.tag }}
-      skipped: ${{ steps.changelog.outputs.skipped }}
     steps:
       - name: Checkout code 👋
         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
-      - name: Create changelog ✍️
-        id: changelog
-        uses: TriPSs/conventional-changelog-action@84dadaf2c367cb52af02737cd9c7e888807219e7
         with:
-          github-token: ${{ secrets.github_token }}
-          skip-version-file: "true"
-          output-file: "false"
-          skip-commit: "true"
-          skip-on-empty: "true"
-          skip-tag: "true"
+          fetch-depth: 0
 
-  artifacts:
-    needs: changelog
-    if: ${{ needs.changelog.outputs.skipped == 'false' }}
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: pwsh
-        working-directory: ${{ github.workspace }}/build
-    steps:
-      - name: Checkout code 👋
-        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
       - name: Install Go 🗳
         uses: ./.github/workflows/composite/bootstrap-go
-      - name: Pre Build 😸
-        env:
-          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+      - name: Install Protobuf 🧬
+        uses: ./.github/workflows/composite/bootstrap-protobuf
+      - name: Generate Code
+        working-directory: ${{ github.workspace }}/src
+        run: go generate ./...
+      - name: Verify Generated Code
+        working-directory: ${{ github.workspace }}/src
         run: |
-          ./pre.ps1 -Version ${{ needs.changelog.outputs.version }} -SDKVersion "10.0.26100.0"
+          if ! git diff --exit-code -- .; then
+            git --no-pager diff --stat
+            echo "generated files are out of date"
+            exit 1
+          fi
+      - name: Golang CI
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20
+        with:
+          working-directory: src
+      - name: Fieldalignment
+        working-directory: ${{ github.workspace }}/src
+        run: |
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          go install golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment@latest
+          go list ./... | grep -v '/daemon/ipc$' | xargs fieldalignment
+      - name: Modernize
+        working-directory: ${{ github.workspace }}/src
+        run: |
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          go install golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest
+          go list ./... | grep -v '/daemon/ipc$' | xargs modernize
+
       - name: Run GoReleaser 🚀
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
         with:
           distribution: goreleaser
           version: v2.3.2
-          args: release --clean --skip publish
+          args: release --clean
           workdir: src
         env:
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      - name: Post Build 🤐
-        run: |
-          ./post.ps1
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-        with:
-          name: build-artifacts
-          path: |
-            src/dist/prompto-*
-            src/dist/themes.*
-            src/dist/checksums.*
-  msi:
-    needs:
-      - changelog
-      - artifacts
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        arch: [x64, arm64]
-    defaults:
-      run:
-        shell: pwsh
-        working-directory: ${{ github.workspace }}/packages/msi
-    steps:
-      - name: Checkout code 👋
-        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
-        with:
-          name: build-artifacts
-          path: dist
-      - name: Install Wix Toolset 🛠
-        run: dotnet tool install --global wix
-      - name: Build installer 📦
-        id: build
-        env:
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        run: |
-          $version = '${{ needs.changelog.outputs.version }}'.TrimStart("v")
-          ./build.ps1 -Architecture ${{ matrix.arch }}  -Version $version -Copy -Sign -SDKVersion "10.0.26100.0"
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-        with:
-          name: msi-artifact-${{ matrix.arch }}
-          path: |
-            packages/msi/out/install-${{ matrix.arch }}.msi
-            packages/msi/out/install-${{ matrix.arch }}.msix
-  release:
-    runs-on: ubuntu-latest
-    needs:
-      - changelog
-      - artifacts
-      - msi
-    steps:
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
-        with:
-          merge-multiple: true
-      - name: Upload version file
-        env:
-          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.CDN_CONNECTIONSTRING }}
-        run: |
-          echo v${{ needs.changelog.outputs.version }} > version.txt
-          az storage blob upload-batch --destination releases/v${{ needs.changelog.outputs.version }} --source .
-          az storage blob upload-batch --destination releases/latest --overwrite true --source .
-      - name: Release 🎓
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
-        with:
-          tag_name: ${{ needs.changelog.outputs.tag }}
-          body: ${{ needs.changelog.outputs.body }}
-          fail_on_unmatched_files: true
-          token: ${{ secrets.GH_PAT }}
-          files: |
-            *
-  winget:
-    runs-on: windows-latest
-    needs:
-      - changelog
-      - release
-    env:
-      WINGETCREATE_TOKEN: ${{ secrets.WINGETCREATE_TOKEN }}
-    steps:
-    - name: Create manifest and submit PR 📦
-      shell: pwsh
-      run: |
-        Write-Host "Preparing to submit to WinGet repository..." -ForegroundColor Green
-
-        # Install the latest wingetcreate exe
-        # Need to do things this way, see https://github.com/PowerShell/PowerShell/issues/13138
-        Write-Verbose "Importing Appx module using Windows PowerShell compatibility"
-        Import-Module Appx -UseWindowsPowerShell -ErrorAction Stop
-
-        # Download and install Winget-Create msixbundle
-        $appxBundleFile = Join-Path -Path $env:TEMP -ChildPath "wingetcreate.msixbundle"
-        Write-Verbose "Downloading wingetcreate to: $appxBundleFile"
-
-        Invoke-WebRequest -Uri "https://aka.ms/wingetcreate/latest/msixbundle" -OutFile $appxBundleFile -ErrorAction Stop
-        Add-AppxPackage -Path $appxBundleFile -ErrorAction Stop
-
-        Write-Verbose "Successfully installed wingetcreate"
-
-        # Submit the PR to WinGet repository
-        Write-Host "Submitting pull request to WinGet repository..." -ForegroundColor Green
-
-        $version = "${{ needs.changelog.outputs.tag }}"
-        $version = $version.TrimStart('v')
-
-        $urls = @(
-            "https://github.com/po1o/prompto/releases/download/v$version/install-x64.msi|x64",
-            "https://github.com/po1o/prompto/releases/download/v$version/install-x64.msix|x64",
-            "https://github.com/po1o/prompto/releases/download/v$version/install-arm64.msi|arm64",
-            "https://github.com/po1o/prompto/releases/download/v$version/install-arm64.msix|arm64"
-        )
-
-        wingetcreate update JanDeDobbeleer.OhMyPosh --version $version --token $env:WINGETCREATE_TOKEN --submit --urls $urls
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

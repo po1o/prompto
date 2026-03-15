@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-action.json
+name: "Setup Protobuf"
+description: "Install protoc and the Go protobuf generators used by go generate"
+runs:
+  using: "composite"
+  steps:
+    - if: runner.os != 'Windows'
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        PROTOC_VERSION=33.4
+        PROTOC_DIR="$RUNNER_TEMP/protoc"
+
+        case "${RUNNER_OS}" in
+          Linux)
+            PROTOC_ARCHIVE="protoc-${PROTOC_VERSION}-linux-x86_64.zip"
+            ;;
+          macOS)
+            PROTOC_ARCHIVE="protoc-${PROTOC_VERSION}-osx-universal_binary.zip"
+            ;;
+          *)
+            echo "unsupported runner OS: ${RUNNER_OS}"
+            exit 1
+            ;;
+        esac
+
+        curl -fsSL -o "$RUNNER_TEMP/protoc.zip" \
+          "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ARCHIVE}"
+        rm -rf "$PROTOC_DIR"
+        unzip -q "$RUNNER_TEMP/protoc.zip" -d "$PROTOC_DIR"
+
+        echo "$PROTOC_DIR/bin" >> "$GITHUB_PATH"
+        GOBIN="$PROTOC_DIR/bin" go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+        GOBIN="$PROTOC_DIR/bin" go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.1
+
+        "$PROTOC_DIR/bin/protoc" --version
+        "$PROTOC_DIR/bin/protoc-gen-go" --version
+        "$PROTOC_DIR/bin/protoc-gen-go-grpc" --version
+    - if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $protocVersion = '33.4'
+        $protocDir = Join-Path $env:RUNNER_TEMP 'protoc'
+        $archivePath = Join-Path $env:RUNNER_TEMP 'protoc.zip'
+
+        Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/protocolbuffers/protobuf/releases/download/v$protocVersion/protoc-$protocVersion-win64.zip" -OutFile $archivePath
+        if (Test-Path $protocDir) {
+          Remove-Item -Recurse -Force $protocDir
+        }
+        Expand-Archive -Path $archivePath -DestinationPath $protocDir -Force
+
+        $binDir = Join-Path $protocDir 'bin'
+        $binDir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+        $env:GOBIN = $binDir
+        go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
+        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.1
+
+        & (Join-Path $binDir 'protoc.exe') --version
+        & (Join-Path $binDir 'protoc-gen-go.exe') --version
+        & (Join-Path $binDir 'protoc-gen-go-grpc.exe') --version

@@ -1,21 +1,43 @@
 name: Homebrew
+
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version without the leading v
+        required: true
+        type: string
 
 jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-    - name: Notify Homebrew Repo 🙋🏾‍♀️
+    - name: Notify tap repository
       uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      env:
+        HOMEBREW_TAP_REPO: ${{ vars.HOMEBREW_TAP_REPO }}
+        RELEASE_VERSION: ${{ inputs.version }}
       with:
-        github-token: ${{ secrets.GH_PAT }}
+        github-token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         script: |
+          const tapRepo = process.env.HOMEBREW_TAP_REPO || `${context.repo.owner}/homebrew`;
+          const [owner, repo] = tapRepo.split('/');
+
+          if (!owner || !repo) {
+            throw new Error(`invalid tap repository: ${tapRepo}`);
+          }
+
+          const version = (process.env.RELEASE_VERSION || context.payload.release?.tag_name || '').replace(/^v/, '');
+          if (!version) {
+            throw new Error('could not determine release version');
+          }
+
           await github.request('POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches', {
-            owner: 'jandedobbeleer',
-            repo: 'homebrew-prompto',
+            owner,
+            repo,
             workflow_id: 'release.yml',
             ref: 'main',
-            inputs: {"version": process.env.GITHUB_REF.replace('refs/tags/v', '')}
-          })
+            inputs: { version },
+          });
