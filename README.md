@@ -19,7 +19,7 @@ Not pursuing [PR #7244](https://github.com/JanDeDobbeleer/oh-my-posh/pull/7244) 
 oh-my-posh has different goals: broad compatibility, a stable user experience, and a configuration model that serves a
 large existing user base.
 
-## Big Disclaimer
+## Disclaimer
 
 If you need a mature, broadly compatible, general-purpose, almost universal, top-notch prompt system, use [oh-my-posh](https://ohmyposh.dev/), not this fork.
 
