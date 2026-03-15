@@ -17,12 +17,23 @@ jobs:
       uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
     - name: Install Go 🗳
       uses: ./.github/workflows/composite/bootstrap-go
+    - name: Install Protobuf 🧬
+      uses: ./.github/workflows/composite/bootstrap-protobuf
+    - name: Generate Code
+      run: go generate ./...
+    - name: Verify Generated Code
+      run: |
+        if ! git diff --exit-code -- .; then
+          git --no-pager diff --stat
+          echo "generated files are out of date"
+          exit 1
+        fi
     - name: Check for unused dependencies
       run: |
         go mod tidy
-        if [ "$(git status | grep -c "nothing to commit, working tree clean")" -eq 1 ]; then
-          echo "Nothing to tidy"
-          exit 0
+        if ! git diff --exit-code -- go.mod go.sum; then
+          git --no-pager diff -- go.mod go.sum
+          echo "go mod tidy is needed"
+          exit 1
         fi
-        echo "Go mod tidy is needed"
-        exit 1
+        echo "Nothing to tidy"

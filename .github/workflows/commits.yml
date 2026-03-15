@@ -16,6 +16,6 @@ jobs:
           fetch-depth: 0
 
       - name: Validate commit messages
-        uses: wagoid/commitlint-github-action@8c4f58e1a6bc0773ec4081ef08d1b7e9fe15a779
+        uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed
         with:
           configFile: .commitlintrc.yml
