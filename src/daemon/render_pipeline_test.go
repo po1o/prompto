@@ -126,26 +126,30 @@ func TestActiveRenderNextHandlesNil(t *testing.T) {
 }
 
 func TestApplyRenderFlagsNonRepaintUpdatesWorkingDirectory(t *testing.T) {
+	firstPwd := filepath.Join(t.TempDir(), "first")
+	secondPwd := filepath.Join(t.TempDir(), "second")
 	term := &runtime.Terminal{}
-	term.Init(&runtime.Flags{PWD: "/tmp/first", VimMode: "insert"})
+	term.Init(&runtime.Flags{PWD: firstPwd, VimMode: "insert"})
 	engine := &prompt.Engine{Env: term}
 
-	applyRenderFlags(engine, &runtime.Flags{PWD: "/tmp/second", VimMode: "normal"}, false)
+	applyRenderFlags(engine, &runtime.Flags{PWD: secondPwd, VimMode: "normal"}, false)
 
-	require.Equal(t, "/tmp/second", term.Pwd())
-	require.Equal(t, "/tmp/second", term.Flags().PWD)
+	require.Equal(t, secondPwd, term.Pwd())
+	require.Equal(t, secondPwd, term.Flags().PWD)
 	require.Equal(t, "normal", term.Flags().VimMode)
 }
 
 func TestApplyRenderFlagsRepaintOnlyUpdatesVimMode(t *testing.T) {
+	firstPwd := filepath.Join(t.TempDir(), "first")
+	secondPwd := filepath.Join(t.TempDir(), "second")
 	term := &runtime.Terminal{}
-	term.Init(&runtime.Flags{PWD: "/tmp/first", VimMode: "insert"})
+	term.Init(&runtime.Flags{PWD: firstPwd, VimMode: "insert"})
 	engine := &prompt.Engine{Env: term}
 
-	applyRenderFlags(engine, &runtime.Flags{PWD: "/tmp/second", VimMode: "normal"}, true)
+	applyRenderFlags(engine, &runtime.Flags{PWD: secondPwd, VimMode: "normal"}, true)
 
-	require.Equal(t, "/tmp/first", term.Pwd())
-	require.Equal(t, "/tmp/first", term.Flags().PWD)
+	require.Equal(t, firstPwd, term.Pwd())
+	require.Equal(t, firstPwd, term.Flags().PWD)
 	require.Equal(t, "normal", term.Flags().VimMode)
 }
 
