@@ -2,7 +2,7 @@
 ![prompto logo](./.github/assets/prompto-logo_256.png)
 <!-- markdownlint-enable MD041 -->
 
-# prompto
+# Prompto
 
 ## What This Is
 
