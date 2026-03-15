@@ -29,7 +29,7 @@ func TestResolveConfigPathUsesRunningDaemonConfigWhenNoFlag(t *testing.T) {
 	previous := configFlag
 	configFlag = ""
 	stateHome := t.TempDir()
-	t.Setenv("XDG_STATE_HOME", stateHome)
+	setDaemonStateEnv(t, stateHome)
 	daemonConfigPath := filepath.Join(t.TempDir(), "daemon-config.yaml")
 
 	lockDir := filepath.Join(stateHome, "prompto")
@@ -144,4 +144,14 @@ func setDefaultConfigEnv(t *testing.T) {
 	t.Setenv("APPDATA", configHome)
 	t.Setenv("LOCALAPPDATA", configHome)
 	t.Setenv("USERPROFILE", configHome)
+}
+
+func setDaemonStateEnv(t *testing.T, stateHome string) {
+	t.Helper()
+
+	t.Setenv("XDG_STATE_HOME", stateHome)
+
+	if runtimelib.GOOS == "windows" {
+		t.Setenv("LOCALAPPDATA", stateHome)
+	}
 }
