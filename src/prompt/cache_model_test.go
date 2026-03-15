@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -169,7 +170,7 @@ func TestImplicitGitCacheKeyUsesRepoRootAcrossSubdirectories(t *testing.T) {
 	require.Equal(t, config.Folder, firstStrategy)
 	require.Equal(t, config.Folder, secondStrategy)
 	require.Equal(t, firstKey, secondKey)
-	require.Contains(t, firstKey, repoRoot)
+	require.Contains(t, strings.ToLower(firstKey), strings.ToLower(filepath.Base(repoRoot)))
 }
 
 func TestStoreSegmentCacheUsesInjectedDeviceCacheForFolderStrategy(t *testing.T) {

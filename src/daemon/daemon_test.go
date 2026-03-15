@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	libruntime "runtime"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -318,15 +317,22 @@ func startDetachedTestProcessPID(t *testing.T) int {
 
 	command, args := detachedProcessPIDCommand()
 	cmd := exec.CommandContext(context.Background(), command, args...)
-	output, err := cmd.Output()
+	err := cmd.Start()
 	require.NoError(t, err)
 
-	pidText := strings.TrimSpace(string(output))
-	pid, err := strconv.Atoi(pidText)
-	require.NoError(t, err)
-	require.Greater(t, pid, 0)
+	t.Cleanup(func() {
+		if cmd.Process == nil {
+			return
+		}
 
-	return pid
+		_ = cmd.Process.Kill()
+		_, _ = cmd.Process.Wait()
+	})
+
+	require.NotNil(t, cmd.Process)
+	require.Greater(t, cmd.Process.Pid, 0)
+
+	return cmd.Process.Pid
 }
 
 func detachedProcessPIDCommand() (string, []string) {
@@ -334,9 +340,9 @@ func detachedProcessPIDCommand() (string, []string) {
 		return "powershell", []string{
 			"-NoProfile",
 			"-Command",
-			"$p = Start-Process -FilePath powershell -ArgumentList '-NoProfile -Command Start-Sleep -Seconds 1' -PassThru; $p.Id",
+			"Start-Sleep -Seconds 1",
 		}
 	}
 
-	return "sh", []string{"-c", "sleep 1 & echo $!"}
+	return "sleep", []string{"1"}
 }
