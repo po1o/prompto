@@ -1,15 +1,12 @@
 # See here for image contents: https://github.com/devcontainers/images/blob/main/src/go/.devcontainer/Dockerfile
 
-# [Choice] Go version: 1, 1.24, 1.25, 1-trixie, 1.24-trixie, 1.25-trixie, 1-bookworm, 1.24-bookworm, 1.25-bookworm, 1-bullseye, 1.24-bullseye, 1.25-bullseye
-ARG VARIANT=1-trixie
+# [Choice] Go version: 1, 1.26, 1.25, 1-trixie, 1.26-trixie, 1.25-trixie, 1-bookworm, 1.26-bookworm, 1.25-bookworm
+ARG VARIANT=2-1.26-trixie
 FROM mcr.microsoft.com/vscode/devcontainers/go:${VARIANT}
-
-# [Choice] Node.js version: none, lts/*, 24, 22, 20
-ARG NODE_VERSION="none"
-RUN if [ "${NODE_VERSION}" != "none" ]; then su vscode -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
 
 # Install powershell
 ARG PS_VERSION="7.5.4"
+ARG PROTOC_VERSION="33.4"
 # powershell-7.5.4-linux-x64.tar.gz
 # powershell-7.5.4-linux-arm64.tar.gz
 RUN ARCH="$(dpkg --print-architecture)"; \
@@ -26,8 +23,6 @@ RUN ARCH="$(dpkg --print-architecture)"; \
     rm pwsh.tar.gz && \
     chmod +x /usr/local/pwsh/pwsh
 
-ENV PATH=$PATH:/usr/local/pwsh
-
 RUN echo 'deb http://download.opensuse.org/repositories/shells:/fish:/release:/4/Debian_13/ /' | tee /etc/apt/sources.list.d/shells:fish:release:4.list; \
     curl -fsSL https://download.opensuse.org/repositories/shells:fish:release:4/Debian_13/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/shells_fish_release_4.gpg > /dev/null; \
     apt-get update && export DEBIAN_FRONTEND=noninteractive \
@@ -35,22 +30,41 @@ RUN echo 'deb http://download.opensuse.org/repositories/shells:/fish:/release:/4
     fish \
     tmux \
     fzf \
+    unzip \
     && apt-get clean
 
 ARG USERNAME=vscode
 
-# NOTE: devcontainers are Linux-only at this time but when
-# Windows or Darwin is supported someone will need to improve
-# the code logic above.
+RUN ARCH="$(dpkg --print-architecture)"; \
+    case "${ARCH}" in \
+      amd64) PROTOC_ARCHIVE="protoc-${PROTOC_VERSION}-linux-x86_64.zip" ;; \
+      arm64) PROTOC_ARCHIVE="protoc-${PROTOC_VERSION}-linux-aarch_64.zip" ;; \
+      *) echo "unsupported architecture: ${ARCH}" && exit 1 ;; \
+    esac; \
+    mkdir -p /usr/local/protoc; \
+    wget -q "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/${PROTOC_ARCHIVE}" -O /tmp/protoc.zip; \
+    unzip -q /tmp/protoc.zip -d /usr/local/protoc; \
+    rm /tmp/protoc.zip
+
+ENV PATH=$PATH:/usr/local/pwsh:/usr/local/protoc/bin:/home/${USERNAME}/bin
+
+RUN GOBIN=/usr/local/protoc/bin go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11; \
+    GOBIN=/usr/local/protoc/bin go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.1; \
+    GOBIN=/usr/local/bin go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+    GOBIN=/usr/local/bin go install golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment@latest; \
+    GOBIN=/usr/local/bin go install golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest; \
+    protoc --version; \
+    protoc-gen-go --version; \
+    protoc-gen-go-grpc --version; \
+    golangci-lint version; \
+    fieldalignment -help >/dev/null; \
+    modernize -help >/dev/null
 
 # Setup a neat little PowerShell experience
 RUN pwsh -Command Install-Module prompto-git -Scope AllUsers -Force; \
     pwsh -Command Install-Module z -Scope AllUsers -Force; \
     pwsh -Command Install-Module PSFzf -Scope AllUsers -Force; \
     pwsh -Command Install-Module Terminal-Icons -Scope AllUsers -Force;
-
-# add the prompto path to the PATH variable
-ENV PATH="$PATH:/home/${USERNAME}/bin"
 
 # Deploy prompto prompt to Powershell:
 COPY Microsoft.PowerShell_profile.ps1 /home/${USERNAME}/.config/powershell/Microsoft.PowerShell_profile.ps1
@@ -75,6 +89,3 @@ RUN ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime
 
 # [Optional] Uncomment the next line to use go get to install anything else you need
 # RUN go get -x github.com/JanDeDobbeleer/battery
-
-# [Optional] Uncomment this line to install global node packages.
-# RUN su vscode -c "source /usr/local/share/nvm/nvm.sh && npm install -g <your-package-here>" 2>&1

@@ -5,16 +5,15 @@
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
-      // Update the VARIANT arg to pick a version of Go: 1, 1.24, 1.25
+      // Update the VARIANT arg to pick a version of Go: 1, 1.26, 1.25
       // Append -trixie, -bookworm or -bullseye to pin to an OS version.
-      "VARIANT": "2-1.25-trixie",
+      "VARIANT": "2-1.26-trixie",
 
       // Override me with your own timezone:
       "TZ": "UTC",
       // Use one of the "TZ database name" entries from:
       // https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
-      "NODE_VERSION": "lts/*",
       //Powershell version
       "PS_VERSION": "7.5.4"
     }
@@ -65,16 +64,10 @@
       "extensions": [
         "bmalehorn.vscode-fish",
         "davidanson.vscode-markdownlint",
-        "elves.elvish",
-        "esbenp.prettier-vscode",
         "github.vscode-pull-request-github",
         "golang.go",
-        "jnoortheen.xonsh",
-        "ms-azuretools.vscode-azurefunctions",
         "ms-vscode.powershell",
         "redhat.vscode-yaml",
-        "sumneko.lua",
-        "tamasfe.even-better-toml",
         "yzhang.markdown-all-in-one"
       ]
     }
@@ -84,5 +77,5 @@
   // This is running the same command as the VSCode Task 'devcontainer: rebuild prompto'
   // It Compiles *prompto* from this repo while **overwriting** your preinstalled stable release.'
   // Ideal for getting straight into developing & testing whilst using a devcontainer
-  "updateContentCommand": "cd src && go build -v -buildvcs=false -o /home/vscode/bin/prompto -ldflags \"-s -w -X 'github.com/po1o/prompto/src/build.Version=development-$(git --no-pager log -1 --pretty=%h-%s)' -extldflags '-static'\""
+  "updateContentCommand": "cd src && go generate ./... && go build -v -buildvcs=false -o /home/vscode/bin/prompto -ldflags \"-s -w -X 'github.com/po1o/prompto/src/build.Version=development-$(git --no-pager log -1 --pretty=%h-%s)' -extldflags '-static'\""
 }

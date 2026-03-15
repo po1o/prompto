@@ -26,7 +26,7 @@
     },
     {
       "type": "shell",
-      "command": "go",
+      "command": "go generate ./... && go build -v -buildvcs=false -o /home/vscode/bin/prompto -ldflags \"-s -w -X 'github.com/po1o/prompto/src/build.Version=development-$(git --no-pager log -1 --pretty=%h-%s)' -extldflags '-static'\"",
       "label": "devcontainer: rebuild prompto",
       "detail": "Build prompto for all shells when inside the devcontainer",
       "options": {
@@ -34,7 +34,7 @@
         "shell": {
           "executable": "bash",
           "args": [
-            "-c"
+            "-lc"
           ]
         },
         "statusbar": {
@@ -46,14 +46,7 @@
       },
       "group": "build",
       "problemMatcher": "$go",
-      "args": [
-        "build",
-        "-v",
-        "-o",
-        "/home/vscode/bin/prompto",
-        "-ldflags",
-        "\"-s -w -X 'github.com/po1o/prompto/src/build.Version=development-$(git --no-pager log -1 --pretty=%h-%s)' -extldflags '-static'\""
-      ]
+      "args": []
     },
     {
       "type": "npm",
