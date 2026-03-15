@@ -20,7 +20,7 @@ jobs:
           - os: ubuntu-latest
             shell: bash
           - os: macos-latest
-            shell: zsh
+            shell: /bin/zsh --no-rcs -eo pipefail {0}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
