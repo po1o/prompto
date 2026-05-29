@@ -56,6 +56,71 @@ func (registry *EngineRegistry) GetOrCreateEngine(sessionID string, flags *runti
 	return engine
 }
 
+// RenderHandle is one render generation for a session: its engine, the
+// context that is cancelled when the generation is superseded, and the
+// render ID used to match updates and completions.
+type RenderHandle struct {
+	// Context is cancelled when this render generation is superseded.
+	Context    context.Context
+	Engine     *prompt.Engine
+	registry   *EngineRegistry
+	sessionID  string
+	renderID   uint64
+	Reattached bool
+}
+
+func (h *RenderHandle) Complete() {
+	if h == nil || h.registry == nil {
+		return
+	}
+
+	h.registry.CancelRenderIf(h.sessionID, h.renderID)
+}
+
+func (h *RenderHandle) RenderID() uint64 {
+	if h == nil {
+		return 0
+	}
+
+	return h.renderID
+}
+
+// StartRender begins, or for a soft cancel reattaches to, the active render
+// for a session. A soft cancel (vim toggle) reuses the in-flight render and
+// its context so the running computation is preserved; a hard cancel (new
+// command) aborts the prior render and starts a fresh generation. See
+// cancel.go and ARCHITECTURE.md ("The cancel model").
+func (registry *EngineRegistry) StartRender(sessionID string, flags *runtime.Flags, kind CancelKind) *RenderHandle {
+	engine := registry.GetOrCreateEngine(sessionID, flags)
+
+	if kind.Repaint() {
+		if ctx, renderID, ok := registry.GetActiveRender(sessionID); ok {
+			return &RenderHandle{
+				Context:    ctx,
+				Engine:     engine,
+				registry:   registry,
+				sessionID:  sessionID,
+				renderID:   renderID,
+				Reattached: true,
+			}
+		}
+	} else {
+		// A hard cancel aborts the prior generation before starting a new one.
+		registry.CancelActiveRender(sessionID)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	renderID, _ := registry.SetActiveRender(sessionID, ctx, cancel)
+	return &RenderHandle{
+		Context:    ctx,
+		Engine:     engine,
+		registry:   registry,
+		sessionID:  sessionID,
+		renderID:   renderID,
+		Reattached: false,
+	}
+}
+
 func (registry *EngineRegistry) SetActiveRenderCancel(sessionID string, cancel context.CancelFunc) {
 	_, _ = registry.SetActiveRender(sessionID, context.Background(), cancel)
 }
