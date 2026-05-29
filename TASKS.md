@@ -87,11 +87,11 @@ Universal acceptance gates (apply to EVERY task unless overridden):
 
 Each task = one PR. Sequential unless `[P]` marker present.
 
-### C1a. Introduce `CancelKind` and `RegistryContext` types (additive)
+### C1a. Introduce `CancelKind` and `RegistryContext` types (additive) — DONE 2026-05-29
 
-- **Acceptance:** New types defined in `src/daemon/registry.go`: `CancelKind` (enum: `CancelHard`, `CancelSoft`), `RegistryContext` (wraps context.Context with cancel-kind awareness). No existing callers migrated yet — purely additive. Doc comments explain the Hard/Soft model per `src/daemon/ARCHITECTURE.md`.
-- **Verify:** Universal gates + `go vet ./daemon/...`. Scenarios tests from B2 still green.
-- **Files:** `src/daemon/registry.go`, `src/daemon/registry_test.go` (add tests for new types).
+- **Acceptance:** New types defined in `src/daemon/cancel.go` (not `registry.go` — follows the `cancel.go` home defined in `ARCHITECTURE.md`): `CancelKind` (enum: `CancelHard`, `CancelSoft`), `RegistryContext` (embeds context.Context + Kind). Also `CancelKindForRepaint(bool)` (the single bool→kind boundary), `CancelKind.Repaint()`, `CancelKind.String()`, `WithCancelKind(ctx, kind)`. All exported so the additive-only commit stays `unused`-lint-clean; referenced by tests. No existing callers migrated.
+- **Verify:** Universal gates + `go vet ./daemon/...`. Scenarios tests from B2 still green. ✅ All passed (build, vet, lint 0 issues, fieldalignment, modernize, `-race`).
+- **Files:** `src/daemon/cancel.go` [NEW], `src/daemon/cancel_test.go` [NEW].
 - **Spec link:** SPEC Code Style example block; PLAN Phase C1.
 
 ### C1b. Migrate Registry internals to `CancelKind`
