@@ -94,40 +94,68 @@ Each task = one PR. Sequential unless `[P]` marker present.
 - **Files:** `src/daemon/cancel.go` [NEW], `src/daemon/cancel_test.go` [NEW].
 - **Spec link:** SPEC Code Style example block; PLAN Phase C1.
 
-### C1b. Migrate Registry internals to `CancelKind`
+### C1b / C1c / C1d — FOLDED INTO C2 (2026-05-29)
 
-- **Acceptance:** `Registry.Subscribe`, `Registry.Cancel`, and the internal `future` struct use `CancelKind`. External signatures unchanged where possible; if a signature must change, only the daemon-internal callers are touched in this PR.
-- **Verify:** Universal gates + scenarios tests green. No call sites outside `src/daemon/` changed.
-- **Files:** `src/daemon/registry.go`, `src/daemon/registry_test.go`.
-- **Spec link:** PLAN Phase C1.
+**Resequenced.** These tasks were written against a hypothetical registry API
+(`Subscribe`/`Cancel`/`future`) that does not exist. In the real code the
+`EngineRegistry` is cancel-kind-agnostic; the Hard/Soft decision lives in
+`coordinator.go`, and the `bool repaint` flows through the 5-layer tower
+(`Service → SessionRenderRuntime → RequestManager → RenderCoordinator →
+applyRenderFlags`) that C2 deletes. Threading `CancelKind` through doomed
+layers is throwaway work. Decision (human-approved): introduce `CancelKind`
+as the cancel signal **in the collapsed code**, as part of C2. C1d's original
+targets (`update_hub`/`binding`/`relay`) carry no repaint flag and need no
+migration — `update_binding.go` is dead code, deleted in C2-iii anyway.
 
-### C1c. Migrate `request_manager.go` to `CancelKind`
+### C2 — Collapse orchestration tower + wire CancelKind
 
-- **Acceptance:** `RequestManager` uses `CancelKind` to choose Hard vs Soft on cancel. The "is this a repaint?" check is now expressed as `CancelKind`, not a bool flag.
-- **Verify:** Universal gates + scenarios tests green. `git grep -n "repaint" src/daemon/` shows the new naming consistently.
-- **Files:** `src/daemon/request_manager.go`, `src/daemon/request_manager_test.go`, `src/daemon/registry.go` (only if interface tightening required).
-- **Spec link:** PLAN Phase C1.
+Replaces old C2a/C2b. The post-refactor boundary is already decided and
+documented in `ARCHITECTURE.md` (A2): `Daemon` absorbs `Service` +
+`RequestManager`; `RenderPipeline` absorbs `RenderCoordinator` +
+`SessionRenderRuntime`; `EngineRegistry` gains kind-aware entry points.
+Executed as ordered, individually-revertible sub-steps, each behavior-
+preserving and gated by the B2 scenario tests + full suite + `-race`.
 
-### C1d. Migrate `update_hub.go`, `update_binding.go`, `stream_relay.go` to `CancelKind`
+#### C2-i. Make `EngineRegistry` kind-aware; absorb `RenderCoordinator`
 
-- **Acceptance:** All three files honor `CancelKind` on cancellation paths. No `bool isRepaint` parameter survives. Cache writes are gated behind `ctx.Err() == nil` per the daemon-vim-mode-plan "Cache Safety" rule.
-- **Verify:** Universal gates + scenarios tests green. `git grep -n "isRepaint\|is_repaint" src/daemon/` returns nothing.
-- **Files:** `src/daemon/update_hub.go`, `src/daemon/update_binding.go`, `src/daemon/stream_relay.go`, plus their `_test.go` siblings.
-- **Spec link:** PLAN Phase C1.
+- **Acceptance:** `EngineRegistry` gains a kind-aware entry point that
+  encapsulates the hard-cancel-then-start vs soft-reattach branch currently
+  in `coordinator.go` (e.g. `StartRender(sessionID, flags, kind CancelKind)`
+  returning the render handle). `RenderCoordinator`'s logic moves onto the
+  registry; `coordinator.go` is deleted (its `RenderHandle` either moves to
+  registry or is replaced by the existing handle type). `RequestManager`
+  calls the new registry method with a `CancelKind` instead of `bool repaint`.
+- **Verify:** Universal gates + B2 scenarios green. `git grep -n 'repaint bool' src/daemon/registry.go src/daemon/request_manager.go` returns nothing.
+- **Files:** `src/daemon/registry.go`, `src/daemon/coordinator.go` [DELETE], `src/daemon/request_manager.go`, plus `_test.go` siblings (`coordinator_test.go` cases move to `registry_test.go`).
 
-### C2a. Decide and document Service/RenderPipeline/Coordinator boundaries
+#### C2-ii. Collapse `SessionRenderRuntime` + `RequestManager` into `RenderPipeline`
 
-- **Acceptance:** Update `src/daemon/ARCHITECTURE.md` "Core Components" section with the chosen post-refactor boundaries. Decision options written into the PR description: (a) absorb Coordinator into Service, (b) absorb into RenderPipeline, (c) keep three but rename. One chosen, justified, and approved by human before C2b.
-- **Verify:** Human approval on the PR. No code changes yet.
-- **Files:** `src/daemon/ARCHITECTURE.md`.
-- **Spec link:** PLAN Phase C2.
+- **Acceptance:** `RenderPipeline.Start` takes `CancelKind` (not `bool
+  repaint`) and owns what `SessionRenderRuntime` + `RequestManager` did
+  (engine resolution, ReloadGate gating, handle creation). `runtime.go` and
+  `request_manager.go` deleted; `SessionRenderHandle`/`RequestHandle` unified
+  with the existing `ActiveRender` type. `Service` calls the new pipeline.
+- **Verify:** Universal gates + B2 scenarios green. Net LoC in `src/daemon/` drops. Three handle types reduced to one.
+- **Files:** `src/daemon/render_pipeline.go`, `src/daemon/runtime.go` [DELETE], `src/daemon/request_manager.go` [DELETE], `src/daemon/service.go`, plus `_test.go` siblings.
 
-### C2b. Execute Service/RenderPipeline/Coordinator merge per C2a
+#### C2-iii. Collapse `Service` into `Daemon`; delete dead `update_binding.go`; route publish through `BindSegmentUpdates`
 
-- **Acceptance:** Code matches the boundary decision from C2a. Net file count in `src/daemon/` does not increase; net LoC stays flat or drops.
-- **Verify:** Universal gates + scenarios tests green. `wc -l src/daemon/*.go | tail -1` ≤ baseline.
-- **Files:** `src/daemon/service.go`, `src/daemon/render_pipeline.go`, `src/daemon/coordinator.go` (likely deleted or merged), plus their `_test.go` siblings.
-- **Spec link:** PLAN Phase C2.
+- **Acceptance:** `Service`'s methods move onto `Daemon` (the 1:1 wrapper from
+  A1/F3 collapses); `service.go` deleted. The inline `handle.Hub().Publish()`
+  calls in `render_pipeline.go` route through `BindSegmentUpdates` (per the
+  A1 dead-code decision: "use Bind, delete inline"). `RenderRequest` carries
+  `CancelKind`.
+- **Verify:** Universal gates + B2 scenarios green. `git grep -n 'NewService\|\*Service' src/daemon/` returns nothing.
+- **Files:** `src/daemon/daemon.go`, `src/daemon/service.go` [DELETE], `src/daemon/render_pipeline.go`, `src/daemon/update_binding.go`, plus `_test.go` siblings.
+
+#### C2-iv. Derive `CancelKind` once at the Server boundary
+
+- **Acceptance:** `server.go RenderPrompt` derives `CancelKind` from
+  `PromptRequest.GetRepaint()` via `CancelKindForRepaint` and passes it into
+  `Daemon.StartRender`. No `bool repaint` parameter survives anywhere in
+  `src/daemon/` (only the proto field + this single derivation point remain).
+- **Verify:** Universal gates + B2 scenarios green. `git grep -n 'repaint bool\|repaint:.*bool' src/daemon/` returns only the derivation site / proto-mapped field.
+- **Files:** `src/daemon/server.go`, `src/daemon/service.go`/`daemon.go` (signature), plus `_test.go` siblings.
 
 ### C3a. Extract OS-detection into `src/daemon/sessionid/` subpackage
 
