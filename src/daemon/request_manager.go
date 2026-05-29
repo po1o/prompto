@@ -34,8 +34,8 @@ func (h *RequestHandle) Complete() {
 type RequestManager struct {
 	// gate blocks new requests during reload and waits for active requests.
 	gate *ReloadGate
-	// coordinator handles session engine reuse + cancel/reattach behavior.
-	coordinator *RenderCoordinator
+	// registry handles session engine reuse + cancel/reattach behavior.
+	registry *EngineRegistry
 }
 
 func NewRequestManager(registry *EngineRegistry, gate *ReloadGate) *RequestManager {
@@ -44,14 +44,14 @@ func NewRequestManager(registry *EngineRegistry, gate *ReloadGate) *RequestManag
 	}
 
 	return &RequestManager{
-		gate:        gate,
-		coordinator: NewRenderCoordinator(registry),
+		gate:     gate,
+		registry: registry,
 	}
 }
 
 func (manager *RequestManager) StartRequest(sessionID string, flags *runtime.Flags, repaint bool) *RequestHandle {
 	release := manager.gate.StartRequest()
-	render := manager.coordinator.StartRender(sessionID, flags, repaint)
+	render := manager.registry.StartRender(sessionID, flags, CancelKindForRepaint(repaint))
 	return &RequestHandle{
 		Render:        render,
 		releaseActive: release,

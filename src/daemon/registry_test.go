@@ -64,3 +64,62 @@ func TestRemoveSessionCreatesNewEngineOnNextRequest(t *testing.T) {
 
 	require.NotSame(t, first, second)
 }
+
+func TestStartRenderSoftCancelReattachesToActiveContext(t *testing.T) {
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	})
+
+	first := registry.StartRender("session-a", &runtime.Flags{}, CancelHard)
+	second := registry.StartRender("session-a", &runtime.Flags{}, CancelSoft)
+
+	require.NotNil(t, first.Context)
+	require.NotNil(t, second.Context)
+	require.True(t, second.Reattached)
+	require.Same(t, first.Engine, second.Engine)
+	require.Same(t, first.Context, second.Context)
+}
+
+func TestStartRenderHardCancelCancelsActiveRender(t *testing.T) {
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	})
+
+	first := registry.StartRender("session-a", &runtime.Flags{}, CancelHard)
+	second := registry.StartRender("session-a", &runtime.Flags{}, CancelHard)
+
+	require.False(t, second.Reattached)
+	require.NotSame(t, first.Context, second.Context)
+
+	select {
+	case <-first.Context.Done():
+	default:
+		t.Fatal("first render context should be canceled by a hard cancel")
+	}
+
+	select {
+	case <-second.Context.Done():
+		t.Fatal("second render context should stay active")
+	default:
+	}
+}
+
+func TestRenderHandleCompleteClearsOnlyMatchingActiveRender(t *testing.T) {
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+		return &prompt.Engine{}
+	})
+
+	first := registry.StartRender("session-a", &runtime.Flags{}, CancelHard)
+	second := registry.StartRender("session-a", &runtime.Flags{}, CancelHard)
+
+	first.Complete()
+
+	activeContext, ok := registry.GetActiveRenderContext("session-a")
+	require.True(t, ok)
+	require.Same(t, second.Context, activeContext)
+
+	second.Complete()
+
+	_, ok = registry.GetActiveRenderContext("session-a")
+	require.False(t, ok)
+}
