@@ -58,6 +58,8 @@ jobs:
         go list ./... | grep -v '/daemon/ipc$' | xargs modernize
     - name: Unit Tests
       run: go test -count=1 -v ./...
+    - name: Race Tests
+      run: go test -race -count=3 ./daemon/... ./log/...
 
   validate-windows:
     runs-on: windows-latest

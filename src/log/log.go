@@ -14,10 +14,14 @@ var (
 	enabled bool
 	raw     bool
 
+	// mu guards all shared log state below it: the in-memory buffer and the
+	// optional output file. The daemon logs from many segment goroutines
+	// concurrently, so every read/write of these must hold mu.
+	mu sync.Mutex
+
 	log strings.Builder
 
 	outputFile *os.File
-	outputMu   sync.Mutex
 )
 
 func Enable(plain bool) {
@@ -94,12 +98,14 @@ func Errorf(format string, args ...any) {
 }
 
 func String() string {
+	mu.Lock()
+	defer mu.Unlock()
 	return log.String()
 }
 
 func SetOutputPath(path string) error {
-	outputMu.Lock()
-	defer outputMu.Unlock()
+	mu.Lock()
+	defer mu.Unlock()
 
 	if outputFile != nil {
 		_ = outputFile.Close()
