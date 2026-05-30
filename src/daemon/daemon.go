@@ -92,7 +92,7 @@ func NewWithIdleTimeoutAndDeviceCache(idleTimeout time.Duration, renderer prompt
 
 	registry := NewEngineRegistry(prompt.New)
 	gate := NewReloadGate()
-	pipeline := NewRenderPipeline(registry, gate, renderer, newPromptDeviceCacheBridge(deviceCache))
+	pipeline := NewRenderPipeline(registry, gate, renderer, deviceCache)
 
 	daemon := &Daemon{
 		pipeline:       pipeline,

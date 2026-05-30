@@ -3,16 +3,16 @@ package daemon
 import (
 	"sync"
 	"time"
+
+	"github.com/po1o/prompto/src/prompt"
 )
 
 const DefaultDeviceCacheTTL = 7 * 24 * time.Hour
 
-type SegmentRenderValue struct {
-	RenderedAt time.Time
-	Text       string
-	Foreground string
-	Background string
-}
+// SegmentRenderValue is the daemon's view of a cached rendered segment.
+// It is a type alias for prompt.DeviceCacheEntry, which lets *DeviceCache
+// satisfy the prompt.DeviceCache interface directly — no bridge type needed.
+type SegmentRenderValue = prompt.DeviceCacheEntry
 
 type deviceCacheEntry struct {
 	expiresAt time.Time
