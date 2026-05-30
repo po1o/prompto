@@ -32,7 +32,7 @@ func newActiveRenderTestDaemon() *Daemon {
 		renders:     make(map[string]*ActiveRender),
 		idleTimeout: 5 * time.Minute,
 	}
-	daemon.sessions = NewSessionManager(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
+	daemon.sessions = NewProcessTracker(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
 	return daemon
 }
 

@@ -13,17 +13,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewSessionManager(t *testing.T) {
+func TestNewProcessTracker(t *testing.T) {
 	called := false
-	sm := NewSessionManager(func(_ int) { called = true }, nil)
+	sm := NewProcessTracker(func(_ int) { called = true }, nil)
 
 	assert.NotNil(t, sm)
 	assert.Equal(t, 0, sm.Count())
 	assert.False(t, called)
 }
 
-func TestSessionManagerRegister(t *testing.T) {
-	sm := NewSessionManager(nil, nil)
+func TestProcessTrackerRegister(t *testing.T) {
+	sm := NewProcessTracker(nil, nil)
 
 	pid := os.Getpid()
 	sm.Register(pid, "uuid", "shell")
@@ -33,9 +33,9 @@ func TestSessionManagerRegister(t *testing.T) {
 	assert.Equal(t, 1, sm.Count())
 }
 
-func TestSessionManagerUnregister(t *testing.T) {
+func TestProcessTrackerUnregister(t *testing.T) {
 	var unregisterCount atomic.Int32
-	sm := NewSessionManager(func(_ int) { unregisterCount.Add(1) }, nil)
+	sm := NewProcessTracker(func(_ int) { unregisterCount.Add(1) }, nil)
 
 	pid := os.Getpid()
 	sm.Register(pid, "uuid", "shell")
@@ -45,9 +45,9 @@ func TestSessionManagerUnregister(t *testing.T) {
 	assert.Equal(t, int32(1), unregisterCount.Load())
 }
 
-func TestSessionManagerOnEmptyCallback(t *testing.T) {
+func TestProcessTrackerOnEmptyCallback(t *testing.T) {
 	var emptyCount atomic.Int32
-	sm := NewSessionManager(nil, func() { emptyCount.Add(1) })
+	sm := NewProcessTracker(nil, func() { emptyCount.Add(1) })
 
 	pid := os.Getpid()
 	sm.Register(pid, "uuid", "shell")
@@ -56,13 +56,13 @@ func TestSessionManagerOnEmptyCallback(t *testing.T) {
 	assert.Equal(t, int32(1), emptyCount.Load())
 }
 
-func TestSessionManagerDetectsExitedProcess(t *testing.T) {
+func TestProcessTrackerDetectsExitedProcess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping process exit detection test in short mode")
 	}
 
 	var emptyCount atomic.Int32
-	sm := NewSessionManager(nil, func() { emptyCount.Add(1) })
+	sm := NewProcessTracker(nil, func() { emptyCount.Add(1) })
 
 	process := startSessionTestProcess(t)
 	sm.Register(process.Pid, "uuid", "shell")
@@ -72,9 +72,9 @@ func TestSessionManagerDetectsExitedProcess(t *testing.T) {
 	}, 2*time.Second, 20*time.Millisecond)
 }
 
-func TestSessionManagerNonExistentPID(t *testing.T) {
+func TestProcessTrackerNonExistentPID(t *testing.T) {
 	var emptyCount atomic.Int32
-	sm := NewSessionManager(nil, func() { emptyCount.Add(1) })
+	sm := NewProcessTracker(nil, func() { emptyCount.Add(1) })
 
 	sm.Register(999999999, "uuid", "shell")
 

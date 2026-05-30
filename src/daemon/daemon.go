@@ -52,7 +52,7 @@ type Daemon struct {
 	configWatcher         *ConfigWatcher
 	binaryWatcher         *BinaryWatcher
 	configReloadCh        chan struct{}
-	sessions              *SessionManager
+	sessions              *ProcessTracker
 	pipeline              *RenderPipeline
 	configPath            string
 	idleTimeout           time.Duration
@@ -103,7 +103,7 @@ func NewWithIdleTimeoutAndDeviceCache(idleTimeout time.Duration, renderer prompt
 		done:           make(chan struct{}),
 		idleTimeout:    idleTimeout,
 	}
-	daemon.sessions = NewSessionManager(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
+	daemon.sessions = NewProcessTracker(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
 
 	// Start the idle timer immediately; it is canceled on first tracked render.
 	daemon.mu.Lock()
@@ -217,7 +217,7 @@ func (daemon *Daemon) CompleteSession(sessionID string) {
 
 	pid, ok := parseSessionPID(sessionID)
 	if ok {
-		// PID-backed sessions are lifecycle-managed by SessionManager callbacks.
+		// PID-backed sessions are lifecycle-managed by ProcessTracker callbacks.
 		daemon.sessions.Unregister(pid)
 		return
 	}
@@ -367,13 +367,13 @@ func (daemon *Daemon) registerSessionPID(request RenderRequest) {
 }
 
 func (daemon *Daemon) onSessionUnregister(pid int) {
-	// SessionManager has already removed the PID from its tracking; we only
+	// ProcessTracker has already removed the PID from its tracking; we only
 	// need to tear down the render state for that session ID.
 	daemon.completeRender(strconv.Itoa(pid))
 }
 
 func (daemon *Daemon) onAllSessionsEnded() {
-	// Called from SessionManager while its lock is held; avoid re-entering sessions locks here.
+	// Called from ProcessTracker while its lock is held; avoid re-entering sessions locks here.
 	daemon.mu.Lock()
 	daemon.scheduleIdleStopLocked()
 	daemon.mu.Unlock()
@@ -392,7 +392,7 @@ func (daemon *Daemon) scheduleIdleIfNoSessions() {
 // completeRender tears down the active render stream for a session and clears
 // its pipeline-level state. Used by both CompleteSession (the public API) and
 // onSessionUnregister (when a tracked PID exits). It deliberately does NOT
-// touch SessionManager or idle scheduling — those are the caller's concern.
+// touch ProcessTracker or idle scheduling — those are the caller's concern.
 func (daemon *Daemon) completeRender(sessionID string) {
 	daemon.rendersMu.Lock()
 	active, ok := daemon.renders[sessionID]
