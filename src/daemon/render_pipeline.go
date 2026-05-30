@@ -398,11 +398,6 @@ func (active *ActiveRender) Complete() {
 	}
 
 	active.once.Do(func() {
-		if engine := active.engine(); engine != nil {
-			// Detach callback so old/canceled renders stop publishing updates.
-			ClearSegmentUpdates(engine)
-		}
-
 		if active.render != nil {
 			active.render.Complete()
 		}

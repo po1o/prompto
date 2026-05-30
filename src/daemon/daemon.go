@@ -9,22 +9,58 @@ import (
 
 	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/prompt"
+	"github.com/po1o/prompto/src/runtime"
 )
 
+// renderCompletePayload is published on a session's update hub to signal that
+// the active render generation has produced its final state. Server.RenderPrompt
+// and Daemon.NextUpdate use it to terminate the response stream.
+const renderCompletePayload = "__prompto_render_complete__"
+
+// RenderRequest is the daemon's render entry point — what the server sends to
+// Daemon.StartRender per RPC.
+type RenderRequest struct {
+	Flags     *runtime.Flags
+	SessionID string
+	// Cancel selects the cancel semantics for this render: CancelHard
+	// (default — new command, abort prior in-flight work) or CancelSoft
+	// (vim toggle / repaint — preserve in-flight work and reattach).
+	Cancel CancelKind
+}
+
+// RenderResponse is the daemon's render exit point — initial bundles and
+// per-segment updates returned to the server, which forwards them over gRPC.
+type RenderResponse struct {
+	Bundle   PromptBundle
+	Type     string
+	Segment  string
+	Sequence uint64
+}
+
+// Daemon owns the long-lived prompt-rendering process: lifecycle (lock file,
+// idle shutdown, on-stop callback), per-shell PID tracking, the device cache,
+// and the per-session active-render map. Render execution itself is delegated
+// to RenderPipeline. See ARCHITECTURE.md.
 type Daemon struct {
-	// service owns render lifecycle and stream updates for all sessions.
-	service *Service
+	// pipeline executes per-session render strategy: gating, engine reuse,
+	// cancellation, update hubs, and full-render vs repaint rendering.
+	pipeline *RenderPipeline
 	// sessions tracks live shell PIDs so idle shutdown is based on process exits, not RPC churn.
 	sessions *SessionManager
 	// deviceCache is shared across sessions/renders and survives per-session engine resets.
 	deviceCache *DeviceCache
-	onStop      func()
+	// renders keeps the currently active render stream handle by session.
+	renders map[string]*ActiveRender
+	onStop  func()
 	// idleTimeout is armed when there are no tracked sessions.
 	idleTimeout time.Duration
 	// idleToken invalidates stale timers when activity resumes.
 	idleToken uint64
 	stopped   atomic.Bool
-	mu        sync.Mutex
+	// mu guards lifecycle state (onStop, idleToken).
+	mu sync.Mutex
+	// rendersMu guards the renders map.
+	rendersMu sync.Mutex
 }
 
 func New(renderer promptBundleRenderer) *Daemon {
@@ -52,12 +88,12 @@ func NewWithIdleTimeoutAndDeviceCache(idleTimeout time.Duration, renderer prompt
 
 	registry := NewEngineRegistry(prompt.New)
 	gate := NewReloadGate()
-	service := NewService(registry, gate, renderer)
-	service.pipeline.deviceCache = newPromptDeviceCacheBridge(deviceCache)
+	pipeline := NewRenderPipeline(registry, gate, renderer, newPromptDeviceCacheBridge(deviceCache))
 
 	daemon := &Daemon{
-		service:     service,
+		pipeline:    pipeline,
 		deviceCache: deviceCache,
+		renders:     make(map[string]*ActiveRender),
 		idleTimeout: idleTimeout,
 	}
 	daemon.sessions = NewSessionManager(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
@@ -82,7 +118,47 @@ func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
 	// Any tracked PID render is considered activity and cancels pending idle stop.
 	daemon.registerSessionPID(request)
 
-	return daemon.service.StartRender(request)
+	daemon.rendersMu.Lock()
+	existing, ok := daemon.renders[request.SessionID]
+	var staleCompleted *ActiveRender
+	var previous *ActiveRender
+	if ok && existing != nil && daemon.isCompletedRender(existing) {
+		delete(daemon.renders, request.SessionID)
+		staleCompleted = existing
+		existing = nil
+		ok = false
+	}
+
+	if ok && existing != nil && !request.Cancel.Repaint() {
+		// A hard cancel starts a new render generation; cancel the previous one.
+		delete(daemon.renders, request.SessionID)
+		previous = existing
+	}
+	daemon.rendersMu.Unlock()
+
+	if staleCompleted != nil {
+		staleCompleted.Complete()
+	}
+	if previous != nil {
+		previous.Complete()
+	}
+
+	bundle, active := daemon.pipeline.Start(request.SessionID, request.Flags, request.Cancel)
+	sequence := daemon.currentSequence(request.SessionID)
+
+	daemon.rendersMu.Lock()
+	if active == nil {
+		delete(daemon.renders, request.SessionID)
+	} else {
+		daemon.renders[request.SessionID] = active
+	}
+	daemon.rendersMu.Unlock()
+
+	return RenderResponse{
+		Type:     "initial",
+		Bundle:   bundle,
+		Sequence: sequence,
+	}
 }
 
 func (daemon *Daemon) NextUpdate(ctx context.Context, sessionID string, after uint64) (RenderResponse, bool) {
@@ -90,7 +166,33 @@ func (daemon *Daemon) NextUpdate(ctx context.Context, sessionID string, after ui
 		return RenderResponse{}, false
 	}
 
-	return daemon.service.NextUpdate(ctx, sessionID, after)
+	daemon.rendersMu.Lock()
+	active, ok := daemon.renders[sessionID]
+	daemon.rendersMu.Unlock()
+	if !ok || active == nil {
+		return RenderResponse{}, false
+	}
+
+	update, ok := active.Next(ctx, after)
+	if !ok {
+		if ctx != nil && ctx.Err() != nil {
+			return RenderResponse{}, false
+		}
+
+		daemon.releaseActiveRenderIfCurrent(sessionID, active)
+		return RenderResponse{}, false
+	}
+
+	if update.Snapshot.Payload == renderCompletePayload {
+		daemon.releaseActiveRenderIfCurrent(sessionID, active)
+	}
+
+	return RenderResponse{
+		Type:     "update",
+		Sequence: update.Snapshot.Sequence,
+		Segment:  update.Snapshot.Payload,
+		Bundle:   update.Bundle,
+	}, true
 }
 
 func (daemon *Daemon) CompleteSession(sessionID string) {
@@ -98,7 +200,7 @@ func (daemon *Daemon) CompleteSession(sessionID string) {
 		return
 	}
 
-	daemon.service.CompleteSession(sessionID)
+	daemon.completeRender(sessionID)
 
 	pid, ok := parseSessionPID(sessionID)
 	if ok {
@@ -115,19 +217,22 @@ func (daemon *Daemon) Reload(action func()) {
 		return
 	}
 
-	daemon.service.Reload(action)
+	daemon.pipeline.Reload(action)
 }
 
 func (daemon *Daemon) Snapshot() (active int, reloading bool) {
-	return daemon.service.Snapshot()
+	return daemon.pipeline.Snapshot()
 }
 
 func (daemon *Daemon) SessionCount() int {
-	return daemon.service.SessionCount()
+	daemon.rendersMu.Lock()
+	defer daemon.rendersMu.Unlock()
+
+	return len(daemon.renders)
 }
 
 func (daemon *Daemon) SessionHub(sessionID string) *SessionUpdateHub {
-	return daemon.service.SessionHub(sessionID)
+	return daemon.pipeline.SessionHub(sessionID)
 }
 
 func (daemon *Daemon) Reset() {
@@ -135,7 +240,27 @@ func (daemon *Daemon) Reset() {
 		return
 	}
 
-	daemon.service.Reset()
+	daemon.rendersMu.Lock()
+	activeRenders := make([]*ActiveRender, 0, len(daemon.renders))
+	for sessionID, active := range daemon.renders {
+		activeRenders = append(activeRenders, active)
+		delete(daemon.renders, sessionID)
+	}
+	daemon.rendersMu.Unlock()
+
+	for _, active := range activeRenders {
+		if active == nil {
+			continue
+		}
+
+		active.Complete()
+	}
+
+	if daemon.pipeline == nil {
+		return
+	}
+
+	daemon.pipeline.Reset()
 }
 
 func (daemon *Daemon) Stop() {
@@ -218,7 +343,9 @@ func (daemon *Daemon) registerSessionPID(request RenderRequest) {
 }
 
 func (daemon *Daemon) onSessionUnregister(pid int) {
-	daemon.service.CompleteSession(strconv.Itoa(pid))
+	// SessionManager has already removed the PID from its tracking; we only
+	// need to tear down the render state for that session ID.
+	daemon.completeRender(strconv.Itoa(pid))
 }
 
 func (daemon *Daemon) onAllSessionsEnded() {
@@ -236,6 +363,84 @@ func (daemon *Daemon) scheduleIdleIfNoSessions() {
 	daemon.mu.Lock()
 	daemon.scheduleIdleStopLocked()
 	daemon.mu.Unlock()
+}
+
+// completeRender tears down the active render stream for a session and clears
+// its pipeline-level state. Used by both CompleteSession (the public API) and
+// onSessionUnregister (when a tracked PID exits). It deliberately does NOT
+// touch SessionManager or idle scheduling — those are the caller's concern.
+func (daemon *Daemon) completeRender(sessionID string) {
+	daemon.rendersMu.Lock()
+	active, ok := daemon.renders[sessionID]
+	if ok {
+		delete(daemon.renders, sessionID)
+	}
+	daemon.rendersMu.Unlock()
+
+	if ok && active != nil {
+		// Ensure request gate "active" counter is released.
+		active.Complete()
+	}
+
+	daemon.pipeline.RemoveSession(sessionID)
+}
+
+func (daemon *Daemon) releaseActiveRenderIfCurrent(sessionID string, expected *ActiveRender) {
+	if expected == nil {
+		return
+	}
+
+	daemon.rendersMu.Lock()
+	current, ok := daemon.renders[sessionID]
+	if !ok || current != expected {
+		daemon.rendersMu.Unlock()
+		return
+	}
+
+	delete(daemon.renders, sessionID)
+	daemon.rendersMu.Unlock()
+
+	expected.Complete()
+}
+
+func (daemon *Daemon) currentSequence(sessionID string) uint64 {
+	if daemon.pipeline == nil {
+		return 0
+	}
+
+	hub := daemon.pipeline.SessionHub(sessionID)
+	if hub == nil {
+		return 0
+	}
+
+	snapshot, ok := hub.Last()
+	if !ok {
+		return 0
+	}
+
+	return snapshot.Sequence
+}
+
+func (daemon *Daemon) isCompletedRender(active *ActiveRender) bool {
+	if active == nil || active.hub == nil {
+		return false
+	}
+
+	snapshot, ok := active.hub.Last()
+	if !ok {
+		return false
+	}
+
+	if snapshot.Payload != renderCompletePayload {
+		return false
+	}
+
+	renderID := active.renderID()
+	if snapshot.RenderID == 0 || snapshot.RenderID == renderID {
+		return true
+	}
+
+	return false
 }
 
 func parseSessionPID(sessionID string) (int, bool) {
