@@ -116,7 +116,7 @@ documented in `ARCHITECTURE.md` (A2): `Daemon` absorbs `Service` +
 Executed as ordered, individually-revertible sub-steps, each behavior-
 preserving and gated by the B2 scenario tests + full suite + `-race`.
 
-#### C2-i. Make `EngineRegistry` kind-aware; absorb `RenderCoordinator`
+#### C2-i. Make `EngineRegistry` kind-aware; absorb `RenderCoordinator` — DONE 2026-05-29
 
 - **Acceptance:** `EngineRegistry` gains a kind-aware entry point that
   encapsulates the hard-cancel-then-start vs soft-reattach branch currently
@@ -128,7 +128,7 @@ preserving and gated by the B2 scenario tests + full suite + `-race`.
 - **Verify:** Universal gates + B2 scenarios green. `git grep -n 'repaint bool' src/daemon/registry.go src/daemon/request_manager.go` returns nothing.
 - **Files:** `src/daemon/registry.go`, `src/daemon/coordinator.go` [DELETE], `src/daemon/request_manager.go`, plus `_test.go` siblings (`coordinator_test.go` cases move to `registry_test.go`).
 
-#### C2-ii. Collapse `SessionRenderRuntime` + `RequestManager` into `RenderPipeline`
+#### C2-ii. Collapse `SessionRenderRuntime` + `RequestManager` into `RenderPipeline` — DONE 2026-05-30
 
 - **Acceptance:** `RenderPipeline.Start` takes `CancelKind` (not `bool
   repaint`) and owns what `SessionRenderRuntime` + `RequestManager` did
@@ -138,7 +138,11 @@ preserving and gated by the B2 scenario tests + full suite + `-race`.
 - **Verify:** Universal gates + B2 scenarios green. Net LoC in `src/daemon/` drops. Three handle types reduced to one.
 - **Files:** `src/daemon/render_pipeline.go`, `src/daemon/runtime.go` [DELETE], `src/daemon/request_manager.go` [DELETE], `src/daemon/service.go`, plus `_test.go` siblings.
 
-#### C2-iii. Collapse `Service` into `Daemon`; delete dead `update_binding.go`; route publish through `BindSegmentUpdates`
+#### C2-iii + C2-iv. Collapse `Service` into `Daemon`; delete dead `update_binding.go`; derive `CancelKind` at the Server boundary — DONE 2026-05-30
+
+Note: C2-iv (server boundary CancelKind derivation) folded into C2-iii since the changes are tightly coupled. Also a course correction during execution: the original plan was "route publish through BindSegmentUpdates," but investigation showed `engine.SetUpdateCallback` (the path BindSegmentUpdates wires) and `PrimaryStreaming`'s inline callback are *separate* channels — wiring both would cause duplicate publishes. Honored the A1 "dead code" finding and deleted update_binding.go outright; PrimaryStreaming's inline callback in render_pipeline.go is the live channel.
+
+
 
 - **Acceptance:** `Service`'s methods move onto `Daemon` (the 1:1 wrapper from
   A1/F3 collapses); `service.go` deleted. The inline `handle.Hub().Publish()`
@@ -148,14 +152,9 @@ preserving and gated by the B2 scenario tests + full suite + `-race`.
 - **Verify:** Universal gates + B2 scenarios green. `git grep -n 'NewService\|\*Service' src/daemon/` returns nothing.
 - **Files:** `src/daemon/daemon.go`, `src/daemon/service.go` [DELETE], `src/daemon/render_pipeline.go`, `src/daemon/update_binding.go`, plus `_test.go` siblings.
 
-#### C2-iv. Derive `CancelKind` once at the Server boundary
+#### C2-iv. — FOLDED INTO C2-iii (DONE 2026-05-30)
 
-- **Acceptance:** `server.go RenderPrompt` derives `CancelKind` from
-  `PromptRequest.GetRepaint()` via `CancelKindForRepaint` and passes it into
-  `Daemon.StartRender`. No `bool repaint` parameter survives anywhere in
-  `src/daemon/` (only the proto field + this single derivation point remain).
-- **Verify:** Universal gates + B2 scenarios green. `git grep -n 'repaint bool\|repaint:.*bool' src/daemon/` returns only the derivation site / proto-mapped field.
-- **Files:** `src/daemon/server.go`, `src/daemon/service.go`/`daemon.go` (signature), plus `_test.go` siblings.
+`bool repaint` survives only in (a) `cancel.go CancelKindForRepaint` (the conversion fn), (b) `client.go` RPC wrappers (passthrough to the proto bool field), and (c) `render_pipeline.go applyRenderFlags` (an internal vim-mode-only flag-mutation helper, not a cancel decision). All three are acceptable per the spec's "no bool in cancel decisions" intent.
 
 ### C3a. Extract OS-detection into `src/daemon/sessionid/` subpackage
 
