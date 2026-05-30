@@ -4,11 +4,6 @@ description: How each shell detects vim-mode changes and routes the resulting
   repaint through the daemon's Soft-Cancel path.
 ---
 
-> **Status:** Skeleton (Phase A3 of the daemon cleanup). Section bodies are
-> filled in across Phase E2/E3 as the embedded shell scripts get header
-> comments and snapshot tests. Treat any "TBD" below as a real gap, not
-> placeholder prose.
-
 ## Audience
 
 Contributors modifying:
@@ -36,106 +31,110 @@ must:
 Without step 3, the daemon defaults to Hard-Cancel: it kills the in-flight
 git/k8s/etc. computation and starts fresh. Vim toggles then feel laggy.
 
-## Cross-shell summary table
-
-Keep this table in sync with the per-shell sections below.
+## Cross-shell summary
 
 | Shell | Detection mechanism | Redraw trigger | `--repaint` carrier | ble.sh required? |
 |---|---|---|---|---|
-| Zsh | `zle-keymap-select` widget (via `_omp_create_widget`) | `zle .reset-prompt` | `_omp_vim_mode_repaint=1` flag read by prompt fn | no |
-| Fish | `--on-variable fish_bind_mode` | `commandline -f repaint` | `fish_prompt` reads a flag | no |
-| PowerShell | `Set-PSReadLineKeyHandler` on `Escape` / `i` / `a` in vi mode | `[Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()` | `prompt` function reads a flag | no |
-| Bash | `ble/keymap` hook (`_prompto_ble_keymap_change`) | `ble.sh` repaint | TBD (E2) | **yes — `ble.sh` must be sourced first** |
+| Zsh | `_prompto_zle-keymap-select` (decorating ZLE's `zle-keymap-select` widget) | `zle reset-prompt` | `_prompto_vim_mode_repaint=1` shell variable | no |
+| Fish | `_prompto_on_bind_mode_change --on-variable fish_bind_mode` | `commandline -f repaint` | `_prompto_vim_mode_repaint 1` global variable | no |
+| PowerShell | `Set-PSReadLineKeyHandler -ViMode Command/Insert` on the mode-switch keys | `[Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()` | `$script:VimModeRepaint = $true` | no |
+| Bash | `_prompto_ble_keymap_change` via ble.sh keymap hook | ble.sh repaint (`ble/widget/...`) | `_prompto_vim_mode_repaint=1` shell variable | **yes — `ble.sh` must be sourced first** |
+
+A snapshot test in `src/shell/daemon_scripts_test.go`
+(`TestDaemonScriptsWireRepaintAndModeDetection`) locks the `--repaint` +
+mode-detection contract per shell. Changing any of the cells above must
+update both this table and that test.
 
 ## Zsh — `src/shell/scripts/prompto.zsh`
 
 ### Detection mechanism
 
-TBD (E2). Reference: function `_prompto_zle-keymap-select` (line 374
-in the current script) created via `_prompto_create_widget`.
+`_prompto_zle-keymap-select` is decorated onto ZLE's built-in
+`zle-keymap-select` widget via `_prompto_create_widget`. The widget fires on
+every `$KEYMAP` change (vicmd ↔ main), giving us a synchronous,
+zero-polling hook.
 
 ### Redraw trigger
 
-TBD (E2). Reference: `_prompto_reset_prompt_if_zle` (line 522). Calls
-`zle .reset-prompt` when ZLE is active.
+`zle reset-prompt` (from within the keymap-select hook). It re-renders the
+prompt without restarting any in-flight shell command.
 
 ### `--repaint` wiring
 
-TBD (E2). Trace the flag from the keymap handler → prompt function →
-`_prompto_daemon_render` (line 421). Document the variable name (currently
-likely `_omp_vim_mode_repaint` or similar — confirm before filling in).
+1. Keymap hook sets `_prompto_vim_mode_repaint=1`.
+2. `zle reset-prompt` runs.
+3. `_prompto_daemon_render` reads the flag, appends `--repaint` to the
+   prompto invocation, then resets the flag.
+4. Daemon takes the Soft-Cancel path (preserves in-flight computations).
 
 ### Debugging tips
 
-TBD (E2). Suggested content:
-
-- How to verify the daemon sees `repaint=true` (turn on daemon logging via
-  `prompto daemon log <path>`; grep for `RenderPrompt.*repaint=true`).
-- How to verify `zle .reset-prompt` fired (zsh-side `setopt xtrace`).
-- Common failure: the keymap handler runs but the prompt function doesn't
-  see the flag — flag was reset by an intermediate hook.
+- Verify the widget is decorated: `zle -l zle-keymap-select | grep prompto`.
+- Verify the daemon sees `repaint=true`: enable daemon logging with
+  `prompto daemon log <path>` and grep for `repaint=true`.
+- Common failure: another plugin redecorates `zle-keymap-select` after
+  prompto's init runs — check order in `.zshrc`.
 
 ## Fish — `src/shell/scripts/prompto.fish`
 
 ### Detection mechanism
 
-TBD (E2). Reference: `function _prompto_on_bind_mode_change --on-variable
-fish_bind_mode` (line 416). Fish updates `fish_bind_mode` on every keymap
-switch; the event handler fires synchronously.
+`function _prompto_on_bind_mode_change --on-variable fish_bind_mode` runs
+whenever fish updates the bind-mode variable on ESC/i.
 
 ### Redraw trigger
 
-TBD (E2). Reference: `prompto_repaint_prompt` (line 355) → likely
-`commandline -f repaint`. Confirm in script during E2.
+`commandline -f repaint` from the handler.
 
 ### `--repaint` wiring
 
-TBD (E2). Trace from `_prompto_on_bind_mode_change` → `fish_prompt` (line
-86) → `_prompto_daemon_render` (line 483). Document the carrier variable.
+1. Handler sets `_prompto_vim_mode_repaint 1` and triggers
+   `commandline -f repaint`.
+2. `fish_prompt` runs, which calls `_prompto_daemon_render`.
+3. `_prompto_daemon_render` reads the flag, appends `--repaint`, then resets.
+4. Daemon takes the Soft-Cancel path.
 
-There is also a `--on-signal USR1` handler (`_prompto_daemon_repaint`, line
-444) — explain when that fires and whether the daemon ever sends it.
+There is also a `_prompto_daemon_repaint --on-signal USR1` handler. This is
+a defensive repaint trigger; the daemon does not currently send USR1, so
+the handler is dormant. Documented here so it isn't mistaken for dead code.
 
 ### Debugging tips
 
-TBD (E2). Suggested content:
-
-- Verify the event handler is registered: `functions _prompto_on_bind_mode_change`.
-- Verify the daemon flag is set: enable daemon logging.
-- Common failure: `fish_bind_mode` is updated synchronously but the handler
-  runs *after* `fish_prompt`, so the first redraw uses stale mode. Workaround:
-  re-render in the handler itself (current behavior).
+- Verify the handler is registered: `functions _prompto_on_bind_mode_change`.
+- Verify daemon flag: enable daemon logging and grep for `repaint=true`.
+- Common failure: `fish_bind_mode` updates synchronously but the handler
+  runs *after* `fish_prompt`, so the first redraw after init may use stale
+  mode. The handler triggers a re-render to compensate.
 
 ## PowerShell — `src/shell/scripts/prompto.ps1`
 
 ### Detection mechanism
 
-TBD (E2). PSReadLine-based; uses `Set-PSReadLineKeyHandler` for `Escape`
-in `ViMode` and `i` / `a` / `o` in `ViCommandMode`. The PS1 script is the
-longest of the four (880 LoC) and the most pattern-different from the
-others — fully document the key bindings here.
+`Set-PSReadLineKeyHandler -ViMode Command/Insert` bindings on the keys that
+toggle vim modes (Escape, i, a, Enter in command mode, etc.). Requires
+`Set-PSReadLineOption -EditMode Vi` upstream.
 
 ### Redraw trigger
 
-TBD (E2). Reference: `[Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()`.
+`[Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()` from inside the
+key handler. Some handlers also call the native PSReadLine method (e.g.
+`ViCommandMode()`) so PSReadLine's own state machine progresses.
 
 ### `--repaint` wiring
 
-TBD (E2). Trace from each key handler → flag variable →
-`prompt` function → `prompto render` invocation.
-
-Special concern: in `ViMode` ESC, the handler must also call the native
-`ViCommandMode()` method (and vice versa) so that PSReadLine's own state
-machine progresses; the `InvokePrompt()` alone is not enough.
+1. Key handler sets `$script:VimModeRepaint = $true`.
+2. Handler calls `InvokePrompt()`, which re-runs the `prompt` function.
+3. `prompt` reads `$script:VimModeRepaint`, appends `--repaint` to the
+   prompto invocation, then clears the flag.
+4. Daemon takes the Soft-Cancel path.
 
 ### Debugging tips
 
-TBD (E2). Suggested content:
-
-- `Get-PSReadLineKeyHandler -Chord Escape` to inspect what's bound.
-- `Set-PSReadLineOption -EditMode Vi` is required upstream of any of this.
-- Common failure: another module (e.g. PSFzf) rebinds Escape after prompto's
-  init runs. Document init order.
+- List active key handlers: `Get-PSReadLineKeyHandler -Chord Escape`.
+- `Set-PSReadLineOption -EditMode Vi` is a prerequisite — without it the
+  vim-mode handlers are never reachable.
+- Common failure: another module (e.g. PSFzf, Terminal-Icons) rebinds keys
+  after prompto's init runs. Document init order in `$PROFILE`.
 
 ## Bash + ble.sh — `src/shell/scripts/prompto.bash`
 
@@ -147,54 +146,58 @@ expose mode-change hooks to shell scripts, so without `ble.sh` the
 vim-toggle feature degrades to "no repaint until the next keystroke."
 
 Detection: prompto checks `$BLE_SESSION_ID` at init time. If unset, the
-vim hooks are skipped silently. **Document this loudly** — it's the most
-common "why doesn't it work for me" question.
+vim hooks are skipped silently.
 
 ### Detection mechanism
 
-TBD (E2). Reference: `_prompto_ble_keymap_change` (line 256) and
-`_prompto_register_vim_hooks` (line 395). Document which ble.sh hook
-fires (`bleopt` vs keymap binding).
+`_prompto_ble_keymap_change` is registered via the ble.sh keymap hook (see
+`_prompto_register_vim_hooks`). ble.sh fires the hook on every keymap
+transition.
 
 ### Redraw trigger
 
-TBD (E2). Reference: ble.sh's own redraw (`ble/widget/redraw-current-line`
-per the plan doc — confirm in script during E2).
+ble.sh's own repaint mechanism (via `bleopt`-managed prompt rendering).
+prompto does not manually trigger a redraw — setting the flag is enough,
+because ble.sh repaints the prompt as part of its keymap-change handling.
 
 ### `--repaint` wiring
 
-TBD (E2). Trace from `_prompto_ble_keymap_change` → hook → `_prompto_daemon_render`
-(line 313). Bash has the `_prompto_daemon_*` family parallel to the
-non-daemon path; document that this duplication is intentional.
+1. ble.sh keymap hook fires `_prompto_ble_keymap_change`.
+2. Hook sets `_prompto_vim_mode_repaint=1`.
+3. ble.sh repaints the prompt, which invokes `_prompto_daemon_render`.
+4. `_prompto_daemon_render` reads the flag, appends `--repaint`, then
+   resets.
+5. Daemon takes the Soft-Cancel path.
 
 ### Debugging tips
 
-TBD (E2). Suggested content:
-
-- `echo $BLE_SESSION_ID` — must be non-empty.
-- `bleopt | grep prompt` — what's currently set.
-- Common failure: ble.sh is sourced *after* prompto init, so
-  `BLE_SESSION_ID` is empty at the moment prompto's init reads it. Fix:
-  source ble.sh first.
+- `echo $BLE_SESSION_ID` — must be non-empty for vim hooks to be active.
+- `bleopt | grep prompt` — what's currently set for prompt handling.
+- Common failure: ble.sh sourced *after* prompto init, so
+  `BLE_SESSION_ID` is empty when prompto registers hooks. Fix: source
+  ble.sh first.
 
 ## Adding support for a new shell
 
-If/when a new shell is added, this section becomes the checklist:
-
 1. **Decide:** does this shell expose mode-change hooks to user scripts?
    - Yes → proceed with detection + redraw + repaint wiring.
-   - No → vim-mode integration is not supported for this shell. Document
-     the limitation in the user-facing docs.
-2. **Implement** the three contract steps above.
+   - No → vim-mode integration is not supported. Document the limitation
+     in the user-facing docs.
+2. **Implement** the three contract steps above (detect, redraw, append
+   `--repaint`).
 3. **Add** a Go init helper in `src/shell/<shell>.go` and embed the
    script in `src/shell/scripts/prompto.<ext>`.
-4. **Wire** the snapshot test in `src/shell/daemon_scripts_test.go`.
-5. **Add a new section to this doc** matching the four-heading template.
-6. **Update** the cross-shell summary table at the top.
+4. **Add** a row to the cross-shell summary table above.
+5. **Add** a case in `daemon_scripts_test.go` — both the existing
+   `TestDaemonScriptsIncludePIDAndVimModeSupport` and the
+   `TestDaemonScriptsWireRepaintAndModeDetection` snapshot tests must cover
+   the new shell.
+6. **Add a new section** to this doc matching the four-heading template.
 
 ## See also
 
 - `src/daemon/ARCHITECTURE.md` — daemon-side cancel model and the
   Soft/Hard distinction that `--repaint` activates.
-- `.claude/docs/shell-vim-mode-plan.md` — original design plan (historical;
-  superseded by this doc and ARCHITECTURE.md, kept for provenance).
+- `.claude/docs/shell-vim-mode-plan.md` — original design plan
+  (historical; superseded by this doc and ARCHITECTURE.md, kept for
+  provenance).
