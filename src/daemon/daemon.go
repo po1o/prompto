@@ -44,30 +44,25 @@ type RenderResponse struct {
 // and the per-session active-render map. Render execution itself is delegated
 // to RenderPipeline. See ARCHITECTURE.md.
 type Daemon struct {
-	// pipeline executes per-session render strategy: gating, engine reuse,
-	// cancellation, update hubs, and full-render vs repaint rendering.
-	pipeline *RenderPipeline
-	// sessions tracks live shell PIDs so idle shutdown is based on process exits, not RPC churn.
-	sessions *SessionManager
-	// deviceCache is shared across sessions/renders and survives per-session engine resets.
-	deviceCache *DeviceCache
-	// renders keeps the currently active render stream handle by session.
-	renders map[string]*ActiveRender
-	// segmentToggles holds the per-session segment-visibility map, seeded
-	// from the persistent toggle cache on first access per session.
-	segmentToggles map[string]map[string]bool
-	onStop         func()
-	// idleTimeout is armed when there are no tracked sessions.
-	idleTimeout time.Duration
-	// idleToken invalidates stale timers when activity resumes.
-	idleToken uint64
-	stopped   atomic.Bool
-	// mu guards lifecycle state (onStop, idleToken).
-	mu sync.Mutex
-	// rendersMu guards the renders map.
-	rendersMu sync.Mutex
-	// toggleMu guards segmentToggles.
-	toggleMu sync.RWMutex
+	done                  chan struct{}
+	onStop                func()
+	deviceCache           *DeviceCache
+	renders               map[string]*ActiveRender
+	segmentToggles        map[string]map[string]bool
+	configWatcher         *ConfigWatcher
+	binaryWatcher         *BinaryWatcher
+	configReloadCh        chan struct{}
+	sessions              *SessionManager
+	pipeline              *RenderPipeline
+	configPath            string
+	idleTimeout           time.Duration
+	idleToken             uint64
+	lastConfigModUnixNano atomic.Int64
+	toggleMu              sync.RWMutex
+	mu                    sync.Mutex
+	rendersMu             sync.Mutex
+	reloadMu              sync.Mutex
+	stopped               atomic.Bool
 }
 
 func New(renderer promptBundleRenderer) *Daemon {
@@ -75,8 +70,7 @@ func New(renderer promptBundleRenderer) *Daemon {
 }
 
 func NewFromConfig(configPath string, renderer promptBundleRenderer) *Daemon {
-	cfg := config.Load(configPath)
-	return NewWithIdleTimeoutAndDeviceCache(cfg.GetDaemonIdleTimeout(), renderer, nil)
+	return NewFromConfigWithDeviceCache(configPath, renderer, nil)
 }
 
 func NewWithIdleTimeout(idleTimeout time.Duration, renderer promptBundleRenderer) *Daemon {
@@ -85,7 +79,10 @@ func NewWithIdleTimeout(idleTimeout time.Duration, renderer promptBundleRenderer
 
 func NewFromConfigWithDeviceCache(configPath string, renderer promptBundleRenderer, deviceCache *DeviceCache) *Daemon {
 	cfg := config.Load(configPath)
-	return NewWithIdleTimeoutAndDeviceCache(cfg.GetDaemonIdleTimeout(), renderer, deviceCache)
+	daemon := NewWithIdleTimeoutAndDeviceCache(cfg.GetDaemonIdleTimeout(), renderer, deviceCache)
+	daemon.configPath = configPath
+	daemon.startReloadAndWatchers()
+	return daemon
 }
 
 func NewWithIdleTimeoutAndDeviceCache(idleTimeout time.Duration, renderer promptBundleRenderer, deviceCache *DeviceCache) *Daemon {
@@ -102,6 +99,8 @@ func NewWithIdleTimeoutAndDeviceCache(idleTimeout time.Duration, renderer prompt
 		deviceCache:    deviceCache,
 		renders:        make(map[string]*ActiveRender),
 		segmentToggles: make(map[string]map[string]bool),
+		configReloadCh: make(chan struct{}, 1),
+		done:           make(chan struct{}),
 		idleTimeout:    idleTimeout,
 	}
 	daemon.sessions = NewSessionManager(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
@@ -116,6 +115,12 @@ func NewWithIdleTimeoutAndDeviceCache(idleTimeout time.Duration, renderer prompt
 
 func (daemon *Daemon) DeviceCache() *DeviceCache {
 	return daemon.deviceCache
+}
+
+// ConfigPath returns the resolved root config path the daemon is watching, or
+// the empty string if the daemon was constructed without a config path.
+func (daemon *Daemon) ConfigPath() string {
+	return daemon.configPath
 }
 
 func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
@@ -297,6 +302,17 @@ func (daemon *Daemon) stop(notify bool) {
 	daemon.cancelIdleStopLocked()
 	callback := daemon.onStop
 	daemon.mu.Unlock()
+
+	// Signal the reload-worker goroutine to exit and tear down watchers.
+	if daemon.done != nil {
+		close(daemon.done)
+	}
+	if daemon.configWatcher != nil {
+		_ = daemon.configWatcher.Close()
+	}
+	if daemon.binaryWatcher != nil {
+		_ = daemon.binaryWatcher.Close()
+	}
 
 	if notify && callback != nil {
 		callback()

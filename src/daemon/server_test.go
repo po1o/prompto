@@ -143,21 +143,23 @@ text.main:
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(configBody), 0o644))
 
-	deviceCache := NewDeviceCache()
+	// Build a daemon WITHOUT the watcher/worker goroutine (tests drive the
+	// reload path manually via requestConfigReload + ProcessPendingConfigReload).
+	core := NewWithIdleTimeoutAndDeviceCache(0, nil, NewDeviceCache())
+	core.configPath = configPath
 	server := &Server{
-		configPath:     configPath,
-		core:           NewFromConfigWithDeviceCache(configPath, nil, deviceCache),
-		deviceCache:    deviceCache,
-		configReloadCh: make(chan struct{}, 1),
+		core:           core,
+		done:           make(chan struct{}),
+		primaryStreams: make(map[string]primaryStreamState),
 	}
 	t.Cleanup(func() {
 		server.core.Stop()
 	})
 
-	server.requestConfigReload(configPath)
-	server.processPendingConfigReload()
+	server.core.requestConfigReload(configPath)
+	server.core.ProcessPendingConfigReload()
 
-	require.Equal(t, 0, len(server.configReloadCh))
+	require.Equal(t, 0, len(server.core.configReloadCh))
 	require.Equal(t, "A", renderServerPrimary(t, server, configPath))
 
 	configBody = `
@@ -170,8 +172,8 @@ text.main:
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(configBody), 0o644))
 
-	server.requestConfigReload(configPath)
-	server.processPendingConfigReload()
+	server.core.requestConfigReload(configPath)
+	server.core.ProcessPendingConfigReload()
 
 	require.Equal(t, "B", renderServerPrimary(t, server, configPath))
 }
@@ -188,18 +190,18 @@ text.main:
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(configBody), 0o644))
 
-	deviceCache := NewDeviceCache()
+	core := NewWithIdleTimeoutAndDeviceCache(0, nil, NewDeviceCache())
+	core.configPath = configPath
 	server := &Server{
-		configPath:     configPath,
-		core:           NewFromConfigWithDeviceCache(configPath, nil, deviceCache),
-		deviceCache:    deviceCache,
-		configReloadCh: make(chan struct{}, 1),
+		core:           core,
+		done:           make(chan struct{}),
+		primaryStreams: make(map[string]primaryStreamState),
 	}
 	t.Cleanup(func() {
 		server.core.Stop()
 	})
 
-	server.captureConfigModTime()
+	server.core.captureConfigModTime()
 	require.Equal(t, "A", renderServerPrimary(t, server, configPath))
 
 	time.Sleep(15 * time.Millisecond)
@@ -213,9 +215,9 @@ text.main:
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(configBody), 0o644))
 
-	server.reloadIfConfigFileUpdated()
+	server.core.ReloadIfConfigFileUpdated()
 
-	require.Equal(t, 0, len(server.configReloadCh))
+	require.Equal(t, 0, len(server.core.configReloadCh))
 	require.Equal(t, "B", renderServerPrimary(t, server, configPath))
 }
 
