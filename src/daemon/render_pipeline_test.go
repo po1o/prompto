@@ -67,11 +67,10 @@ func TestRenderPipelineStartRendersInitialBundle(t *testing.T) {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	sessionRuntime := NewSessionRenderRuntime(registry, nil)
 	renderer := &rendererStub{}
-	pipeline := NewRenderPipeline(sessionRuntime, renderer, nil)
+	pipeline := NewRenderPipeline(registry, nil, renderer, nil)
 
-	bundle, active := pipeline.Start("session-a", &runtime.Flags{}, false)
+	bundle, active := pipeline.Start("session-a", &runtime.Flags{}, CancelHard)
 	require.Equal(t, "render", bundle.Primary)
 	require.Equal(t, "transient", bundle.Transient)
 	require.Equal(t, "rtransient", bundle.RTransient)
@@ -88,16 +87,15 @@ func TestRenderPipelineNextRendersAfterUpdate(t *testing.T) {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	sessionRuntime := NewSessionRenderRuntime(registry, nil)
 	renderer := &rendererStub{}
-	pipeline := NewRenderPipeline(sessionRuntime, renderer, nil)
+	pipeline := NewRenderPipeline(registry, nil, renderer, nil)
 
-	_, active := pipeline.Start("session-a", &runtime.Flags{}, false)
+	_, active := pipeline.Start("session-a", &runtime.Flags{}, CancelHard)
 	defer active.Complete()
 
 	go func() {
 		time.Sleep(20 * time.Millisecond)
-		sessionRuntime.SessionHub("session-a").Publish("path.main")
+		pipeline.SessionHub("session-a").Publish("path.main")
 	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -157,11 +155,10 @@ func TestRenderPipelineRepaintWithoutActiveRenderReturnsNoActiveHandle(t *testin
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	sessionRuntime := NewSessionRenderRuntime(registry, nil)
 	renderer := &rendererStub{}
-	pipeline := NewRenderPipeline(sessionRuntime, renderer, nil)
+	pipeline := NewRenderPipeline(registry, nil, renderer, nil)
 
-	bundle, active := pipeline.Start("session-a", &runtime.Flags{VimMode: "normal"}, true)
+	bundle, active := pipeline.Start("session-a", &runtime.Flags{VimMode: "normal"}, CancelSoft)
 
 	require.Equal(t, "render", bundle.Primary)
 	require.Nil(t, active)
@@ -197,9 +194,8 @@ text.rtransient:
 	require.NoError(t, os.WriteFile(configPath, []byte(configYAML), 0o644))
 
 	registry := NewEngineRegistry(prompt.New)
-	sessionRuntime := NewSessionRenderRuntime(registry, nil)
 	renderer := &rendererStub{}
-	pipeline := NewRenderPipeline(sessionRuntime, renderer, nil)
+	pipeline := NewRenderPipeline(registry, nil, renderer, nil)
 
 	flags := &runtime.Flags{
 		ConfigPath:    configPath,
@@ -208,7 +204,7 @@ text.rtransient:
 		Plain:         true,
 	}
 
-	bundle, active := pipeline.Start("session-a", flags, false)
+	bundle, active := pipeline.Start("session-a", flags, CancelHard)
 
 	require.Equal(t, "render", bundle.Primary)
 	require.Equal(t, "transient", bundle.Transient)
@@ -239,8 +235,7 @@ status:
 	require.NoError(t, os.WriteFile(configPath, []byte(configYAML), 0o644))
 
 	registry := NewEngineRegistry(prompt.New)
-	sessionRuntime := NewSessionRenderRuntime(registry, nil)
-	pipeline := NewRenderPipeline(sessionRuntime, nil, nil)
+	pipeline := NewRenderPipeline(registry, nil, nil, nil)
 
 	flags := func(code int) *runtime.Flags {
 		return &runtime.Flags{
@@ -252,12 +247,12 @@ status:
 		}
 	}
 
-	success, active := pipeline.Start("session-a", flags(0), false)
+	success, active := pipeline.Start("session-a", flags(0), CancelHard)
 	require.Nil(t, active)
 	require.True(t, strings.Contains(success.Primary, "OK"))
 	require.False(t, strings.Contains(success.Primary, "ERROR"))
 
-	failure, active := pipeline.Start("session-a", flags(1), false)
+	failure, active := pipeline.Start("session-a", flags(1), CancelHard)
 	require.Nil(t, active)
 	require.True(t, strings.Contains(failure.Primary, "ERROR"))
 }

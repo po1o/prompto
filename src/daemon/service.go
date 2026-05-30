@@ -23,9 +23,8 @@ type RenderResponse struct {
 }
 
 type Service struct {
-	// runtime owns request gating and per-session hubs/engines.
-	runtime *SessionRenderRuntime
-	// pipeline executes actual prompt rendering strategy (full render vs repaint).
+	// pipeline executes per-session render strategy: gating, engine reuse,
+	// cancellation, update hubs, and full-render vs repaint rendering.
 	pipeline *RenderPipeline
 	// renders keeps the currently active render stream handle by session.
 	renders map[string]*ActiveRender
@@ -33,10 +32,8 @@ type Service struct {
 }
 
 func NewService(registry *EngineRegistry, gate *ReloadGate, renderer promptBundleRenderer) *Service {
-	sessionRuntime := NewSessionRenderRuntime(registry, gate)
 	return &Service{
-		runtime:  sessionRuntime,
-		pipeline: NewRenderPipeline(sessionRuntime, renderer, nil),
+		pipeline: NewRenderPipeline(registry, gate, renderer, nil),
 		renders:  make(map[string]*ActiveRender),
 	}
 }
@@ -67,7 +64,7 @@ func (service *Service) StartRender(request RenderRequest) RenderResponse {
 		previous.Complete()
 	}
 
-	bundle, active := service.pipeline.Start(request.SessionID, request.Flags, request.Repaint)
+	bundle, active := service.pipeline.Start(request.SessionID, request.Flags, CancelKindForRepaint(request.Repaint))
 	sequence := service.currentSequence(request.SessionID)
 
 	service.mu.Lock()
@@ -128,15 +125,15 @@ func (service *Service) CompleteSession(sessionID string) {
 		active.Complete()
 	}
 
-	service.runtime.RemoveSession(sessionID)
+	service.pipeline.RemoveSession(sessionID)
 }
 
 func (service *Service) Reload(action func()) {
-	service.runtime.Reload(action)
+	service.pipeline.Reload(action)
 }
 
 func (service *Service) Snapshot() (active int, reloading bool) {
-	return service.runtime.Snapshot()
+	return service.pipeline.Snapshot()
 }
 
 func (service *Service) SessionCount() int {
@@ -146,7 +143,7 @@ func (service *Service) SessionCount() int {
 }
 
 func (service *Service) SessionHub(sessionID string) *SessionUpdateHub {
-	return service.runtime.SessionHub(sessionID)
+	return service.pipeline.SessionHub(sessionID)
 }
 
 func (service *Service) Reset() {
@@ -166,11 +163,11 @@ func (service *Service) Reset() {
 		active.Complete()
 	}
 
-	if service.runtime == nil {
+	if service.pipeline == nil {
 		return
 	}
 
-	service.runtime.Reset()
+	service.pipeline.Reset()
 }
 
 func (service *Service) releaseActiveRenderIfCurrent(sessionID string, expected *ActiveRender) {
@@ -192,11 +189,11 @@ func (service *Service) releaseActiveRenderIfCurrent(sessionID string, expected 
 }
 
 func (service *Service) currentSequence(sessionID string) uint64 {
-	if service.runtime == nil {
+	if service.pipeline == nil {
 		return 0
 	}
 
-	hub := service.runtime.SessionHub(sessionID)
+	hub := service.pipeline.SessionHub(sessionID)
 	if hub == nil {
 		return 0
 	}
@@ -210,11 +207,11 @@ func (service *Service) currentSequence(sessionID string) uint64 {
 }
 
 func (service *Service) isCompletedRender(active *ActiveRender) bool {
-	if active == nil || active.handle == nil || active.handle.Hub() == nil {
+	if active == nil || active.hub == nil {
 		return false
 	}
 
-	snapshot, ok := active.handle.Hub().Last()
+	snapshot, ok := active.hub.Last()
 	if !ok {
 		return false
 	}
@@ -223,7 +220,7 @@ func (service *Service) isCompletedRender(active *ActiveRender) bool {
 		return false
 	}
 
-	renderID := active.handle.RenderID()
+	renderID := active.renderID()
 	if snapshot.RenderID == 0 || snapshot.RenderID == renderID {
 		return true
 	}
