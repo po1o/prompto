@@ -7,7 +7,18 @@ option go_package = "github.com/po1o/prompto/src/daemon/ipc";
 // DaemonService handles prompt rendering requests.
 service DaemonService {
   // RenderPrompt streams segment updates as they complete.
-  // A new request for the same session automatically cancels any in-progress render.
+  //
+  // Cancellation: a new request for the same session supersedes any
+  // in-progress render. The `repaint` field on PromptRequest selects which
+  // kind of cancel:
+  //   - repaint=false (Hard cancel): on-disk state may have changed — the
+  //     prior render's context is aborted; its in-flight computations must
+  //     not write to the cache. A fresh render starts.
+  //   - repaint=true  (Soft cancel): only the view changed (vim toggle) —
+  //     the prior render's computations are preserved; the new request
+  //     reattaches to them and reuses their results.
+  //
+  // See src/daemon/ARCHITECTURE.md ("The cancel model") for details.
   rpc RenderPrompt(PromptRequest) returns (stream PromptResponse);
 
   // ToggleSegment toggles the visibility of segments for a session.

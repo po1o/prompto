@@ -39,7 +39,10 @@ func (de *Environment) Getenv(key string) string {
 	return de.Terminal.Getenv(key)
 }
 
-// UpdateForRepaint updates the environment with repaint-specific changes.
+// UpdateForRepaint updates the environment for a Soft-Cancel (vim toggle)
+// render: only the vim-mode flag changes; the rest of the request context
+// is preserved so the in-flight computations stay valid. See
+// src/daemon/ARCHITECTURE.md ("The cancel model").
 func (de *Environment) UpdateForRepaint(flags *runtime.Flags, envVars map[string]string) {
 	if envVars != nil {
 		de.envVars = envVars
