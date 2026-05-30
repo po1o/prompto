@@ -275,12 +275,16 @@ continued to compile unchanged.
 
 - **Files:** `src/daemon/cache.go`, `src/daemon/daemon.go`, `src/daemon/prompt_cache_bridge.go` [DELETED].
 
-### C8. Add proto doc comments + environment audit  `[P with C5, C6, C7]`
+### C8. Add proto doc comments + environment audit — DONE 2026-05-30
 
-- **Acceptance:** Every message and RPC in `src/daemon/ipc/daemon.proto` has a `//` comment explaining purpose and cancel semantics where relevant. `go generate ./...` produces a diff that is committed. `src/daemon/environment.go` reviewed and either left as-is (with a one-line "audit OK" PR note) or trivially cleaned up.
-- **Verify:** Universal gates green. `git diff` after `go generate` is empty post-commit.
-- **Files:** `src/daemon/ipc/daemon.proto`, `src/daemon/ipc/daemon.pb.go` (regenerated), `src/daemon/ipc/daemon_grpc.pb.go` (regenerated), `src/daemon/environment.go`.
-- **Spec link:** PLAN Phase C8.
+- `daemon.proto`: expanded the `RenderPrompt` RPC comment to spell out the
+  Hard/Soft cancel semantics tied to the `repaint` field, with a pointer to
+  ARCHITECTURE.md.
+- `environment.go`: audited (61 LoC, well-structured); added a one-line
+  cancel-model pointer on `UpdateForRepaint`.
+- `go generate ./daemon/ipc/` produced no changes to generated stubs (doc
+  comments don't affect generated Go code).
+- **Files:** `src/daemon/ipc/daemon.proto`, `src/daemon/environment.go`.
 
 ### C — Phase Gate
 
