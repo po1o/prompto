@@ -22,7 +22,7 @@ func newRenderDaemon(registry *EngineRegistry, renderer promptBundleRenderer) *D
 		renders:     make(map[string]*ActiveRender),
 		// idleTimeout = 0 disables the idle-stop timer for tests.
 	}
-	daemon.sessions = NewSessionManager(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
+	daemon.sessions = NewProcessTracker(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
 	return daemon
 }
 

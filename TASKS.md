@@ -156,19 +156,23 @@ Note: C2-iv (server boundary CancelKind derivation) folded into C2-iii since the
 
 `bool repaint` survives only in (a) `cancel.go CancelKindForRepaint` (the conversion fn), (b) `client.go` RPC wrappers (passthrough to the proto bool field), and (c) `render_pipeline.go applyRenderFlags` (an internal vim-mode-only flag-mutation helper, not a cancel decision). All three are acceptable per the spec's "no bool in cancel decisions" intent.
 
-### C3a. Extract OS-detection into `src/daemon/sessionid/` subpackage
+### C3. Rename `SessionManager` → `ProcessTracker` (in place) — DONE 2026-05-30
 
-- **Acceptance:** Files `session_freebsd*.go`, `session_linux.go`, `session_macos.go`, `session_other.go`, `session_windows.go` move under `src/daemon/sessionid/` with a single exported `Resolve() (string, error)` function. `src/daemon/session.go` calls `sessionid.Resolve()`.
-- **Verify:** Universal gates green on all platforms (CI matrix already covers ubuntu/macos/windows). `go build ./...` clean.
-- **Files:** `src/daemon/sessionid/*.go` (new subpackage), `src/daemon/session.go` (call site), `src/daemon/session_test.go` (adjust). Old `session_{os}.go` files deleted.
-- **Spec link:** PLAN Phase C3.
+**Revised from original C3a/C3b** which called for subpackaging into
+`daemon/sessionid/` (later `idlestop/`). The core smell was the name —
+`SessionManager` tracks PIDs, not sessions, and the overloaded "Session"
+prefix collided with PromptSessionStore and SessionRenderRuntime (the
+latter is already gone after C2). An in-place rename + file rename gets
+~90% of the clarity benefit without the import overhead of a new package.
 
-### C3b. Clarify Session vs SessionStore vs Runtime boundaries
-
-- **Acceptance:** Doc comments on each of `Session`, `SessionStore`, `SessionRenderRuntime` explicitly state "owns X, does NOT own Y." Naming aligned with ARCHITECTURE.md. Any field that crosses the boundary either moves or is justified in a comment.
-- **Verify:** Universal gates + scenarios tests green. Reviewer reads the three doc comments and can answer "where does field Z live?" without grep.
-- **Files:** `src/daemon/session.go`, `src/daemon/session_store.go`, `src/daemon/runtime.go`, plus `_test.go` siblings.
-- **Spec link:** PLAN Phase C3.
+- **What changed:**
+  - `SessionManager` type → `ProcessTracker`; `NewSessionManager` → `NewProcessTracker`; receiver `sm` → `tracker`.
+  - `session.go` → `process_tracker.go`; `session_test.go` → `process_tracker_test.go`.
+  - `session_{freebsd,freebsd_32,freebsd_64,linux,macos,other,windows}.go` → `process_wait_*.go`.
+  - `session_store.go` left untouched (`PromptSessionStore` is a different concept — render-hub storage, not PID tracking).
+  - ARCHITECTURE.md updated to drop the `idlestop/` subpackage plan.
+- **Verify:** Universal gates green. ✅ build, vet, daemon `-race`, lint, fieldalignment, modernize all clean. CI matrix covers all OS-specific waiter files.
+- **Files:** `process_tracker.go`, `process_tracker_test.go`, `process_wait_*.go`, `daemon.go` (callers), `service_test.go` (helper), `daemon_test.go` (helper), `ARCHITECTURE.md`.
 
 ### C4 — Clean the Server/Daemon boundary, then split `server.go`
 

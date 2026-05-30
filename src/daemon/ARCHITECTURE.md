@@ -306,13 +306,17 @@ marked `[DELETED]` exist today but do not exist post-refactor.
 | `reload_gate.go` | `ReloadGate` — counter + CV for "active requests vs reload pending." `BeginReload` waits for in-flight requests to drain; `StartRequest` blocks while reload is in progress. Owned by `Daemon`. |
 | `lock.go` | `LockFile` — cross-platform PID-file. Build-tagged platform helpers live in the same file via `//go:build` blocks; the `lock_unix.go` / `lock_windows.go` split is removed unless code volume dictates otherwise (decision deferred to C6b). |
 
-### Process tracking (idle-shutdown) — `src/daemon/idlestop/` [NEW]
+### Process tracking (idle-shutdown) — `src/daemon/`
+
+Kept in the `daemon` package (the originally-planned `idlestop/` subpackage
+was skipped after weighing import overhead vs organisational win — the
+in-place rename gets ~90% of the clarity).
 
 | File | Owns |
 |---|---|
-| `idlestop/tracker.go` [NEW] | `ProcessTracker` (was `SessionManager`). Register/Unregister/Count + `watchProcess` goroutine per PID. Triggers the idle-shutdown callback when no tracked PIDs remain. |
-| `idlestop/wait_{linux,macos,freebsd,windows,other}.go` [NEW] | `waitForProcessExit(ctx, pid)` per OS. Was `session_{os}.go`. |
-| `idlestop/kevent_freebsd_{32,64}.go` [NEW] | 32/64-bit kevent `setIdent`. Was `session_freebsd_{32,64}.go`. |
+| `process_tracker.go` | `ProcessTracker` (was `SessionManager`). Register/Unregister/Count + `watchProcess` goroutine per PID. Triggers the idle-shutdown callback when no tracked PIDs remain. |
+| `process_wait_{linux,macos,freebsd,windows,other}.go` | `waitForProcessExit(ctx, pid)` per OS. |
+| `process_wait_freebsd_{32,64}.go` | 32/64-bit kevent `setIdent`. |
 
 ### Client — `src/daemon/client*.go`
 
@@ -334,7 +338,7 @@ marked `[DELETED]` exist today but do not exist post-refactor.
   duration of the slowest segment.
 - **One goroutine per RPC stream**, owned by the gRPC handler in
   `server_render.go`. Closes its context when the client disconnects.
-- **One goroutine per tracked PID** in `idlestop`. Exits when the PID exits.
+- **One goroutine per tracked PID** in `ProcessTracker`. Exits when the PID exits.
 - **One goroutine per watcher** (config, binary). Idle until fsnotify fires.
 - **One goroutine for config-reload worker** in `server_session.go`. Reads
   from a queue, calls `Daemon.Reload`.
