@@ -242,26 +242,38 @@ real win. The genuine smells were elsewhere:
   follow-up — covering them would require a substantial new test scaffold.
 - **Files:** `src/daemon/client.go`, `src/daemon/client_test.go` [NEW].
 
-### C6a. Resolve ReloadGate vs ConfigWatcher overlap  `[P with C5, C7, C8]`
+### C6. Watchers + lock — NO ACTION 2026-05-30
 
-- **Acceptance:** One of: (a) ReloadGate absorbed into ConfigWatcher, (b) explicit doc comments stating "ReloadGate handles X, ConfigWatcher handles Y" if both must stay. ARCHITECTURE.md updated accordingly.
-- **Verify:** Universal gates + scenarios tests green. Reviewer can answer "who debounces config reloads?" by reading either file's package comment.
-- **Files:** `src/daemon/reload_gate.go`, `src/daemon/config_watcher.go`, plus `_test.go` siblings.
-- **Spec link:** PLAN Phase C6.
+A1 flagged `ReloadGate` vs `ConfigWatcher` as overlapping, but closer
+reading shows they have distinct, complementary roles:
 
-### C6b. Collapse `lock_*.go` trio if possible  `[P with C5, C7, C8]`
+- **ReloadGate** is an active-requests counter: `BeginReload` blocks while
+  any request is in-flight; `StartRequest` blocks while a reload is pending.
+  It says nothing about *when* to reload.
+- **ConfigWatcher** is an fsnotify wrapper: it emits "config X changed"
+  events. It says nothing about *what to do* when one fires.
+- They meet in `Daemon.configReloadWorker` (`daemon_reload.go`), which
+  receives ConfigWatcher's events and runs `Daemon.Reload`, which in turn
+  uses ReloadGate to serialize against active requests. Clean composition.
 
-- **Acceptance:** `lock.go` + `lock_unix.go` + `lock_windows.go` (260 LoC total) audited. Either: (a) collapsed to `lock.go` if the platform split was unnecessary, (b) doc comments justify the split if it's load-bearing.
-- **Verify:** Universal gates green on the CI matrix (ubuntu/macos/windows). `go build ./...` clean per platform.
-- **Files:** `src/daemon/lock.go`, `src/daemon/lock_unix.go`, `src/daemon/lock_windows.go`.
-- **Spec link:** PLAN Phase C6.
+The `lock_unix.go` + `lock_windows.go` split is idiomatic Go (the
+`_GOOS.go` suffix is the standard implicit build constraint). Per-function
+build tags don't exist in Go, so collapsing into one file isn't possible.
+The split is load-bearing.
 
-### C7. Resolve `prompt_cache_bridge.go` indirection  `[P with C5, C6, C8]`
+No code action needed. Documenting the analysis here so the A1 finding is
+explicitly closed.
 
-- **Acceptance:** Either: (a) the bridge is removed and `cache.go` calls into `src/cache/` directly, (b) the bridge is renamed to describe its actual job, with a doc comment explaining the impedance mismatch it resolves.
-- **Verify:** Universal gates + scenarios tests green.
-- **Files:** `src/daemon/cache.go`, `src/daemon/prompt_cache_bridge.go`, `src/daemon/cache_test.go`.
-- **Spec link:** PLAN Phase C7.
+### C7. Resolve `prompt_cache_bridge.go` indirection — DONE 2026-05-30
+
+`SegmentRenderValue` is now a type alias for `prompt.DeviceCacheEntry`, so
+`*DeviceCache` satisfies `prompt.DeviceCache` directly. The bridge file is
+deleted; the `daemon.go` constructor passes `deviceCache` straight into
+`NewRenderPipeline`. Color fields (`Foreground`, `Background`) were already
+compatible (`color.Ansi` is `type Ansi string`) — string-literal tests
+continued to compile unchanged.
+
+- **Files:** `src/daemon/cache.go`, `src/daemon/daemon.go`, `src/daemon/prompt_cache_bridge.go` [DELETED].
 
 ### C8. Add proto doc comments + environment audit  `[P with C5, C6, C7]`
 
