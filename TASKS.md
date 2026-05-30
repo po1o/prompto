@@ -296,14 +296,14 @@ continued to compile unchanged.
 
 Runs in parallel with the Phase D gate decision; E does not depend on D.
 
-### E1. Audit + align `src/shell/{init,bash,fish,pwsh,zsh}.go`
+### E1. Audit + align `src/shell/{init,bash,fish,pwsh,zsh}.go` — DONE 2026-05-30
 
 - **Acceptance:** Doc comments on each per-shell helper describe the `--repaint` wire-up. Duplication across the four files surfaced — either deduped into `shell/init.go` or justified per-shell in a comment.
 - **Verify:** Universal gates green. `go test ./shell/...` green.
 - **Files:** `src/shell/init.go`, `src/shell/bash.go`, `src/shell/fish.go`, `src/shell/pwsh.go`, `src/shell/zsh.go`.
 - **Spec link:** PLAN Phase E1.
 
-### E2. Embedded script header comments + snapshot tests
+### E2. Embedded script header comments + snapshot tests — DONE 2026-05-30
 
 - **Acceptance:** Each of `prompto.{bash,fish,ps1,zsh}` has a top-of-file comment block explaining: (a) mode-detection mechanism for this shell, (b) where `--repaint` is appended, (c) any ble.sh dependency. `daemon_scripts_test.go` has a snapshot test per shell that locks current behavior — any future drift fails CI loudly.
 - **Verify:** Universal gates green. `go test ./shell -run TestDaemonScripts` green.

@@ -7,6 +7,10 @@ import (
 //go:embed scripts/prompto.zsh
 var zshInit string
 
+// Zsh returns the snippet of zsh code that activates the given feature when
+// emitted into the rendered init script. Script body lives in
+// scripts/prompto.zsh. Vim-mode features rely on ZLE's `zle-keymap-select`
+// widget; the snippet decorates it via `_prompto_create_widget`.
 func (f Features) Zsh() Code {
 	switch f {
 	case CursorPositioning:

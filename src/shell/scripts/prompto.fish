@@ -1,3 +1,18 @@
+# prompto integration for fish.
+#
+# Daemon-mode + vim-mode wiring (see src/daemon/ARCHITECTURE.md and
+# docs/maintainers/daemon-shells.md):
+#
+#   - Mode detection: `_prompto_on_bind_mode_change --on-variable
+#     fish_bind_mode` runs whenever fish updates the bind mode on ESC/i.
+#   - --repaint wiring: the handler sets `_prompto_vim_mode_repaint 1` and
+#     issues `commandline -f repaint`; `_prompto_daemon_render` reads the
+#     flag and appends `--repaint` so the daemon takes the Soft-Cancel path.
+#   - Daemon entry: `_prompto_daemon_render` is the single point that calls
+#     the prompto binary; see `enable_prompto_daemon`.
+#   - The USR1 signal handler (`_prompto_daemon_repaint --on-signal USR1`)
+#     is a defensive repaint trigger; the daemon does not currently send it.
+
 set --export --global PROMPTO_SHELL fish
 set --export --global PROMPTO_SHELL_VERSION $FISH_VERSION
 set --export --global POWERLINE_COMMAND prompto
