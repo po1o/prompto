@@ -19,10 +19,20 @@ import (
 const sessionIDFixture = "session-a"
 
 func newActiveRenderTestDaemon() *Daemon {
-	daemon := New(&rendererStub{})
-	daemon.service = NewService(NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
+	// A real Daemon configured with a stub engine factory and stub renderer,
+	// so render tests don't spin up the full prompt engine. Keeps the idle
+	// timer so existing idle-stop tests still exercise it.
+	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
-	}), NewReloadGate(), &rendererStub{})
+	})
+	pipeline := NewRenderPipeline(registry, NewReloadGate(), &rendererStub{}, nil)
+	daemon := &Daemon{
+		pipeline:    pipeline,
+		deviceCache: NewDeviceCache(),
+		renders:     make(map[string]*ActiveRender),
+		idleTimeout: 5 * time.Minute,
+	}
+	daemon.sessions = NewSessionManager(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
 	return daemon
 }
 

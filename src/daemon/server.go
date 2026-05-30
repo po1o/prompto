@@ -192,7 +192,7 @@ func (server *Server) RenderPrompt(
 	initial := server.core.StartRender(RenderRequest{
 		SessionID: sessionID,
 		Flags:     flags,
-		Repaint:   request.Repaint,
+		Cancel:    CancelKindForRepaint(request.Repaint),
 	})
 
 	if initial.Type == "stopped" {

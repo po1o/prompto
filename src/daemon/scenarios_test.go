@@ -19,11 +19,11 @@ import (
 // C1's CancelKind introduction, which changes how the cancel decision is
 // represented but not what it does).
 //
-// When C2 merges Service into Daemon, only newScenarioHarness changes; the
-// three Test_Scenario_* bodies keep their assertions verbatim.
+// Updated in C2-iii to call the merged Daemon (was Service). Harness shape
+// kept stable so the three Test_Scenario_* bodies need no changes.
 
 type scenarioHarness struct {
-	service  *Service
+	daemon   *Daemon
 	registry *EngineRegistry
 }
 
@@ -33,28 +33,28 @@ func newScenarioHarness(t *testing.T) *scenarioHarness {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	service := NewService(registry, nil, &rendererStub{})
+	daemon := newRenderDaemon(registry, &rendererStub{})
 
-	return &scenarioHarness{service: service, registry: registry}
+	return &scenarioHarness{daemon: daemon, registry: registry}
 }
 
 // startCommand issues a normal (non-repaint) render — a Hard cancel of any
 // prior in-flight render for the session.
 func (h *scenarioHarness) startCommand(sessionID string) {
-	h.service.StartRender(RenderRequest{
+	h.daemon.StartRender(RenderRequest{
 		SessionID: sessionID,
 		Flags:     &runtime.Flags{},
-		Repaint:   false,
+		Cancel:    CancelHard,
 	})
 }
 
 // toggleVimMode issues a repaint render — a Soft cancel that preserves the
 // in-flight computation for the session.
 func (h *scenarioHarness) toggleVimMode(sessionID, mode string) {
-	h.service.StartRender(RenderRequest{
+	h.daemon.StartRender(RenderRequest{
 		SessionID: sessionID,
 		Flags:     &runtime.Flags{VimMode: mode},
-		Repaint:   true,
+		Cancel:    CancelSoft,
 	})
 }
 
@@ -83,16 +83,16 @@ func Test_Scenario_SoftCancel_VimToggle(t *testing.T) {
 	// The preserved computation's result reaches the post-toggle subscriber.
 	go func() {
 		time.Sleep(10 * time.Millisecond)
-		h.service.SessionHub(sessionID).Publish("segment.git", firstID)
+		h.daemon.SessionHub(sessionID).Publish("segment.git", firstID)
 	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	update, ok := h.service.NextUpdate(ctx, sessionID, 0)
+	update, ok := h.daemon.NextUpdate(ctx, sessionID, 0)
 	require.True(t, ok, "the preserved computation's update must stream to the new subscriber")
 	require.Equal(t, "segment.git", update.Segment)
 
-	h.service.CompleteSession(sessionID)
+	h.daemon.CompleteSession(sessionID)
 }
 
 // Scenario 2: running a new command aborts the in-flight computation
@@ -120,7 +120,7 @@ func Test_Scenario_HardCancel_NewCommand(t *testing.T) {
 	require.NotEqual(t, firstID, secondID, "hard cancel must allocate a new render ID")
 	require.NoError(t, secondCtx.Err(), "the replacement render context must be live")
 
-	h.service.CompleteSession(sessionID)
+	h.daemon.CompleteSession(sessionID)
 }
 
 // Scenario 3: rapid-fire toggles never restart the computation. Across many
@@ -149,14 +149,14 @@ func Test_Scenario_RapidFireToggles_RunsOnce(t *testing.T) {
 	// The single original computation still delivers to the current subscriber.
 	go func() {
 		time.Sleep(10 * time.Millisecond)
-		h.service.SessionHub(sessionID).Publish("segment.git", baseID)
+		h.daemon.SessionHub(sessionID).Publish("segment.git", baseID)
 	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	update, ok := h.service.NextUpdate(ctx, sessionID, 0)
+	update, ok := h.daemon.NextUpdate(ctx, sessionID, 0)
 	require.True(t, ok, "the single computation's update must reach the final subscriber")
 	require.Equal(t, "segment.git", update.Segment)
 
-	h.service.CompleteSession(sessionID)
+	h.daemon.CompleteSession(sessionID)
 }

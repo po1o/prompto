@@ -11,12 +11,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// newRenderDaemon builds a Daemon configured for render-orchestration tests:
+// the supplied registry and renderer, no idle-stop timer, no device cache
+// pressure. Shared between this file and scenarios_test.go.
+func newRenderDaemon(registry *EngineRegistry, renderer promptBundleRenderer) *Daemon {
+	pipeline := NewRenderPipeline(registry, nil, renderer, nil)
+	daemon := &Daemon{
+		pipeline:    pipeline,
+		deviceCache: NewDeviceCache(),
+		renders:     make(map[string]*ActiveRender),
+		// idleTimeout = 0 disables the idle-stop timer for tests.
+	}
+	daemon.sessions = NewSessionManager(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
+	return daemon
+}
+
 func TestServiceStartRenderReturnsInitialBundle(t *testing.T) {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
 	renderer := &rendererStub{}
-	service := NewService(registry, nil, renderer)
+	service := newRenderDaemon(registry, renderer)
 
 	response := service.StartRender(RenderRequest{
 		SessionID: "session-a",
@@ -35,7 +50,7 @@ func TestServiceStartRenderReplacesExistingSessionHandle(t *testing.T) {
 		return &prompt.Engine{}
 	})
 	renderer := &rendererStub{}
-	service := NewService(registry, nil, renderer)
+	service := newRenderDaemon(registry, renderer)
 
 	service.StartRender(RenderRequest{SessionID: "session-a", Flags: &runtime.Flags{}})
 	active, _ := service.Snapshot()
@@ -54,7 +69,7 @@ func TestServiceNextUpdateReturnsUpdateResponse(t *testing.T) {
 		return &prompt.Engine{}
 	})
 	renderer := &rendererStub{}
-	service := NewService(registry, nil, renderer)
+	service := newRenderDaemon(registry, renderer)
 
 	service.StartRender(RenderRequest{SessionID: "session-a", Flags: &runtime.Flags{}})
 	go func() {
@@ -75,7 +90,7 @@ func TestServiceNextUpdateReturnsUpdateResponse(t *testing.T) {
 }
 
 func TestServiceNextUpdateReturnsFalseForUnknownSession(t *testing.T) {
-	service := NewService(NewEngineRegistry(nil), nil, &rendererStub{})
+	service := newRenderDaemon(NewEngineRegistry(nil), &rendererStub{})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
@@ -87,7 +102,7 @@ func TestServiceCompleteSessionRemovesActiveHandle(t *testing.T) {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	service := NewService(registry, nil, &rendererStub{})
+	service := newRenderDaemon(registry, &rendererStub{})
 	service.StartRender(RenderRequest{SessionID: "session-a", Flags: &runtime.Flags{}})
 	require.Equal(t, 1, service.SessionCount())
 
@@ -103,13 +118,13 @@ func TestServiceStartRenderRepaintReattachesActiveRender(t *testing.T) {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	service := NewService(registry, nil, &rendererStub{})
+	service := newRenderDaemon(registry, &rendererStub{})
 
-	service.StartRender(RenderRequest{SessionID: "session-a", Flags: &runtime.Flags{}, Repaint: false})
+	service.StartRender(RenderRequest{SessionID: "session-a", Flags: &runtime.Flags{}, Cancel: CancelHard})
 	firstContext, firstID, ok := registry.GetActiveRender("session-a")
 	require.True(t, ok)
 
-	service.StartRender(RenderRequest{SessionID: "session-a", Flags: &runtime.Flags{VimMode: "normal"}, Repaint: true})
+	service.StartRender(RenderRequest{SessionID: "session-a", Flags: &runtime.Flags{VimMode: "normal"}, Cancel: CancelSoft})
 	secondContext, secondID, ok := registry.GetActiveRender("session-a")
 	require.True(t, ok)
 
@@ -121,14 +136,14 @@ func TestServiceRepaintKeepsContextAndStreamsPendingUpdates(t *testing.T) {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	service := NewService(registry, nil, &rendererStub{})
+	service := newRenderDaemon(registry, &rendererStub{})
 	sessionID := sessionIDFixture
 
-	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Cancel: CancelHard})
 	firstContext, renderID, ok := registry.GetActiveRender(sessionID)
 	require.True(t, ok)
 
-	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{VimMode: "normal"}, Repaint: true})
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{VimMode: "normal"}, Cancel: CancelSoft})
 	secondContext, secondID, ok := registry.GetActiveRender(sessionID)
 	require.True(t, ok)
 	require.Same(t, firstContext, secondContext)
@@ -152,10 +167,10 @@ func TestServiceRapidRepaintDoesNotCreateNewRenderContext(t *testing.T) {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	service := NewService(registry, nil, &rendererStub{})
+	service := newRenderDaemon(registry, &rendererStub{})
 	sessionID := sessionIDFixture
 
-	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Cancel: CancelHard})
 	baseContext, baseID, ok := registry.GetActiveRender(sessionID)
 	require.True(t, ok)
 
@@ -163,7 +178,7 @@ func TestServiceRapidRepaintDoesNotCreateNewRenderContext(t *testing.T) {
 		service.StartRender(RenderRequest{
 			SessionID: sessionID,
 			Flags:     &runtime.Flags{VimMode: "normal"},
-			Repaint:   true,
+			Cancel:    CancelSoft,
 		})
 
 		ctx, renderID, exists := registry.GetActiveRender(sessionID)
@@ -189,10 +204,10 @@ func TestServiceDeregistersRenderWhenCompleteUpdateArrives(t *testing.T) {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	service := NewService(registry, nil, &rendererStub{})
+	service := newRenderDaemon(registry, &rendererStub{})
 	sessionID := sessionIDFixture
 
-	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Cancel: CancelHard})
 	_, renderID, ok := registry.GetActiveRender(sessionID)
 	require.True(t, ok)
 	require.Equal(t, 1, service.SessionCount())
@@ -219,10 +234,10 @@ func TestServiceNextUpdateContextCancelKeepsActiveRender(t *testing.T) {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	service := NewService(registry, nil, &rendererStub{})
+	service := newRenderDaemon(registry, &rendererStub{})
 	sessionID := sessionIDFixture
 
-	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Cancel: CancelHard})
 	_, renderID, ok := registry.GetActiveRender(sessionID)
 	require.True(t, ok)
 	require.Equal(t, 1, service.SessionCount())
@@ -250,10 +265,10 @@ func TestServiceNextUpdateStopsWhenRenderIsSuperseded(t *testing.T) {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	service := NewService(registry, nil, &rendererStub{})
+	service := newRenderDaemon(registry, &rendererStub{})
 	sessionID := sessionIDFixture
 
-	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Cancel: CancelHard})
 
 	firstDone := make(chan bool, 1)
 	go func() {
@@ -264,7 +279,7 @@ func TestServiceNextUpdateStopsWhenRenderIsSuperseded(t *testing.T) {
 	}()
 
 	time.Sleep(20 * time.Millisecond)
-	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Cancel: CancelHard})
 
 	select {
 	case ok := <-firstDone:
@@ -278,10 +293,10 @@ func TestServiceStartRenderRepaintSkipsCompletedActiveRender(t *testing.T) {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	service := NewService(registry, nil, &rendererStub{})
+	service := newRenderDaemon(registry, &rendererStub{})
 	sessionID := sessionIDFixture
 
-	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Cancel: CancelHard})
 	_, renderID, ok := registry.GetActiveRender(sessionID)
 	require.True(t, ok)
 
@@ -290,7 +305,7 @@ func TestServiceStartRenderRepaintSkipsCompletedActiveRender(t *testing.T) {
 	response := service.StartRender(RenderRequest{
 		SessionID: sessionID,
 		Flags:     &runtime.Flags{VimMode: "normal"},
-		Repaint:   true,
+		Cancel:    CancelSoft,
 	})
 
 	require.Equal(t, "initial", response.Type)
@@ -305,10 +320,10 @@ func TestServiceStartRenderReattachStartsAfterCurrentSequence(t *testing.T) {
 	registry := NewEngineRegistry(func(_ *runtime.Flags) *prompt.Engine {
 		return &prompt.Engine{}
 	})
-	service := NewService(registry, nil, &rendererStub{})
+	service := newRenderDaemon(registry, &rendererStub{})
 	sessionID := sessionIDFixture
 
-	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Repaint: false})
+	service.StartRender(RenderRequest{SessionID: sessionID, Flags: &runtime.Flags{}, Cancel: CancelHard})
 	_, renderID, ok := registry.GetActiveRender(sessionID)
 	require.True(t, ok)
 
@@ -317,7 +332,7 @@ func TestServiceStartRenderReattachStartsAfterCurrentSequence(t *testing.T) {
 	response := service.StartRender(RenderRequest{
 		SessionID: sessionID,
 		Flags:     &runtime.Flags{VimMode: "normal"},
-		Repaint:   true,
+		Cancel:    CancelSoft,
 	})
 
 	require.Equal(t, "initial", response.Type)
