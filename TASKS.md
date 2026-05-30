@@ -188,14 +188,28 @@ Note: C2-iv (server boundary CancelKind derivation) folded into C2-iii since the
 - **Files:** `src/daemon/daemon.go`, `src/daemon/server.go`, plus `_test.go` siblings.
 - **Spec link:** PLAN Phase C4 (revised).
 
-#### C4c. Split the now-thin `server.go` by RPC method group
+#### C4c. Split the now-thin `server.go` by RPC method group — SKIPPED 2026-05-30
+
+After C4a+C4b, `server.go` dropped from 560 to 362 LoC and is now coherent
+(handlers + wire wiring + helpers). The cosmetic split would trade one tight
+file for four small ones — more files to grok, not less. Original C4 motive
+(break the 560-LoC overload) was already addressed by C4a/b. Revisit if
+`server.go` grows again.
+
+
 
 - **Acceptance:** What remains of `Server` is wire-only: gRPC lifecycle (`grpcServer`, `listener`, `done`, `shutdownOnce`, `lockFile`, `Start`/`Stop`/`Done`), per-RPC handlers, the `primaryStreams` cancellation tracker (genuinely gRPC-specific — it forces wire-side handlers to return when a session's stream is superseded), and proto↔Go conversion at the boundary. Split into `server.go` (wiring/lifecycle), `server_render.go` (`RenderPrompt`), `server_session.go` (`ToggleSegment`, `SetLogging`), `server_cache.go` (`CacheClear`/`SetTTL`/`GetTTL`). No method count change.
 - **Verify:** Universal gates green. `wc -l src/daemon/server*.go` shows the new layout. `go doc ./daemon | grep -c '^func.*Server'` matches `main`.
 - **Files:** `src/daemon/server.go` + 3 new `server_*.go` files, plus `server_test.go` (split if natural).
 - **Spec link:** PLAN Phase C4 (revised).
 
-#### C4d. Align `src/cli/daemon*.go` to the new Server shape
+#### C4d. Align `src/cli/daemon*.go` to the new Server shape — N/A 2026-05-30
+
+Server's external API (`NewServer(configPath)`, `Start`, `Stop`, `Done`)
+did not change in C4a/b. No CLI updates required. Verified by `grep` —
+`cli/daemon*.go` only touches `NewServer`, `Start`, `Stop`, `Done`.
+
+
 
 - **Acceptance:** CLI plumbing files reflect any naming changes from C4a–c. No new flags, no removed flags.
 - **Verify:** Universal gates green. `prompto daemon --help` output matches `main`'s verbatim (capture both, diff).
