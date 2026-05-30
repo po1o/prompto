@@ -334,21 +334,21 @@ Each will get a full task breakdown (audit → characterize → refactor → doc
 
 ## Phase F — Docs Landing & Wrap
 
-### F1. Finalize `src/daemon/ARCHITECTURE.md`
+### F1. Finalize `src/daemon/ARCHITECTURE.md` — DONE 2026-05-30
 
 - **Acceptance:** ARCHITECTURE.md cross-references final code (file names, function names) after all C+E refactors. Diagrams reflect the executed shape. Every C/E PR that drifted from the A2 draft is reconciled.
 - **Verify:** Reviewer can read ARCHITECTURE.md cover-to-cover and predict the file layout in `src/daemon/`.
 - **Files:** `src/daemon/ARCHITECTURE.md`.
 - **Spec link:** SPEC Success Criteria #5.
 
-### F2. Finalize `docs/maintainers/daemon-shells.md`
+### F2. Finalize `docs/maintainers/daemon-shells.md` — DONE 2026-05-30
 
 - **Acceptance:** Each shell section's body is filled in with the post-E2 script contents and pointers to relevant `src/shell/*.go` code.
 - **Verify:** Reviewer can debug a shell-integration bug using only this file + the source.
 - **Files:** `docs/maintainers/daemon-shells.md`.
 - **Spec link:** SPEC Success Criteria #5.
 
-### F3. Banner historical plans
+### F3. Banner historical plans — DONE 2026-05-30
 
 - **Acceptance:** Both `.claude/docs/daemon-vim-mode-plan.md` and `.claude/docs/shell-vim-mode-plan.md` carry a top-of-file banner: "**HISTORICAL** — superseded by `src/daemon/ARCHITECTURE.md`. Kept for provenance." Contents otherwise unchanged.
 - **Verify:** Banner text is present and consistent.

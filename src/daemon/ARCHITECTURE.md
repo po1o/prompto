@@ -45,10 +45,9 @@ between commands so that:
                              |
                              v
 +-------------------------------------------------------------+
-|  Server (src/daemon/server.go + server_render.go +            |
-|          server_cache.go + server_session.go)                 |
-|    gRPC method handlers; per-session toggle store;            |
-|    config-reload worker (drives ReloadGate)                   |
+|  Server (src/daemon/server.go) — thin gRPC adapter            |
+|    All six RPC handlers, lifecycle (Start/Stop/Done),         |
+|    proto↔Go conversion, primaryStreams cancel tracker         |
 +----------------------------+--------------------------------+
                              |
                              v
@@ -147,17 +146,13 @@ Cancellation rules — enforced in `EngineRegistry`:
 | `CancelHard` | Cancel `RegistryContext` of prior render. Hub writes from prior render are dropped (`ctx.Err() != nil` gate). |
 | `CancelSoft` | Close the prior RPC stream only. **Preserve** `RegistryContext` — in-flight compute keeps running; new request reattaches via `Registry.GetActiveRender`. |
 
-Cache-write safety (mirrored in `cache.go`):
-
-```go
-// Any code path that writes to DeviceCache MUST go through this gate.
-func (c *DeviceCache) SetIfActive(ctx context.Context, key string, val SegmentRenderValue, ttl time.Duration) {
-    if ctx.Err() != nil {
-        return // aborted; never pollute the cache
-    }
-    c.Set(key, val, ttl)
-}
-```
+Cache-write safety: every cache write in the render path is preceded by a
+context-error check at the call site (e.g. in `PrimaryStreaming`'s segment
+callback). The pattern is straightforward enough that we deliberately
+*did not* add a `SetIfActive` helper — adding a helper that wraps two
+lines of code obscures rather than helps, and forces callers to thread an
+extra context through. If this hand-discipline starts to slip, that's the
+time to introduce the helper.
 
 ## The three vim-mode scenarios
 
@@ -247,64 +242,65 @@ marked `[DELETED]` exist today but do not exist post-refactor.
 | `protocol.go` | `FlagsToProto` / `ProtoToFlags` + `ProtocolVersion` constant. |
 | `socket.go` + `socket_unix.go` + `socket_windows.go` | Cross-platform socket-path resolution, listen, dial, cleanup. |
 
-### Server / CLI — `src/daemon/server*.go`, `src/cli/daemon*.go`
+### Server / CLI — `src/daemon/server.go`, `src/cli/daemon*.go`
 
 | File | Owns |
 |---|---|
-| `server.go` | gRPC wiring, lifecycle (Start/Stop/Done), helpers. |
-| `server_render.go` [NEW] | `RenderPrompt` handler. Derives `CancelKind` from `request.Repaint`; calls `Daemon.StartRender`; streams responses. |
-| `server_cache.go` [NEW] | `CacheClear`, `CacheSetTTL`, `CacheGetTTL`. |
-| `server_session.go` [NEW] | `ToggleSegment`, `SetLogging`, per-session toggle store, config-reload worker. |
+| `server.go` | Thin gRPC adapter. Owns: gRPC lifecycle (`grpcServer`, `listener`, `Start`/`Stop`/`Done`, `lockFile`, `shutdownOnce`), all six RPC handlers, proto↔Go conversion at the boundary (`CancelKindForRepaint`), and `primaryStreams` — the per-session gRPC stream-cancel tracker that forces wire handlers to return immediately when a session is superseded. **All business state lives on `Daemon`.** |
 | `cli/daemon.go` | `prompto daemon` subcommands. |
 | `cli/daemon_unix.go`, `cli/daemon_windows.go` | Detached-process spawn per OS. |
 
-### Orchestration — `src/daemon/daemon.go`
+Note: the originally-planned per-RPC split into `server_render.go` /
+`server_cache.go` / `server_session.go` was skipped after C4a/b cut
+`server.go` from 560 to 362 LoC — one coherent file beat four small ones.
+
+### Orchestration — `src/daemon/daemon.go` + `daemon_reload.go`
 
 | File | Owns |
 |---|---|
-| `daemon.go` | The `Daemon` type. Holds: `EngineRegistry`, `ReloadGate`, `DeviceCache`, `ConfigWatcher`, `BinaryWatcher`, `ProcessTracker`, `LockFile`. Public API: `New`, `StartRender`, `NextUpdate`, `CompleteSession`, `Reload`, `Stop`, `Snapshot`, `SessionCount`, `SessionHub`. |
-| `service.go` [DELETED] | Merged into `daemon.go`. No external caller ever held a `*Service`; the type added no value over `*Daemon`. |
-| `coordinator.go` [DELETED] | Merged into `render_pipeline.go`. `RenderHandle`'s only consumer was `RequestManager`. |
-| `request_manager.go` [DELETED] | Merged into `daemon.go`. `ReloadGate` integration moves directly onto `Daemon.StartRender`. |
-| `runtime.go` [DELETED] | Merged into `render_pipeline.go`. `SessionRenderHandle` becomes the existing `ActiveRender` type. |
+| `daemon.go` | The `Daemon` type. Holds: `RenderPipeline`, `ProcessTracker`, `DeviceCache`, `ConfigWatcher`, `BinaryWatcher`, `segmentToggles` map, active-`renders` map, lock-file state. Public API: render orchestration (`StartRender`, `NextUpdate`, `CompleteSession`, `Reload`, `Reset`, `Snapshot`, `SessionCount`, `SessionHub`), lifecycle (`Stop`, `StopSilently`, `SetOnStop`), toggles (`SessionToggles`, `ToggleSegment`, `ResetToggles`), cache (`DeviceCache`), config (`ConfigPath`). |
+| `daemon_reload.go` | Config-reload pipeline: `startReloadAndWatchers` wires `ConfigWatcher` + `BinaryWatcher` + the reload-worker goroutine; `ProcessPendingConfigReload` / `ReloadIfConfigFileUpdated` are the exported entry points the gRPC handler calls before each render. |
+| `service.go` [DELETED] | Merged into `daemon.go` (Daemon was the only `*Service` holder). |
+| `coordinator.go` [DELETED] | Merged into `registry.go`. The hard-cancel-vs-soft-reattach branch lives on `EngineRegistry.StartRender`. |
+| `request_manager.go` [DELETED] | Merged into `render_pipeline.go`. |
+| `runtime.go` [DELETED] | Merged into `render_pipeline.go`. `SessionRenderHandle` collapsed into `ActiveRender`. |
+| `update_binding.go` [DELETED] | Was dead code; the engine's `SetUpdateCallback` path is not used in production (`PrimaryStreaming`'s inline callback in `render_pipeline.go` is the live channel). |
 
 ### Per-render execution — `src/daemon/render_pipeline.go`
 
 | File | Owns |
 |---|---|
-| `render_pipeline.go` | `RenderPipeline.Start(sessionID, flags, kind CancelKind) → (PromptBundle, *ActiveRender)`. Resolves engine via Registry, applies flags (full vs repaint-only), wires segment-update publish via `BindSegmentUpdates(sessionID, engine, sessionStore)` — no more inline `handle.Hub().Publish()` calls. `ActiveRender.Next(ctx, after)` streams via `StreamRelay`. |
+| `render_pipeline.go` | `RenderPipeline.Start(sessionID, flags, kind CancelKind) → (PromptBundle, *ActiveRender)`. Owns the `ReloadGate`, `EngineRegistry`, and `PromptSessionStore` (per-session hubs). Resolves engine via Registry, applies flags (full vs repaint-only), publishes segment updates inline from `PrimaryStreaming`'s callback. `ActiveRender` unifies the former `RenderHandle` / `RequestHandle` / `SessionRenderHandle` plumbing; its `Next(ctx, after)` streams via `StreamRelay` and `Complete` is idempotent (releases gate + cancels render). |
 
 ### Registry + cancellation — `src/daemon/registry.go` + `cancel.go`
 
 | File | Owns |
 |---|---|
-| `cancel.go` [NEW] | `CancelKind` enum + `RegistryContext` type + `DeviceCache.SetIfActive` helper signature documentation. The cancel model in code form. |
-| `registry.go` | `EngineRegistry`. Per-session `prompt.Engine` cache + active-render slot (`RegistryContext` + cancel func + renderID). API mirrors the cancel-kind cases: `StartHard(sessionID, flags)`, `StartSoftOrReuse(sessionID, flags)`, `Complete(sessionID, renderID)`, `RemoveSession`, `Reset`. The old `bool repaint` API is gone. |
+| `cancel.go` | `CancelKind` enum (`CancelHard`, `CancelSoft`) + `RegistryContext` wrapper + `CancelKindForRepaint(bool)` (the single bool→kind boundary at the Server↔Daemon edge) + `CancelKind.Repaint()` predicate. |
+| `registry.go` | `EngineRegistry`. Per-session `prompt.Engine` cache + active-render slot (context + cancel func + renderID). One kind-aware entry point: `StartRender(sessionID, flags, kind CancelKind) → *RenderHandle` — soft kind reattaches to the live render, hard kind aborts the prior and starts a new one. Plus `RenderHandle` (the registry-owned generation handle: `Complete`, `RenderID`). |
 
-### Update streaming — `src/daemon/update_*.go` + `stream_relay.go` + `session_store.go`
+### Update streaming — `src/daemon/update_hub.go` + `stream_relay.go` + `session_store.go`
 
 | File | Owns |
 |---|---|
-| `update_hub.go` | `SessionUpdateHub` — per-session pub/sub of sequence-numbered snapshots. No changes from today. |
-| `update_binding.go` | `BindSegmentUpdates(sessionID, engine, store)` / `ClearSegmentUpdates(engine)`. **Now actually used** by `RenderPipeline.Start`. The inline publishes in render_pipeline.go are removed. |
-| `stream_relay.go` | `StreamRelay.Next(ctx, after, renderID)` — hub→ctx replay relay for `NextUpdate`. No changes. |
-| `session_store.go` | `PromptSessionStore` — owns hubs per session, delegates engine removal to Registry. No changes. |
+| `update_hub.go` | `SessionUpdateHub` — per-session pub/sub of sequence-numbered snapshots. |
+| `stream_relay.go` | `StreamRelay.Next(ctx, after, renderID)` — hub→ctx replay relay for `NextUpdate`. |
+| `session_store.go` | `PromptSessionStore` — owns hubs per session, delegates engine removal to Registry. Owned by `RenderPipeline`. |
 
 ### Cache — `src/daemon/cache.go`
 
 | File | Owns |
 |---|---|
-| `cache.go` | `DeviceCache` directly implements `prompt.DeviceCache` (no bridge). Adds `SetIfActive(ctx, key, val, ttl)` — the only allowed write path for in-flight renders. |
-| `prompt_cache_bridge.go` [DELETED] | Was pure indirection. DeviceCache implements the prompt interface natively. |
+| `cache.go` | `DeviceCache` — in-memory TTL store. `SegmentRenderValue` is a type alias for `prompt.DeviceCacheEntry`, so `*DeviceCache` satisfies `prompt.DeviceCache` directly with no bridge. |
 
 ### Lifecycle + watchers — `src/daemon/{config_watcher,binary_watcher,reload_gate,lock}.go`
 
 | File | Owns |
 |---|---|
-| `config_watcher.go` | fsnotify-based watcher over the config + dependent files. Calls `onChange(path)` when any change settles past the debounce window. |
-| `binary_watcher.go` | fsnotify on the daemon binary's resolved path. Triggers shutdown on change so the next client start picks up a new binary. |
-| `reload_gate.go` | `ReloadGate` — counter + CV for "active requests vs reload pending." `BeginReload` waits for in-flight requests to drain; `StartRequest` blocks while reload is in progress. Owned by `Daemon`. |
-| `lock.go` | `LockFile` — cross-platform PID-file. Build-tagged platform helpers live in the same file via `//go:build` blocks; the `lock_unix.go` / `lock_windows.go` split is removed unless code volume dictates otherwise (decision deferred to C6b). |
+| `config_watcher.go` | fsnotify-based watcher over the root config + extends. Calls `onChange(path)` when an event settles past the debounce window. Owned by `Daemon`. |
+| `binary_watcher.go` | fsnotify on the daemon binary's resolved path. Triggers `Daemon.Stop` on change so the next client start picks up the new binary. Owned by `Daemon`. |
+| `reload_gate.go` | `ReloadGate` — counter + CV for "active requests vs reload pending." `BeginReload` waits for in-flight requests to drain; `StartRequest` blocks while reload is in progress. Owned by `RenderPipeline`. Composes with `ConfigWatcher` via `Daemon.configReloadWorker` (in `daemon_reload.go`). |
+| `lock.go` + `lock_unix.go` + `lock_windows.go` | `LockFile` — cross-platform PID-file. The `_GOOS.go` suffix is Go's standard implicit build constraint; per-function build tags don't exist, so the three-file split is load-bearing. |
 
 ### Process tracking (idle-shutdown) — `src/daemon/`
 
@@ -318,13 +314,15 @@ in-place rename gets ~90% of the clarity).
 | `process_wait_{linux,macos,freebsd,windows,other}.go` | `waitForProcessExit(ctx, pid)` per OS. |
 | `process_wait_freebsd_{32,64}.go` | 32/64-bit kevent `setIdent`. |
 
-### Client — `src/daemon/client*.go`
+### Client — `src/daemon/client.go`
 
 | File | Owns |
 |---|---|
-| `client.go` | Public surface: `Client` type, `NewClient`, `ConnectOrStart`, `Close`. Response parsing helpers (`PromptResult`, `ExtractPrompts`). |
-| `client_dial.go` [NEW] | Dial + retry logic (was inlined). |
-| `client_rpc.go` [NEW] | One thin function per RPC: `RenderPrompt`, `RenderPromptSync`, `ToggleSegment`, `Cache*`, `SetLogging`. |
+| `client.go` | `Client` type + `NewClient`/`ConnectOrStart`/`Close` (connection lifecycle), the RPC wrappers (`RenderPrompt`, `RenderPromptSync`, `ToggleSegment`, `Cache*`, `SetLogging`), and response parsing (`PromptResult`, `ExtractPrompts` — table-driven). |
+
+Note: the originally-planned 3-way split into `client_dial.go` /
+`client_rpc.go` was skipped — at 336 LoC the file is coherent (types →
+connection → RPCs → helpers) and splitting would scatter related code.
 
 ### Environment — `src/daemon/environment.go`
 
@@ -337,11 +335,11 @@ in-place rename gets ~90% of the clarity).
 - **One goroutine per active render**, owned by the engine; lives for the
   duration of the slowest segment.
 - **One goroutine per RPC stream**, owned by the gRPC handler in
-  `server_render.go`. Closes its context when the client disconnects.
+  `server.go`. Closes its context when the client disconnects.
 - **One goroutine per tracked PID** in `ProcessTracker`. Exits when the PID exits.
 - **One goroutine per watcher** (config, binary). Idle until fsnotify fires.
-- **One goroutine for config-reload worker** in `server_session.go`. Reads
-  from a queue, calls `Daemon.Reload`.
+- **One goroutine for config-reload worker** in `daemon_reload.go`. Reads
+  from `Daemon.configReloadCh`, calls `Daemon.applyConfigReload`.
 
 Shared state is documented per-field with `// guarded by mu` comments
 (see `code-style` in `SPEC.md`). All cancellation flows through
