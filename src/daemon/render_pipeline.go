@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"context"
+	"sync"
 
 	runtimePkg "github.com/po1o/prompto/src/runtime"
 
@@ -56,38 +57,108 @@ func (renderer defaultPromptBundleRenderer) Bundle(engine *prompt.Engine, primar
 	return bundle
 }
 
+// RenderPipeline owns per-session render execution end to end: reload gating,
+// engine reuse and cancellation (via EngineRegistry), per-session update hubs,
+// and turning engine state into client-facing bundles. It absorbs what were
+// previously the SessionRenderRuntime and RequestManager layers.
 type RenderPipeline struct {
-	// runtime gives access to session-scoped engine/hub/request state.
-	runtime *SessionRenderRuntime
+	// gate blocks new requests during reload and waits for active requests.
+	gate *ReloadGate
+	// registry reuses/cancels per-session engines and active renders.
+	registry *EngineRegistry
+	// sessions stores the update hub for each session ID.
+	sessions *PromptSessionStore
 	// renderer turns engine state into bundle text sent to clients.
 	renderer promptBundleRenderer
 	// deviceCache is injected into each engine before rendering.
 	deviceCache prompt.DeviceCache
 }
 
-func NewRenderPipeline(sessionRuntime *SessionRenderRuntime, renderer promptBundleRenderer, deviceCache prompt.DeviceCache) *RenderPipeline {
+func NewRenderPipeline(registry *EngineRegistry, gate *ReloadGate, renderer promptBundleRenderer, deviceCache prompt.DeviceCache) *RenderPipeline {
+	if gate == nil {
+		gate = NewReloadGate()
+	}
+
 	if renderer == nil {
 		renderer = defaultPromptBundleRenderer{}
 	}
 
 	return &RenderPipeline{
-		runtime:     sessionRuntime,
+		gate:        gate,
+		registry:    registry,
+		sessions:    NewPromptSessionStore(registry),
 		renderer:    renderer,
 		deviceCache: deviceCache,
 	}
 }
 
+// ActiveRender is one in-flight render stream for a session. It unifies the
+// former RenderHandle / RequestHandle / SessionRenderHandle plumbing: the
+// render generation (engine, context, render ID, reattach flag), the update
+// hub and its relay, and the reload-gate release. Complete is idempotent.
 type ActiveRender struct {
-	handle   *SessionRenderHandle
-	renderer promptBundleRenderer
+	render        *RenderHandle
+	relay         *StreamRelay
+	hub           *SessionUpdateHub
+	renderer      promptBundleRenderer
+	releaseActive func()
+	once          sync.Once
 }
 
-func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags, repaint bool) (PromptBundle, *ActiveRender) {
-	handle := pipeline.runtime.StartRequest(sessionID, flags, repaint)
-	engine := handle.Engine()
+func (active *ActiveRender) engine() *prompt.Engine {
+	if active == nil || active.render == nil {
+		return nil
+	}
+
+	return active.render.Engine
+}
+
+func (active *ActiveRender) context() context.Context {
+	if active == nil || active.render == nil {
+		return nil
+	}
+
+	return active.render.Context
+}
+
+func (active *ActiveRender) renderID() uint64 {
+	if active == nil || active.render == nil {
+		return 0
+	}
+
+	return active.render.RenderID()
+}
+
+func (active *ActiveRender) reattached() bool {
+	if active == nil || active.render == nil {
+		return false
+	}
+
+	return active.render.Reattached
+}
+
+func (pipeline *RenderPipeline) newActiveRender(sessionID string, flags *runtimePkg.Flags, kind CancelKind) *ActiveRender {
+	release := pipeline.gate.StartRequest()
+	render := pipeline.registry.StartRender(sessionID, flags, kind)
+	hub := pipeline.sessions.Hub(sessionID)
+
+	return &ActiveRender{
+		render:        render,
+		relay:         NewStreamRelay(hub),
+		hub:           hub,
+		renderer:      pipeline.renderer,
+		releaseActive: release,
+	}
+}
+
+func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags, kind CancelKind) (PromptBundle, *ActiveRender) {
+	repaint := kind.Repaint()
+	active := pipeline.newActiveRender(sessionID, flags, kind)
+	engine := active.engine()
 	primary := ""
-	if repaint && !handle.Reattached() && (engine == nil || engine.Config == nil) {
-		handle.Complete()
+
+	if repaint && !active.reattached() && (engine == nil || engine.Config == nil) {
+		active.Complete()
 		bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{})
 		return bundle, nil
 	}
@@ -100,53 +171,47 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 		if flags != nil && flags.Type != "" && flags.Type != prompt.PRIMARY {
 			// Non-primary type requests are synchronous one-shots.
 			bundle := renderPromptByType(engine, flags.Type, flags.Command)
-			if handle.Hub() != nil {
-				handle.Hub().Publish(renderCompletePayload, handle.RenderID())
+			if active.hub != nil {
+				active.hub.Publish(renderCompletePayload, active.renderID())
 			}
-			return bundle, &ActiveRender{
-				handle:   handle,
-				renderer: pipeline.renderer,
-			}
+			return bundle, active
 		}
 
-		if repaint && handle.Reattached() {
+		if repaint && active.reattached() {
 			// Repaint updates vim-mode-driven output without restarting async segment jobs.
 			primary = engine.PrimaryRepaint()
-			if engine.PendingSegmentCount() == 0 && handle.Hub() != nil {
-				handle.Hub().Publish(renderCompletePayload, handle.RenderID())
+			if engine.PendingSegmentCount() == 0 && active.hub != nil {
+				active.hub.Publish(renderCompletePayload, active.renderID())
 			}
 
 			bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{includeTransient: true})
-			return bundle, &ActiveRender{
-				handle:   handle,
-				renderer: pipeline.renderer,
-			}
+			return bundle, active
 		}
 
 		if repaint {
 			primary = engine.PrimaryRepaint()
-			handle.Complete()
+			active.Complete()
 
 			bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{includeTransient: true})
 			return bundle, nil
 		}
 
 		timeout := engine.Config.GetDaemonTimeout()
-		if handle.Hub() != nil {
-			renderID := handle.RenderID()
+		if active.hub != nil {
+			renderID := active.renderID()
 			// PrimaryStreaming returns quickly with pending placeholders, then publishes updates.
-			primary = engine.PrimaryStreaming(handle.Context(), timeout, func(segmentName string) {
+			primary = engine.PrimaryStreaming(active.context(), timeout, func(segmentName string) {
 				if segmentName == "" {
-					handle.Hub().Publish(renderCompletePayload, renderID)
+					active.hub.Publish(renderCompletePayload, renderID)
 					return
 				}
 
-				handle.Hub().Publish(segmentName, renderID)
+				active.hub.Publish(segmentName, renderID)
 			})
 
 			if engine.PendingSegmentCount() == 0 {
-				handle.Hub().Publish(renderCompletePayload, renderID)
-				handle.Complete()
+				active.hub.Publish(renderCompletePayload, renderID)
+				active.Complete()
 
 				bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{
 					includeSecondary: true,
@@ -171,10 +236,40 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 	}
 
 	bundle := pipeline.renderer.Bundle(engine, primary, options)
-	return bundle, &ActiveRender{
-		handle:   handle,
-		renderer: pipeline.renderer,
+	return bundle, active
+}
+
+// Reload runs action while holding the reload gate, after waiting for active
+// requests to drain and blocking new ones until it returns.
+func (pipeline *RenderPipeline) Reload(action func()) {
+	pipeline.gate.BeginReload()
+	defer pipeline.gate.EndReload()
+
+	if action == nil {
+		return
 	}
+
+	action()
+}
+
+func (pipeline *RenderPipeline) Snapshot() (active int, reloading bool) {
+	return pipeline.gate.Snapshot()
+}
+
+func (pipeline *RenderPipeline) SessionHub(sessionID string) *SessionUpdateHub {
+	return pipeline.sessions.Hub(sessionID)
+}
+
+func (pipeline *RenderPipeline) RemoveSession(sessionID string) {
+	pipeline.sessions.RemoveSession(sessionID)
+}
+
+func (pipeline *RenderPipeline) Reset() {
+	if pipeline.sessions == nil {
+		return
+	}
+
+	pipeline.sessions.Reset()
 }
 
 func renderPromptByType(engine *prompt.Engine, promptType, command string) PromptBundle {
@@ -245,7 +340,7 @@ func applyRenderFlags(engine *prompt.Engine, flags *runtimePkg.Flags, repaint bo
 }
 
 func (active *ActiveRender) Next(updateContext context.Context, after uint64) (PromptUpdate, bool) {
-	if active == nil || active.handle == nil || active.handle.Relay() == nil || active.renderer == nil {
+	if active == nil || active.relay == nil || active.renderer == nil {
 		return PromptUpdate{}, false
 	}
 
@@ -254,7 +349,7 @@ func (active *ActiveRender) Next(updateContext context.Context, after uint64) (P
 	}
 
 	relayContext := updateContext
-	renderContext := active.handle.Context()
+	renderContext := active.context()
 	if renderContext != nil {
 		var cancel context.CancelFunc
 		relayContext, cancel = context.WithCancel(updateContext)
@@ -263,7 +358,7 @@ func (active *ActiveRender) Next(updateContext context.Context, after uint64) (P
 		defer cancel()
 	}
 
-	snapshot, ok := active.handle.Relay().Next(relayContext, after, active.handle.RenderID())
+	snapshot, ok := active.relay.Next(relayContext, after, active.renderID())
 	if !ok {
 		return PromptUpdate{}, false
 	}
@@ -278,7 +373,7 @@ func (active *ActiveRender) Next(updateContext context.Context, after uint64) (P
 		}
 	}
 
-	engine := active.handle.Engine()
+	engine := active.engine()
 	if engine == nil {
 		return PromptUpdate{}, false
 	}
@@ -298,9 +393,22 @@ func (active *ActiveRender) Next(updateContext context.Context, after uint64) (P
 }
 
 func (active *ActiveRender) Complete() {
-	if active == nil || active.handle == nil {
+	if active == nil {
 		return
 	}
 
-	active.handle.Complete()
+	active.once.Do(func() {
+		if engine := active.engine(); engine != nil {
+			// Detach callback so old/canceled renders stop publishing updates.
+			ClearSegmentUpdates(engine)
+		}
+
+		if active.render != nil {
+			active.render.Complete()
+		}
+
+		if active.releaseActive != nil {
+			active.releaseActive()
+		}
+	})
 }
