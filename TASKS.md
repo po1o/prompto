@@ -170,19 +170,41 @@ Note: C2-iv (server boundary CancelKind derivation) folded into C2-iii since the
 - **Files:** `src/daemon/session.go`, `src/daemon/session_store.go`, `src/daemon/runtime.go`, plus `_test.go` siblings.
 - **Spec link:** PLAN Phase C3.
 
-### C4a. Split `server.go` by RPC method group
+### C4 — Clean the Server/Daemon boundary, then split `server.go`
 
-- **Acceptance:** `src/daemon/server.go` (currently 560 LoC) split into `server.go` (wiring/lifecycle) + one file per RPC method group (e.g., `server_render.go`, `server_cache.go`, `server_session.go`). No method count change.
-- **Verify:** Universal gates green. `wc -l src/daemon/server*.go` shows the new layout. `go doc ./daemon | grep -c '^func.*Server'` matches the count on `main`.
-- **Files:** `src/daemon/server.go` + 2–3 new `server_*.go` files + `src/daemon/server_test.go` (split if natural).
-- **Spec link:** PLAN Phase C4.
+**Revised 2026-05-30.** The original C4 only split `server.go` cosmetically by RPC method group. Per review, that leaves the *real* problem unaddressed: `Server` today owns per-session business state (toggles, primary-stream cancellation tracker, the config-reload worker, the config + binary watchers, a duplicate `deviceCache` field) that has nothing to do with the gRPC wire and should live on `Daemon`. Without moving that state, the principle "Daemon = pure-Go business logic; Server = thin wire adapter" is aspirational rather than true. C4 is resequenced into four ordered sub-steps that fix the boundary first, then do the cosmetic split.
 
-### C4b. Align `src/cli/daemon*.go` to new server shape
+#### C4a. Move per-session toggles to `Daemon`
 
-- **Acceptance:** CLI plumbing files reflect any naming changes from C4a. No new flags, no removed flags.
-- **Verify:** Universal gates green. `prompto daemon --help` output matches `main`'s output verbatim (capture both, diff).
+- **Acceptance:** `segmentToggles map[string]map[string]bool` + `toggleMu` + `sessionToggles`/`cloneToggleMap` helpers move from `Server` to `Daemon`. Daemon exposes `ToggleSegment(sessionID string, segments []string)` and `SessionToggles(sessionID string) map[string]bool`. `Server.ToggleSegment` RPC handler becomes a thin proxy. Render path reads toggles via `Daemon`, not `Server`.
+- **Verify:** Universal gates + B2 scenarios + full daemon -race green. `git grep -n 'segmentToggles\|toggleMu' daemon/server.go` returns nothing.
+- **Files:** `src/daemon/daemon.go`, `src/daemon/server.go`, plus `_test.go` siblings.
+- **Spec link:** PLAN Phase C4 (revised).
+
+#### C4b. Move config-reload worker + watchers to `Daemon`; dedupe `DeviceCache`
+
+- **Acceptance:** `ConfigWatcher`, `BinaryWatcher`, the `configReloadCh` channel, `configReloadWorker` goroutine, `processPendingConfigReload`, `applyConfigReload`, `reloadIfConfigFileUpdated`, `captureConfigModTime`, `requestConfigReload`, `refreshConfigWatches`, `lastConfigModUnixNano`, `reloadMu`, and the `configPath` field all move from `Server` to `Daemon`. `Server.deviceCache` field deleted (was duplicate; `Daemon.DeviceCache()` is the single source). Cache RPC handlers read via `server.core.DeviceCache()`.
+- **Verify:** Universal gates green. `git grep -n 'configReloadCh\|configWatcher\|binaryWatcher\|reloadMu\|lastConfigModUnixNano\|deviceCache' daemon/server.go` returns nothing.
+- **Files:** `src/daemon/daemon.go`, `src/daemon/server.go`, plus `_test.go` siblings.
+- **Spec link:** PLAN Phase C4 (revised).
+
+#### C4c. Split the now-thin `server.go` by RPC method group
+
+- **Acceptance:** What remains of `Server` is wire-only: gRPC lifecycle (`grpcServer`, `listener`, `done`, `shutdownOnce`, `lockFile`, `Start`/`Stop`/`Done`), per-RPC handlers, the `primaryStreams` cancellation tracker (genuinely gRPC-specific — it forces wire-side handlers to return when a session's stream is superseded), and proto↔Go conversion at the boundary. Split into `server.go` (wiring/lifecycle), `server_render.go` (`RenderPrompt`), `server_session.go` (`ToggleSegment`, `SetLogging`), `server_cache.go` (`CacheClear`/`SetTTL`/`GetTTL`). No method count change.
+- **Verify:** Universal gates green. `wc -l src/daemon/server*.go` shows the new layout. `go doc ./daemon | grep -c '^func.*Server'` matches `main`.
+- **Files:** `src/daemon/server.go` + 3 new `server_*.go` files, plus `server_test.go` (split if natural).
+- **Spec link:** PLAN Phase C4 (revised).
+
+#### C4d. Align `src/cli/daemon*.go` to the new Server shape
+
+- **Acceptance:** CLI plumbing files reflect any naming changes from C4a–c. No new flags, no removed flags.
+- **Verify:** Universal gates green. `prompto daemon --help` output matches `main`'s verbatim (capture both, diff).
 - **Files:** `src/cli/daemon.go`, `src/cli/daemon_unix.go`, `src/cli/daemon_windows.go`.
-- **Spec link:** PLAN Phase C4.
+- **Spec link:** PLAN Phase C4 (revised).
+
+#### Note: `primaryStreams` stays on Server (with caveat)
+
+`primaryStreams` + `replacePrimaryStream` track per-session gRPC stream cancel funcs so that when a new render arrives for a session, the prior gRPC handler returns immediately (rather than waiting for the next `daemon.NextUpdate` poll to notice the render was superseded). This **is** gRPC-handler-specific and correctly belongs on Server. **Open follow-up (post-C4):** A1 finding #5 noted this is a *parallel* cancellation layer on top of Registry's own active-render slot — there may be a way to fold the two into one mechanism. Out of scope for C4; revisit if it ever causes a real bug.
 
 ### C5. Split `client.go`  `[P with C6, C7, C8]`
 
