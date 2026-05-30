@@ -3,7 +3,6 @@ package daemon
 import (
 	"context"
 	"fmt"
-	"maps"
 	"net"
 	"os"
 	"os/signal"
@@ -37,12 +36,9 @@ type Server struct {
 	deviceCache   *DeviceCache
 	// configReloadCh is a coalescing signal channel (buffer=1).
 	configReloadCh chan struct{}
-	// segmentToggles keeps per-session runtime toggle state.
-	segmentToggles map[string]map[string]bool
 	primaryStreams map[string]primaryStreamState
 	configPath     string
 	streamMu       sync.Mutex
-	toggleMu       sync.RWMutex
 	reloadMu       sync.Mutex
 	// lastConfigModUnixNano tracks the last applied root config mtime.
 	lastConfigModUnixNano atomic.Int64
@@ -68,7 +64,6 @@ func NewServer(configPath string) (*Server, error) {
 		done:           make(chan struct{}),
 		deviceCache:    NewDeviceCache(),
 		configReloadCh: make(chan struct{}, 1),
-		segmentToggles: make(map[string]map[string]bool),
 		primaryStreams: make(map[string]primaryStreamState),
 	}
 	server.captureConfigModTime()
@@ -175,7 +170,7 @@ func (server *Server) RenderPrompt(
 
 	sessionID := resolveServerSessionID(request.Pid, request.SessionId)
 
-	flags.SegmentToggles = server.sessionToggles(sessionID)
+	flags.SegmentToggles = server.core.SessionToggles(sessionID)
 
 	streamContext := stream.Context()
 	releaseStream := func() {}
@@ -249,31 +244,14 @@ func (server *Server) ToggleSegment(
 	request *ipc.ToggleSegmentRequest,
 ) (*ipc.ToggleSegmentResponse, error) {
 	sessionID := resolveServerSessionID(0, request.SessionId)
-
-	currentToggleSet := server.sessionToggles(sessionID)
-
-	for _, segment := range request.Segments {
-		if currentToggleSet[segment] {
-			delete(currentToggleSet, segment)
-			continue
-		}
-
-		currentToggleSet[segment] = true
-	}
-
-	server.toggleMu.Lock()
-	server.segmentToggles[sessionID] = currentToggleSet
-	server.toggleMu.Unlock()
+	server.core.ToggleSegment(sessionID, request.Segments)
 
 	return &ipc.ToggleSegmentResponse{Success: true}, nil
 }
 
 func (server *Server) CacheClear(_ context.Context, _ *ipc.CacheClearRequest) (*ipc.CacheClearResponse, error) {
 	server.deviceCache.Clear()
-
-	server.toggleMu.Lock()
-	server.segmentToggles = make(map[string]map[string]bool)
-	server.toggleMu.Unlock()
+	server.core.ResetToggles()
 
 	cache.DeleteAll(cache.Device)
 	cache.DeleteAll(cache.Session)
@@ -484,24 +462,6 @@ func makePromptResponse(responseType, requestID string, bundle *PromptBundle) *i
 	}
 }
 
-func (server *Server) sessionToggles(sessionID string) map[string]bool {
-	server.toggleMu.RLock()
-	existing, ok := server.segmentToggles[sessionID]
-	server.toggleMu.RUnlock()
-	if ok {
-		return cloneToggleMap(existing)
-	}
-
-	baseToggles, _ := cache.Get[map[string]bool](cache.Session, cache.TOGGLECACHE)
-	cloned := cloneToggleMap(baseToggles)
-
-	server.toggleMu.Lock()
-	server.segmentToggles[sessionID] = cloned
-	server.toggleMu.Unlock()
-
-	return cloneToggleMap(cloned)
-}
-
 func (server *Server) replacePrimaryStream(sessionID, requestID string, cancel context.CancelFunc) func() {
 	server.streamMu.Lock()
 	previous, ok := server.primaryStreams[sessionID]
@@ -526,17 +486,6 @@ func (server *Server) replacePrimaryStream(sessionID, requestID string, cancel c
 
 		delete(server.primaryStreams, sessionID)
 	}
-}
-
-func cloneToggleMap(source map[string]bool) map[string]bool {
-	if len(source) == 0 {
-		return map[string]bool{}
-	}
-
-	cloned := make(map[string]bool, len(source))
-	maps.Copy(cloned, source)
-
-	return cloned
 }
 
 func resolveServerSessionID(pid int32, sessionID string) string {
