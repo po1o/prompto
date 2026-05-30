@@ -304,32 +304,23 @@ func ExtractPrompts(resp *ipc.PromptResponse) *PromptResult {
 		return result
 	}
 
-	if p, ok := resp.Prompts["primary"]; ok {
-		result.Primary = p.Text
-	}
-	if p, ok := resp.Prompts["right"]; ok {
-		result.Right = p.Text
-	}
-	if p, ok := resp.Prompts["secondary"]; ok {
-		result.Secondary = p.Text
-	}
-	if p, ok := resp.Prompts["transient"]; ok {
-		result.Transient = p.Text
-	}
-	if p, ok := resp.Prompts["rtransient"]; ok {
-		result.RTransient = p.Text
-	}
-	if p, ok := resp.Prompts["debug"]; ok {
-		result.Debug = p.Text
-	}
-	if p, ok := resp.Prompts["tooltip"]; ok {
-		result.Tooltip = p.Text
-	}
-	if p, ok := resp.Prompts["valid"]; ok {
-		result.Valid = p.Text
-	}
-	if p, ok := resp.Prompts["error"]; ok {
-		result.Error = p.Text
+	for _, field := range []struct {
+		dst *string
+		key string
+	}{
+		{&result.Primary, "primary"},
+		{&result.Right, "right"},
+		{&result.Secondary, "secondary"},
+		{&result.Transient, "transient"},
+		{&result.RTransient, "rtransient"},
+		{&result.Debug, "debug"},
+		{&result.Tooltip, "tooltip"},
+		{&result.Valid, "valid"},
+		{&result.Error, "error"},
+	} {
+		if p, ok := resp.Prompts[field.key]; ok {
+			*field.dst = p.Text
+		}
 	}
 
 	return result

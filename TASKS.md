@@ -224,12 +224,23 @@ did not change in C4a/b. No CLI updates required. Verified by `grep` —
 
 `primaryStreams` + `replacePrimaryStream` track per-session gRPC stream cancel funcs so that when a new render arrives for a session, the prior gRPC handler returns immediately (rather than waiting for the next `daemon.NextUpdate` poll to notice the render was superseded). This **is** gRPC-handler-specific and correctly belongs on Server. **Open follow-up (post-C4):** A1 finding #5 noted this is a *parallel* cancellation layer on top of Registry's own active-render slot — there may be a way to fold the two into one mechanism. Out of scope for C4; revisit if it ever causes a real bug.
 
-### C5. Split `client.go`  `[P with C6, C7, C8]`
+### C5. Simplify `client.go` and add tests — DONE 2026-05-30 (split skipped)
 
-- **Acceptance:** `src/daemon/client.go` (336 LoC) split into `client.go` (public surface), `client_dial.go` (connect/retry), `client_rpc.go` (RPC wrappers). Same external API.
-- **Verify:** Universal gates green. Tests pass. No callers outside `src/daemon/` need changes.
-- **Files:** 3 client files + `client_test.go` (split if natural).
-- **Spec link:** PLAN Phase C5.
+**Revised.** The original C5 was a 3-way file split (client.go +
+client_dial.go + client_rpc.go), motivated by the file's 336 LoC. Like
+C4c, the file is actually well-organized (types → connection → RPCs →
+helpers → result extraction); splitting scatters related code without a
+real win. The genuine smells were elsewhere:
+
+- **Simplified `ExtractPrompts`**: 9 near-identical if-blocks → one loop
+  over a `{dst, key}` table. Data, not code.
+- **Added `client_test.go`**: 5 tests for `ExtractPrompts` (nil, empty,
+  all-fields, partial, unknown-keys). Brings ExtractPrompts from 0% → 100%
+  coverage. Closes one of B1's biggest gaps.
+- The connection / RPC wrappers still need an in-process gRPC harness to
+  test meaningfully (heavy lift); they remain at 0% coverage. Noted as a
+  follow-up — covering them would require a substantial new test scaffold.
+- **Files:** `src/daemon/client.go`, `src/daemon/client_test.go` [NEW].
 
 ### C6a. Resolve ReloadGate vs ConfigWatcher overlap  `[P with C5, C7, C8]`
 
