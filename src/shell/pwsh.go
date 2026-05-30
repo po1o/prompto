@@ -9,6 +9,10 @@ import (
 //go:embed scripts/prompto.ps1
 var pwshInit string
 
+// Pwsh returns the snippet of PowerShell code that activates the given
+// feature when emitted into the rendered init script. Script body lives in
+// scripts/prompto.ps1. Vim-mode features assume PSReadLine is configured
+// with `-EditMode Vi`.
 func (f Features) Pwsh() Code {
 	switch f {
 	case Tooltips:

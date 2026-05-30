@@ -9,6 +9,9 @@ import (
 //go:embed scripts/prompto.fish
 var fishInit string
 
+// Fish returns the snippet of fish code that activates the given feature
+// when emitted into the rendered init script. Script body lives in
+// scripts/prompto.fish.
 func (f Features) Fish() Code {
 	switch f {
 	case Transient:

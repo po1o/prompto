@@ -7,6 +7,50 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestDaemonScriptsWireRepaintAndModeDetection locks the contract every
+// shell script must satisfy for the daemon's Soft-Cancel path to work:
+// each script (1) appends --repaint to its render call, and (2) contains
+// the shell-specific mode-detection idiom that triggers the repaint.
+// See src/daemon/ARCHITECTURE.md ("The cancel model") and
+// docs/maintainers/daemon-shells.md.
+func TestDaemonScriptsWireRepaintAndModeDetection(t *testing.T) {
+	testCases := []struct {
+		name              string
+		script            string
+		modeDetectionHook string
+	}{
+		{
+			name:              "bash",
+			script:            bashInit,
+			modeDetectionHook: "_prompto_ble_keymap_change",
+		},
+		{
+			name:              "fish",
+			script:            fishInit,
+			modeDetectionHook: "_prompto_on_bind_mode_change --on-variable fish_bind_mode",
+		},
+		{
+			name:              "pwsh",
+			script:            pwshInit,
+			modeDetectionHook: "-ViMode Command",
+		},
+		{
+			name:              "zsh",
+			script:            zshInit,
+			modeDetectionHook: "_prompto_zle-keymap-select",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.True(t, strings.Contains(tc.script, "--repaint"),
+				"daemon script must append --repaint for vim-mode toggles (Soft-Cancel path)")
+			assert.True(t, strings.Contains(tc.script, tc.modeDetectionHook),
+				"daemon script must contain shell-specific mode-detection hook %q", tc.modeDetectionHook)
+		})
+	}
+}
+
 func TestDaemonScriptsIncludePIDAndVimModeSupport(t *testing.T) {
 	testCases := []struct {
 		name            string

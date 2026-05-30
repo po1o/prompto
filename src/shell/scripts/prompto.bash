@@ -1,3 +1,19 @@
+# prompto integration for Bash.
+#
+# Daemon-mode + vim-mode wiring (see src/daemon/ARCHITECTURE.md and
+# docs/maintainers/daemon-shells.md):
+#
+#   - Mode detection: requires ble.sh. We register a keymap-change hook
+#     via `_prompto_ble_keymap_change` (only when $BLE_SESSION_ID is set).
+#     Native Bash readline does not expose mode-change hooks, so vim-mode
+#     repaint is silently a no-op without ble.sh sourced first.
+#   - --repaint wiring: the keymap hook sets `_prompto_vim_mode_repaint=1`;
+#     `_prompto_daemon_render` reads it and appends `--repaint` to the
+#     `prompto render` invocation. The daemon then takes the Soft-Cancel
+#     path (preserves in-flight segment computations).
+#   - Daemon entry: `_prompto_daemon_render` is the single point that calls
+#     the prompto binary; see `enable_prompto_daemon`.
+
 export PROMPTO_SHELL='bash'
 export PROMPTO_SHELL_VERSION=$BASH_VERSION
 export POWERLINE_COMMAND='prompto'

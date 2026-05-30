@@ -1,3 +1,18 @@
+# prompto integration for PowerShell.
+#
+# Daemon-mode + vim-mode wiring (see src/daemon/ARCHITECTURE.md and
+# docs/maintainers/daemon-shells.md):
+#
+#   - Mode detection: `Set-PSReadLineKeyHandler -ViMode Command/Insert`
+#     bindings on the keys that toggle vim modes (Escape, i, a, etc.).
+#     Requires `Set-PSReadLineOption -EditMode Vi` upstream.
+#   - --repaint wiring: each handler sets a script-scope repaint flag and
+#     calls `[Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt()`; the
+#     prompt function then appends `--repaint` to the prompto invocation,
+#     so the daemon takes the Soft-Cancel path.
+#   - Order matters: if another module (e.g. PSFzf) rebinds keys after
+#     prompto's init runs, the bindings here may be overridden.
+
 # remove any existing dynamic module of OMP
 if ($null -ne (Get-Module -Name "prompto-core")) {
     Remove-Module -Name "prompto-core" -Force

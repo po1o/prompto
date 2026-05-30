@@ -1,3 +1,18 @@
+# prompto integration for Zsh.
+#
+# Daemon-mode + vim-mode wiring (see src/daemon/ARCHITECTURE.md and
+# docs/maintainers/daemon-shells.md):
+#
+#   - Mode detection: `_prompto_zle-keymap-select` is decorated onto ZLE's
+#     `zle-keymap-select` widget via `_prompto_create_widget` and fires on
+#     every $KEYMAP change (vicmd ↔ main).
+#   - --repaint wiring: the keymap hook sets `_prompto_vim_mode_repaint=1`
+#     and calls `zle reset-prompt`; `_prompto_daemon_render` reads the flag
+#     and appends `--repaint` to the prompto invocation, so the daemon
+#     takes the Soft-Cancel path.
+#   - Daemon entry: `_prompto_daemon_render` is the single point that calls
+#     the prompto binary; see `enable_prompto_daemon`.
+
 export PROMPTO_SHELL='zsh'
 export PROMPTO_SHELL_VERSION=$ZSH_VERSION
 export POWERLINE_COMMAND='prompto'

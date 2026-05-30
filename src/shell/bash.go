@@ -9,6 +9,12 @@ import (
 //go:embed scripts/prompto.bash
 var bashInit string
 
+// Bash returns the snippet of Bash code (typically a single line or short
+// block) that activates the given feature when emitted into the rendered
+// init script. The script body itself lives in scripts/prompto.bash; the
+// snippets returned here switch on / configure individual features. Some
+// features require ble.sh and silently return "" when BLE_SESSION_ID is
+// absent — see the bashBLEsession guard.
 func (f Features) Bash() Code {
 	switch f {
 	case CursorPositioning:
