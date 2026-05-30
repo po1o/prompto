@@ -174,7 +174,7 @@ Note: C2-iv (server boundary CancelKind derivation) folded into C2-iii since the
 
 **Revised 2026-05-30.** The original C4 only split `server.go` cosmetically by RPC method group. Per review, that leaves the *real* problem unaddressed: `Server` today owns per-session business state (toggles, primary-stream cancellation tracker, the config-reload worker, the config + binary watchers, a duplicate `deviceCache` field) that has nothing to do with the gRPC wire and should live on `Daemon`. Without moving that state, the principle "Daemon = pure-Go business logic; Server = thin wire adapter" is aspirational rather than true. C4 is resequenced into four ordered sub-steps that fix the boundary first, then do the cosmetic split.
 
-#### C4a. Move per-session toggles to `Daemon`
+#### C4a. Move per-session toggles to `Daemon` — DONE 2026-05-30
 
 - **Acceptance:** `segmentToggles map[string]map[string]bool` + `toggleMu` + `sessionToggles`/`cloneToggleMap` helpers move from `Server` to `Daemon`. Daemon exposes `ToggleSegment(sessionID string, segments []string)` and `SessionToggles(sessionID string) map[string]bool`. `Server.ToggleSegment` RPC handler becomes a thin proxy. Render path reads toggles via `Daemon`, not `Server`.
 - **Verify:** Universal gates + B2 scenarios + full daemon -race green. `git grep -n 'segmentToggles\|toggleMu' daemon/server.go` returns nothing.

@@ -2,11 +2,13 @@ package daemon
 
 import (
 	"context"
+	"maps"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/prompt"
 	"github.com/po1o/prompto/src/runtime"
@@ -51,7 +53,10 @@ type Daemon struct {
 	deviceCache *DeviceCache
 	// renders keeps the currently active render stream handle by session.
 	renders map[string]*ActiveRender
-	onStop  func()
+	// segmentToggles holds the per-session segment-visibility map, seeded
+	// from the persistent toggle cache on first access per session.
+	segmentToggles map[string]map[string]bool
+	onStop         func()
 	// idleTimeout is armed when there are no tracked sessions.
 	idleTimeout time.Duration
 	// idleToken invalidates stale timers when activity resumes.
@@ -61,6 +66,8 @@ type Daemon struct {
 	mu sync.Mutex
 	// rendersMu guards the renders map.
 	rendersMu sync.Mutex
+	// toggleMu guards segmentToggles.
+	toggleMu sync.RWMutex
 }
 
 func New(renderer promptBundleRenderer) *Daemon {
@@ -91,10 +98,11 @@ func NewWithIdleTimeoutAndDeviceCache(idleTimeout time.Duration, renderer prompt
 	pipeline := NewRenderPipeline(registry, gate, renderer, newPromptDeviceCacheBridge(deviceCache))
 
 	daemon := &Daemon{
-		pipeline:    pipeline,
-		deviceCache: deviceCache,
-		renders:     make(map[string]*ActiveRender),
-		idleTimeout: idleTimeout,
+		pipeline:       pipeline,
+		deviceCache:    deviceCache,
+		renders:        make(map[string]*ActiveRender),
+		segmentToggles: make(map[string]map[string]bool),
+		idleTimeout:    idleTimeout,
 	}
 	daemon.sessions = NewSessionManager(daemon.onSessionUnregister, daemon.onAllSessionsEnded)
 
@@ -441,6 +449,65 @@ func (daemon *Daemon) isCompletedRender(active *ActiveRender) bool {
 	}
 
 	return false
+}
+
+// SessionToggles returns the per-session segment-toggle map, seeding from the
+// persistent toggle cache on first access. The returned map is a clone;
+// callers may mutate it without affecting daemon state.
+func (daemon *Daemon) SessionToggles(sessionID string) map[string]bool {
+	daemon.toggleMu.RLock()
+	existing, ok := daemon.segmentToggles[sessionID]
+	daemon.toggleMu.RUnlock()
+	if ok {
+		return cloneToggleMap(existing)
+	}
+
+	baseToggles, _ := cache.Get[map[string]bool](cache.Session, cache.TOGGLECACHE)
+	cloned := cloneToggleMap(baseToggles)
+
+	daemon.toggleMu.Lock()
+	daemon.segmentToggles[sessionID] = cloned
+	daemon.toggleMu.Unlock()
+
+	return cloneToggleMap(cloned)
+}
+
+// ToggleSegment flips the visibility of the named segments for a session:
+// segments currently toggled-on become toggled-off and vice versa.
+func (daemon *Daemon) ToggleSegment(sessionID string, segments []string) {
+	current := daemon.SessionToggles(sessionID)
+
+	for _, segment := range segments {
+		if current[segment] {
+			delete(current, segment)
+			continue
+		}
+
+		current[segment] = true
+	}
+
+	daemon.toggleMu.Lock()
+	daemon.segmentToggles[sessionID] = current
+	daemon.toggleMu.Unlock()
+}
+
+// ResetToggles clears all per-session segment toggles. Used when the
+// persistent cache is cleared.
+func (daemon *Daemon) ResetToggles() {
+	daemon.toggleMu.Lock()
+	daemon.segmentToggles = make(map[string]map[string]bool)
+	daemon.toggleMu.Unlock()
+}
+
+func cloneToggleMap(source map[string]bool) map[string]bool {
+	if len(source) == 0 {
+		return map[string]bool{}
+	}
+
+	cloned := make(map[string]bool, len(source))
+	maps.Copy(cloned, source)
+
+	return cloned
 }
 
 func parseSessionPID(sessionID string) (int, bool) {

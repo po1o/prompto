@@ -45,10 +45,10 @@ blocks:
 	})
 	require.NoError(t, err)
 
-	sessionOneToggles := server.sessionToggles("session-one")
+	sessionOneToggles := server.core.SessionToggles("session-one")
 	require.True(t, sessionOneToggles["left"])
 
-	sessionTwoToggles := server.sessionToggles("session-two")
+	sessionTwoToggles := server.core.SessionToggles("session-two")
 	require.False(t, sessionTwoToggles["left"])
 
 	_, err = client.ToggleSegment(context.Background(), &ipc.ToggleSegmentRequest{
@@ -57,7 +57,7 @@ blocks:
 	})
 	require.NoError(t, err)
 
-	sessionOneToggles = server.sessionToggles("session-one")
+	sessionOneToggles = server.core.SessionToggles("session-one")
 	require.False(t, sessionOneToggles["left"])
 
 	stopTestServer(t, server)
