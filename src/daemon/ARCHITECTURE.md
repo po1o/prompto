@@ -4,13 +4,6 @@ description: Target architecture for the prompto daemon — lifecycle, render
   orchestration, the Hard/Soft cancel model, and per-session update streaming.
 ---
 
-> **Status:** Target architecture. Phase A2 of the daemon cleanup. Code is
-> refactoring toward this shape across the C-series PRs; deviations between
-> this doc and the current code are tracked in
-> `.claude/notes/daemon-current-state.md`.
-> Each C-series PR closes one of those deltas and updates this doc in the
-> same commit. Subsumes `.claude/docs/daemon-vim-mode-plan.md` and
-> `.claude/docs/shell-vim-mode-plan.md` (both retained as historical).
 
 ## What the daemon does
 
@@ -85,11 +78,9 @@ between commands so that:
 +-------------------------------------------------------------+
 ```
 
-**Five files were collapsed to get here.** See the per-file map below for
-what each layer owns now. `coordinator.go`, `request_manager.go`,
-`runtime.go`, `prompt_cache_bridge.go`, and `service.go` no longer exist as
-separate concepts — their responsibilities live on `Daemon` (lifecycle +
-orchestration) and `RenderPipeline` (per-render execution).
+See the per-file map below for what each layer owns. The render path is
+intentionally flat: `Daemon` owns lifecycle + orchestration; `RenderPipeline`
+owns per-render execution; `EngineRegistry` owns per-session cancellation.
 
 ## The cancel model — first-class `CancelKind`
 
@@ -157,7 +148,7 @@ time to introduce the helper.
 ## The three vim-mode scenarios
 
 The cancel model is best understood by walking the three canonical
-scenarios. Each is also a test in `src/daemon/scenarios_test.go` (Phase B2).
+scenarios. Each is also a test in `src/daemon/scenarios_test.go`.
 
 ### Scenario 1 — Soft cancel during vim toggle
 
@@ -228,10 +219,7 @@ t=100ms git completes (still running in A's context).
 
 Net effect: git runs **once** regardless of toggle count.
 
-## Per-file responsibilities (target layout)
-
-Files marked `[NEW]` are introduced during the C-series refactor. Files
-marked `[DELETED]` exist today but do not exist post-refactor.
+## Per-file responsibilities
 
 ### Wire / protocol — `src/daemon/ipc/`
 
@@ -250,27 +238,18 @@ marked `[DELETED]` exist today but do not exist post-refactor.
 | `cli/daemon.go` | `prompto daemon` subcommands. |
 | `cli/daemon_unix.go`, `cli/daemon_windows.go` | Detached-process spawn per OS. |
 
-Note: the originally-planned per-RPC split into `server_render.go` /
-`server_cache.go` / `server_session.go` was skipped after C4a/b cut
-`server.go` from 560 to 362 LoC — one coherent file beat four small ones.
-
 ### Orchestration — `src/daemon/daemon.go` + `daemon_reload.go`
 
 | File | Owns |
 |---|---|
 | `daemon.go` | The `Daemon` type. Holds: `RenderPipeline`, `ProcessTracker`, `DeviceCache`, `ConfigWatcher`, `BinaryWatcher`, `segmentToggles` map, active-`renders` map, lock-file state. Public API: render orchestration (`StartRender`, `NextUpdate`, `CompleteSession`, `Reload`, `Reset`, `Snapshot`, `SessionCount`, `SessionHub`), lifecycle (`Stop`, `StopSilently`, `SetOnStop`), toggles (`SessionToggles`, `ToggleSegment`, `ResetToggles`), cache (`DeviceCache`), config (`ConfigPath`). |
 | `daemon_reload.go` | Config-reload pipeline: `startReloadAndWatchers` wires `ConfigWatcher` + `BinaryWatcher` + the reload-worker goroutine; `ProcessPendingConfigReload` / `ReloadIfConfigFileUpdated` are the exported entry points the gRPC handler calls before each render. |
-| `service.go` [DELETED] | Merged into `daemon.go` (Daemon was the only `*Service` holder). |
-| `coordinator.go` [DELETED] | Merged into `registry.go`. The hard-cancel-vs-soft-reattach branch lives on `EngineRegistry.StartRender`. |
-| `request_manager.go` [DELETED] | Merged into `render_pipeline.go`. |
-| `runtime.go` [DELETED] | Merged into `render_pipeline.go`. `SessionRenderHandle` collapsed into `ActiveRender`. |
-| `update_binding.go` [DELETED] | Was dead code; the engine's `SetUpdateCallback` path is not used in production (`PrimaryStreaming`'s inline callback in `render_pipeline.go` is the live channel). |
 
 ### Per-render execution — `src/daemon/render_pipeline.go`
 
 | File | Owns |
 |---|---|
-| `render_pipeline.go` | `RenderPipeline.Start(sessionID, flags, kind CancelKind) → (PromptBundle, *ActiveRender)`. Owns the `ReloadGate`, `EngineRegistry`, and `PromptSessionStore` (per-session hubs). Resolves engine via Registry, applies flags (full vs repaint-only), publishes segment updates inline from `PrimaryStreaming`'s callback. `ActiveRender` unifies the former `RenderHandle` / `RequestHandle` / `SessionRenderHandle` plumbing; its `Next(ctx, after)` streams via `StreamRelay` and `Complete` is idempotent (releases gate + cancels render). |
+| `render_pipeline.go` | `RenderPipeline.Start(sessionID, flags, kind CancelKind) → (PromptBundle, *ActiveRender)`. Owns the `ReloadGate`, `EngineRegistry`, and `PromptSessionStore` (per-session hubs). Resolves engine via Registry, applies flags (full vs repaint-only), publishes segment updates inline from `PrimaryStreaming`'s callback. `ActiveRender` bundles the render generation (engine, context, render ID), the update hub + relay, and the reload-gate release; `Next(ctx, after)` streams via `StreamRelay` and `Complete` is idempotent. |
 
 ### Registry + cancellation — `src/daemon/registry.go` + `cancel.go`
 
@@ -304,10 +283,6 @@ Note: the originally-planned per-RPC split into `server_render.go` /
 
 ### Process tracking (idle-shutdown) — `src/daemon/`
 
-Kept in the `daemon` package (the originally-planned `idlestop/` subpackage
-was skipped after weighing import overhead vs organisational win — the
-in-place rename gets ~90% of the clarity).
-
 | File | Owns |
 |---|---|
 | `process_tracker.go` | `ProcessTracker` (was `SessionManager`). Register/Unregister/Count + `watchProcess` goroutine per PID. Triggers the idle-shutdown callback when no tracked PIDs remain. |
@@ -319,10 +294,6 @@ in-place rename gets ~90% of the clarity).
 | File | Owns |
 |---|---|
 | `client.go` | `Client` type + `NewClient`/`ConnectOrStart`/`Close` (connection lifecycle), the RPC wrappers (`RenderPrompt`, `RenderPromptSync`, `ToggleSegment`, `Cache*`, `SetLogging`), and response parsing (`PromptResult`, `ExtractPrompts` — table-driven). |
-
-Note: the originally-planned 3-way split into `client_dial.go` /
-`client_rpc.go` was skipped — at 336 LoC the file is coherent (types →
-connection → RPCs → helpers) and splitting would scatter related code.
 
 ### Environment — `src/daemon/environment.go`
 

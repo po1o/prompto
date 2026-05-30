@@ -6,11 +6,6 @@ import "context"
 // the single signal the render path uses to decide whether to abort or
 // preserve in-flight segment computations. See ARCHITECTURE.md, "The cancel
 // model".
-//
-// This type is introduced ahead of its callers (C1a): the daemon currently
-// threads a bool "repaint" through the render path. Subsequent steps replace
-// that bool with CancelKind so the Hard/Soft decision is made once and
-// carried explicitly.
 type CancelKind int
 
 const (
