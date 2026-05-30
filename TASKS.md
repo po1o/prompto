@@ -181,7 +181,7 @@ Note: C2-iv (server boundary CancelKind derivation) folded into C2-iii since the
 - **Files:** `src/daemon/daemon.go`, `src/daemon/server.go`, plus `_test.go` siblings.
 - **Spec link:** PLAN Phase C4 (revised).
 
-#### C4b. Move config-reload worker + watchers to `Daemon`; dedupe `DeviceCache`
+#### C4b. Move config-reload worker + watchers to `Daemon`; dedupe `DeviceCache` — DONE 2026-05-30
 
 - **Acceptance:** `ConfigWatcher`, `BinaryWatcher`, the `configReloadCh` channel, `configReloadWorker` goroutine, `processPendingConfigReload`, `applyConfigReload`, `reloadIfConfigFileUpdated`, `captureConfigModTime`, `requestConfigReload`, `refreshConfigWatches`, `lastConfigModUnixNano`, `reloadMu`, and the `configPath` field all move from `Server` to `Daemon`. `Server.deviceCache` field deleted (was duplicate; `Daemon.DeviceCache()` is the single source). Cache RPC handlers read via `server.core.DeviceCache()`.
 - **Verify:** Universal gates green. `git grep -n 'configReloadCh\|configWatcher\|binaryWatcher\|reloadMu\|lastConfigModUnixNano\|deviceCache' daemon/server.go` returns nothing.

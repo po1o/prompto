@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -23,26 +22,24 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Server is the gRPC adapter. It owns the wire (listener, gRPC server, the
+// proto handlers, and per-stream cancel tracking for gRPC handlers) and
+// delegates all business state — render orchestration, toggles, config
+// watching, the reload worker, the device cache — to its embedded Daemon.
 type Server struct {
 	ipc.UnimplementedDaemonServiceServer
 	listener   net.Listener
 	done       chan struct{}
 	lockFile   *LockFile
 	grpcServer *grpc.Server
-	// core owns render/session state and idle lifecycle.
-	core          *Daemon
-	configWatcher *ConfigWatcher
-	binaryWatcher *BinaryWatcher
-	deviceCache   *DeviceCache
-	// configReloadCh is a coalescing signal channel (buffer=1).
-	configReloadCh chan struct{}
+	// core owns render/session state, lifecycle, watchers, toggles, cache.
+	core *Daemon
+	// primaryStreams maps a session ID to the gRPC stream cancel func, so a
+	// new render request for the same session can force the prior wire
+	// handler to return immediately rather than wait for the next poll.
 	primaryStreams map[string]primaryStreamState
-	configPath     string
 	streamMu       sync.Mutex
-	reloadMu       sync.Mutex
-	// lastConfigModUnixNano tracks the last applied root config mtime.
-	lastConfigModUnixNano atomic.Int64
-	shutdownOnce          sync.Once
+	shutdownOnce   sync.Once
 }
 
 type primaryStreamState struct {
@@ -59,34 +56,12 @@ func NewServer(configPath string) (*Server, error) {
 	}
 
 	server := &Server{
-		configPath:     resolvedPath,
 		lockFile:       lockFile,
 		done:           make(chan struct{}),
-		deviceCache:    NewDeviceCache(),
-		configReloadCh: make(chan struct{}, 1),
 		primaryStreams: make(map[string]primaryStreamState),
 	}
-	server.captureConfigModTime()
-	server.core = NewFromConfigWithDeviceCache(resolvedPath, nil, server.deviceCache)
+	server.core = NewFromConfigWithDeviceCache(resolvedPath, nil, nil)
 	server.core.SetOnStop(server.Stop)
-
-	configWatcher, err := NewConfigWatcher(server.requestConfigReload)
-	if err == nil {
-		server.configWatcher = configWatcher
-		server.refreshConfigWatches()
-		go server.configReloadWorker()
-	}
-
-	binaryPath, err := os.Executable()
-	if err == nil {
-		// If executable is replaced while running, stop; client auto-start path will launch new one.
-		watcher, watchErr := NewBinaryWatcher(binaryPath, func() {
-			server.Stop()
-		})
-		if watchErr == nil {
-			server.binaryWatcher = watcher
-		}
-	}
 
 	return server, nil
 }
@@ -120,18 +95,11 @@ func (server *Server) Done() <-chan struct{} {
 
 func (server *Server) Stop() {
 	server.shutdownOnce.Do(func() {
+		// StopSilently tears down daemon-owned watchers and the reload worker.
 		server.core.StopSilently()
 
 		if server.grpcServer != nil {
 			server.grpcServer.GracefulStop()
-		}
-
-		if server.configWatcher != nil {
-			_ = server.configWatcher.Close()
-		}
-
-		if server.binaryWatcher != nil {
-			_ = server.binaryWatcher.Close()
 		}
 
 		_ = log.SetOutputPath("")
@@ -148,9 +116,9 @@ func (server *Server) RenderPrompt(
 ) error {
 	// Apply any already-queued config reload before starting a new render so the
 	// first prompt after save reflects updated config.
-	server.processPendingConfigReload()
+	server.core.ProcessPendingConfigReload()
 	// Also check config mtime in case render starts before fsnotify event delivery.
-	server.reloadIfConfigFileUpdated()
+	server.core.ReloadIfConfigFileUpdated()
 
 	if request.Version != ipc.ProtocolVersion {
 		return fmt.Errorf("protocol version mismatch: client=%d server=%d", request.Version, ipc.ProtocolVersion)
@@ -165,7 +133,7 @@ func (server *Server) RenderPrompt(
 	}
 
 	if flags.ConfigPath == "" {
-		flags.ConfigPath = server.configPath
+		flags.ConfigPath = server.core.ConfigPath()
 	}
 
 	sessionID := resolveServerSessionID(request.Pid, request.SessionId)
@@ -250,7 +218,7 @@ func (server *Server) ToggleSegment(
 }
 
 func (server *Server) CacheClear(_ context.Context, _ *ipc.CacheClearRequest) (*ipc.CacheClearResponse, error) {
-	server.deviceCache.Clear()
+	server.core.DeviceCache().Clear()
 	server.core.ResetToggles()
 
 	cache.DeleteAll(cache.Device)
@@ -264,7 +232,7 @@ func (server *Server) CacheSetTTL(_ context.Context, request *ipc.CacheSetTTLReq
 	}
 
 	ttl := time.Duration(request.Days) * 24 * time.Hour
-	server.deviceCache.SetDefaultTTL(ttl)
+	server.core.DeviceCache().SetDefaultTTL(ttl)
 	cache.Set(cache.Device, cache.TTL, int(request.Days), cache.INFINITE)
 	return &ipc.CacheSetTTLResponse{Success: true}, nil
 }
@@ -274,7 +242,7 @@ func (server *Server) CacheGetTTL(_ context.Context, _ *ipc.CacheGetTTLRequest) 
 		return &ipc.CacheGetTTLResponse{Days: int32(ttlDays)}, nil
 	}
 
-	defaultDays := int(server.deviceCache.GetDefaultTTL() / (24 * time.Hour))
+	defaultDays := int(server.core.DeviceCache().GetDefaultTTL() / (24 * time.Hour))
 	if defaultDays <= 0 {
 		defaultDays = 7
 	}
@@ -294,121 +262,6 @@ func (server *Server) SetLogging(_ context.Context, request *ipc.SetLoggingReque
 	log.Debug("daemon logging to file")
 
 	return &ipc.SetLoggingResponse{Success: true}, nil
-}
-
-func (server *Server) configReloadWorker() {
-	// Single consumer for config reload requests.
-	// Reload itself is guarded by ReloadGate (inside server.core.Reload),
-	// so running it from one worker keeps sequencing easy to reason about.
-	for {
-		select {
-		case <-server.done:
-			return
-		case <-server.configReloadCh:
-			server.applyConfigReload()
-		}
-	}
-}
-
-func (server *Server) processPendingConfigReload() {
-	if server == nil {
-		return
-	}
-
-	for {
-		select {
-		case <-server.configReloadCh:
-			server.applyConfigReload()
-		default:
-			return
-		}
-	}
-}
-
-func (server *Server) applyConfigReload() {
-	if server == nil || server.configPath == "" {
-		return
-	}
-
-	server.reloadMu.Lock()
-	defer server.reloadMu.Unlock()
-
-	// Cancel in-flight renders first so reload does not block waiting for slow segment completion.
-	server.core.Reset()
-
-	server.core.Reload(nil)
-
-	server.refreshConfigWatches()
-	server.captureConfigModTime()
-}
-
-func (server *Server) reloadIfConfigFileUpdated() {
-	if server == nil || server.configPath == "" {
-		return
-	}
-
-	current := configModTimeUnix(server.configPath)
-	if current == 0 {
-		return
-	}
-
-	if current <= server.lastConfigModUnixNano.Load() {
-		return
-	}
-
-	server.applyConfigReload()
-}
-
-func (server *Server) captureConfigModTime() {
-	if server == nil || server.configPath == "" {
-		return
-	}
-
-	server.lastConfigModUnixNano.Store(configModTimeUnix(server.configPath))
-}
-
-func configModTimeUnix(path string) int64 {
-	info, err := os.Stat(path)
-	if err != nil {
-		return 0
-	}
-
-	return info.ModTime().UnixNano()
-}
-
-func (server *Server) requestConfigReload(configPath string) {
-	// Ignore unrelated watched files. We only reload for this daemon instance's root config.
-	if configPath == "" || configPath != server.configPath {
-		return
-	}
-
-	select {
-	case <-server.done:
-		return
-	default:
-	}
-
-	select {
-	// Buffered channel of size 1 coalesces bursts of fsnotify events.
-	// If a reload is already queued/in progress, extra signals are redundant.
-	case server.configReloadCh <- struct{}{}:
-	default:
-	}
-}
-
-func (server *Server) refreshConfigWatches() {
-	if server.configWatcher == nil || server.configPath == "" {
-		return
-	}
-
-	cfg, err := config.Parse(server.configPath)
-	if err != nil {
-		return
-	}
-
-	// Re-register all resolved files (root + extends + symlink targets).
-	// Watch() is idempotent for already tracked files/dirs.
-	_ = server.configWatcher.Watch(server.configPath, cfg.FilePaths)
 }
 
 func resolveServerConfigPath(configPath string) string {
