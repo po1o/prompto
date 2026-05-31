@@ -14,7 +14,7 @@ func (n *Nim) Enabled() bool {
 	n.tooling = map[string]*cmd{
 		"nim": {
 			executable: "nim",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `Nim Compiler Version (?P<version>(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+))`,
 		},
 	}

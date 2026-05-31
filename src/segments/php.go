@@ -13,7 +13,7 @@ func (p *Php) Enabled() bool {
 	p.tooling = map[string]*cmd{
 		"php": {
 			executable: "php",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `(?:PHP (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
 		},
 	}

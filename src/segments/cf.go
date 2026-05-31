@@ -14,7 +14,7 @@ func (c *Cf) Enabled() bool {
 		"cf": {
 			executable: "cf",
 			args:       []string{"version"},
-			regex:      `(?:(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
+			regex:      versionRegexNonCapturing,
 		},
 	}
 	c.defaultTooling = []string{"cf"}

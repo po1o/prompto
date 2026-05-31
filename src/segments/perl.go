@@ -19,7 +19,7 @@ func (p *Perl) Enabled() bool {
 	p.tooling = map[string]*cmd{
 		"perl": {
 			executable: "perl",
-			args:       []string{"-version"},
+			args:       []string{versionFlagShort},
 			regex:      perlRegex,
 		},
 	}

@@ -9,7 +9,7 @@ func (m *Mvn) Enabled() bool {
 	m.tooling = map[string]*cmd{
 		"mvn": {
 			executable: "mvn",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)(?:-(?P<prerelease>[a-z]+-[0-9]+))?))`,
 		},
 	}

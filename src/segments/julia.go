@@ -13,7 +13,7 @@ func (j *Julia) Enabled() bool {
 	j.tooling = map[string]*cmd{
 		"julia": {
 			executable: "julia",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `julia version (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 	}

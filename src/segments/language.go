@@ -20,6 +20,15 @@ import (
 const (
 	languageTemplate = " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
 	noVersion        = "NO VERSION"
+
+	versionFlag      = "--version"
+	versionFlagShort = "-version"
+	// versionRegex matches semver-style "MAJOR.MINOR.PATCH" with named capture
+	// groups, used by language segments that parse version output.
+	versionRegex = `(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`
+	// versionRegexNonCapturing wraps versionRegex in a non-capturing group, used
+	// by segments that emit "Tool VERSION" output.
+	versionRegexNonCapturing = `(?:(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`
 )
 
 type loadContext func()

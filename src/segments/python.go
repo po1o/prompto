@@ -33,31 +33,33 @@ func (p *Python) Enabled() bool {
 	p.extensions = []string{"*.py", "*.ipynb", "pyproject.toml", "venv.bak"}
 	p.folders = []string{".venv", "venv", "virtualenv", "venv-win", "pyenv-win"}
 
+	const pythonVersionRegex = `(?:Python (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`
+
 	// Define all available tooling options for Python
 	p.tooling = map[string]*cmd{
 		"pyenv": {
 			getVersion: p.pyenvVersion,
-			regex:      `(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
+			regex:      versionRegex,
 		},
 		"python": {
 			executable: "python",
-			args:       []string{"--version"},
-			regex:      `(?:Python (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
+			args:       []string{versionFlag},
+			regex:      pythonVersionRegex,
 		},
 		"python3": {
 			executable: "python3",
-			args:       []string{"--version"},
-			regex:      `(?:Python (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
+			args:       []string{versionFlag},
+			regex:      pythonVersionRegex,
 		},
 		"py": {
 			executable: "py",
-			args:       []string{"--version"},
-			regex:      `(?:Python (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
+			args:       []string{versionFlag},
+			regex:      pythonVersionRegex,
 		},
 		"uv": {
 			executable: "uv",
-			args:       []string{"run", "--no-sync", "--quiet", "--no-python-downloads", "python", "--version"},
-			regex:      `(?:Python (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
+			args:       []string{"run", "--no-sync", "--quiet", "--no-python-downloads", "python", versionFlag},
+			regex:      pythonVersionRegex,
 		},
 	}
 

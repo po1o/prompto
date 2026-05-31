@@ -28,8 +28,8 @@ func (q *Quasar) Enabled() bool {
 	q.tooling = map[string]*cmd{
 		"quasar": {
 			executable: "quasar",
-			args:       []string{"--version"},
-			regex:      `(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
+			args:       []string{versionFlag},
+			regex:      versionRegex,
 		},
 	}
 	q.defaultTooling = []string{"quasar"}

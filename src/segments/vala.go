@@ -13,7 +13,7 @@ func (v *Vala) Enabled() bool {
 	v.tooling = map[string]*cmd{
 		"vala": {
 			executable: "vala",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `Vala (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 	}

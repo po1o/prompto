@@ -13,7 +13,7 @@ func (x *XMake) Enabled() bool {
 	x.tooling = map[string]*cmd{
 		"xmake": {
 			executable: "xmake",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `xmake v(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 	}

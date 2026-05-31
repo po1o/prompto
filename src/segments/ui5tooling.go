@@ -17,8 +17,8 @@ func (u *UI5Tooling) Enabled() bool {
 	u.tooling = map[string]*cmd{
 		"ui5": {
 			executable: "ui5",
-			args:       []string{"--version"},
-			regex:      `(?:(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
+			args:       []string{versionFlag},
+			regex:      versionRegexNonCapturing,
 		},
 	}
 	u.defaultTooling = []string{"ui5"}

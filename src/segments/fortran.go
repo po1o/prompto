@@ -21,7 +21,7 @@ func (f *Fortran) Enabled() bool {
 	f.tooling = map[string]*cmd{
 		"gfortran": {
 			executable: "gfortran",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `GNU Fortran \(.*\) (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 	}

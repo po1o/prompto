@@ -13,7 +13,7 @@ func (c *Cmake) Enabled() bool {
 	c.tooling = map[string]*cmd{
 		"cmake": {
 			executable: "cmake",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `cmake version (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 	}

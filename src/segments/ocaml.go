@@ -13,7 +13,7 @@ func (o *OCaml) Enabled() bool {
 	o.tooling = map[string]*cmd{
 		"ocaml": {
 			executable: "ocaml",
-			args:       []string{"-version"},
+			args:       []string{versionFlagShort},
 			regex:      `The OCaml toplevel, version (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))(-(?P<prerelease>[a-z]+))?)`,
 		},
 	}

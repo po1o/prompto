@@ -13,8 +13,8 @@ func (b *Bun) Enabled() bool {
 	b.tooling = map[string]*cmd{
 		"bun": {
 			executable: "bun",
-			args:       []string{"--version"},
-			regex:      `(?:(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
+			args:       []string{versionFlag},
+			regex:      versionRegexNonCapturing,
 		},
 	}
 	b.defaultTooling = []string{"bun"}

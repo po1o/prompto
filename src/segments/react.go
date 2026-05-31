@@ -12,7 +12,7 @@ func (r *React) Enabled() bool {
 	r.extensions = []string{"package.json"}
 	r.tooling = map[string]*cmd{
 		"react": {
-			regex:      `(?:(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
+			regex:      versionRegexNonCapturing,
 			getVersion: r.getVersion,
 		},
 	}

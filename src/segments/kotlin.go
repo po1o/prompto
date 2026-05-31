@@ -13,7 +13,7 @@ func (k *Kotlin) Enabled() bool {
 	k.tooling = map[string]*cmd{
 		"kotlin": {
 			executable: "kotlin",
-			args:       []string{"-version"},
+			args:       []string{versionFlagShort},
 			regex:      `Kotlin version (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 	}

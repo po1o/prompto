@@ -13,7 +13,7 @@ func (s *Swift) Enabled() bool {
 	s.tooling = map[string]*cmd{
 		"swift": {
 			executable: "swift",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `Swift version (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+)((.|-)(?P<patch>[0-9]+|dev))?))`,
 		},
 	}
