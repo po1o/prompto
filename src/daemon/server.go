@@ -288,20 +288,20 @@ func makePromptResponse(responseType, requestID string, bundle *PromptBundle) *i
 	}
 
 	prompts := map[string]*ipc.Prompt{
-		"primary": {Text: bundle.Primary},
-		"right":   {Text: bundle.RPrompt},
+		PromptPrimary: {Text: bundle.Primary},
+		PromptRight:   {Text: bundle.RPrompt},
 	}
 
 	if bundle.Secondary != "" {
-		prompts["secondary"] = &ipc.Prompt{Text: bundle.Secondary}
+		prompts[PromptSecondary] = &ipc.Prompt{Text: bundle.Secondary}
 	}
 
 	if bundle.Transient != "" {
-		prompts["transient"] = &ipc.Prompt{Text: bundle.Transient}
+		prompts[PromptTransient] = &ipc.Prompt{Text: bundle.Transient}
 	}
 
 	if bundle.RTransient != "" {
-		prompts["rtransient"] = &ipc.Prompt{Text: bundle.RTransient}
+		prompts[PromptRTransient] = &ipc.Prompt{Text: bundle.RTransient}
 	}
 
 	for name, text := range bundle.Extras {

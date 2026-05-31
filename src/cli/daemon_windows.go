@@ -23,7 +23,7 @@ func startDetachedDaemon() error {
 	}
 
 	// The detached process runs "daemon serve"
-	args := []string{"daemon", "serve"}
+	args := []string{"daemon", daemonSubcommandServe}
 	if configFlag != "" {
 		configFlag = path.ReplaceTildePrefixWithHomeDir(configFlag)
 		if abs, err := filepath.Abs(configFlag); err == nil {
