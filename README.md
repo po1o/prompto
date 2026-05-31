@@ -6,9 +6,12 @@
 
 ## What This Is
 
-`prompto` is a fork of [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) that I built mostly for personal use. It is a continuation of ideas explored in [oh-my-posh PR #7244](https://github.com/JanDeDobbeleer/oh-my-posh/pull/7244).
+`prompto` is a fork of [oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) that I built mostly for personal use.
+It is a continuation of ideas explored in
+[oh-my-posh PR #7244](https://github.com/JanDeDobbeleer/oh-my-posh/pull/7244).
 
-Because, it comes from [oh-my-posh](https://ohmyposh.dev/), it sits on the shoulders of a giant. However, it is now massively different from oh-my-posh.
+Because, it comes from [oh-my-posh](https://ohmyposh.dev/), it sits on the shoulders of a giant. However, it is now
+massively different from oh-my-posh.
 
 ## Why This Fork Exists
 
@@ -21,7 +24,8 @@ large existing user base.
 
 ## Disclaimer
 
-If you need a mature, broadly compatible, general-purpose, almost universal, top-notch prompt system, use [oh-my-posh](https://ohmyposh.dev/), not this fork.
+If you need a mature, broadly compatible, general-purpose, almost universal, top-notch prompt system, use
+[oh-my-posh](https://ohmyposh.dev/), not this fork.
 
 This is not a drop-in replacement for oh-my-posh and it is not trying to compete with it.
 That is intentional. I do not want to steal users from oh-my-posh or lure people away from it.

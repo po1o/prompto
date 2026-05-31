@@ -19,7 +19,7 @@ between commands so that:
 
 ## Layered overview
 
-```
+```text
 +-------------------------------------------------------------+
 |  Shell scripts (src/shell/scripts/prompto.{bash,fish,ps1,zsh}) |
 |    Detects vim-mode change → calls `prompto render --repaint` |
@@ -155,7 +155,7 @@ scenarios. Each is also a test in `src/daemon/scenarios_test.go`.
 User has a heavy `git status` segment in flight. User presses `ESC` (vim
 command mode). Shell calls `prompto render --repaint`.
 
-```
+```text
 t=0    Request A arrives, kind=CancelHard.
        Daemon.StartRender → RenderPipeline.Start →
          Registry.SetActiveRender(sessionID, ctx, cancel)
@@ -183,7 +183,7 @@ runs `touch file && git add file`. Shell calls `prompto render` (no
 `--repaint`). Repo state on disk has changed; the in-flight `git` result
 would be stale.
 
-```
+```text
 t=0    Request A arrives, kind=CancelHard. git starts, predicts "clean."
 
 t=50ms Request B arrives, kind=CancelHard.
@@ -207,7 +207,7 @@ preserved.
 
 User spams `ESC i ESC i ESC` faster than git can complete.
 
-```
+```text
 t=0     Request A arrives, kind=CancelHard. git starts.
 t=20ms  Request B, kind=CancelSoft. Reattach to A.
 t=40ms  Request C, kind=CancelSoft. Reattach to A.

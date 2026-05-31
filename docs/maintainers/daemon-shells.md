@@ -140,7 +140,7 @@ key handler. Some handlers also call the native PSReadLine method (e.g.
 
 ### Pre-requisite
 
-`ble.sh` (https://github.com/akinomyoga/ble.sh) must be installed and
+`ble.sh` (<https://github.com/akinomyoga/ble.sh>) must be installed and
 sourced **before** prompto's init runs. Native Bash readline does not
 expose mode-change hooks to shell scripts, so without `ble.sh` the
 vim-toggle feature degrades to "no repaint until the next keystroke."

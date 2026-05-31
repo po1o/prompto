@@ -1,8 +1,15 @@
+# CI runs markdownlint-cli2 v0.20.0 via the @07035fd action commit pinned in
+# .github/workflows/markdown.yml. Local devs: `npx -y markdownlint-cli2@0.20.0
+# '**/*.md'`. Bump both together.
 config:
   MD013:
     line_length: 120
     code_blocks: false
+    tables: false
   MD024: false
+  # MD060 (table-column-style) requires fully-aligned or fully-compact tables;
+  # auto-formatters fight this rule and it adds no readability value.
+  MD060: false
 fix: true
 gitignore: true
 ignores:
