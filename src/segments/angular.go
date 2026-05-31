@@ -16,7 +16,7 @@ func (a *Angular) Enabled() bool {
 	a.extensions = []string{"angular.json"}
 	a.tooling = map[string]*cmd{
 		"angular": {
-			regex:      `(?:(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
+			regex:      versionRegexNonCapturing,
 			getVersion: a.getVersion,
 		},
 	}

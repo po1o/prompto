@@ -14,7 +14,7 @@ func (v *V) Enabled() bool {
 	v.tooling = map[string]*cmd{
 		"v": {
 			executable: "v",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `V (?P<version>(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)) [a-f0-9]+`,
 		},
 	}

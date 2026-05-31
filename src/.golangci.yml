@@ -49,6 +49,33 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    rules:
+      - path: _test\.go
+        linters:
+          - goconst
+      # The following packages hold file-local data declarations (color names,
+      # file-glob lists, segment fixture strings). Extracting these into shared
+      # constants reduces, not improves, readability — each file is meant to be
+      # self-contained. Shared cross-file duplicates that ARE worth deduping
+      # (e.g. the version-parsing flag/regex) are extracted in segments/language.go.
+      - path: segments/
+        linters:
+          - goconst
+      - path: config/
+        linters:
+          - goconst
+      - path: cli/image/
+        linters:
+          - goconst
+      - path: color/
+        linters:
+          - goconst
+      - path: terminal/
+        linters:
+          - goconst
+      - path: text/
+        linters:
+          - goconst
     paths:
       - third_party$
       - builtin$

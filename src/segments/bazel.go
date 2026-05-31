@@ -22,7 +22,7 @@ func (b *Bazel) Enabled() bool {
 	b.tooling = map[string]*cmd{
 		"bazel": {
 			executable: "bazel",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `bazel (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 	}

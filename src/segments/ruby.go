@@ -33,7 +33,7 @@ func (r *Ruby) Enabled() bool {
 		},
 		"ruby": {
 			executable: "ruby",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `ruby\s+(?P<version>[^\s]+)\s+`,
 		},
 	}

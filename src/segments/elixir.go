@@ -18,7 +18,7 @@ func (e *Elixir) Enabled() bool {
 		},
 		"elixir": {
 			executable: "elixir",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `Elixir (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 	}

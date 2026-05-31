@@ -9,8 +9,8 @@ func (n *Npm) Enabled() bool {
 	n.tooling = map[string]*cmd{
 		"npm": {
 			executable: "npm",
-			args:       []string{"--version"},
-			regex:      `(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
+			args:       []string{versionFlag},
+			regex:      versionRegex,
 		},
 	}
 	n.defaultTooling = []string{"npm"}

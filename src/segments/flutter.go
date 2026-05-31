@@ -14,12 +14,12 @@ func (f *Flutter) Enabled() bool {
 	f.tooling = map[string]*cmd{
 		"fvm": {
 			executable: "fvm",
-			args:       []string{"flutter", "--version"},
+			args:       []string{"flutter", versionFlag},
 			regex:      `Flutter (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 		"flutter": {
 			executable: "flutter",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `Flutter (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 	}

@@ -17,7 +17,7 @@ func (t *Tauri) Enabled() bool {
 	t.folders = []string{"src-tauri"}
 	t.tooling = map[string]*cmd{
 		"tauri": {
-			regex:      `(?:(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
+			regex:      versionRegexNonCapturing,
 			getVersion: t.getVersion,
 		},
 	}

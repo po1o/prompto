@@ -13,7 +13,7 @@ func (az *AzFunc) Enabled() bool {
 	az.tooling = map[string]*cmd{
 		"func": {
 			executable: "func",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `(?P<version>[0-9.]+)`,
 		},
 	}

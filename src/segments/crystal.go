@@ -13,7 +13,7 @@ func (c *Crystal) Enabled() bool {
 	c.tooling = map[string]*cmd{
 		"crystal": {
 			executable: "crystal",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `Crystal (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 	}

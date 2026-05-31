@@ -13,7 +13,7 @@ func (r *Rust) Enabled() bool {
 	r.tooling = map[string]*cmd{
 		"rustc": {
 			executable: "rustc",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `(rust version|rustc) (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))(-(?P<prerelease>[a-z]+))?)(( \((?P<buildmetadata>[0-9a-f]+ [0-9]+-[0-9]+-[0-9]+)\))?)`, //nolint:lll
 		},
 	}

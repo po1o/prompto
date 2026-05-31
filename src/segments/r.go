@@ -14,17 +14,17 @@ func (r *R) Enabled() bool {
 	r.tooling = map[string]*cmd{
 		"Rscript": {
 			executable: "Rscript",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      rRegex,
 		},
 		"R": {
 			executable: "R",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      rRegex,
 		},
 		"R.exe": {
 			executable: "R.exe",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      rRegex,
 		},
 	}

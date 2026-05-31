@@ -9,8 +9,8 @@ func (n *Pnpm) Enabled() bool {
 	n.tooling = map[string]*cmd{
 		"pnpm": {
 			executable: "pnpm",
-			args:       []string{"--version"},
-			regex:      `(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
+			args:       []string{versionFlag},
+			regex:      versionRegex,
 		},
 	}
 	n.defaultTooling = []string{"pnpm"}

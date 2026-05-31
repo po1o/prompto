@@ -14,7 +14,7 @@ func (c *Cds) Enabled() bool {
 	c.tooling = map[string]*cmd{
 		"cds": {
 			executable: "cds",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `@sap/cds: (?:(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
 		},
 	}

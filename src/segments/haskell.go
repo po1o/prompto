@@ -17,19 +17,19 @@ func (h *Haskell) Template() string {
 }
 
 func (h *Haskell) Enabled() bool {
-	ghcRegex := `(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`
+	const numericVersion = "--numeric-version"
 
 	h.extensions = []string{"*.hs", "*.lhs", "stack.yaml", "package.yaml", "*.cabal", "cabal.project"}
 	h.tooling = map[string]*cmd{
 		"ghc": {
 			executable: "ghc",
-			args:       []string{"--numeric-version"},
-			regex:      ghcRegex,
+			args:       []string{numericVersion},
+			regex:      versionRegex,
 		},
 		"stack": {
 			executable: "stack",
-			args:       []string{"ghc", "--", "--numeric-version"},
-			regex:      ghcRegex,
+			args:       []string{"ghc", "--", numericVersion},
+			regex:      versionRegex,
 		},
 	}
 	h.defaultTooling = []string{"ghc"}

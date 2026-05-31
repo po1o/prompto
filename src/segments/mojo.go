@@ -20,7 +20,7 @@ func (m *Mojo) Enabled() bool {
 	m.tooling = map[string]*cmd{
 		"mojo": {
 			executable: "mojo",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `(?:mojo (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
 		},
 	}

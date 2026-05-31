@@ -19,12 +19,12 @@ func (d *Dart) Enabled() bool {
 	d.tooling = map[string]*cmd{
 		"fvm": {
 			executable: "fvm",
-			args:       []string{"dart", "--version"},
+			args:       []string{"dart", versionFlag},
 			regex:      `Dart SDK version: (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 		"dart": {
 			executable: "dart",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `Dart SDK version: (?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
 		},
 	}

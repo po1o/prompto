@@ -214,7 +214,7 @@ func (f *fields) init(data any) {
 		return
 	}
 
-	if val.Kind() == reflect.Ptr {
+	if val.Kind() == reflect.Pointer {
 		f.init(reflect.ValueOf(data).Elem().Interface())
 	}
 }

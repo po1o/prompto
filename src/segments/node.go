@@ -37,7 +37,7 @@ func (n *Node) Enabled() bool {
 	n.tooling = map[string]*cmd{
 		"node": {
 			executable: "node",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `(?:v(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
 		},
 	}

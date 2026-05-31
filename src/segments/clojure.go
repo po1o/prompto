@@ -32,12 +32,12 @@ func (c *Clojure) init() {
 	c.tooling = map[string]*cmd{
 		"clojure": {
 			executable: "clojure",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `Clojure CLI version (?P<version>(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+)(?:\.(?P<build>[0-9]+))?)`,
 		},
 		"lein": {
 			executable: "lein",
-			args:       []string{"--version"},
+			args:       []string{versionFlag},
 			regex:      `Leiningen (?P<version>(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+))`,
 		},
 	}
