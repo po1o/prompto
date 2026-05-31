@@ -34,20 +34,13 @@ jobs:
           echo "generated files are out of date"
           exit 1
         fi
-    - name: Golang CI
-      uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20
-      with:
-        working-directory: src
+    # Lint tool versions are pinned via the `tool` directive in src/go.mod.
+    - name: Golangci-lint
+      run: go tool golangci-lint run
     - name: Fieldalignment
-      run: |
-        export PATH="$(go env GOPATH)/bin:$PATH"
-        go install golang.org/x/tools/go/analysis/passes/fieldalignment/cmd/fieldalignment@latest
-        go list ./... | grep -v '/daemon/ipc$' | xargs fieldalignment
+      run: go list ./... | grep -v '/daemon/ipc$' | xargs go tool fieldalignment
     - name: Modernize
-      run: |
-        export PATH="$(go env GOPATH)/bin:$PATH"
-        go install golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest
-        go list ./... | grep -v '/daemon/ipc$' | xargs modernize
+      run: go list ./... | grep -v '/daemon/ipc$' | xargs go tool modernize
     - name: Run GoReleaser 🚀
       uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
       with:
