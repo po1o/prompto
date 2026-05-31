@@ -22,7 +22,7 @@ type countingTextProvider struct {
 	count *int32
 }
 
-var sharedStateExecCount int32
+var sharedStateExecCount atomic.Int32
 
 type sharedStateWriter struct {
 	TextValue string
@@ -227,7 +227,7 @@ func TestSharedProviderKeepsPerInstanceTemplateWithSharedTypeState(t *testing.T)
 		delete(config.Segments, segmentType)
 	})
 
-	atomic.StoreInt32(&sharedStateExecCount, 0)
+	sharedStateExecCount.Store(0)
 
 	flags := &runtime.Flags{
 		Shell:         shell.GENERIC,
@@ -265,13 +265,13 @@ func TestSharedProviderKeepsPerInstanceTemplateWithSharedTypeState(t *testing.T)
 	}
 
 	promptText, _ := engine.writeBlockSegments(block)
-	require.Equal(t, int32(1), atomic.LoadInt32(&sharedStateExecCount))
+	require.Equal(t, int32(1), sharedStateExecCount.Load())
 	require.Contains(t, promptText, "A1")
 	require.Contains(t, promptText, "B1")
 }
 
 func (writer *sharedStateWriter) Enabled() bool {
-	count := atomic.AddInt32(&sharedStateExecCount, 1)
+	count := sharedStateExecCount.Add(1)
 	writer.Value = int(count)
 	return true
 }

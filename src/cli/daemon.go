@@ -13,6 +13,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// daemonSubcommandServe is the daemon subcommand that runs the daemon server
+// in the foreground; emitted by the daemon-init shell snippet and used by
+// `daemon start` to launch a detached child.
+const daemonSubcommandServe = "serve"
+
 var (
 	foreground bool
 
@@ -35,7 +40,7 @@ It automatically shuts down after being idle (no connections) for 5 minutes.
 			"stop",
 			"restart",
 			"status",
-			"serve",
+			daemonSubcommandServe,
 			"log",
 		},
 		Args: cobra.ArbitraryArgs,
@@ -54,7 +59,7 @@ It automatically shuts down after being idle (no connections) for 5 minutes.
 				restartDaemon()
 			case "status":
 				daemonStatus()
-			case "serve":
+			case daemonSubcommandServe:
 				silent = true
 				runDaemonServe()
 			case "log":

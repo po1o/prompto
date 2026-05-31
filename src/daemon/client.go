@@ -26,6 +26,19 @@ const ResponseTypeComplete = "complete"
 // ResponseTypeUpdate indicates a partial response with more updates to follow.
 const ResponseTypeUpdate = "update"
 
+// ResponseTypeInitial is the first response of a stream, before any segments
+// are ready.
+const ResponseTypeInitial = "initial"
+
+// Stream names used as keys in PromptResponse.Prompts.
+const (
+	PromptPrimary    = "primary"
+	PromptRight      = "right"
+	PromptSecondary  = "secondary"
+	PromptTransient  = "transient"
+	PromptRTransient = "rtransient"
+)
+
 // ResponseCallback is called for each response from the daemon.
 // Return false to stop receiving responses.
 type ResponseCallback func(*ipc.PromptResponse) bool
@@ -308,11 +321,11 @@ func ExtractPrompts(resp *ipc.PromptResponse) *PromptResult {
 		dst *string
 		key string
 	}{
-		{&result.Primary, "primary"},
-		{&result.Right, "right"},
-		{&result.Secondary, "secondary"},
-		{&result.Transient, "transient"},
-		{&result.RTransient, "rtransient"},
+		{&result.Primary, PromptPrimary},
+		{&result.Right, PromptRight},
+		{&result.Secondary, PromptSecondary},
+		{&result.Transient, PromptTransient},
+		{&result.RTransient, PromptRTransient},
 		{&result.Debug, "debug"},
 		{&result.Tooltip, "tooltip"},
 		{&result.Valid, "valid"},

@@ -168,7 +168,7 @@ func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
 	daemon.rendersMu.Unlock()
 
 	return RenderResponse{
-		Type:     "initial",
+		Type:     ResponseTypeInitial,
 		Bundle:   bundle,
 		Sequence: sequence,
 	}
