@@ -41,8 +41,12 @@ func (provider *onceProvider[T]) Get() (T, error) {
 type stateSharedProvider struct{}
 
 func (provider *stateSharedProvider) Execute(ctx context.Context, e *Engine, source *config.Segment) (sharedExecutionResult, bool, error) {
-	completed := e.executeSegmentWithContext(ctx, source)
-	if !completed {
+	completed, clean := e.executeSegmentWithContext(ctx, source)
+	if !completed || !clean {
+		// On timeout (!clean) or cancellation the execution goroutine may
+		// still be mutating source; executeSegmentWithContext already marked it
+		// abandoned before killing, so its deferred template cache registration
+		// is suppressed. Don't expose the source to readers either.
 		return sharedExecutionResult{}, false, nil
 	}
 
