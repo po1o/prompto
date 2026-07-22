@@ -1,7 +1,9 @@
 package cache
 
 import (
+	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -86,4 +88,45 @@ func TestStore(t *testing.T) {
 			tc.testFunc(t)
 		})
 	}
+}
+
+// TestStoreConcurrentAccessWithClear drives Set/Get/Delete concurrently with
+// DeleteAll to guard against the store.cache pointer race that DeleteAll used to
+// introduce (it reassigned the field while readers held the old pointer). Run
+// with -race to catch a regression.
+func TestStoreConcurrentAccessWithClear(t *testing.T) {
+	session = Session.new()
+
+	const workers = 8
+	var wg sync.WaitGroup
+	wg.Add(workers + 1)
+
+	stop := make(chan struct{})
+
+	for i := range workers {
+		go func(id int) {
+			defer wg.Done()
+			key := fmt.Sprintf("key-%d", id)
+			for {
+				select {
+				case <-stop:
+					return
+				default:
+					Set(Session, key, id, ONEDAY)
+					_, _ = Get[int](Session, key)
+					Delete(Session, key)
+				}
+			}
+		}(i)
+	}
+
+	go func() {
+		defer wg.Done()
+		for range 500 {
+			DeleteAll(Session)
+		}
+		close(stop)
+	}()
+
+	wg.Wait()
 }
