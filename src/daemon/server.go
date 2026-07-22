@@ -155,6 +155,7 @@ func (server *Server) RenderPrompt(
 	initial := server.core.StartRender(RenderRequest{
 		SessionID: sessionID,
 		Flags:     flags,
+		Env:       request.Env,
 		Cancel:    CancelKindForRepaint(request.Repaint),
 	})
 

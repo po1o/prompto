@@ -22,7 +22,10 @@ const renderCompletePayload = "__prompto_render_complete__"
 // RenderRequest is the daemon's render entry point — what the server sends to
 // Daemon.StartRender per RPC.
 type RenderRequest struct {
-	Flags     *runtime.Flags
+	Flags *runtime.Flags
+	// Env holds the client shell's environment variables. Segments resolve
+	// Getenv against these instead of the daemon's own (stale) environment.
+	Env       map[string]string
 	SessionID string
 	// Cancel selects the cancel semantics for this render: CancelHard
 	// (default — new command, abort prior in-flight work) or CancelSoft
@@ -156,7 +159,7 @@ func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
 		previous.Complete()
 	}
 
-	bundle, active := daemon.pipeline.Start(request.SessionID, request.Flags, request.Cancel)
+	bundle, active := daemon.pipeline.Start(request.SessionID, request.Flags, request.Env, request.Cancel)
 	sequence := daemon.currentSequence(request.SessionID)
 
 	daemon.rendersMu.Lock()

@@ -73,7 +73,7 @@ var tooltipCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		resp, err := client.RenderPromptSync(ctx, flags, pid, "", nil, false)
+		resp, err := client.RenderPromptSync(ctx, flags, pid, "", clientEnvMap(), false)
 		if err != nil {
 			exitcode = 1
 			return
