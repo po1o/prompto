@@ -3,6 +3,8 @@ package cache
 import (
 	"fmt"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/po1o/prompto/src/log"
@@ -11,10 +13,18 @@ import (
 
 type store struct {
 	cache *maps.Concurrent[*Entry[any]]
-	dirty bool
+	// dirty is written from concurrent daemon render goroutines (via Set/Delete
+	// on the shared global stores), so it must be atomic. It is currently
+	// write-only: persistence is stubbed out (see close), but the flag is kept
+	// for when it returns.
+	dirty atomic.Bool
 }
 
 var (
+	// storeMu guards lazy creation of the session/device globals below. The
+	// daemon serves renders from concurrent goroutines, so the nil-check-then-
+	// assign in get() would otherwise race.
+	storeMu sync.Mutex
 	session *store
 	device  *store
 )
@@ -35,6 +45,9 @@ func (s Store) new() *store {
 
 // getStore returns the appropriate store based on the Store identifier
 func (s Store) get() *store {
+	storeMu.Lock()
+	defer storeMu.Unlock()
+
 	switch s { //nolint:exhaustive
 	case Device:
 		if device == nil {
@@ -56,8 +69,10 @@ func (s Store) init(filePath string) {
 	defer log.Trace(time.Now(), string(s), filePath)
 
 	store := s.get()
-	store.cache = maps.NewConcurrent[*Entry[any]]()
-	store.dirty = false
+	// Clear in place rather than reassigning store.cache: a render goroutine may
+	// be reading the field concurrently, and swapping the pointer would race.
+	store.cache.Clear()
+	store.dirty.Store(false)
 }
 
 func (s Store) close() {
@@ -86,7 +101,7 @@ func Get[T any](s Store, key string) (T, bool) {
 	if entry.Expired() {
 		log.Debugf("(%s) key expired: %s", string(s), key)
 		store.cache.Delete(key)
-		store.dirty = true
+		store.dirty.Store(true)
 		return zero, false
 	}
 
@@ -123,7 +138,7 @@ func Set[T any](s Store, key string, value T, duration Duration) {
 		TTL:       seconds,
 	})
 
-	store.dirty = true
+	store.dirty.Store(true)
 }
 
 // Delete removes a key from the specified store
@@ -138,7 +153,7 @@ func Delete(s Store, key string) {
 
 	log.Debugf("(%s) deleting key: %s", string(s), key)
 	store.cache.Delete(key)
-	store.dirty = true
+	store.dirty.Store(true)
 }
 
 func DeleteAll(s Store) {
@@ -150,8 +165,11 @@ func DeleteAll(s Store) {
 		return
 	}
 
-	store.cache = maps.NewConcurrent[*Entry[any]]()
-	store.dirty = true
+	// Clear in place rather than reassigning: CacheClear invokes DeleteAll from
+	// its own gRPC handler goroutine, concurrent with render goroutines reading
+	// store.cache, so swapping the pointer would race on the field.
+	store.cache.Clear()
+	store.dirty.Store(true)
 }
 
 func Print(s Store) string {

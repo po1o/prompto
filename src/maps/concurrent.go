@@ -45,6 +45,12 @@ func (cm *Concurrent[V]) Delete(key string) {
 	cm.m.Delete(key)
 }
 
+// Clear removes all entries in place. Callers holding a *Concurrent can reset it
+// without reassigning the pointer, avoiding a data race with concurrent readers.
+func (cm *Concurrent[V]) Clear() {
+	cm.m.Clear()
+}
+
 func (cm *Concurrent[V]) Contains(key string) bool {
 	_, ok := cm.m.Load(key)
 	return ok
