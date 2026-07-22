@@ -137,6 +137,22 @@ func init() {
 	RootCmd.AddCommand(renderCmd)
 }
 
+// clientEnvMap captures the calling shell's environment so the daemon
+// evaluates segments against the client's env, not its own (which reflects
+// whatever session the daemon happened to be started from).
+func clientEnvMap() map[string]string {
+	environ := os.Environ()
+	env := make(map[string]string, len(environ))
+
+	for _, kv := range environ {
+		if i := strings.IndexByte(kv, '='); i > 0 {
+			env[kv[:i]] = kv[i+1:]
+		}
+	}
+
+	return env
+}
+
 func renderViaDaemon(flags *runtime.Flags, pid int, repaint bool) error {
 	silent = true
 	client, err := daemon.ConnectOrStart(startDetachedDaemon)
@@ -148,7 +164,7 @@ func renderViaDaemon(flags *runtime.Flags, pid int, repaint bool) error {
 	ctx, cancel := context.WithTimeout(context.Background(), renderTimeout)
 	defer cancel()
 
-	return client.RenderPrompt(ctx, flags, pid, "", nil, repaint, func(resp *ipc.PromptResponse) bool {
+	return client.RenderPrompt(ctx, flags, pid, "", clientEnvMap(), repaint, func(resp *ipc.PromptResponse) bool {
 		outputPrompts(resp)
 		return resp.Type != "complete"
 	})

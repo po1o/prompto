@@ -70,7 +70,7 @@ func TestRenderPipelineStartRendersInitialBundle(t *testing.T) {
 	renderer := &rendererStub{}
 	pipeline := NewRenderPipeline(registry, nil, renderer, nil)
 
-	bundle, active := pipeline.Start("session-a", &runtime.Flags{}, CancelHard)
+	bundle, active := pipeline.Start("session-a", &runtime.Flags{}, nil, CancelHard)
 	require.Equal(t, "render", bundle.Primary)
 	require.Equal(t, "transient", bundle.Transient)
 	require.Equal(t, "rtransient", bundle.RTransient)
@@ -90,7 +90,7 @@ func TestRenderPipelineNextRendersAfterUpdate(t *testing.T) {
 	renderer := &rendererStub{}
 	pipeline := NewRenderPipeline(registry, nil, renderer, nil)
 
-	_, active := pipeline.Start("session-a", &runtime.Flags{}, CancelHard)
+	_, active := pipeline.Start("session-a", &runtime.Flags{}, nil, CancelHard)
 	defer active.Complete()
 
 	go func() {
@@ -130,7 +130,7 @@ func TestApplyRenderFlagsNonRepaintUpdatesWorkingDirectory(t *testing.T) {
 	term.Init(&runtime.Flags{PWD: firstPwd, VimMode: "insert"})
 	engine := &prompt.Engine{Env: term}
 
-	applyRenderFlags(engine, &runtime.Flags{PWD: secondPwd, VimMode: "normal"}, false)
+	applyRenderFlags(engine, &runtime.Flags{PWD: secondPwd, VimMode: "normal"}, nil, false)
 
 	require.Equal(t, secondPwd, term.Pwd())
 	require.Equal(t, secondPwd, term.Flags().PWD)
@@ -144,11 +144,47 @@ func TestApplyRenderFlagsRepaintOnlyUpdatesVimMode(t *testing.T) {
 	term.Init(&runtime.Flags{PWD: firstPwd, VimMode: "insert"})
 	engine := &prompt.Engine{Env: term}
 
-	applyRenderFlags(engine, &runtime.Flags{PWD: secondPwd, VimMode: "normal"}, true)
+	applyRenderFlags(engine, &runtime.Flags{PWD: secondPwd, VimMode: "normal"}, nil, true)
 
 	require.Equal(t, firstPwd, term.Pwd())
 	require.Equal(t, firstPwd, term.Flags().PWD)
 	require.Equal(t, "normal", term.Flags().VimMode)
+}
+
+func TestApplyRenderFlagsResolvesEnvFromClientRequest(t *testing.T) {
+	term := &runtime.Terminal{}
+	term.Init(&runtime.Flags{})
+	engine := &prompt.Engine{Env: term}
+
+	// The daemon was started from an SSH session; the local client shell
+	// sends its complete environ, which does NOT contain SSH_CONNECTION.
+	t.Setenv("SSH_CONNECTION", "10.0.0.40 55103 10.0.0.42 22")
+	clientEnv := map[string]string{"CLIENT_ONLY": "from-client"}
+
+	applyRenderFlags(engine, &runtime.Flags{}, clientEnv, false)
+
+	require.IsType(t, &Environment{}, engine.Env)
+	// A non-nil client env map is authoritative: a key absent from it is
+	// unset in the client shell, with no per-key fallback to the daemon env.
+	require.Empty(t, engine.Env.Getenv("SSH_CONNECTION"))
+	require.Equal(t, "from-client", engine.Env.Getenv("CLIENT_ONLY"))
+
+	// A request without an env map (nil) falls back to the daemon's own env.
+	applyRenderFlags(engine, &runtime.Flags{}, nil, false)
+	require.Equal(t, "10.0.0.40 55103 10.0.0.42 22", engine.Env.Getenv("SSH_CONNECTION"))
+	require.Empty(t, engine.Env.Getenv("CLIENT_ONLY"))
+}
+
+func TestApplyRenderFlagsRepaintRefreshesEnv(t *testing.T) {
+	term := &runtime.Terminal{}
+	term.Init(&runtime.Flags{VimMode: "insert"})
+	engine := &prompt.Engine{Env: term}
+
+	applyRenderFlags(engine, &runtime.Flags{}, map[string]string{"KEY": "hard"}, false)
+	applyRenderFlags(engine, &runtime.Flags{VimMode: "normal"}, map[string]string{"KEY": "soft"}, true)
+
+	require.Equal(t, "soft", engine.Env.Getenv("KEY"))
+	require.Equal(t, "normal", engine.Env.Flags().VimMode)
 }
 
 func TestRenderPipelineRepaintWithoutActiveRenderReturnsNoActiveHandle(t *testing.T) {
@@ -158,7 +194,7 @@ func TestRenderPipelineRepaintWithoutActiveRenderReturnsNoActiveHandle(t *testin
 	renderer := &rendererStub{}
 	pipeline := NewRenderPipeline(registry, nil, renderer, nil)
 
-	bundle, active := pipeline.Start("session-a", &runtime.Flags{VimMode: "normal"}, CancelSoft)
+	bundle, active := pipeline.Start("session-a", &runtime.Flags{VimMode: "normal"}, nil, CancelSoft)
 
 	require.Equal(t, "render", bundle.Primary)
 	require.Nil(t, active)
@@ -204,7 +240,7 @@ text.rtransient:
 		Plain:         true,
 	}
 
-	bundle, active := pipeline.Start("session-a", flags, CancelHard)
+	bundle, active := pipeline.Start("session-a", flags, nil, CancelHard)
 
 	require.Equal(t, "render", bundle.Primary)
 	require.Equal(t, "transient", bundle.Transient)
@@ -247,12 +283,12 @@ status:
 		}
 	}
 
-	success, active := pipeline.Start("session-a", flags(0), CancelHard)
+	success, active := pipeline.Start("session-a", flags(0), nil, CancelHard)
 	require.Nil(t, active)
 	require.True(t, strings.Contains(success.Primary, "OK"))
 	require.False(t, strings.Contains(success.Primary, "ERROR"))
 
-	failure, active := pipeline.Start("session-a", flags(1), CancelHard)
+	failure, active := pipeline.Start("session-a", flags(1), nil, CancelHard)
 	require.Nil(t, active)
 	require.True(t, strings.Contains(failure.Primary, "ERROR"))
 }

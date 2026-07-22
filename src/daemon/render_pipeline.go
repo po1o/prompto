@@ -151,7 +151,7 @@ func (pipeline *RenderPipeline) newActiveRender(sessionID string, flags *runtime
 	}
 }
 
-func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags, kind CancelKind) (PromptBundle, *ActiveRender) {
+func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags, envVars map[string]string, kind CancelKind) (PromptBundle, *ActiveRender) {
 	repaint := kind.Repaint()
 	active := pipeline.newActiveRender(sessionID, flags, kind)
 	engine := active.engine()
@@ -165,7 +165,7 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 
 	if engine != nil && engine.Config != nil {
 		engine.SetDeviceCache(pipeline.deviceCache)
-		applyRenderFlags(engine, flags, repaint)
+		applyRenderFlags(engine, flags, envVars, repaint)
 		template.Init(engine.Env, engine.Config.Var, engine.Config.Maps)
 
 		if flags != nil && flags.Type != "" && flags.Type != prompt.PRIMARY {
@@ -308,9 +308,19 @@ func renderPromptByType(engine *prompt.Engine, promptType, command string) Promp
 	}
 }
 
-func applyRenderFlags(engine *prompt.Engine, flags *runtimePkg.Flags, repaint bool) {
+func applyRenderFlags(engine *prompt.Engine, flags *runtimePkg.Flags, envVars map[string]string, repaint bool) {
 	if engine == nil || flags == nil || engine.Env == nil {
 		return
+	}
+
+	// Wrap the engine's Terminal in Environment so segments resolve Getenv
+	// against the client request's env vars, not the daemon's own environment.
+	daemonEnv, isDaemonEnv := engine.Env.(*Environment)
+	if !isDaemonEnv {
+		if term, isTerm := engine.Env.(*runtimePkg.Terminal); isTerm {
+			daemonEnv = &Environment{Terminal: term}
+			engine.Env = daemonEnv
+		}
 	}
 
 	currentFlags := engine.Env.Flags()
@@ -319,7 +329,13 @@ func applyRenderFlags(engine *prompt.Engine, flags *runtimePkg.Flags, repaint bo
 	}
 
 	if repaint {
-		// Repaint only needs VimMode change; keep previous request context/flags intact.
+		// Repaint (soft cancel) only needs VimMode and refreshed env vars;
+		// keep previous request context/flags intact.
+		if daemonEnv != nil {
+			daemonEnv.UpdateForRepaint(flags, envVars)
+			return
+		}
+
 		currentFlags.VimMode = flags.VimMode
 		return
 	}
@@ -331,12 +347,12 @@ func applyRenderFlags(engine *prompt.Engine, flags *runtimePkg.Flags, repaint bo
 			engine.Config.ValidLine != nil || engine.Config.ErrorLine != nil || engine.Config.DebugPrompt != nil
 	}
 
-	term, ok := engine.Env.(*runtimePkg.Terminal)
-	if !ok {
+	if daemonEnv == nil {
 		return
 	}
 
-	term.Init(currentFlags)
+	daemonEnv.setEnvVars(envVars)
+	daemonEnv.Init(currentFlags)
 }
 
 func (active *ActiveRender) Next(updateContext context.Context, after uint64) (PromptUpdate, bool) {
