@@ -66,6 +66,7 @@ func TestSharedProviderExecutesTextSegmentOncePerBlock(t *testing.T) {
 			},
 		},
 	}
+	t.Cleanup(engine.WaitForSegmentExecutions)
 
 	block := &config.Block{
 		Segments: []*config.Segment{
@@ -112,6 +113,7 @@ func TestSharedProviderExecutesOnceAcrossBlocksWithinRender(t *testing.T) {
 			},
 		},
 	}
+	t.Cleanup(engine.WaitForSegmentExecutions)
 
 	firstBlock := &config.Block{Segments: []*config.Segment{{Type: config.TEXT, Template: "A", Alias: "first"}}}
 	secondBlock := &config.Block{Segments: []*config.Segment{{Type: config.TEXT, Template: "B", Alias: "second"}}}
@@ -152,6 +154,7 @@ func TestSharedProviderResetsBetweenRenders(t *testing.T) {
 			},
 		},
 	}
+	t.Cleanup(engine.WaitForSegmentExecutions)
 
 	block := &config.Block{Segments: []*config.Segment{{Type: config.TEXT, Template: "A", Alias: "text"}}}
 
@@ -205,6 +208,7 @@ func TestSharedProviderReusesPrimaryComputationForTransientRightPrompt(t *testin
 			},
 		},
 	}
+	t.Cleanup(engine.WaitForSegmentExecutions)
 
 	_ = engine.Primary()
 	require.Equal(t, int32(1), atomic.LoadInt32(&executionCount))
@@ -256,6 +260,7 @@ func TestSharedProviderKeepsPerInstanceTemplateWithSharedTypeState(t *testing.T)
 			},
 		},
 	}
+	t.Cleanup(engine.WaitForSegmentExecutions)
 
 	block := &config.Block{
 		Segments: []*config.Segment{

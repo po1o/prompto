@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/po1o/prompto/src/cache"
@@ -36,8 +37,15 @@ func (s *SegmentStyle) resolve(context any) SegmentStyle {
 }
 
 type Segment struct {
-	writer                  SegmentWriter
-	env                     runtime.Environment
+	writer SegmentWriter
+	env    runtime.Environment
+	// abandoned is set via MarkAbandoned when the caller gives up on this
+	// (cloned) segment while its execution goroutine may still be running
+	// (timeout or cancellation). It suppresses the deferred template cache
+	// registration in Execute so a stale clone's writer cannot leak into
+	// cross-segment template data. It is a pointer to keep value copies of
+	// Segment vet-clean (atomic.Bool must not be copied); Clone allocates it.
+	abandoned               *atomic.Bool
 	Options                 options.Map `yaml:"options,omitempty"`
 	Cache                   *Cache      `yaml:"cache,omitempty"`
 	Alias                   string      `yaml:"alias,omitempty"`
@@ -91,6 +99,10 @@ func (segment *Segment) Clone() *Segment {
 	cloned := *segment
 	cloned.writer = nil
 	cloned.env = nil
+	// Allocated eagerly: the flag is shared between the abandoning caller and
+	// a possibly still-running execution goroutine, so it must exist before
+	// the goroutine starts (lazy allocation would race on the pointer).
+	cloned.abandoned = &atomic.Bool{}
 	cloned.styleCache = ""
 	cloned.name = ""
 	cloned.Needs = nil
@@ -175,7 +187,7 @@ func (segment *Segment) Execute(env runtime.Environment) {
 	}
 
 	defer func() {
-		if segment.Enabled {
+		if segment.Enabled && !segment.isAbandoned() {
 			template.Cache.AddSegmentData(segment.Name(), segment.writer)
 		}
 	}()
@@ -186,6 +198,24 @@ func (segment *Segment) Execute(env runtime.Environment) {
 	}
 
 	segment.Enabled = segment.writer.Enabled()
+}
+
+// MarkAbandoned flags the segment as abandoned: the caller no longer wants
+// its result, but an execution goroutine may still be running on it (segment
+// timeout or context cancellation). Execute then skips the deferred template
+// cache registration so the stale writer never becomes visible to
+// cross-segment template references. Only cloned segments carry the flag;
+// calling this on a non-clone is a no-op.
+func (segment *Segment) MarkAbandoned() {
+	if segment == nil || segment.abandoned == nil {
+		return
+	}
+
+	segment.abandoned.Store(true)
+}
+
+func (segment *Segment) isAbandoned() bool {
+	return segment.abandoned != nil && segment.abandoned.Load()
 }
 
 func (segment *Segment) Render(index int, force bool) bool {

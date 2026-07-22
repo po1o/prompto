@@ -34,12 +34,67 @@ type streamingBlockSet struct {
 
 type streamingSegment struct {
 	segment *config.Segment
+	// working is the worker's private clone, taken under streamingMu in
+	// prepareStreamingSegments. Workers must never read the canonical
+	// segment: the render path rewrites it for pending placeholders.
+	working *config.Segment
 	key     string
 }
 
 type streamingResult struct {
 	segment *config.Segment
-	key     string
+	// executed is the worker's private clone holding the computation result.
+	// It is nil when execution did not finish cleanly (segment timeout): the
+	// execution goroutine may then still be mutating the clone, so it cannot
+	// be merged and the canonical segment keeps its pre-execution state.
+	executed *config.Segment
+	key      string
+}
+
+// mergeStreamingResultLocked copies a worker's completed computation from its
+// private clone into the canonical segment. The canonical segment is owned by
+// streamingMu — callers must hold it. This keeps segment execution decoupled
+// from render state: workers never touch the segment the render path reads.
+func (e *Engine) mergeStreamingResultLocked(ctx context.Context, result streamingResult) {
+	if result.executed == nil {
+		return
+	}
+
+	// Hard Cancel safety: cancellation strictly happens-before the next
+	// render's prepareStreamingSegments, so re-checking under streamingMu
+	// guarantees a superseded render's worker cannot merge stale state into
+	// canonical segments the new generation has already re-prepared.
+	if ctx.Err() != nil {
+		return
+	}
+
+	// Soft Cancel (vim toggle) safety: once PrimaryRepaint has re-executed
+	// the canonical vim segment with the current VimMode, a late worker merge
+	// would overwrite it with a clone executed under the old mode. The vim
+	// segment is trivially cheap and re-executed on every repaint, so the
+	// async result is safely dropped. Before the first repaint of a render
+	// generation the merge proceeds: cold starts rely on it for the initial
+	// vim state.
+	if result.segment.Type == config.VIM && e.vimRepainted {
+		return
+	}
+
+	if err := result.segment.CopyWriterStateFrom(result.executed); err != nil {
+		log.Error(err)
+		return
+	}
+
+	result.segment.Needs = result.executed.Needs
+	result.segment.Duration = result.executed.Duration
+	result.segment.NameLength = result.executed.NameLength
+}
+
+// WaitForSegmentExecutions blocks until all in-flight segment execution
+// goroutines have finished, including ones abandoned by a segment timeout.
+// Segment executions may outlive PrimaryStreaming's render window by design;
+// use this to quiesce the engine (tests, daemon shutdown).
+func (e *Engine) WaitForSegmentExecutions() {
+	e.executionWG.Wait()
 }
 
 // PrimaryStreaming renders a prompt with a timeout cutoff and pending placeholders.
@@ -58,6 +113,9 @@ func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, up
 	e.pendingSegments = make(map[string]bool)
 	e.cachedValues = make(map[string]string)
 	e.segmentCacheKeys = make(map[string]string)
+	// New render generation: its own vim worker result must merge (cold
+	// start); only a repaint issued after this point makes it stale.
+	e.vimRepainted = false
 	e.streamingBlocks = e.resolveStreamingBlocks()
 	e.streamingTransient = e.resolveStreamingTransientBlocks()
 	e.streamingRTransient = e.resolveStreamingRTransientBlocks()
@@ -82,11 +140,17 @@ func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, up
 	if hasPending {
 		go func() {
 			for result := range results {
+				e.streamingMu.Lock()
+				// Re-check under the lock: a Hard Cancel may have landed while
+				// this goroutine was blocked acquiring streamingMu, in which
+				// case pendingSegments already belongs to the next render
+				// generation and must not be touched or published.
 				if ctx.Err() != nil {
+					e.streamingMu.Unlock()
 					return
 				}
 
-				e.streamingMu.Lock()
+				e.mergeStreamingResultLocked(ctx, result)
 				delete(e.pendingSegments, result.key)
 				e.streamingMu.Unlock()
 				updateCallback(result.segment.Name())
@@ -135,6 +199,7 @@ func (e *Engine) prepareStreamingSegments() ([]streamingSegment, map[string]bool
 
 				segmentsToExecute = append(segmentsToExecute, streamingSegment{
 					segment: segment,
+					working: segment.Clone(),
 					key:     key,
 				})
 			}
@@ -161,13 +226,17 @@ func (e *Engine) startStreamingExecutions(
 			continue
 		}
 
-		sources[entry.segment.Type] = entry.segment.Clone()
+		// Derive from the worker clone, not the canonical segment; this runs
+		// unlocked while a concurrent repaint may rewrite the canonical.
+		sources[entry.segment.Type] = entry.working.Clone()
 	}
 
 	for _, entry := range segments {
 		wg.Add(1)
+		e.executionWG.Add(1)
 		go func(entry streamingSegment) {
 			defer wg.Done()
+			defer e.executionWG.Done()
 			e.executeStreamingSegment(ctx, entry, sources, results)
 		}(entry)
 	}
@@ -195,11 +264,17 @@ func (e *Engine) executeStreamingSegment(
 	segment := entry.segment
 	e.markSegmentPending(segment)
 
+	// Execute on the private clone taken under streamingMu: the canonical
+	// segment is owned by that lock (the render path reads and temporarily
+	// rewrites it for pending placeholders), so workers must never touch it.
+	// The result is merged back under the lock when the result is collected.
+	working := entry.working
+
 	if providerFactory, ok := e.sharedProviderFactory[segment.Type]; ok {
-		if err := segment.MapSegmentWithWriter(e.Env); err == nil {
+		if err := working.MapSegmentWithWriter(e.Env); err == nil {
 			sharedProvider := e.getOrCreateSharedProvider(ctx, segment.Type, sources[segment.Type], providerFactory)
 			if res, sharedErr := sharedProvider.Get(); sharedErr == nil {
-				_ = segment.CopyWriterStateFrom(res.Source)
+				_ = working.CopyWriterStateFrom(res.Source)
 			}
 		}
 
@@ -210,12 +285,15 @@ func (e *Engine) executeStreamingSegment(
 		}
 
 		e.markSegmentDone(segment)
-		results <- streamingResult{segment: segment, key: entry.key}
+		results <- streamingResult{segment: segment, executed: working, key: entry.key}
 		return
 	}
 
-	completed := e.executeSegmentWithContext(ctx, segment)
+	completed, clean := e.executeSegmentWithContext(ctx, working)
 	if !completed {
+		// Cancelled: executeSegmentWithContext already marked the clone
+		// abandoned before killing, so its still-running execution goroutine
+		// cannot register a stale writer in the template cache.
 		return
 	}
 
@@ -225,44 +303,64 @@ func (e *Engine) executeStreamingSegment(
 	default:
 	}
 
+	if !clean {
+		// Timeout: the execution goroutine still owns the clone (already marked
+		// abandoned inside executeSegmentWithContext). Drop it so the stale
+		// writer state is never merged back into the canonical segment.
+		working = nil
+	}
+
 	e.markSegmentDone(segment)
-	results <- streamingResult{segment: segment, key: entry.key}
+	results <- streamingResult{segment: segment, executed: working, key: entry.key}
 }
 
-func (e *Engine) executeSegmentWithContext(ctx context.Context, segment *config.Segment) bool {
+// executeSegmentWithContext runs the segment's execution with cancellation and
+// timeout handling. completed reports whether the caller should emit a result;
+// clean reports whether the execution goroutine finished (false on timeout,
+// when it may still be running and mutating the segment).
+func (e *Engine) executeSegmentWithContext(ctx context.Context, segment *config.Segment) (completed, clean bool) {
 	done := make(chan struct{})
 	gidChan := make(chan uint64, 1)
 
-	go func() {
+	// Tracked in executionWG: on timeout this goroutine outlives the worker
+	// (and possibly the render); WaitForSegmentExecutions joins it.
+	e.executionWG.Go(func() {
 		gidChan <- runjobs.CurrentGID()
 		e.executeWithoutLegacySegmentCache(segment)
 		close(done)
-	}()
+	})
 
 	gid := <-gidChan
 
+	// Mark abandoned before killing: KillGoroutineChildren unblocks the hung
+	// Execute, so the goroutine's deferred template-cache registration can run
+	// the instant we kill. The atomic store must happen-before the kill for the
+	// defer's isAbandoned() load to observe it and suppress the stale write.
 	if segment.Timeout <= 0 {
 		select {
 		case <-done:
-			return true
+			return true, true
 		case <-ctx.Done():
+			segment.MarkAbandoned()
 			_ = runjobs.KillGoroutineChildren(gid)
-			return false
+			return false, false
 		}
 	}
 
 	select {
 	case <-done:
-		return true
+		return true, true
 	case <-ctx.Done():
+		segment.MarkAbandoned()
 		_ = runjobs.KillGoroutineChildren(gid)
-		return false
+		return false, false
 	case <-time.After(time.Duration(segment.Timeout) * time.Millisecond):
 		log.Errorf("timeout after %dms for segment: %s", segment.Timeout, segment.Name())
+		segment.MarkAbandoned()
 		if err := runjobs.KillGoroutineChildren(gid); err != nil {
 			log.Errorf("failed to kill child processes for goroutine %d (segment: %s): %v", gid, segment.Name(), err)
 		}
-		return true
+		return true, false
 	}
 }
 
@@ -281,6 +379,9 @@ func (e *Engine) collectStreamingResultsUntil(
 				doneWaiting = true
 				continue
 			}
+			e.streamingMu.Lock()
+			e.mergeStreamingResultLocked(ctx, result)
+			e.streamingMu.Unlock()
 			completed[result.key] = true
 		case <-ctx.Done():
 			doneWaiting = true
@@ -320,9 +421,13 @@ func (e *Engine) PrimaryRepaint() string {
 		for blockIndex, block := range set.blocks {
 			for segmentIndex, segment := range block.Segments {
 				key := segmentKey(set.scope, blockIndex, segmentIndex, segment)
-				if segment.Type == config.SegmentType("vim") {
+				if segment.Type == config.VIM {
 					_ = segment.MapSegmentWithWriter(e.Env)
 					segment.Execute(e.Env)
+					// The canonical vim segment now reflects the current
+					// VimMode; block late async merges from overwriting it
+					// with a clone executed under the previous mode.
+					e.vimRepainted = true
 					continue
 				}
 
@@ -533,7 +638,7 @@ func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, 
 			continue
 		}
 
-		if e.repaintOnly && segment.Type != config.SegmentType("vim") {
+		if e.repaintOnly && segment.Type != config.VIM {
 			continue
 		}
 

@@ -45,9 +45,14 @@ type Engine struct {
 	sharedProviderMu      sync.Mutex
 	streamingMu           sync.Mutex
 	stateMu               sync.Mutex
+	executionWG           sync.WaitGroup
 	Plain                 bool
 	forceRender           bool
 	repaintOnly           bool
+	// vimRepainted, guarded by streamingMu, records that PrimaryRepaint has
+	// re-executed the canonical vim segment since the current render
+	// generation started; late async merges of vim results are then dropped.
+	vimRepainted bool
 }
 
 const (

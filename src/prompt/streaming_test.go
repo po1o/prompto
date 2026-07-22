@@ -129,6 +129,7 @@ slow.main:
 		Shell:      shell.GENERIC,
 	}
 	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
 
 	updates := make(chan string, 8)
 	start := time.Now()
@@ -195,6 +196,7 @@ slow.main:
 		Shell:      shell.GENERIC,
 	}
 	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
 
 	updates := make(chan string, 8)
 	start := time.Now()
@@ -280,6 +282,7 @@ slow.rtransient:
 		Shell:      shell.GENERIC,
 	}
 	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
 
 	updates := make(chan string, 16)
 	initial := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(segment string) {
@@ -355,6 +358,7 @@ text.time:
 		Shell:      shell.GENERIC,
 	}
 	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
 	_ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
 
 	pending := engine.StreamingTransientRPrompt()
@@ -394,6 +398,7 @@ blocking.main:
 		Shell:      shell.GENERIC,
 	}
 	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
 
 	done := make(chan struct{})
 	go func() {
@@ -438,6 +443,7 @@ vim:
 		VimMode:    "insert",
 	}
 	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
 
 	_ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
 	require.True(t, strings.Contains(engine.StreamingRPrompt(), "INSERT"), "expected initial render to include INSERT mode")
@@ -466,6 +472,7 @@ session:
 		Shell:      shell.GENERIC,
 	}
 	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
 	_ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
 
 	const hold = 80 * time.Millisecond
@@ -555,6 +562,7 @@ test.main:
 		Shell:      shell.GENERIC,
 	}
 	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
 	_ = engine.PrimaryRepaint()
 
 	require.Equal(t, int64(0), repaintExecutionCount.Load())
@@ -595,6 +603,7 @@ test.main:
 		Shell:      shell.GENERIC,
 	}
 	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
 	engine.streamingBlocks = engine.resolveStreamingBlocks()
 
 	require.NotEmpty(t, engine.streamingBlocks)
@@ -664,6 +673,7 @@ test.next:
 		Shell:      shell.GENERIC,
 	}
 	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
 	engine.streamingBlocks = engine.resolveStreamingBlocks()
 
 	require.Len(t, engine.streamingBlocks, 1)
@@ -681,4 +691,131 @@ test.next:
 
 	_ = engine.PrimaryRepaint()
 	require.Equal(t, int64(0), repaintDangerCount.Load())
+}
+
+func newMergeTestEngine(t *testing.T) *Engine {
+	t.Helper()
+
+	configPath := filepath.Join(t.TempDir(), "merge-guard.omp.yaml")
+	cfg := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+  style: "plain"
+  template: "L"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	engine := New(&runtime.Flags{
+		ConfigPath: configPath,
+		Plain:      true,
+		Shell:      shell.GENERIC,
+	})
+	t.Cleanup(engine.WaitForSegmentExecutions)
+
+	return engine
+}
+
+// newMergePair returns a canonical segment and an executed worker clone of the
+// given type, both with initialized writers, the clone marked Enabled as a
+// merge marker.
+func newMergePair(t *testing.T, engine *Engine, segmentType config.SegmentType) (canonical, executed *config.Segment) {
+	t.Helper()
+
+	canonical = &config.Segment{Type: segmentType}
+	require.NoError(t, canonical.MapSegmentWithWriter(engine.Env))
+
+	executed = canonical.Clone()
+	require.NoError(t, executed.MapSegmentWithWriter(engine.Env))
+	executed.Enabled = true
+
+	return canonical, executed
+}
+
+func TestMergeStreamingResultSkippedAfterHardCancel(t *testing.T) {
+	engine := newMergeTestEngine(t)
+	canonical, executed := newMergePair(t, engine, config.SegmentType("text"))
+	result := streamingResult{segment: canonical, executed: executed, key: "primary:0:0:Text"}
+
+	cancelled, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	engine.streamingMu.Lock()
+	engine.mergeStreamingResultLocked(cancelled, result)
+	engine.streamingMu.Unlock()
+	require.False(t, canonical.Enabled, "hard-cancelled result must not merge into the canonical segment")
+
+	engine.streamingMu.Lock()
+	engine.mergeStreamingResultLocked(context.Background(), result)
+	engine.streamingMu.Unlock()
+	require.True(t, canonical.Enabled, "live context must merge the worker result")
+}
+
+func TestMergeStreamingResultSkipsVimAfterRepaint(t *testing.T) {
+	engine := newMergeTestEngine(t)
+	canonical, executed := newMergePair(t, engine, config.VIM)
+	result := streamingResult{segment: canonical, executed: executed, key: "primary:0:0:Vim"}
+
+	engine.streamingMu.Lock()
+	engine.vimRepainted = true
+	engine.mergeStreamingResultLocked(context.Background(), result)
+	engine.streamingMu.Unlock()
+	require.False(t, canonical.Enabled, "vim result executed before a repaint must not overwrite the repainted segment")
+
+	engine.streamingMu.Lock()
+	engine.vimRepainted = false
+	engine.mergeStreamingResultLocked(context.Background(), result)
+	engine.streamingMu.Unlock()
+	require.True(t, canonical.Enabled, "cold-start vim result must merge when no repaint has occurred")
+}
+
+func TestPrimaryStreamingHardCancelStopsUpdatesAndPreservesPending(t *testing.T) {
+	segmentType := config.SegmentType("slow_test_cancel")
+	previous, hadPrevious := config.Segments[segmentType]
+	config.Segments[segmentType] = func() config.SegmentWriter { return &slowWriter{} }
+	t.Cleanup(func() {
+		if hadPrevious {
+			config.Segments[segmentType] = previous
+			return
+		}
+
+		delete(config.Segments, segmentType)
+	})
+
+	configPath := filepath.Join(t.TempDir(), "slow-cancel.omp.yaml")
+	cfg := `
+daemon_timeout: 50
+prompt:
+  - segments: ["slow.main"]
+
+slow.main:
+  type: "slow_test_cancel"
+  template: "SLOW"
+  style: "plain"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	flags := &runtime.Flags{
+		ConfigPath: configPath,
+		Plain:      true,
+		Shell:      shell.GENERIC,
+	}
+	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	var updates atomic.Int32
+	_ = engine.PrimaryStreaming(ctx, 50*time.Millisecond, func(string) {
+		updates.Add(1)
+	})
+	require.NotEmpty(t, engine.PendingSegments())
+
+	// Hard Cancel while the slow segment is still executing.
+	cancel()
+	engine.WaitForSegmentExecutions()
+
+	require.Equal(t, int32(0), updates.Load(), "no updates may be published after a hard cancel")
+	require.NotEmpty(t, engine.PendingSegments(), "a cancelled drain must not touch pending state")
 }
