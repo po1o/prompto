@@ -20,7 +20,7 @@ jobs:
         working-directory: ${{ github.workspace }}/src
     steps:
     - name: Checkout code 👋
-      uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+      uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
     - name: Install Go 🗳
       uses: ./.github/workflows/composite/bootstrap-go
     - name: Install Protobuf 🧬
@@ -42,14 +42,14 @@ jobs:
     - name: Modernize
       run: go list ./... | grep -v '/daemon/ipc$' | xargs go tool modernize
     - name: Run GoReleaser 🚀
-      uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
+      uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94
       with:
         distribution: goreleaser
         version: v2.3.2
         args: build --clean --snapshot
         workdir: src
     - name: Archive production artifacts
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
         name: builds
         retention-days: 1
