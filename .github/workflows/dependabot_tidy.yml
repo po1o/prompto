@@ -1,0 +1,96 @@
+name: Dependabot Auto-Tidy
+
+# When Dependabot bumps a Go module, `go.mod` can end up untidy — most often a
+# dependency is promoted between the direct and indirect blocks. Dependabot does
+# not run `go mod tidy`, so `gomod.yml`'s `tidy:check` gate fails. This workflow
+# runs `go mod tidy` on Dependabot's own branch and pushes the fix back, so the
+# PR goes green without manual intervention.
+#
+# ── One-time setup (per repo) ────────────────────────────────────────────────
+# The push must be made with a token that RE-TRIGGERS the required checks. The
+# default GITHUB_TOKEN cannot: on Dependabot PRs it is read-only, and a push it
+# makes never starts new workflow runs (loop prevention). Instead of a long-lived
+# PAT, we mint a SHORT-LIVED token from a GitHub App — it auto-expires in ~1 hour
+# and nothing sensitive sits at rest in the secret store:
+#
+#   1. Create a GitHub App (Settings → Developer settings → GitHub Apps → New):
+#      - Repository permissions → Contents: Read and write (nothing else).
+#      - Uncheck "Active" under Webhook (none needed).
+#      - Note the App ID; then "Generate a private key" and download the .pem.
+#   2. Install the App on this repository (the App's page → Install App).
+#   3. Add two *Dependabot* secrets (Settings → Secrets and variables →
+#      Dependabot, NOT Actions — only that store is exposed to Dependabot runs):
+#        TIDY_APP_ID          = the numeric App ID
+#        TIDY_APP_PRIVATE_KEY = the full contents of the downloaded .pem
+#
+# Until those secrets exist the app-token step fails loudly — that is the signal
+# to finish setup. App pushes re-trigger required checks (only GITHUB_TOKEN's do
+# not); a fine-grained PAT works too, but leaves a long-lived credential at rest.
+#
+# ── Security: why exposing a write token here is safe ────────────────────────
+# Dependabot runs are hardened (read-only token, no Actions secrets) because CI
+# on a dependency PR executes the freshly-bumped third-party code, which could
+# steal secrets. This job re-exposes one short-lived Contents:write token — safe
+# ONLY because:
+#   - Blast radius is bounded: the token can push to this repo, nothing else,
+#     expires within the hour, and is not your deploy keys / cloud creds.
+#   - No untrusted code runs in this job. The steps are pinned actions
+#     (create-github-app-token, checkout, setup-go) plus `go mod tidy` — and
+#     `go mod tidy` does NOT run dependency code (it reads the import graph to
+#     compute checksums; no compile, no init(), no install scripts — Go has
+#     none). So the bumped dependency's code never executes while the token is
+#     present.
+#
+# THE ONE RULE: never add test / build / run / generate steps to this workflow.
+# The moment it runs the bumped dependency's code, that code runs WITH the token
+# in the environment — that is the line. Untrusted-code execution belongs in
+# code.yml, which runs in the hardened, secret-less context. Keeping the token
+# and the untrusted code in separate jobs is the whole security design.
+
+on: pull_request
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  tidy:
+    # Only Dependabot's Go-module PRs. Other ecosystems (github-actions) never
+    # touch go.mod, so they are skipped.
+    if: >-
+      github.actor == 'dependabot[bot]' &&
+      startsWith(github.head_ref, 'dependabot/go_modules/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint a short-lived token from the GitHub App
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.TIDY_APP_ID }}
+          private-key: ${{ secrets.TIDY_APP_PRIVATE_KEY }}
+      - name: Checkout the PR branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.head_ref }}
+          # App token (not GITHUB_TOKEN) so the eventual push re-triggers checks.
+          token: ${{ steps.app-token.outputs.token }}
+      - name: Install Go 🗳
+        uses: ./.github/workflows/composite/bootstrap-go
+      - name: Tidy go.mod / go.sum
+        working-directory: src
+        run: go mod tidy
+      - name: Commit and push if tidy changed anything
+        # No-op when go mod tidy is clean, so re-running on our own push simply
+        # finds nothing to do and stops — the workflow is self-terminating.
+        run: |
+          if git diff --quiet -- src/go.mod src/go.sum; then
+            echo "go.mod / go.sum already tidy — nothing to push"
+            exit 0
+          fi
+          git config user.name  "dependabot[bot]"
+          git config user.email "49699333+dependabot[bot]@users.noreply.github.com"
+          git commit -am "chore(deps): go mod tidy after dependabot bump"
+          git push
