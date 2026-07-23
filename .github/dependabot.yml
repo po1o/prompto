@@ -1,4 +1,5 @@
 version: 2
+# Version updates: daily grouped PRs for github-actions and gomod pins.
 updates:
 
   - package-ecosystem: "github-actions"
