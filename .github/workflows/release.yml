@@ -24,7 +24,7 @@ jobs:
       version: ${{ steps.version.outputs.value }}
     steps:
       - name: Checkout code 👋
-        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
         with:
           fetch-depth: 0
 
@@ -75,7 +75,7 @@ jobs:
         run: go list ./... | grep -v '/daemon/ipc$' | xargs go tool modernize
 
       - name: Run GoReleaser 🚀
-        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94
         with:
           distribution: goreleaser
           version: v2.3.2
@@ -89,7 +89,7 @@ jobs:
     needs: release
     steps:
       - name: Notify tap repository
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         env:
           HOMEBREW_TAP_REPO: ${{ vars.HOMEBREW_TAP_REPO }}
           RELEASE_VERSION: ${{ needs.release.outputs.version }}
