@@ -19,6 +19,24 @@ name: Dependabot Auto-Tidy
 #
 # Until that secret exists the checkout falls back to the read-only token and the
 # push step fails loudly — that is the signal to finish the setup above.
+#
+# ── Security: why exposing a write token here is safe ────────────────────────
+# Dependabot runs are hardened (read-only token, no Actions secrets) because CI
+# on a dependency PR executes the freshly-bumped third-party code, which could
+# steal secrets. This job re-exposes one Contents:write PAT — safe ONLY because:
+#   - Blast radius is bounded: the PAT can push to this repo, nothing else, and
+#     is revocable in one click. It is not your deploy keys / cloud creds.
+#   - No untrusted code runs in this job. The steps are pinned actions
+#     (checkout, setup-go) plus `go mod tidy` — and `go mod tidy` does NOT run
+#     dependency code (it reads the import graph to compute checksums; no
+#     compile, no init(), no install scripts — Go has none). So the bumped
+#     dependency's code never executes while the token is present.
+#
+# THE ONE RULE: never add test / build / run / generate steps to this workflow.
+# The moment it runs the bumped dependency's code, that code runs WITH the token
+# in the environment — that is the line. Untrusted-code execution belongs in
+# code.yml, which runs in the hardened, secret-less context. Keeping the token
+# and the untrusted code in separate jobs is the whole security design.
 
 on: pull_request
 
