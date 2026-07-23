@@ -1,0 +1,63 @@
+name: Dependabot Auto-Tidy
+
+# When Dependabot bumps a Go module, `go.mod` can end up untidy — most often a
+# dependency is promoted between the direct and indirect blocks. Dependabot does
+# not run `go mod tidy`, so the `go-mod` tidy gate fails. This workflow runs
+# `go mod tidy` on Dependabot's own branch and pushes the fix back, so the PR
+# goes green without manual intervention.
+#
+# ── One-time setup (per repo) ────────────────────────────────────────────────
+# The push must be made with a token that RE-TRIGGERS the required checks. The
+# default GITHUB_TOKEN cannot: on Dependabot PRs it is read-only, and a push it
+# makes never starts new workflow runs (loop prevention). So supply your own:
+#
+#   1. Create a fine-grained PAT (Settings → Developer settings → Fine-grained
+#      tokens): this repo only, Repository permissions → Contents: Read+write.
+#   2. Add it as a *Dependabot* secret (Settings → Secrets and variables →
+#      Dependabot, NOT Actions — Dependabot-triggered runs only see that store)
+#      named exactly DEPENDABOT_TIDY_TOKEN.
+#
+# Until that secret exists the checkout falls back to the read-only token and the
+# push step fails loudly — that is the signal to finish the setup above.
+
+on: pull_request
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  tidy:
+    # Only Dependabot's Go-module PRs. Other ecosystems (github-actions) never
+    # touch go.mod, so they are skipped.
+    if: >-
+      github.actor == 'dependabot[bot]' &&
+      startsWith(github.head_ref, 'dependabot/go_modules/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the PR branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.head_ref }}
+          # PAT/App token so the eventual `git push` re-triggers required checks.
+          token: ${{ secrets.DEPENDABOT_TIDY_TOKEN }}
+      - name: Install Go 🗳
+        uses: ./.github/workflows/composite/bootstrap-go
+      - name: Tidy go.mod / go.sum
+        working-directory: src
+        run: go mod tidy
+      - name: Commit and push if tidy changed anything
+        # No-op when go mod tidy is clean, so re-running on our own push simply
+        # finds nothing to do and stops — the workflow is self-terminating.
+        run: |
+          if git diff --quiet -- src/go.mod src/go.sum; then
+            echo "go.mod / go.sum already tidy — nothing to push"
+            exit 0
+          fi
+          git config user.name  "dependabot[bot]"
+          git config user.email "49699333+dependabot[bot]@users.noreply.github.com"
+          git commit -am "chore(deps): go mod tidy after dependabot bump"
+          git push
