@@ -17,17 +17,9 @@ jobs:
       uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
     - name: Install Go 🗳
       uses: ./.github/workflows/composite/bootstrap-go
-    - name: Install Protobuf 🧬
-      uses: ./.github/workflows/composite/bootstrap-protobuf
-    - name: Generate Code
-      run: go generate ./...
-    - name: Verify Generated Code
-      run: |
-        if ! git diff --exit-code -- .; then
-          git --no-pager diff --stat
-          echo "generated files are out of date"
-          exit 1
-        fi
+    # Generated code is committed, so `go mod tidy` sees protobuf's direct
+    # importer without running `go generate`. Generated-vs-source drift is
+    # verified once, in the Build Code workflow.
     - name: Check for unused dependencies
       run: |
         go mod tidy
