@@ -28,7 +28,11 @@ packages/msi/Microsoft.Trusted.Signing.Client
 *.test
 
 # protobuf generated files
-*.pb.go
+# NOTE: *.pb.go is intentionally committed. daemon/ipc's generated code is the
+# only direct importer of google.golang.org/protobuf; if it is absent from the
+# tree, `go mod tidy` (run by Dependabot and the auto-tidy job, neither of which
+# runs `go generate`) demotes protobuf to // indirect, which the go-mod check
+# then rejects. Committing the generated code keeps the dependency graph stable.
 *.pb.gw.go
 *.pb.validate.go
 
