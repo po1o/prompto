@@ -45,7 +45,7 @@ When editing PowerShell files (`*.ps1`, `*.psm1`, `*.psd1`):
 ## Commit and Pull Requests Guidelines
 
 - Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary) for PR titles and commit messages.
-- The repository-specific rules are in `.commitlintrc.yml` (not `.json`).
+- The repository-specific rules are in `.commitlintrc.cjs` (JS config, so Dependabot commits can be ignored via a function).
 - **Allowed commit types** (anything else fails CI):
   `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`, `theme`.
   Note: `build` is **not** allowed — use `ci(deps):` or `chore(deps):` for tooling/dependency bumps.
