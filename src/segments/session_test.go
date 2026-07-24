@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/po1o/prompto/src/cache"
-	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/runtime/mock"
 	"github.com/po1o/prompto/src/segments/options"
 	"github.com/po1o/prompto/src/template"
@@ -77,16 +76,6 @@ func TestSessionSegmentTemplate(t *testing.T) {
 			UserName:       "john",
 			SSHSession:     false,
 			WhoAmI:         "sascha   pts/1        2023-11-08 22:56 (89.246.1.1)",
-			ComputerName:   "remote",
-			Template:       "{{.UserName}}{{if .SSHSession}} on {{.HostName}}{{end}}",
-		},
-		{
-			Case:           "user with ssh using who am i (windows)",
-			ExpectedString: "john",
-			UserName:       "john",
-			SSHSession:     false,
-			WhoAmI:         "sascha   pts/1        2023-11-08 22:56 (89.246.1.1)",
-			Platform:       runtime.WINDOWS,
 			ComputerName:   "remote",
 			Template:       "{{.UserName}}{{if .SSHSession}} on {{.HostName}}{{end}}",
 		},

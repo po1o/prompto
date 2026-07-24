@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	runtimelib "runtime"
 	"testing"
 
 	bundledthemes "github.com/po1o/prompto/src/themes"
@@ -136,22 +135,10 @@ func setDefaultConfigEnv(t *testing.T) {
 	configHome := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", configHome)
 	t.Setenv("HOME", configHome)
-
-	if runtimelib.GOOS != "windows" {
-		return
-	}
-
-	t.Setenv("APPDATA", configHome)
-	t.Setenv("LOCALAPPDATA", configHome)
-	t.Setenv("USERPROFILE", configHome)
 }
 
 func setDaemonStateEnv(t *testing.T, stateHome string) {
 	t.Helper()
 
 	t.Setenv("XDG_STATE_HOME", stateHome)
-
-	if runtimelib.GOOS == "windows" {
-		t.Setenv("LOCALAPPDATA", stateHome)
-	}
 }

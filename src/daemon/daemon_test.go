@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	libruntime "runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -346,13 +345,5 @@ func startDetachedTestProcessPID(t *testing.T) int {
 }
 
 func detachedProcessPIDCommand() (string, []string) {
-	if libruntime.GOOS == runtime.WINDOWS {
-		// `ping -n 2` lives ~1s (like `sleep 1`) but, unlike powershell, starts
-		// instantly — powershell's cold start on CI is slow and highly variable,
-		// which pushed the tracked process's lifetime past the test deadline and
-		// made TestDaemonStopsAfterTrackedProcessActuallyExits flaky on Windows.
-		return "ping", []string{"-n", "2", "127.0.0.1"}
-	}
-
 	return "sleep", []string{"1"}
 }

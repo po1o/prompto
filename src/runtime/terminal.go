@@ -72,20 +72,6 @@ func (term *Terminal) Pwd() string {
 func (term *Terminal) setPwd() {
 	defer log.Trace(time.Now())
 
-	correctPath := func(pwd string) string {
-		if term.GOOS() != WINDOWS {
-			return pwd
-		}
-
-		// on Windows, and being case sensitive and not consistent and all, this gives silly issues
-		driveLetter, err := regex.GetCompiledRegex(`^[a-z]:`)
-		if err == nil {
-			return driveLetter.ReplaceAllStringFunc(pwd, strings.ToUpper)
-		}
-
-		return pwd
-	}
-
 	if term.CmdFlags != nil && term.CmdFlags.PWD != "" {
 		term.cwd = path.Clean(term.CmdFlags.PWD)
 		log.Debug(term.cwd)
@@ -98,7 +84,7 @@ func (term *Terminal) setPwd() {
 		return
 	}
 
-	term.cwd = correctPath(dir)
+	term.cwd = dir
 	log.Debug(term.cwd)
 }
 
@@ -499,11 +485,6 @@ func dirMatchesOneOf(dir, home, goos string, regexes []string) bool {
 		return false
 	}
 
-	if goos == WINDOWS {
-		dir = strings.ReplaceAll(dir, "\\", "/")
-		home = strings.ReplaceAll(home, "\\", "/")
-	}
-
 	for _, element := range regexes {
 		normalized := strings.ReplaceAll(element, "\\\\", "/")
 		if strings.HasPrefix(normalized, "~") {
@@ -513,7 +494,7 @@ func dirMatchesOneOf(dir, home, goos string, regexes []string) bool {
 			}
 		}
 		pattern := fmt.Sprintf("^%s$", normalized)
-		if goos == WINDOWS || goos == DARWIN {
+		if goos == DARWIN {
 			pattern = "(?i)" + pattern
 		}
 		matched := regex.MatchString(pattern, dir)

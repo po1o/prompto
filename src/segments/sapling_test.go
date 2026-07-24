@@ -23,20 +23,11 @@ func TestSetDir(t *testing.T) {
 			Path:     "/usr/sapling/repo/.sl",
 			GOOS:     runtime.LINUX,
 		},
-		{
-			Case:     "Windows",
-			Expected: "\\usr\\sapling\\repo",
-			Path:     "\\usr\\sapling\\repo\\.sl",
-			GOOS:     runtime.WINDOWS,
-		},
 	}
 	for _, tc := range cases {
 		env := new(mock.Environment)
 		env.On("GOOS").Return(tc.GOOS)
 		home := "/usr/home"
-		if tc.GOOS == runtime.WINDOWS {
-			home = "\\usr\\home"
-		}
 		env.On("Home").Return(home)
 
 		sl := &Sapling{}

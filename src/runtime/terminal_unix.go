@@ -1,5 +1,3 @@
-//go:build !windows
-
 package runtime
 
 import (
@@ -19,10 +17,6 @@ import (
 func (term *Terminal) Root() bool {
 	defer log.Trace(time.Now())
 	return os.Geteuid() == 0
-}
-
-func (term *Terminal) QueryWindowTitles(_, _ string) (string, error) {
-	return "", &NotImplemented{}
 }
 
 func (term *Terminal) IsWsl() bool {
@@ -114,10 +108,6 @@ func (term *Terminal) Platform() string {
 
 	log.Debug(platform)
 	return platform
-}
-
-func (term *Terminal) WindowsRegistryKeyValue(_ string) (*WindowsRegistryValue, error) {
-	return nil, &NotImplemented{}
 }
 
 func (term *Terminal) InWSLSharedDrive() bool {

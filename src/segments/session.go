@@ -2,7 +2,6 @@ package segments
 
 import (
 	"github.com/po1o/prompto/src/regex"
-	"github.com/po1o/prompto/src/runtime"
 )
 
 type Session struct {
@@ -31,10 +30,6 @@ func (s *Session) activeSSHSession() bool {
 		if content != "" {
 			return true
 		}
-	}
-
-	if s.env.Platform() == runtime.WINDOWS {
-		return false
 	}
 
 	whoAmI, err := s.env.RunCommand("who", "am", "i")

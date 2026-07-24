@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	homeDir        = "/home/someone"
-	homeDirWindows = "C:\\Users\\someone"
+	homeDir = "/home/someone"
 )
 
 func renderTemplateNoTrimSpace(env *mock.Environment, segmentTemplate string, context any) string {
@@ -161,11 +160,7 @@ func TestFullAndFolderPath(t *testing.T) {
 			tc.PathSeparator = "/"
 		}
 		env.On("PathSeparator").Return(tc.PathSeparator)
-		if tc.GOOS == runtime.WINDOWS {
-			env.On("Home").Return(homeDirWindows)
-		} else {
-			env.On("Home").Return(homeDir)
-		}
+		env.On("Home").Return(homeDir)
 		env.On("Pwd").Return(tc.Pwd)
 		env.On("GOOS").Return(tc.GOOS)
 		env.On("StackCount").Return(tc.StackCount)
@@ -436,7 +431,6 @@ func TestSplitPath(t *testing.T) {
 			root:          tc.Root,
 			relative:      tc.Relative,
 			pathSeparator: "/",
-			windowsPath:   tc.GOOS == runtime.WINDOWS,
 		}
 		path.Init(props, env)
 
@@ -514,16 +508,6 @@ func TestAgnosterMaxWidth(t *testing.T) {
 			goos:        runtime.LINUX,
 		},
 		{
-			name:        "path shorter than maxWidth, Windows",
-			pwd:         `C:\Users\john\Documents`,
-			maxWidth:    20,
-			displayRoot: true,
-			folderIcon:  `..`,
-			separator:   `\`,
-			expected:    `..\..\john\Documents`,
-			goos:        runtime.WINDOWS,
-		},
-		{
 			name:        "path shorter than maxWidth, wth root",
 			pwd:         "/foob/user/docs",
 			maxWidth:    20,
@@ -571,16 +555,6 @@ func TestAgnosterMaxWidth(t *testing.T) {
 			separator:   "/",
 			expected:    "verylongfolder…",
 			goos:        runtime.LINUX,
-		},
-		{
-			name:        "Windows path with custom separator",
-			pwd:         `C:\Users\john\Documents`,
-			maxWidth:    15,
-			displayRoot: false,
-			folderIcon:  "…",
-			separator:   `\`,
-			expected:    `…\…\…\Documents`,
-			goos:        runtime.WINDOWS,
 		},
 		{
 			name:        "single folder path",
@@ -702,22 +676,6 @@ func TestFishPath(t *testing.T) {
 			fullLengthDirs: 2,
 			expected:       "hom/use/doc/projects/myproject",
 			separator:      "/",
-		},
-		{
-			name:           "full length dirs 2 - Windows",
-			pwd:            `C:\Users\Jan\Documents\Projects\Myproject`,
-			dirLength:      1,
-			fullLengthDirs: 2,
-			expected:       `C\U\J\D\Projects\Myproject`,
-			separator:      `\`,
-		},
-		{
-			name:           "dir length 3, full length dirs 2 - Windows",
-			pwd:            `C:\Users\Jan\Documents\Projects\Myproject`,
-			dirLength:      3,
-			fullLengthDirs: 2,
-			expected:       `C:\Use\Jan\Doc\Projects\Myproject`,
-			separator:      `\`,
 		},
 		{
 			name:           "single folder",

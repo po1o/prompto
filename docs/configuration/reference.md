@@ -177,7 +177,7 @@ palettes:
 ### Shell and system
 
 `connection`, `executiontime`, `exit`, `os`, `path`, `project`, `root`, `session`, `shell`, `status`, `sysinfo`,
-`text`, `time`, `vim`, `winget`, `winreg`
+`text`, `time`, `vim`
 
 ### Cloud and infrastructure
 

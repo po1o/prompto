@@ -17,5 +17,3 @@
 - [Text](./text.md)
 - [Time](./time.md)
 - [Vim Mode](./vim.md)
-- [Windows Registry Key Query](./winreg.md)
-- [WinGet](./winget.md)

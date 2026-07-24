@@ -3,7 +3,6 @@ package path
 import (
 	"fmt"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/po1o/prompto/src/regex"
@@ -60,26 +59,6 @@ func Clean(input string) string {
 	var prefix string
 	if IsSeparator(cleaned[0]) {
 		prefix = separator
-	}
-
-	if runtime.GOOS == windows {
-		// Normalize (forward) slashes to backslashes on Windows.
-		cleaned = strings.ReplaceAll(cleaned, "/", `\`)
-
-		// Clean the prefix for a UNC path, if any.
-		if regex.MatchString(`^\\{2}[^\\]+`, cleaned) {
-			cleaned = strings.TrimPrefix(cleaned, `\\.\UNC\`)
-			if cleaned == "" {
-				return cleaned
-			}
-			prefix = `\\`
-		}
-
-		// Always use an uppercase drive letter on Windows.
-		driveLetter, err := regex.GetCompiledRegex(`^[a-z]:`)
-		if err == nil {
-			cleaned = driveLetter.ReplaceAllStringFunc(cleaned, strings.ToUpper)
-		}
 	}
 
 	sb := text.NewBuilder()

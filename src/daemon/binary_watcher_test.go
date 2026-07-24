@@ -3,7 +3,6 @@ package daemon
 import (
 	"os"
 	"path/filepath"
-	libruntime "runtime"
 	"testing"
 	"time"
 
@@ -65,10 +64,6 @@ func TestBinaryWatcherTriggersOnRemove(t *testing.T) {
 }
 
 func TestBinaryWatcherTracksResolvedPathForSymlinkInput(t *testing.T) {
-	if libruntime.GOOS == windowsOS {
-		t.Skip("symlink behavior differs on windows")
-	}
-
 	tmpDir := t.TempDir()
 	binDir := filepath.Join(tmpDir, "bin")
 	require.NoError(t, os.MkdirAll(binDir, 0o755))

@@ -38,7 +38,6 @@ body:
       label: What OS are you seeing the problem on?
       multiple: true
       options:
-        - Windows
         - Linux
         - macOS
   - type: dropdown

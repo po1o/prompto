@@ -1,5 +1,3 @@
-//go:build !windows
-
 package segments
 
 import "path/filepath"

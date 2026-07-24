@@ -43,10 +43,6 @@ path:
   - Type: `string`
   - Default: `..`
   - Description: the icon to use as a folder indication
-- `windows_registry_icon`
-  - Type: `string`
-  - Default: `\uF013`
-  - Description: the icon to display when in the Windows registry
 - `style`
   - Type: `enum`
   - Default: `agnoster`
@@ -141,9 +137,9 @@ mapped_locations:
 - If you want to match all child directories, you can use `*` as a wildcard, for example:
   `"C:/Users/Bill/*": "$"` will turn `C:/Users/Bill/Downloads` into `$/Downloads` but leave `C:/Users/Bill` unchanged.
 - The character `~` at the start of a mapped location will match the user's home directory.
-- The match is _case-insensitive on Windows and macOS_, but case-sensitive on other operating systems. This means that
-  for user Bill, who has a user account `Bill` on Windows and `bill` on Linux, `~/Foo` might match
-  `C:\Users\Bill\Foo` or `C:\Users\Bill\foo` on Windows but only `/home/bill/Foo` on Linux.
+- The match is _case-insensitive on macOS_, but case-sensitive on other operating systems. This means that
+  for user Bill, who has a user account `Bill` on macOS and `bill` on Linux, `~/Foo` might match
+  `/Users/Bill/Foo` or `/Users/Bill/foo` on macOS but only `/home/bill/Foo` on Linux.
 
 ### Warning
 
@@ -158,7 +154,7 @@ The replacement value comes from the first capture group, and any additional cap
 For example, `"re:(C:/[0-9]+/Foo)": "#"` will match `C:\123\Foo\Bar` and replace it with `#\Bar`. The path used for
 matching will always use `/`, regardless of the operating system, allowing cross platform matching.
 
-Same as for standard replacements, the match is case insensitive on Windows and WSL mounted drives, but case-sensitive
+Same as for standard replacements, the match is case insensitive on macOS, but case-sensitive
 on other operating systems.
 
 ## Style

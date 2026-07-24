@@ -5,7 +5,6 @@ import (
 	"hash/fnv"
 	"os"
 	"path/filepath"
-	runtimelib "runtime"
 	"strings"
 	"time"
 
@@ -29,8 +28,6 @@ var (
 	ErrNoConfig         = Error{"NO CONFIG"}
 )
 
-const windowsOS = "windows"
-
 func Load(configFile string) *Config {
 	defer log.Trace(time.Now())
 
@@ -43,12 +40,6 @@ func Load(configFile string) *Config {
 }
 
 func DefaultPath() string {
-	if runtimelib.GOOS == windowsOS {
-		if userConfigDir, err := os.UserConfigDir(); err == nil && userConfigDir != "" {
-			return filepath.Join(userConfigDir, "prompto", "config.yaml")
-		}
-	}
-
 	if xdgConfigHome := os.Getenv("XDG_CONFIG_HOME"); xdgConfigHome != "" {
 		return filepath.Join(xdgConfigHome, "prompto", "config.yaml")
 	}
@@ -66,13 +57,6 @@ func resolveConfigLocation(config string) string {
 
 	// Clean the config path so it works regardless of the OS
 	config = filepath.ToSlash(config)
-
-	// Cygwin path always needs the full path as we're on Windows but not really.
-	// Doing filepath actions will convert it to a Windows path and break the init script.
-	if isCygwin() {
-		log.Debug("cygwin detected, using full path for config")
-		return config
-	}
 
 	configFile := path.ReplaceTildePrefixWithHomeDir(config)
 
@@ -140,9 +124,4 @@ func Parse(configFile string) (*Config, error) {
 
 func getData(configFile string) ([]byte, error) {
 	return os.ReadFile(configFile)
-}
-
-// isCygwin checks if we're running in Cygwin environment
-func isCygwin() bool {
-	return runtimelib.GOOS == "windows" && len(os.Getenv("OSTYPE")) > 0
 }

@@ -33,13 +33,6 @@ func getExecutablePath(env runtime.Environment) (string, error) {
 		return path.Base(executable), nil
 	}
 
-	// On Windows, it fails when the executable is called in MSYS2 for example
-	// which uses unix style paths to resolve the executable's location.
-	// PowerShell knows how to resolve both, so we can swap this without any issue.
-	if env.GOOS() == runtime.WINDOWS {
-		executable = strings.ReplaceAll(executable, "\\", "/")
-	}
-
 	return executable, nil
 }
 

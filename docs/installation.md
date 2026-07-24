@@ -15,7 +15,6 @@ The simplest install path is to download a prebuilt binary from the GitHub relea
 Place the executable somewhere on your `PATH`, for example:
 
 - macOS/Linux: `~/bin`, `~/.local/bin`, or `~/opt/go/bin`
-- Windows: a directory already present in `PATH`
 
 Verify the install:
 
@@ -69,7 +68,6 @@ If you do not pass `--config`, `prompto` looks for:
 
 ```text
 macOS/Linux: ${XDG_CONFIG_HOME:-$HOME/.config}/prompto/config.yaml
-Windows: %UserConfigDir%/prompto/config.yaml
 ```
 
 Create the directory if it does not exist.

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/po1o/prompto/src/log"
-	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/runtime/path"
 	"github.com/po1o/prompto/src/segments/options"
 )
@@ -145,11 +144,6 @@ func (jj *Jujutsu) shouldDisplay(displayStatus bool) bool {
 
 func (jj *Jujutsu) setDir(dir string) {
 	dir = path.ReplaceHomeDirPrefixWithTilde(dir) // align with template PWD
-	if jj.env.GOOS() == runtime.WINDOWS {
-		jj.Dir = strings.TrimSuffix(dir, `\.jj`)
-		return
-	}
-
 	jj.Dir = strings.TrimSuffix(dir, "/.jj")
 }
 

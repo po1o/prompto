@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/po1o/prompto/src/cache"
-	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/runtime/mock"
 	"github.com/po1o/prompto/src/segments/options"
 	"github.com/po1o/prompto/src/shell"
@@ -117,7 +116,6 @@ func TestHasCommand(t *testing.T) {
 		IsWslSharedPath bool
 		NativeFallback  bool
 	}{
-		{Case: "On Windows", ExpectedCommand: "git.exe", GOOS: runtime.WINDOWS},
 		{Case: "Cache", ExpectedCommand: "git.exe", Command: "git.exe"},
 		{Case: "Non Windows", ExpectedCommand: "git"},
 		{Case: "Iside WSL2, non shared", ExpectedCommand: "git"},

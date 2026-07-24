@@ -50,11 +50,6 @@ func TestOSInfo(t *testing.T) {
 			DisplayDistroName: true,
 		},
 		{
-			Case:           "windows",
-			ExpectedString: "windows",
-			GOOS:           "windows",
-		},
-		{
 			Case:           "darwin",
 			ExpectedString: "darwin",
 			GOOS:           "darwin",
@@ -93,7 +88,6 @@ func TestOSInfo(t *testing.T) {
 
 		props := options.Map{
 			DisplayDistroName: tc.DisplayDistroName,
-			Windows:           "windows",
 			MacOS:             "darwin",
 		}
 

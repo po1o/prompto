@@ -464,8 +464,6 @@
             "v",
             "vala",
             "wakatime",
-            "winget",
-            "winreg",
             "withings",
             "xmake",
             "yarn",
@@ -3001,12 +2999,6 @@
                     "description": "Icon/text to use for Linux",
                     "default": "\uf17c"
                   },
-                  "windows": {
-                    "type": "string",
-                    "title": "Windows Icon",
-                    "description": "Icon/text to use for Windows",
-                    "default": "\ue62a"
-                  },
                   "display_distro_name": {
                     "type": "boolean",
                     "title": "Display Distro Name",
@@ -3294,12 +3286,6 @@
                     "title": "Folder Icon",
                     "description": "The icon to use as a folder indication",
                     "default": ".."
-                  },
-                  "windows_registry_icon": {
-                    "type": "string",
-                    "title": "Windows Registry Icon",
-                    "description": "The icon to display when in the Windows registry",
-                    "default": "\uf013"
                   },
                   "style": {
                     "type": "string",
@@ -4653,51 +4639,6 @@
                   },
                   "http_timeout": {
                     "$ref": "#/definitions/http_timeout"
-                  }
-                },
-                "unevaluatedProperties": false
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "winget"
-              }
-            }
-          },
-          "then": {
-            "title": "WinGet",
-            "description": "https://prompto.dev/docs/segments/system/winget"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "winreg"
-              }
-            }
-          },
-          "then": {
-            "title": "Windows Registry Query",
-            "description": "https://prompto.dev/docs/segments/system/winreg",
-            "properties": {
-              "options": {
-                "properties": {
-                  "path": {
-                    "type": "string",
-                    "title": "Registry Path",
-                    "description": "The path to the registry key (case insensitive, must use backslashes).  Ending with \\ will retrieve \"(Default)\" key in that path.",
-                    "default": ""
-                  },
-                  "fallback": {
-                    "type": "string",
-                    "title": "Fallback value",
-                    "description": "Value to display if registry value cannot be retrieved",
-                    "default": ""
                   }
                 },
                 "unevaluatedProperties": false

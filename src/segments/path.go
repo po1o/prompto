@@ -148,9 +148,6 @@ func (pt *Path) Enabled() bool {
 	pwd := pt.env.Pwd()
 
 	pt.Location = pt.env.Flags().AbsolutePWD
-	if pt.env.GOOS() == runtime.WINDOWS {
-		pt.Location = strings.ReplaceAll(pt.Location, `\`, `/`)
-	}
 
 	pt.StackCount = pt.env.StackCount()
 	pt.Writable = pt.env.DirIsWritable(pwd)
@@ -172,7 +169,6 @@ func (pt *Path) setPaths() {
 	}
 
 	pt.cygPath = displayCygpath()
-	pt.windowsPath = pt.env.GOOS() == runtime.WINDOWS && !pt.cygPath
 
 	if pt.pathSeparator == "" {
 		pt.pathSeparator = path.Separator()
@@ -786,17 +782,6 @@ func (pt *Path) parsePath(inputPath string) (string, string) {
 		}
 	}
 
-	if pt.env.GOOS() == runtime.WINDOWS {
-		// Handle a UNC path, if any.
-		pattern := fmt.Sprintf(`^\%[1]s{2}(?P<hostname>[^\%[1]s]+)\%[1]s(?P<sharename>[^\%[1]s]+)(\%[1]s(?P<path>[\s\S]*))?$`, pt.pathSeparator)
-		matches := regex.FindNamedRegexMatch(pattern, inputPath)
-		if len(matches) > 0 {
-			root = fmt.Sprintf(`%[1]s%[1]s%[2]s%[1]s%[3]s`, pt.pathSeparator, matches["hostname"], matches["sharename"])
-			relative = matches["path"]
-			return root, relative
-		}
-	}
-
 	s := strings.SplitAfterN(inputPath, pt.pathSeparator, 2)
 	root = s[0]
 
@@ -849,7 +834,7 @@ func (pt *Path) normalize(inputPath string) string {
 
 	normalized = path.Clean(normalized)
 
-	if pt.env.GOOS() == runtime.WINDOWS || pt.env.GOOS() == runtime.DARWIN {
+	if pt.env.GOOS() == runtime.DARWIN {
 		normalized = strings.ToLower(normalized)
 	}
 
