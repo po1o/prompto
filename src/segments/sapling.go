@@ -3,7 +3,6 @@ package segments
 import (
 	"strings"
 
-	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/runtime/path"
 )
 
@@ -103,11 +102,6 @@ func (sl *Sapling) CacheKey() (string, bool) {
 
 func (sl *Sapling) setDir(dir string) {
 	dir = path.ReplaceHomeDirPrefixWithTilde(dir) // align with template PWD
-
-	if sl.env.GOOS() == runtime.WINDOWS {
-		sl.Dir = strings.TrimSuffix(dir, `\.sl`)
-		return
-	}
 
 	sl.Dir = strings.TrimSuffix(dir, "/.sl")
 }

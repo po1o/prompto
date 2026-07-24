@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	libruntime "runtime"
 	"strings"
 	"testing"
 	"time"
@@ -13,8 +12,6 @@ import (
 	"github.com/po1o/prompto/src/runtime"
 	"github.com/stretchr/testify/require"
 )
-
-const windowsOS = "windows"
 
 func TestServerToggleSegmentIsSessionScoped(t *testing.T) {
 	socketDir := testSocketDir(t)
@@ -104,10 +101,6 @@ blocks:
 }
 
 func TestResolveServerConfigPathUsesXDGConfigHomeByDefault(t *testing.T) {
-	if libruntime.GOOS == windowsOS {
-		t.Skip("XDG config home is not used on windows")
-	}
-
 	xdgConfigHome := filepath.Join(t.TempDir(), "xdg-config")
 	t.Setenv("XDG_CONFIG_HOME", xdgConfigHome)
 	t.Setenv("HOME", "")
@@ -118,10 +111,6 @@ func TestResolveServerConfigPathUsesXDGConfigHomeByDefault(t *testing.T) {
 }
 
 func TestResolveServerConfigPathFallsBackToHomeDotConfig(t *testing.T) {
-	if libruntime.GOOS == windowsOS {
-		t.Skip("home fallback path differs on windows")
-	}
-
 	home := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("HOME", home)
@@ -319,10 +308,6 @@ func newDaemonServiceClient(t *testing.T) ipc.DaemonServiceClient {
 
 func testSocketDir(t *testing.T) string {
 	t.Helper()
-
-	if libruntime.GOOS == windowsOS {
-		return t.TempDir()
-	}
 
 	directory, err := os.MkdirTemp("/tmp", "omp")
 	require.NoError(t, err)

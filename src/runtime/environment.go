@@ -12,7 +12,6 @@ import (
 
 const (
 	UNKNOWN = "unknown"
-	WINDOWS = "windows"
 	DARWIN  = "darwin"
 	LINUX   = "linux"
 	FREEBSD = "freebsd"
@@ -50,8 +49,6 @@ type Environment interface {
 	ExecutionTime() float64
 	Flags() *Flags
 	BatteryState() (*battery.Info, error)
-	QueryWindowTitles(processName, windowTitleRegex string) (string, error)
-	WindowsRegistryKeyValue(key string) (*WindowsRegistryValue, error)
 	HTTPRequest(url string, body io.Reader, timeout int, requestModifiers ...http.RequestModifier) ([]byte, error)
 	IsWsl() bool
 	IsWsl2() bool
@@ -115,22 +112,6 @@ type FileInfo struct {
 	ParentFolder string
 	Path         string
 	IsDir        bool
-}
-
-type WindowsRegistryValueType string
-
-const (
-	DWORD  = "DWORD"
-	QWORD  = "QWORD"
-	BINARY = "BINARY"
-	STRING = "STRING"
-)
-
-type WindowsRegistryValue struct {
-	ValueType WindowsRegistryValueType
-	String    string
-	DWord     uint64
-	QWord     uint64
 }
 
 type NotImplemented struct{}

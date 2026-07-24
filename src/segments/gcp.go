@@ -5,7 +5,6 @@ import (
 	"path"
 
 	"github.com/po1o/prompto/src/log"
-	"github.com/po1o/prompto/src/runtime"
 
 	"gopkg.in/ini.v1"
 )
@@ -76,10 +75,6 @@ func (g *Gcp) getConfigDirectory() string {
 	cfgDir := g.env.Getenv("CLOUDSDK_CONFIG")
 	if len(cfgDir) != 0 {
 		return cfgDir
-	}
-
-	if g.env.GOOS() == runtime.WINDOWS {
-		return path.Join(g.env.Getenv("APPDATA"), "gcloud")
 	}
 
 	return path.Join(g.env.Home(), ".config", "gcloud")

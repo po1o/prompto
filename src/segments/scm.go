@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/po1o/prompto/src/log"
-	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/segments/options"
 	"github.com/po1o/prompto/src/template"
 	"github.com/po1o/prompto/src/text"
@@ -175,8 +174,8 @@ func (s *Scm) fileContent(folder, file string) string {
 }
 
 func (s *Scm) convertToWindowsPath(path string) string {
-	// only convert when in Windows, or when in a WSL shared folder and not using the native fallback
-	if s.env.GOOS() == runtime.WINDOWS || (s.IsWslSharedPath && !s.nativeFallback) {
+	// only convert when in a WSL shared folder and not using the native fallback
+	if s.IsWslSharedPath && !s.nativeFallback {
 		return s.env.ConvertToWindowsPath(path)
 	}
 
@@ -199,7 +198,7 @@ func (s *Scm) hasCommand(command string) bool {
 	// when in a WSL shared folder, we must use command.exe and convert paths accordingly
 	// for worktrees, stashes, and path to work, except when native_fallback is set
 	s.IsWslSharedPath = s.env.InWSLSharedDrive()
-	if s.env.GOOS() == runtime.WINDOWS || s.IsWslSharedPath {
+	if s.IsWslSharedPath {
 		command += ".exe"
 	}
 

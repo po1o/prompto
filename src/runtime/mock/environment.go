@@ -143,16 +143,6 @@ func (env *Environment) Shell() string {
 	return args.String(0)
 }
 
-func (env *Environment) QueryWindowTitles(processName, windowTitleRegex string) (string, error) {
-	args := env.Called(processName, windowTitleRegex)
-	return args.String(0), args.Error(1)
-}
-
-func (env *Environment) WindowsRegistryKeyValue(path string) (*runtime.WindowsRegistryValue, error) {
-	args := env.Called(path)
-	return args.Get(0).(*runtime.WindowsRegistryValue), args.Error(1)
-}
-
 func (env *Environment) HTTPRequest(url string, _ io.Reader, _ int, _ ...http.RequestModifier) ([]byte, error) {
 	args := env.Called(url)
 	return args.Get(0).([]byte), args.Error(1)

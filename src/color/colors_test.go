@@ -1,12 +1,10 @@
 package color
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/alecthomas/assert"
 	"github.com/po1o/prompto/src/cache"
-	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/runtime/mock"
 	"github.com/po1o/prompto/src/template"
 )
@@ -45,7 +43,6 @@ func TestMakeColors(t *testing.T) {
 	cache.Set(cache.Device, accentColor, &Set{}, cache.INFINITE)
 	defer cache.DeleteAll(cache.Device)
 
-	env.On("WindowsRegistryKeyValue", `HKEY_CURRENT_USER\Software\Microsoft\Windows\DWM\ColorizationColor`).Return(&runtime.WindowsRegistryValue{}, errors.New("err"))
 	colors := MakeColors(nil, false, "", env)
 	assert.IsType(t, &Defaults{}, colors)
 

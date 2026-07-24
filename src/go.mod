@@ -3,7 +3,6 @@ module github.com/po1o/prompto/src
 go 1.26.0
 
 require (
-	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/alecthomas/assert v1.0.0
 	github.com/alecthomas/colour v0.1.0 // indirect
@@ -26,7 +25,6 @@ require (
 )
 
 require (
-	github.com/Microsoft/go-winio v0.6.2
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0

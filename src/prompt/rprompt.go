@@ -3,7 +3,6 @@ package prompt
 import (
 	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/config"
-	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/shell"
 )
 
@@ -37,8 +36,8 @@ func (e *Engine) RPrompt() string {
 
 	e.rpromptLength = length
 
-	if e.Env.Shell() == shell.ELVISH && e.Env.GOOS() != runtime.WINDOWS {
-		// Workaround to align with a right-aligned block on non-Windows systems.
+	if e.Env.Shell() == shell.ELVISH {
+		// Workaround to align with a right-aligned block.
 		text += " "
 	}
 

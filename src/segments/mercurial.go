@@ -3,7 +3,6 @@ package segments
 import (
 	"strings"
 
-	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/runtime/path"
 )
 
@@ -92,10 +91,6 @@ func (hg *Mercurial) shouldDisplay() bool {
 
 func (hg *Mercurial) setDir(dir string) {
 	dir = path.ReplaceHomeDirPrefixWithTilde(dir) // align with template PWD
-	if hg.env.GOOS() == runtime.WINDOWS {
-		hg.Dir = strings.TrimSuffix(dir, `\.hg`)
-		return
-	}
 	hg.Dir = strings.TrimSuffix(dir, "/.hg")
 }
 

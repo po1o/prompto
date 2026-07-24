@@ -4,7 +4,6 @@ import (
 	"path"
 	"testing"
 
-	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/runtime/mock"
 	"github.com/po1o/prompto/src/segments/options"
 
@@ -108,12 +107,6 @@ func TestGetConfigDirectory(t *testing.T) {
 			Case:           "CLOUDSDK_CONFIG",
 			CloudSDKConfig: "/Users/prompto/.config/gcloud",
 			Expected:       "/Users/prompto/.config/gcloud",
-		},
-		{
-			Case:     "Windows",
-			GOOS:     runtime.WINDOWS,
-			AppData:  "/Users/prompto/.config",
-			Expected: "/Users/prompto/.config/gcloud",
 		},
 		{
 			Case:     "default",

@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"os/exec"
-	"runtime"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -86,13 +85,7 @@ func TestProcessTrackerNonExistentPID(t *testing.T) {
 func startSessionTestProcess(t *testing.T) *os.Process {
 	t.Helper()
 
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.CommandContext(context.Background(), "ping", "-n", "1", "127.0.0.1")
-	}
-	if runtime.GOOS != "windows" {
-		cmd = exec.CommandContext(context.Background(), "sleep", "0.1")
-	}
+	cmd := exec.CommandContext(context.Background(), "sleep", "0.1")
 
 	err := cmd.Start()
 	require.NoError(t, err)

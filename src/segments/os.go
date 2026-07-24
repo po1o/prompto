@@ -16,8 +16,6 @@ const (
 	MacOS options.Option = "macos"
 	// Linux the string/icon to use for linux
 	Linux options.Option = "linux"
-	// Windows the string/icon to use for windows
-	Windows options.Option = "windows"
 	// Android the string/icon to use for android
 	Android options.Option = "android"
 	// DisplayDistroName display the distro name or not
@@ -31,8 +29,6 @@ func (oi *Os) Template() string {
 func (oi *Os) Enabled() bool {
 	goos := oi.env.GOOS()
 	switch goos {
-	case runtime.WINDOWS:
-		oi.Icon = oi.options.String(Windows, "\uE62A")
 	case runtime.DARWIN:
 		oi.Icon = oi.options.String(MacOS, "\uF179")
 	case runtime.LINUX, runtime.FREEBSD:

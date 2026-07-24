@@ -22,7 +22,6 @@ builds:
       - GOEXPERIMENT=greenteagc,jsonv2
     goos:
       - linux
-      - windows
       - darwin
       - freebsd
     goarch:
@@ -31,8 +30,6 @@ builds:
       - arm
     ignore:
       - goos: darwin
-        goarch: arm
-      - goos: windows
         goarch: arm
 archives:
   - id: prompto

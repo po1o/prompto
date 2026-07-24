@@ -2,7 +2,6 @@ package template
 
 import (
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/po1o/prompto/src/build"
@@ -54,10 +53,6 @@ func loadCache(vars maps.Simple[any], aliases *maps.Config) {
 	Cache.PSWD = env.Flags().PSWD
 
 	Cache.Folder = path.Base(pwd)
-	if env.GOOS() == runtime.WINDOWS && strings.HasSuffix(Cache.Folder, ":") {
-		Cache.Folder += `\`
-	}
-
 	Cache.UserName = aliases.GetUserName(env.User())
 	if host, err := env.Host(); err == nil {
 		Cache.HostName = aliases.GetHostName(host)
