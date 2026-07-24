@@ -59,9 +59,11 @@ permissions:
 jobs:
   tidy:
     # Only Dependabot's Go-module PRs. Other ecosystems (github-actions) never
-    # touch go.mod, so they are skipped.
+    # touch go.mod, so they are skipped. Gate on the PR author, not
+    # github.actor: the latter reflects whoever triggered the run (it flips to a
+    # human on any push/rebase/re-run), which would wrongly skip the tidy.
     if: >-
-      github.actor == 'dependabot[bot]' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
       startsWith(github.head_ref, 'dependabot/go_modules/')
     runs-on: ubuntu-latest
     steps:
