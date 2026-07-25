@@ -46,7 +46,7 @@ jobs:
           echo "code=false" >> "$GITHUB_OUTPUT"
         fi
 
-  code-checks:
+  lint-and-test:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     strategy:
@@ -100,7 +100,7 @@ jobs:
     - name: Generate Code
       run: go generate ./...
     # Drift gate: this is the single place generated code is verified against
-    # source. code-checks builds off the committed generated files directly.
+    # source. lint-and-test builds off the committed generated files directly.
     - name: Verify Generated Code
       run: |
         if ! git diff --exit-code -- .; then
@@ -123,13 +123,13 @@ jobs:
         path: |
           src/dist
 
-  # Single required status check. Collapses the code-checks matrix legs and
+  # Single required status check. Collapses the lint-and-test matrix legs and
   # build into one stable, matrix-proof context: adding an OS/shell never
   # changes what branch protection must require. Always runs (even when the
   # heavy jobs are skipped on a docs-only PR) so the required context always
   # posts. A skipped dependency counts as ok; only a real failure blocks.
-  lint-and-test:
-    needs: [changes, code-checks, build]
+  code-checks:
+    needs: [changes, lint-and-test, build]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -144,10 +144,10 @@ jobs:
           echo "changes: ${{ needs.changes.result }} — failing"
           fail=1
         fi
-        for job in code-checks build; do
+        for job in lint-and-test build; do
           case "$job" in
-            code-checks) r='${{ needs.code-checks.result }}' ;;
-            build)       r='${{ needs.build.result }}' ;;
+            lint-and-test) r='${{ needs.lint-and-test.result }}' ;;
+            build)         r='${{ needs.build.result }}' ;;
           esac
           # success = ran & passed; skipped = docs-only PR (job.if was false).
           case "$r" in
