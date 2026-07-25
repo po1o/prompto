@@ -1,11 +1,5 @@
 on:
   pull_request:
-    paths-ignore:
-      - 'README.md'
-      - 'CONTRIBUTING.md'
-      - 'COPYING'
-      - '.github/*.md'
-      - '.github/FUNDING.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -13,7 +7,49 @@ concurrency:
 
 name: Build Code
 jobs:
+  # `build` is a required status check. We gate it here with a job-level `if`
+  # instead of a workflow-level `paths-ignore`: a docs-only PR then *skips*
+  # build, which GitHub reports as a passing required check. A workflow skipped
+  # by paths-ignore would instead never post its context and leave the required
+  # check Pending forever, permanently blocking the PR.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+    - name: Checkout code 👋
+      uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+      with:
+        fetch-depth: 0
+    - name: Detect code changes
+      id: filter
+      shell: bash
+      run: |
+        set -uo pipefail
+        base='${{ github.event.pull_request.base.sha }}'
+        # Fail safe: if we cannot resolve the base, assume code changed so the
+        # heavy jobs still run rather than being silently skipped.
+        if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+          echo "base sha $base not in history; assuming code changed" >&2
+          echo "code=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        files=$(git diff --name-only "$base" HEAD)
+        echo "changed files:"; printf '%s\n' "$files"
+        # Docs-only paths that must NOT trigger build/validate (mirrors the old
+        # paths-ignore list in this and the Validate Code workflow).
+        docs='^(README\.md|CONTRIBUTING\.md|COPYING|\.github/[^/]*\.md|\.github/FUNDING\.yml)$'
+        if [ -z "$files" ]; then
+          echo "code=false" >> "$GITHUB_OUTPUT"
+        elif printf '%s\n' "$files" | grep -qvE "$docs"; then
+          echo "code=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "code=false" >> "$GITHUB_OUTPUT"
+        fi
+
   build:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
