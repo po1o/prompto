@@ -5,5 +5,6 @@ import (
 )
 
 func main() {
+	// Delegate to the CLI root command.
 	cli.Execute()
 }
