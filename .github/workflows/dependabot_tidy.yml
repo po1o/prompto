@@ -16,11 +16,12 @@ name: Dependabot Auto-Tidy
 #   1. Create a GitHub App (Settings → Developer settings → GitHub Apps → New):
 #      - Repository permissions → Contents: Read and write (nothing else).
 #      - Uncheck "Active" under Webhook (none needed).
-#      - Note the App ID; then "Generate a private key" and download the .pem.
+#      - Note the Client ID (the App's page → "Client ID", format Iv23li…);
+#        then "Generate a private key" and download the .pem.
 #   2. Install the App on this repository (the App's page → Install App).
 #   3. Add two *Dependabot* secrets (Settings → Secrets and variables →
 #      Dependabot, NOT Actions — only that store is exposed to Dependabot runs):
-#        TIDY_APP_ID          = the numeric App ID
+#        TIDY_APP_CLIENT_ID   = the App's Client ID (format Iv23li…)
 #        TIDY_APP_PRIVATE_KEY = the full contents of the downloaded .pem
 #
 # Until those secrets exist the app-token step fails loudly — that is the signal
@@ -71,7 +72,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ secrets.TIDY_APP_ID }}
+          client-id: ${{ secrets.TIDY_APP_CLIENT_ID }}
           private-key: ${{ secrets.TIDY_APP_PRIVATE_KEY }}
       - name: Checkout the PR branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
