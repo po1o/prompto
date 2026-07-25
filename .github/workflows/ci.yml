@@ -1,0 +1,158 @@
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+name: CI
+jobs:
+  # Detect whether anything beyond docs changed. The heavy jobs below are gated
+  # on this with a job-level `if` rather than a workflow-level `paths-ignore`:
+  # a docs-only PR then *skips* them, which GitHub reports as passing. A
+  # workflow skipped by paths-ignore would instead never post its context and
+  # leave a required check Pending forever, permanently blocking the PR.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+    - name: Checkout code 👋
+      uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+      with:
+        fetch-depth: 0
+    - name: Detect code changes
+      id: filter
+      shell: bash
+      run: |
+        set -uo pipefail
+        base='${{ github.event.pull_request.base.sha }}'
+        # Fail safe: if we cannot resolve the base, assume code changed so the
+        # heavy jobs still run rather than being silently skipped.
+        if ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+          echo "base sha $base not in history; assuming code changed" >&2
+          echo "code=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        files=$(git diff --name-only "$base" HEAD)
+        echo "changed files:"; printf '%s\n' "$files"
+        # Docs-only paths that must NOT trigger the heavy jobs.
+        docs='^(README\.md|CONTRIBUTING\.md|COPYING|\.github/[^/]*\.md|\.github/FUNDING\.yml)$'
+        if [ -z "$files" ]; then
+          echo "code=false" >> "$GITHUB_OUTPUT"
+        elif printf '%s\n' "$files" | grep -qvE "$docs"; then
+          echo "code=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "code=false" >> "$GITHUB_OUTPUT"
+        fi
+
+  lint-and-test:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            shell: bash
+          - os: macos-latest
+            shell: /bin/zsh --no-rcs -eo pipefail {0}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+        working-directory: ${{ github.workspace }}/src
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+    - name: Install Go 🗳
+      uses: ./.github/workflows/composite/bootstrap-go
+    # Generated code (*.pb.go, bundled_gen.go) is committed, so this job builds
+    # against it directly — no protoc/generate needed. Drift (generated vs
+    # source) is verified once, in the build job below.
+    # Lint tool versions are pinned via the `tool` directive in src/go.mod —
+    # bump them with `go get -tool <pkg>@<ver>`. CI and local devs run the same
+    # binaries by construction.
+    - name: Golangci-lint
+      run: go tool golangci-lint run
+    - name: Fieldalignment
+      run: go list ./... | grep -v '/daemon/ipc$' | xargs go tool fieldalignment
+    - name: Modernize
+      run: go list ./... | grep -v '/daemon/ipc$' | xargs go tool modernize
+    - name: Unit Tests
+      run: go test -count=1 -v ./...
+    - name: Race Tests
+      run: go test -race -count=3 ./daemon/... ./log/...
+
+  build:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/src
+    steps:
+    - name: Checkout code 👋
+      uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+    - name: Install Go 🗳
+      uses: ./.github/workflows/composite/bootstrap-go
+    - name: Install Protobuf 🧬
+      uses: ./.github/workflows/composite/bootstrap-protobuf
+    - name: Generate Code
+      run: go generate ./...
+    # Drift gate: this is the single place generated code is verified against
+    # source. lint-and-test builds off the committed generated files directly.
+    - name: Verify Generated Code
+      run: |
+        if ! git diff --exit-code -- .; then
+          git --no-pager diff --stat
+          echo "generated files are out of date"
+          exit 1
+        fi
+    - name: Run GoReleaser 🚀
+      uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94
+      with:
+        distribution: goreleaser
+        version: v2.3.2
+        args: build --clean --snapshot
+        workdir: src
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: builds
+        retention-days: 1
+        path: |
+          src/dist
+
+  # Single required status check. Collapses the lint-and-test matrix legs and
+  # build into one stable, matrix-proof context: adding an OS/shell never
+  # changes what branch protection must require. Always runs (even when the
+  # heavy jobs are skipped on a docs-only PR) so the required context always
+  # posts. A skipped dependency counts as ok; only a real failure blocks.
+  code-checks:
+    needs: [changes, lint-and-test, build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Summarize required checks
+      shell: bash
+      run: |
+        set -u
+        fail=0
+        # Change detection must have succeeded; otherwise the heavy jobs were
+        # skipped for the wrong reason and we must not report green.
+        if [ '${{ needs.changes.result }}' != 'success' ]; then
+          echo "changes: ${{ needs.changes.result }} — failing"
+          fail=1
+        fi
+        for job in lint-and-test build; do
+          case "$job" in
+            lint-and-test) r='${{ needs.lint-and-test.result }}' ;;
+            build)         r='${{ needs.build.result }}' ;;
+          esac
+          # success = ran & passed; skipped = docs-only PR (job.if was false).
+          case "$r" in
+            success|skipped) echo "$job: $r — ok" ;;
+            *) echo "$job: $r — failing"; fail=1 ;;
+          esac
+        done
+        exit "$fail"
