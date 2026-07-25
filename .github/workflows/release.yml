@@ -50,19 +50,10 @@ jobs:
 
       - name: Install Go 🗳
         uses: ./.github/workflows/composite/bootstrap-go
-      - name: Install Protobuf 🧬
-        uses: ./.github/workflows/composite/bootstrap-protobuf
-      - name: Generate Code
-        working-directory: ${{ github.workspace }}/src
-        run: go generate ./...
-      - name: Verify Generated Code
-        working-directory: ${{ github.workspace }}/src
-        run: |
-          if ! git diff --exit-code -- .; then
-            git --no-pager diff --stat
-            echo "generated files are out of date"
-            exit 1
-          fi
+      # Generated code (*.pb.go, bundled_gen.go) is committed, so GoReleaser
+      # builds against it directly — no protoc/generate needed. Drift is gated
+      # on every PR into main by the Build Code workflow; a tag only ever points
+      # at an already-verified commit, so re-checking it here catches nothing.
       # Lint tool versions are pinned via the `tool` directive in src/go.mod.
       - name: Golangci-lint
         working-directory: ${{ github.workspace }}/src
