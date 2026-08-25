@@ -32,6 +32,12 @@ layout keys, same templates.
 If the variant does not exist, `prompto` uses `config.yaml` as usual. Adding the
 file is the only thing you have to do to opt in.
 
+## Bundled Themes
+
+A bundled theme can ship its own console variant as `<name>.console.prompto.yaml`, and `prompto config set`
+installs both files when it does. The `polo` theme is one such theme. See
+[Themes](../themes.md#console-variants).
+
 ## Naming Rule
 
 The variant is the config path with `.console` inserted before the extension.

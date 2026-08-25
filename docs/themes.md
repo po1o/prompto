@@ -36,6 +36,40 @@ Then initialize your shell against that file:
 eval "$(prompto init --config ~/.config/prompto/config.yaml)"
 ```
 
+## Console Variants
+
+A theme may ship a second file for the Linux virtual console, named with `.console` before the theme suffix:
+
+```text
+themes/polo.prompto.yaml          # terminal emulator
+themes/polo.console.prompto.yaml  # text console
+```
+
+The variant is not a theme of its own. It never appears in `prompto config list`, and it cannot be selected by
+name: it belongs to `polo`. Every `<name>.console.prompto.yaml` must have a matching `<name>.prompto.yaml`, and
+the theme generator fails if one does not.
+
+When a theme has a variant, `config set` installs both:
+
+```console
+$ prompto config set polo
+wrote ~/.config/prompto/config.yaml
+wrote ~/.config/prompto/config.console.yaml (console variant)
+```
+
+Most themes have no variant, in which case only `config.yaml` is written. Switching from a theme that has one to
+a theme that does not leaves the old `config.console.yaml` in place — `prompto` warns about this rather than
+deleting a file you may have written yourself:
+
+```console
+$ prompto config set tokyo
+wrote ~/.config/prompto/config.yaml
+warning: ~/.config/prompto/config.console.yaml is left over from another config and still applies on the
+console; remove it to use "tokyo" there
+```
+
+See [Console config](./configuration/console.md) for how the variant is selected at runtime and how to write one.
+
 ## Render a Theme Preview
 
 If you want a quick preview image of the config you are currently using:
