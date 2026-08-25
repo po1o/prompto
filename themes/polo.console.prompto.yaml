@@ -1,0 +1,104 @@
+# Console variant of the `polo` theme, installed as config.console.yaml.
+#
+# Used automatically instead of config.yaml when prompto detects a text
+# console. Two hard limits drive every choice below:
+#
+#   1. No Nerd Font. Only glyphs present in a console font are safe, so this
+#      config stays on ASCII plus the CP437 arrows the console font carries.
+#   2. 16 colors. Hex colors get approximated or dropped, so every color here
+#      is an ANSI color name.
+#
+# The look is lean rather than powerline: transparent backgrounds with a red
+# `>` closing the left prompt and a red `<` opening the right one.
+
+vim-mode:
+  enabled: true
+  cursor_shape: true
+
+prompt:
+  - segments:
+      - session
+      - path
+
+rprompt:
+  - segments:
+      - git
+      - vim
+
+transient:
+  - segments:
+      - path.transient
+
+rtransient:
+  - segments:
+      - git.transient
+      - time.transient
+
+session:
+  style: plain
+  foreground: yellow
+  background: transparent
+  template: "{{ if .SSHSession }}{{ .UserName }}@{{ .HostName }} <red>></> {{ end }}"
+
+path:
+  style: plain
+  foreground: lightWhite
+  foreground_templates:
+    - "{{ if not .Writable }}lightRed{{ end }}"
+  background: transparent
+  template: "{{ .Path }} <red>></>"
+  options:
+    style: powerlevel
+    max_width: 40
+
+path.transient:
+  style: plain
+  foreground: darkGray
+  foreground_templates:
+    - "{{ if not .Writable }}lightRed{{ end }}"
+  background: transparent
+  template: "{{ .Path }} >"
+  options:
+    style: powerlevel
+    max_width: 40
+
+git:
+  style: plain
+  foreground: white
+  background: transparent
+  render_pending_background: transparent
+  # Everything hangs off `if .HEAD` so the opening `<` can never render on its
+  # own outside a repo, including under `prompto render --force`.
+  template: '{{ if .HEAD }}<red><</> <red><b>{{ .HEAD }}</b></>{{ if .Upstream }}({{ .Upstream }}){{ end }}{{ if or (gt .Behind 0) (gt .Ahead 0) }} {{ if gt .Behind 0 }}↓{{ .Behind }}{{ end }}{{ if gt .Ahead 0 }}↑{{ .Ahead }}{{ end }}{{ end }}{{ if gt .StashCount 0 }} *{{ .StashCount }}{{ end }}{{ if .Merge }} <lightRed>merge</>{{ end }}{{ if .Rebase }} <lightRed>rebase</>{{ end }}{{ if .CherryPick }} <lightRed>cherry-pick</>{{ end }}{{ if .Revert }} <lightRed>revert</>{{ end }}{{ if gt .Working.Unmerged 0 }} <lightRed>~{{ .Working.Unmerged }}</>{{ end }}{{ if .Staging.Changed }} <lightRed>+{{ add .Staging.Added .Staging.Modified .Staging.Deleted }}</>{{ end }}{{ if gt (add .Working.Modified .Working.Deleted) 0 }} <lightRed>!{{ add .Working.Modified .Working.Deleted }}</>{{ end }}{{ if gt .Working.Untracked 0 }} <lightRed>?{{ .Working.Untracked }}</>{{ end }}{{ end }}'
+  options:
+    fetch_status: true
+    fetch_push_status: false
+    fetch_upstream_icon: false
+    branch_icon: ""
+    branch_template: "{{ if gt (len .Branch) 32 }}{{ trunc 12 .Branch }}..{{ substr (sub (len .Branch) 12) (len .Branch) .Branch }}{{ else }}{{ .Branch }}{{ end }}"
+
+git.transient:
+  style: plain
+  foreground: darkGray
+  background: transparent
+  template: '{{ if .HEAD }}<darkGray><</> <darkGray><b>{{ .HEAD }}</b></>{{ if or (gt .Behind 0) (gt .Ahead 0) }} {{ if gt .Behind 0 }}↓{{ .Behind }}{{ end }}{{ if gt .Ahead 0 }}↑{{ .Ahead }}{{ end }}{{ end }}{{ if gt .StashCount 0 }} *{{ .StashCount }}{{ end }}{{ if .Merge }} merge{{ end }}{{ if .Rebase }} rebase{{ end }}{{ if .CherryPick }} cherry-pick{{ end }}{{ if .Revert }} revert{{ end }}{{ if gt .Working.Unmerged 0 }} ~{{ .Working.Unmerged }}{{ end }}{{ if .Staging.Changed }} +{{ add .Staging.Added .Staging.Modified .Staging.Deleted }}{{ end }}{{ if gt (add .Working.Modified .Working.Deleted) 0 }} !{{ add .Working.Modified .Working.Deleted }}{{ end }}{{ if gt .Working.Untracked 0 }} ?{{ .Working.Untracked }}{{ end }}{{ end }}'
+  options:
+    fetch_status: true
+    fetch_push_status: false
+    fetch_upstream_icon: false
+    branch_icon: ""
+    branch_template: "{{ if gt (len .Branch) 32 }}{{ trunc 12 .Branch }}..{{ substr (sub (len .Branch) 12) (len .Branch) .Branch }}{{ else }}{{ .Branch }}{{ end }}"
+
+time.transient:
+  style: plain
+  foreground: cyan
+  background: transparent
+  template: " {{ .CurrentDate }}"
+  options:
+    time_format: "15:04"
+
+vim:
+  style: plain
+  foreground: lightRed
+  background: transparent
+  template: "{{ if .Normal }} NORMAL{{ end }}"

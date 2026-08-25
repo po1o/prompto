@@ -8,6 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/themes"
 	"github.com/spf13/cobra"
@@ -40,6 +41,12 @@ func init() {
 	configCmd.AddCommand(configListCmd, configSetCmd)
 }
 
+type themeWrite struct {
+	path    string
+	content string
+	console bool
+}
+
 func writeBundledTheme(cmd *cobra.Command, name string) error {
 	content, ok := themes.Get(name)
 	if !ok {
@@ -47,20 +54,66 @@ func writeBundledTheme(cmd *cobra.Command, name string) error {
 	}
 
 	targetPath := resolveDefaultConfigPath()
+	writes := []themeWrite{{path: targetPath, content: content}}
+
+	// A theme may ship a console variant. Install it alongside the main config
+	// so switching to a console picks the theme up there too.
+	consolePath := config.ConsoleVariant(targetPath)
+	consoleContent, hasConsole := themes.GetConsole(name)
+
+	if hasConsole {
+		writes = append(writes, themeWrite{
+			path:    consolePath,
+			content: consoleContent,
+			console: true,
+		})
+	}
+
 	err := os.MkdirAll(filepath.Dir(targetPath), 0o755)
 	if err != nil {
 		return err
 	}
 
-	if fileExists(targetPath) && !confirmOverwrite(cmd, targetPath) {
+	// Confirm every existing target up front. Prompting per file could leave a
+	// theme half-installed: a new config.yaml beside a stale config.console.yaml.
+	var existing []string
+	for _, write := range writes {
+		if fileExists(write.path) {
+			existing = append(existing, write.path)
+		}
+	}
+
+	if len(existing) > 0 && !confirmOverwrite(cmd, existing) {
 		return fmt.Errorf("aborted")
 	}
 
-	return os.WriteFile(targetPath, []byte(content), 0o644)
+	for _, write := range writes {
+		if err := os.WriteFile(write.path, []byte(write.content), 0o644); err != nil {
+			return err
+		}
+
+		if write.console {
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "wrote %s (console variant)\n", write.path)
+			continue
+		}
+
+		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "wrote %s\n", write.path)
+	}
+
+	// This theme has no console variant, but a console config is sitting next
+	// to the one we just wrote — most likely left by a previous theme. Deleting
+	// it is not ours to do, since it may be hand-written, so say it is now stale.
+	if !hasConsole && fileExists(consolePath) {
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(),
+			"warning: %s is left over from another config and still applies on the console; remove it to use %q there\n",
+			consolePath, name)
+	}
+
+	return nil
 }
 
-func confirmOverwrite(cmd *cobra.Command, path string) bool {
-	_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "warning: %s already exists and will be overwritten. Continue? [y/N]: ", path)
+func confirmOverwrite(cmd *cobra.Command, paths []string) bool {
+	_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "warning: %s already exists and will be overwritten. Continue? [y/N]: ", strings.Join(paths, ", "))
 
 	reader := bufio.NewReader(cmd.InOrStdin())
 	line, err := reader.ReadString('\n')
