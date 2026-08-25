@@ -7,6 +7,9 @@
 - Default path:
   - macOS/Linux: `${XDG_CONFIG_HOME:-$HOME/.config}/prompto/config.yaml`
   - Windows: `%UserConfigDir%/prompto/config.yaml`
+- Console variant: the same path with `.console` before the extension, for example
+  `config.console.yaml`. Used instead of the requested config when the session is a
+  console and the file exists. See [Console config](./console.md).
 
 ## Validation Rules
 

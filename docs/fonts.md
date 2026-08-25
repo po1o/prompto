@@ -65,3 +65,8 @@ Open `Settings > Profiles > Text` and set the profile font to the Nerd Font you 
 
 Themes with `minimal` in the filename are a better starting point when you do not want Nerd Font icons.
 See [Themes](./themes.md).
+
+## Text Consoles
+
+The Linux virtual console cannot use a Nerd Font at all, so no font install fixes it.
+Keep a separate [console config](./configuration/console.md) for those sessions instead.

@@ -78,9 +78,7 @@ func runInit(sh string) {
 	}
 	sh = normalizedShell
 
-	if configFlag == "" {
-		configFlag = config.DefaultPath()
-	}
+	configFlag = config.Resolve(configFlag)
 
 	cfg := config.Load(configFlag)
 	initCache(sh)
