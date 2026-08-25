@@ -29,14 +29,23 @@ When `prompto init` runs on a console and the variant exists, that variant is
 used instead of `config.yaml`. Nothing else changes: same segment names, same
 layout keys, same templates.
 
-If the variant does not exist, `prompto` uses `config.yaml` as usual. Adding the
-file is the only thing you have to do to opt in.
+If the variant does not exist, `prompto` falls back to `config.yaml` — which on
+a console is the broken-looking prompt this page exists to avoid. The fallback
+is deliberate: a missing variant means "not configured", and the alternatives
+are worse. Refusing to render leaves you with no prompt at all, and degrading
+`config.yaml` automatically would mean guessing which glyphs your console font
+carries and remapping colors silently.
+
+So the feature is opt-in, and creating the file is the whole opt-in.
 
 ## Bundled Themes
 
 A bundled theme can ship its own console variant as `<name>.console.prompto.yaml`, and `prompto config set`
-installs both files when it does. The `polo` theme is one such theme. See
-[Themes](../themes.md#console-variants).
+installs both files when it does.
+
+Most bundled themes have none — at present `polo` is the only one. For every other theme, a console session falls
+back to `config.yaml` as described above, so writing your own `config.console.yaml` is still the way to get a
+usable console prompt. See [Themes](../themes.md#console-variants).
 
 ## Naming Rule
 
