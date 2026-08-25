@@ -47,9 +47,9 @@ func resolveConfigPath() string {
 		}
 	}
 
-	if configFlag == "" {
-		configFlag = config.DefaultPath()
-	}
+	// Resolve picks up the console variant when we're on a console, so
+	// `config edit` targets the config that session actually renders.
+	configFlag = config.Resolve(configFlag)
 
 	configFlag = path.ReplaceTildePrefixWithHomeDir(configFlag)
 

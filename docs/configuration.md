@@ -59,6 +59,8 @@ time:
 - [Colors](./configuration/colors.md): color formats, palettes, color templates, and cycling.
 - [Extras and shell features](./configuration/extras.md): transient prompts, tooltips, vim mode, title, daemon
   settings, and shell integration features.
+- [Console config](./configuration/console.md): a separate config for the Linux virtual console, where there is no
+  Nerd Font and only 16 colors.
 - [Reference](./configuration/reference.md): exhaustive field reference and supported segment type list.
 - [Segment reference](./segments/README.md): per-segment pages with type-specific options, properties, and examples.
 
@@ -101,6 +103,9 @@ path.transient:
 macOS/Linux: ${XDG_CONFIG_HOME:-$HOME/.config}/prompto/config.yaml
 Windows: %UserConfigDir%/prompto/config.yaml
 ```
+
+A sibling `config.console.yaml`, when present, replaces `config.yaml` on the Linux virtual console.
+See [Console config](./configuration/console.md).
 
 ## Practical Advice
 

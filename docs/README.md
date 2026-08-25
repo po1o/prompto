@@ -18,6 +18,7 @@ Use the Markdown files in this repository instead.
 - [Fonts](./fonts.md): install and configure a Nerd Font.
 - [Themes](./themes.md): browse the bundled themes and copy one into your local config.
 - [Configuration](./configuration.md): understand the YAML model.
+- [Console config](./configuration/console.md): a separate config for the Linux virtual console.
 - [Segment reference](./segments/README.md): per-segment docs grouped by category.
 - [FAQ](./faq.md): common operational issues and fixes.
 
