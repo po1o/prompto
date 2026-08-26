@@ -429,7 +429,7 @@ func rejectLineGlyphKeys(doc map[string]any) error {
 }
 
 func normalizePromptLayout(layout *PromptLayout, rightAligned bool, table string) error {
-	leading, trailing, err := resolveSeparatorPair(separatorSpec{
+	leading, trailing, err := resolveSeparatorPair(&separatorSpec{
 		style:             layout.Style,
 		leadingStyle:      layout.LeadingStyle,
 		trailingStyle:     layout.TrailingStyle,
@@ -644,7 +644,11 @@ type separatorSpec struct {
 // style is alignment-aware on a line — left lines close with it, right lines
 // open with it. A segment has no alignment of its own, so its style always sets
 // the trailing separator.
-func resolveSeparatorPair(spec separatorSpec, rightAligned bool, name string) (leadingGlyph, trailingGlyph string, err error) {
+func resolveSeparatorPair(config *separatorSpec, rightAligned bool, name string) (leadingGlyph, trailingGlyph string, err error) {
+	// Copied because the shortcut below rewrites the style fields, and the
+	// caller's value is not ours to change.
+	spec := *config
+
 	if spec.leadingStyle != "" && spec.leadingSeparator != "" {
 		return "", "", fmt.Errorf("%s cannot define both leading_style and leading_separator", name)
 	}
@@ -736,7 +740,7 @@ func normalizeSegmentSeparators(raw map[string]any, name string) error {
 
 	// A segment definition can appear on lines of either alignment, so its
 	// style is never alignment-aware.
-	leading, trailing, err := resolveSeparatorPair(spec, false, name)
+	leading, trailing, err := resolveSeparatorPair(&spec, false, name)
 	if err != nil {
 		return err
 	}
