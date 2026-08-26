@@ -268,6 +268,24 @@ This also applies to a segment that draws its own opening inside its `template` 
 both separators unset, or the separator before it gains a filled block behind the outline the template
 draws.
 
+## Separators Need a Background
+
+A separator is the segment's own block, shaped into a point or a cap. It is drawn in the segment's
+`background` color, which means a segment without one has nothing to draw it with:
+
+| The segment's `background` | Leading separator | Trailing separator |
+| --- | --- | --- |
+| a color | drawn in it | drawn in it |
+| unset | drawn in the terminal's default foreground | **not drawn** |
+| `transparent` | **not drawn** | **not drawn** |
+
+Nothing warns about this. A `trailing_separator` on a segment with no `background` simply never appears,
+and a segment with `background: transparent` gets no separators at all however they are configured.
+
+Set a `background` on any segment whose separators you expect to see. If you want a shape against the
+terminal rather than a filled block, put it in the `template` instead — that is what the bundled themes do
+with `<transparent>` markup.
+
 ## `keep_when_empty`
 
 A segment that renders no text disappears, and the segments around it close the gap.
@@ -278,11 +296,17 @@ git:
   keep_when_empty: true
   leading_separator: "("
   trailing_separator: ")"
+  background: blue
   template: " {{ .HEAD }} "
 ```
 
 Outside a repository this renders `()` instead of vanishing, so the rest of the prompt keeps its position.
 Use it when a segment appears and disappears often and the movement is distracting.
+
+The `background` is not decoration here. A kept segment is nothing but its separators, and separators are
+drawn in the segment's background color — so on a segment without one the trailing separator never appears
+and `keep_when_empty` looks like it does nothing. See [Separators Need a
+Background](#separators-need-a-background).
 
 `force` and `keep_when_empty` solve different problems: `force` makes an empty segment render its text anyway,
 `keep_when_empty` keeps the shape of a segment that has no text to render.
