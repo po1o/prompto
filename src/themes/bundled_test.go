@@ -1,7 +1,6 @@
 package themes
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/po1o/prompto/src/config"
@@ -55,16 +54,25 @@ func TestEveryThemeShipsAConsoleVariant(t *testing.T) {
 	}
 }
 
-// The generated variants exist to be drawn by a console font, which carries
-// nothing outside ASCII. The hand-written one is its author's business.
-func TestGeneratedConsoleVariantsAreASCII(t *testing.T) {
-	for name, content := range bundledConsoleThemes {
-		if !strings.HasPrefix(content, "# Code generated") {
-			continue
-		}
+// consoleSafeRunes are the non-ASCII characters a console variant may still
+// use. The Linux console font carries the CP437 arrows, and they read better
+// than the ASCII stand-ins for git's ahead/behind counts; nothing else outside
+// ASCII can be relied on.
+var consoleSafeRunes = map[rune]bool{
+	'\u2191': true, // up arrow
+	'\u2193': true, // down arrow
+}
 
+// A console variant that reaches for a glyph the console font lacks defeats its
+// own purpose: the reader gets a blank or a box where the prompt should be.
+func TestConsoleVariantsUseConsoleSafeCharacters(t *testing.T) {
+	for name, content := range bundledConsoleThemes {
 		for _, r := range content {
-			require.Less(t, r, rune(0x80), "%s contains %U", name, r)
+			if r < 0x80 || consoleSafeRunes[r] {
+				continue
+			}
+
+			require.Fail(t, "unsafe character", "%s contains %U", name, r)
 		}
 	}
 }
