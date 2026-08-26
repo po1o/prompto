@@ -803,3 +803,52 @@ slow.main:
 	require.Equal(t, int32(0), updates.Load(), "no updates may be published after a hard cancel")
 	require.NotEmpty(t, engine.PendingSegments(), "a cancelled drain must not touch pending state")
 }
+
+// keep_when_empty exists so the prompt does not reflow when a segment has
+// nothing to say. A repaint is exactly when that matters — a vim mode change
+// redraws the line under the cursor — and the repaint path skips segments that
+// did not render, so the kept one has to be let through explicitly.
+func TestPrimaryRepaintKeepsSegmentsMarkedKeepWhenEmpty(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "keep-repaint.omp.yaml")
+	cfg := `
+prompt:
+  - segments: ["session", "text.empty", "vim"]
+
+session:
+  type: "session"
+  template: "L"
+
+text.empty:
+  type: "text"
+  template: ""
+  keep_when_empty: true
+  leading_separator: "["
+  trailing_separator: "]"
+  foreground: "white"
+  background: "blue"
+
+vim:
+  template: "{{ if .Insert }}INSERT{{ end }}{{ if .Normal }}NORMAL{{ end }}"
+  foreground: "white"
+  background: "green"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	flags := &runtime.Flags{
+		ConfigPath: configPath,
+		Plain:      true,
+		Shell:      shell.GENERIC,
+		VimMode:    "insert",
+	}
+	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
+
+	initial := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	require.Contains(t, initial, "[]", "the kept segment should hold its shape on the first render")
+
+	flags.VimMode = "normal"
+	repainted := engine.PrimaryRepaint()
+
+	require.Contains(t, repainted, "NORMAL", "expected the repaint to have happened")
+	require.Contains(t, repainted, "[]", "the kept segment should still hold its shape after a repaint")
+}
