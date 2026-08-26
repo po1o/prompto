@@ -10,7 +10,6 @@ battery:
         charged_icon: "\x95 "
         charging_icon: '⇡ '
         discharging_icon: '⇣ '
-    style: diamond
     template: '{{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}'
     trailing_separator: 
 executiontime:
@@ -20,7 +19,6 @@ executiontime:
     options:
         style: austin
         threshold: 150
-    style: diamond
     template: '{{ .FormattedMs }}'
     trailing_separator: ' '
 cursor_padding: true
@@ -37,7 +35,6 @@ git:
         branch_template: '{{ trunc 25 .Branch }}'
         fetch_status: true
         fetch_upstream_icon: true
-    style: diamond
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
     trailing_separator: 
 go:
@@ -46,7 +43,6 @@ go:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
     trailing_separator: 
 java:
@@ -55,7 +51,6 @@ java:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
     trailing_separator: 
 julia:
@@ -64,7 +59,6 @@ julia:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: '{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: 
 node:
@@ -73,7 +67,6 @@ node:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}
     trailing_separator: 
 path:
@@ -82,7 +75,6 @@ path:
     leading_separator: 
     options:
         style: folder
-    style: diamond
     template:  {{ .Path }}
     trailing_separator: 
 php:
@@ -91,7 +83,6 @@ php:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: ' {{ .Full }} '
     trailing_separator: 
 prompt:
@@ -104,7 +95,6 @@ python:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template:  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}
     trailing_separator: 
 rprompt:
@@ -125,13 +115,11 @@ ruby:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
     trailing_separator: 
 text:
     background: '#29315A'
     foreground: '#E64747'
     leading_separator: 
-    style: diamond
     template: '{{ .UserName }} ❯'
     trailing_separator: 

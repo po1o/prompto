@@ -4,8 +4,7 @@ git:
     foreground: '#ffc107'
     options:
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 path:
     background: '#18354c'
@@ -13,7 +12,6 @@ path:
     leading_separator: 
     options:
         style: folder
-    style: diamond
     template: '  {{ .Path }} '
     trailing_separator: 
 prompt:
@@ -25,12 +23,10 @@ prompt:
 python:
     background: '#ffc107'
     foreground: '#18354c'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
 root:
     background: '#ffc107'
     foreground: '#18354c'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  '

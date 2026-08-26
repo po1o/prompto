@@ -25,13 +25,12 @@ prompt:
 
 nightscout:
   type: "nightscout"
-  style: "diamond"
   foreground: "#ffffff"
   background: "#ff0000"
   background_templates: ["{{ if gt .Sgv 150 }}#FFFF00{{ end }}", "{{ if lt .Sgv 60 }}#FF0000{{ end }}", "#00FF00"]
   foreground_templates: ["{{ if gt .Sgv 150 }}#000000{{ end }}", "{{ if lt .Sgv 60 }}#000000{{ end }}", "#000000"]
-  leading_diamond: ""
-  trailing_diamond: ""
+  leading_separator: ""
+  trailing_separator: ""
   template: " {{ .Sgv }}{{ .TrendIcon }}"
   options:
     url: "https://YOURNIGHTSCOUTAPP.herokuapp.com/api/v1/entries.json?count=1&token=APITOKENFROMYOURADMIN"

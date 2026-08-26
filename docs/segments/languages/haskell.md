@@ -16,8 +16,7 @@ prompt:
 
 haskell:
   type: "haskell"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#906cff"
   background: "#100e23"
   template: "  {{ .Full }}"

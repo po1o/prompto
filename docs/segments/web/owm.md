@@ -21,8 +21,7 @@ prompt:
 
 owm:
   type: "owm"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#FF0000"
   template: "{{.Weather}} ({{.Temperature}}{{.UnitIcon}})"

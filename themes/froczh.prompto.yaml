@@ -1,21 +1,18 @@
 angular:
     background: '#000000'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .Error }}<#FE4A49>?</>{{ else }}{{ .Full }}{{ end }} '
 aurelia:
     background: '#000000'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .Error }}<#DE1F84>?</>{{ else }}{{ .Full }}{{ end }} '
 console_title_template: "{{if .Root}} ⚡ {{end}}{{.Folder | replace \"~\" \"\U0001F3DA\" }} @ {{.HostName}}"
 dotnet:
     background: '#00ffff'
     foreground: '#000000'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Full }} '
 executiontime:
     background: '#29315A'
@@ -24,7 +21,6 @@ executiontime:
     options:
         style: dallas
         threshold: 0
-    style: diamond
     template: ' {{ .FormattedMs }}s '
 git:
     background: '#00C853'
@@ -36,26 +32,22 @@ git:
     foreground: '#000000'
     options:
         fetch_status: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }}{{ if .Staging.Changed }}<#FF6F00>  {{ .Staging.String }}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 node:
     background: '#000000'
     foreground: '#45bf17'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Full }} '
 npm:
     background: '#000000'
     foreground: '#FE4A49'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Full }} '
 os:
     background: '#40189c'
     foreground: '#ffffff'
     leading_separator: 
-    style: diamond
     template: '{{ if .WSL }}WSL at {{ end }}{{.Icon}} '
 path:
     background: '#01579B'
@@ -66,7 +58,6 @@ path:
         folder_separator_icon: <transparent>  </>
         home_icon: 
         style: agnoster_short
-    style: diamond
     template: ' {{ .Path }} '
     trailing_separator: 
 prompt:
@@ -90,14 +81,12 @@ rprompt:
 session:
     background: '#40189c'
     foreground: '#ffffff'
-    style: diamond
     template: '| {{ .UserName }}@{{ .HostName }} '
     trailing_separator: 
 status:
     background: '#910000'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '<transparent> </> {{ reason .Code }} '
 status.2:
     foreground: '#ffffff'
@@ -105,12 +94,10 @@ status.2:
         - '{{ if gt .Code 0 }}#ff0000{{ end }}'
     options:
         always_enabled: true
-    style: plain
     template: '❯ '
 time:
     background: '#29315A'
     foreground: '#3EC669'
     options:
         time_format: 15:04:05 | Monday
-    style: plain
     template: '<transparent>  </>{{ .LastDate | date .Format }} '

@@ -29,7 +29,6 @@ func Default(configError error) *Config {
 		Segments: map[string]*Segment{
 			"path": {
 				Type:       PATH,
-				Style:      Plain,
 				Background: "transparent",
 				Options: options.Map{
 					options.Style: "folder",
@@ -37,12 +36,11 @@ func Default(configError error) *Config {
 				Template: " {{ path .Path .Location }} \ue0b1",
 			},
 			"status": {
-				Type:            STATUS,
-				Style:           Diamond,
-				LeadingDiamond:  "\ue0b6",
-				TrailingDiamond: "\ue0b4",
-				Foreground:      "p:white",
-				Background:      "p:red",
+				Type:          STATUS,
+				LeadingGlyph:  "\ue0b6",
+				TrailingGlyph: "\ue0b4",
+				Foreground:    "p:white",
+				Background:    "p:red",
 				Options: options.Map{
 					options.AlwaysEnabled: true,
 				},
@@ -67,26 +65,24 @@ func Default(configError error) *Config {
 		},
 		Tooltips: []*Segment{
 			{
-				Type:            AWS,
-				Style:           Diamond,
-				LeadingDiamond:  "\ue0b0",
-				TrailingDiamond: "\ue0b4",
-				Foreground:      "p:white",
-				Background:      "p:orange",
-				Template:        " \ue7ad {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} ",
+				Type:          AWS,
+				LeadingGlyph:  "\ue0b0",
+				TrailingGlyph: "\ue0b4",
+				Foreground:    "p:white",
+				Background:    "p:orange",
+				Template:      " \ue7ad {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} ",
 				Options: options.Map{
 					options.DisplayDefault: true,
 				},
 				Tips: []string{"aws"},
 			},
 			{
-				Type:            AZ,
-				Style:           Diamond,
-				LeadingDiamond:  "\ue0b0",
-				TrailingDiamond: "\ue0b4",
-				Foreground:      "p:white",
-				Background:      "p:blue",
-				Template:        " \uebd8 {{ .Name }} ",
+				Type:          AZ,
+				LeadingGlyph:  "\ue0b0",
+				TrailingGlyph: "\ue0b4",
+				Foreground:    "p:white",
+				Background:    "p:blue",
+				Template:      " \uebd8 {{ .Name }} ",
 				Options: options.Map{
 					options.DisplayDefault: true,
 				},

@@ -16,8 +16,7 @@ prompt:
 
 aurelia:
   type: "aurelia"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#de1f84"
   template: " α {{ .Full }} "

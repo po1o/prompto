@@ -144,14 +144,6 @@ func init() {
 }
 
 const (
-	// Plain writes it without ornaments
-	Plain SegmentStyle = "plain"
-	// Powerline writes it Powerline style
-	Powerline SegmentStyle = "powerline"
-	// Accordion writes it Powerline style but collapses the segment when disabled instead of hiding
-	Accordion SegmentStyle = "accordion"
-	// Diamond writes the prompt shaped with a leading and trailing symbol
-	Diamond SegmentStyle = "diamond"
 	// ANGULAR writes which angular cli version us currently active
 	ANGULAR SegmentType = "angular"
 	// ARGOCD writes the current argocd context

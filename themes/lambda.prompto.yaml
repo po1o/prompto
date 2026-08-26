@@ -1,12 +1,10 @@
 git:
     foreground: '#B80101'
-    style: plain
     template: ' <#F5F5F5>git:</>{{ .HEAD }} '
 path:
     foreground: '#B80101'
     options:
         style: agnoster
-    style: plain
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -15,5 +13,4 @@ prompt:
         - git
 text:
     foreground: '#F5F5F5'
-    style: plain
     template: ' '

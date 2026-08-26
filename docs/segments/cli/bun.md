@@ -16,7 +16,6 @@ prompt:
 
 bun:
   type: "bun"
-  style: "plain"
   foreground: "#3C82F6"
   template: "  {{ .Full }} "
 ```

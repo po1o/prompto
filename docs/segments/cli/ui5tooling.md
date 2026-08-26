@@ -18,9 +18,8 @@ prompt:
 ui5tooling:
   background: "#f5a834"
   foreground: "#100e23"
-  powerline_symbol: ""
+  trailing_separator: ""
   template: " ui5 {{ .Full }} "
-  style: "powerline"
   type: "ui5tooling"
 ```
 

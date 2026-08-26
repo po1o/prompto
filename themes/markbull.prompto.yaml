@@ -4,8 +4,7 @@ executiontime:
     foreground: '#fffef9'
     options:
         always_enabled: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '   {{ .FormattedMs }} '
 cursor_padding: true
 git:
@@ -30,24 +29,21 @@ git:
         github_icon: ' '
         gitlab_icon: ' '
         tag_icon: ' '
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if( .UpstreamIcon ) }}{{ url .UpstreamIcon .UpstreamURL }} {{ end }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} <#ed1941> {{.Working.String}}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} <#225a1f> {{.Staging.String}}</>{{ end }}{{ if gt .StashCount 0 }}   {{.StashCount}}{{ end }}{{ if gt .WorktreeCount 0 }}{{if .IsWorkTree}}<#1d953f>{{ end }}   {{if .IsWorkTree}}</>{{ end }}{{.WorktreeCount}}{{ end }} '
 os:
     background: '#C678DD'
     foreground: '#fffef9'
     options:
         windows: 
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
 path:
     background: '#C678DD'
     foreground: '#fffef9'
     options:
         style: full
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '{{ path .Path .Location }} '
 prompt:
     - segments:
@@ -64,24 +60,19 @@ prompt:
 session:
     background: '#ffce7b'
     foreground: '#1d1626'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '   {{ if .SSHSession }}  {{ end }}{{ .UserName }}@{{ .HostName }} '
 status:
     background: '#ed1941'
     foreground: '#fffef9'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  >>{{ reason .Code }} '
 text:
     foreground: '#ffce7b'
-    style: plain
     template: '┌ '
 text.2:
     foreground: '#ffce7b'
-    style: plain
     template: └
 text.3:
     foreground: '#ffffff'
-    style: plain
     template: ' $'

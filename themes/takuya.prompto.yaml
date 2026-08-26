@@ -10,8 +10,7 @@ git:
         branch_icon: ' '
         fetch_status: true
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }} {{ if .Working.Changed }}{{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}<#ef5350>  {{ .Staging.String }}</>{{ end }} '
 node:
     background: '#303030'
@@ -21,7 +20,6 @@ node:
         fetch_package_manager: true
         npm_icon: ' <#cc3a3a></> '
         yarn_icon: ' <#348cba></>'
-    style: diamond
     template:  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}
     trailing_separator: 
 path:
@@ -29,8 +27,7 @@ path:
     foreground: '#E4E4E4'
     options:
         style: full
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -46,7 +43,6 @@ root:
     foreground: '#FFFB38'
     options:
         root_icon: 
-    style: diamond
     template: '<parentBackground></>  '
 rprompt:
     - segments:
@@ -56,7 +52,6 @@ shell:
     background: '#0077c2'
     foreground: '#ffffff'
     leading_separator: ╭─
-    style: diamond
     template: ' {{ .Name }} '
 status:
     foreground: '#e0f8ff'
@@ -64,17 +59,13 @@ status:
         - '{{ if gt .Code 0 }}#ef5350{{ end }}'
     options:
         always_enabled: true
-    style: plain
     template: '❯ '
 text:
     foreground: '#21c7c7'
-    style: plain
     template: ╰─
 time:
     background: '#40c4ff'
     foreground: '#ffffff'
-    invert_powerline: true
     leading_separator: ' '
-    style: diamond
     template: '  {{ .LastDate | date .Format }} '
     trailing_separator: 

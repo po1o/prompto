@@ -16,8 +16,7 @@ prompt:
 
 azfunc:
   type: "azfunc"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#FEAC19"
   template: "  {{ .Full }} "

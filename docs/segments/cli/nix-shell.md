@@ -16,7 +16,6 @@ prompt:
 
 nix-shell:
   type: "nix-shell"
-  style: "powerline"
   foreground: "blue"
   background: "transparent"
   template: "(󱄅-{{ .Type }})"

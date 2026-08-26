@@ -16,8 +16,7 @@ prompt:
 
 mvn:
   type: "mvn"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#FFFFFF"
   background: "#2E2A65"
   template: "  {{ .Full }} "

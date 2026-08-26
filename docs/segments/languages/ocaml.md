@@ -16,8 +16,7 @@ prompt:
 
 ocaml:
   type: "ocaml"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#d08770"
   template: "  {{ .Full }} "
 ```

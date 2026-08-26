@@ -22,8 +22,7 @@ prompt:
 
 gitversion:
   type: "gitversion"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#3a579b"
   template: "  {{ .MajorMinorPatch }} "

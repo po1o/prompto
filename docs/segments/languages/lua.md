@@ -16,8 +16,7 @@ prompt:
 
 lua:
   type: "lua"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "white"
   background: "blue"
   template: "  {{ .Full }} "

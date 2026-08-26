@@ -16,8 +16,7 @@ prompt:
 
 react:
   type: "react"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#81a1c1"
   template: "  {{ .Full }} "
 ```

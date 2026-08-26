@@ -20,8 +20,7 @@ prompt:
 
 todoist:
   type: "todoist"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#FF0000"
   template: "{{.TaskCount}}"

@@ -1,19 +1,16 @@
 git:
     background: '#546E7A'
     foreground: '#D4E157'
-    style: plain
     template: '<#26C6DA> </>{{ .HEAD }} '
 os:
     background: '#546E7A'
     foreground: '#26C6DA'
-    style: plain
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
 path:
     background: '#546E7A'
     foreground: '#26C6DA'
     options:
         style: full
-    style: plain
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -27,7 +24,6 @@ prompt:
 root:
     background: '#546E7A'
     foreground: '#26C6DA'
-    style: plain
     template: '  '
 rprompt:
     - segments:
@@ -37,7 +33,6 @@ session:
     background: '#546E7A'
     foreground: '#D4E157'
     trailing_separator: 
-    style: diamond
     template: ' {{ .UserName }}@{{ .HostName }} <#26C6DA></>'
 status:
     foreground: '#D4E157'
@@ -45,17 +40,14 @@ status:
         - '{{ if gt .Code 0 }}#FF5252{{ end }}'
     options:
         always_enabled: true
-    style: plain
     template: '❯ '
 text:
     background: transparent
     foreground: '#546E7A'
-    style: plain
     template: 
 time:
     background: '#546E7A'
     foreground: '#D4E157'
     options:
         time_format: "15:04:05"
-    style: plain
     template: ' {{ .LastDate | date .Format }}  '

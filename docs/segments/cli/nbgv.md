@@ -20,8 +20,7 @@ prompt:
 
 nbgv:
   type: "nbgv"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#3a579a"
   template: "  {{ .Version }} "

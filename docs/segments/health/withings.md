@@ -30,8 +30,7 @@ prompt:
 
 withings:
   type: "withings"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#000000"
   template: "{{ if gt .Weight 0.0 }} {{ round .Weight 2 }}kg {{ end }}"

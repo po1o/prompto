@@ -10,7 +10,6 @@ battery:
         - '{{ if and (ge .Percentage 91) (le .Percentage 100) }}p:c-battery-100-less{{ end }}'
     foreground: p:c-badge-text
     leading_separator: 
-    style: diamond
     template: "{{ if eq \"True\" (title (default \"False\" .Env.DISABLE_SEGMENT_BATTERY)) }}{{ else }}{{ if not .Error }}{{ if eq \"Charging\" .State.String }} {{ else if eq \"Discharging\" .State.String }}{{ else if eq \"Full\" .State.String }}~ {{ else }}? {{ end }}{{ if le .Percentage 15 }}\U000F007A{{ else if and (ge .Percentage 16) (le .Percentage 30) }}\U000F007B{{ else if and (ge .Percentage 31) (le .Percentage 45) }}\U000F007D{{ else if and (ge .Percentage 46) (le .Percentage 55)}}\U000F007E{{ else if and (ge .Percentage 56) (le .Percentage 70) }}\U000F007F{{ else if and (ge .Percentage 71) (le .Percentage 80) }}\U000F0082{{ else if and (ge .Percentage 81) (le .Percentage 95) }}\U000F0082{{ else }}\U000F0079{{ end }} {{ .Percentage }}%{{ else }}!{{ end }}{{ end }}"
     trailing_separator: 
 console_title_template: '{{ if .Segments.Session.SSHSession }}SSH''d{{ if or .Root }} & {{ end }}{{ end }}{{ if .Root }}# (as {{ .UserName }}) | {{ end }}{{ if .WSL }}WSL | {{ end }}{{ .Folder }} ({{ .Shell }})'
@@ -19,7 +18,6 @@ crystal:
         - '{{ if empty .Full }}p:c-project-generic-error{{ else }}p:c-project-crystal{{ end }}'
     foreground: p:c-badge-text
     leading_separator: 
-    style: diamond
     template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_CRYSTAL)) }} {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}{{ end }}'
     trailing_separator: ' '
 dart:
@@ -27,7 +25,6 @@ dart:
         - '{{ if empty .Full }}p:c-project-generic-error{{ else }}p:c-project-flutter{{ end }}'
     foreground: p:c-badge-text
     leading_separator: 
-    style: diamond
     template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_FLUTTER)) }}Flutter | {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}{{ end }}'
     trailing_separator: ' '
 executiontime:
@@ -41,7 +38,6 @@ executiontime:
     options:
         style: austin
         threshold: 1
-    style: diamond
     template: "{{ if eq \"False\" (title (default \"False\" .Env.DISABLE_SEGMENT_PRIMARY_EXEC_TIME)) }}\U000F051F {{ .FormattedMs }}.{{ end }}"
     trailing_separator: ' '
 cursor_padding: true
@@ -60,7 +56,6 @@ git:
     options:
         branch_icon: ' '
         fetch_status: true
-    style: diamond
     template: '{{ .HEAD }} {{ .BranchStatus }}{{ if .Working.Changed }}   ({{ .Working.String }}){{ end }}{{ if and .Working.Changed .Staging.Changed }}  {{ end }}{{ if .Staging.Changed }}{{ if not .Working.Changed }}  {{ end }} ({{ .Staging.String }}){{ end }}{{ if .StashCount }}  {{ .StashCount }} Stash{{ if gt .StashCount 1 }}es{{ end }}{{ end }}'
     trailing_separator: 
 lua:
@@ -68,7 +63,6 @@ lua:
         - '{{ if .Error }}p:c-project-generic-error{{ else }}p:c-project-lua{{ end }}'
     foreground: p:c-badge-text
     leading_separator: 
-    style: diamond
     template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_LUA)) }} {{ if or (.Error) (empty .Full) }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}{{ end }}'
     trailing_separator: ' '
 node:
@@ -76,7 +70,6 @@ node:
         - '{{ if empty .Full }}p:c-project-generic-error{{ else }}p:c-project-node{{ end }}'
     foreground: p:c-badge-text
     leading_separator: 
-    style: diamond
     template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_NODE)) }} {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}{{ end }}'
     trailing_separator: ' '
 palette:
@@ -138,7 +131,6 @@ path:
         hide_root_location: true
         max_depth: 2
         style: agnoster_short
-    style: diamond
     template:  {{ .Path }}
     trailing_separator: 
 prompt:
@@ -162,7 +154,6 @@ python:
     leading_separator: 
     options:
         display_mode: context
-    style: diamond
     template: '{{ if or (eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_PYTHON))) (eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_PYTHON_VENV))) }} {{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_PYTHON)) }}{{ .Full }}{{ end }}{{ if and (.Venv) (eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_PYTHON))) (eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_PYTHON_VENV))) }}  {{ end }}{{ if and (.Venv) (eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_PYTHON_VENV))) }}{{ if .Env.SEGMENT_PROJECT_PYTHON_ACTIVE_VENV_STR }}{{ .Env.SEGMENT_PROJECT_PYTHON_ACTIVE_VENV_STR }}{{ else }}{{ .Venv }}{{ end }}{{ end }}{{ end }}'
     trailing_separator: ' '
 rprompt:
@@ -176,7 +167,6 @@ rust:
         - '{{ if empty .Full }}p:c-project-generic-error{{ else }}p:c-project-rust{{ end }}'
     foreground: p:c-badge-text
     leading_separator: 
-    style: diamond
     template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_RUST)) }} {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}{{ end }}'
     trailing_separator: ' '
 secondary:
@@ -187,7 +177,6 @@ text.secondary:
     foreground: p:c-secondary-ellipsis
     template: ' ... '
 session:
-    style: diamond
     template: '{{ if false }}{{ end }}'
 text:
     background_templates:
@@ -196,13 +185,11 @@ text:
         - '{{ if and (.Segments.Session.SSHSession) (.Root) }}p:c-shell-state-root-ssh-active{{ end }}'
     foreground: p:c-badge-text
     leading_separator: 
-    style: diamond
     template: '{{ if or (.Segments.Session.SSHSession) (.Root) }}{{ if .Segments.Session.SSHSession }} SSH{{ end }}{{ if and (.Segments.Session.SSHSession) (.Root) }}  {{ end }}{{ if .Root }}# Root{{ end }}{{ end }}'
     trailing_separator: ' '
 text.2:
     foreground_templates:
         - '{{ if eq "False" (title (default "False" .Env.ENABLE_ARROW_DIVIDER_COLOR_EXECUTION_RETURN)) }}p:c-badge-white{{ else }}{{ if eq .Code 0 }}p:c-badge-return-success{{ else if or (eq .Code 1) (eq .Code 130) }}p:c-badge-return-fail-term{{ else }}p:c-badge-return-custom{{ end }}{{ end }}'
-    style: plain
     template: ❯
 time:
     background_templates:
@@ -215,7 +202,6 @@ time:
     leading_separator: 
     options:
         time_format: 15:04 (01/02)
-    style: diamond
     template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_DTIME)) }} {{ .LastDate | date .Format }}{{ end }}'
     trailing_separator: ' '
 transient:
@@ -238,6 +224,5 @@ wakatime:
     options:
         http_timeout: 2000
         url: https://wakatime.com/api/v1/users/current/summaries?start=today&end=today&api_key={{ .Env.WAKATIME_API_KEY }}
-    style: diamond
     template: '{{ if and (.Env.WAKATIME_API_KEY) (eq "False" (title (default "False" .Env.DISABLE_SEGMENT_WAKATIME))) (gt .CumulativeTotal.Seconds 0) }}神 {{ secondsRound .CumulativeTotal.Seconds }}.{{ end }}'
     trailing_separator: ' '

@@ -16,8 +16,7 @@ prompt:
 
 pnpm:
   type: "pnpm"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#000000"
   background: "#F9AD00"
   template: "  {{ .Full }} "

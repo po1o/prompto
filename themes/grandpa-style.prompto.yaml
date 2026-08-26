@@ -6,7 +6,6 @@ executiontime:
     options:
         style: dallas
         threshold: 0
-    style: diamond
     template: ' {{ .FormattedMs }}s '
 git:
     background: '#00C853'
@@ -19,12 +18,10 @@ git:
     leading_separator: <parentBackground,background></>
     options:
         fetch_status: true
-    style: diamond
     template: ' {{ .HEAD }}{{ if .Staging.Changed }}<#FF6F00>  {{ .Staging.String }}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 os:
     background: transparent
     foreground: '#ffffff'
-    style: plain
     template: '{{ if .WSL }}WSL at {{ end }}{{.Icon}} '
 path:
     background: '#5a3d29'
@@ -34,7 +31,6 @@ path:
         folder_separator_icon: <transparent>  </>
         home_icon: 
         style: agnoster_short
-    style: plain
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -49,7 +45,6 @@ prompt:
 root:
     background: '#000000'
     foreground: '#dd1e1e'
-    style: plain
     template: ' ⚡ '
 rprompt:
     - segments:
@@ -59,15 +54,12 @@ session:
     background: '#5a3d29'
     foreground: '#43CCEA'
     leading_separator: 
-    style: diamond
     template: '  {{ if .SSHSession }} {{ end }}{{ .UserName }}<transparent> / </>{{ .HostName }}'
 status:
     background: '#910000'
     foreground: '#ffffff'
     options:
         always_enabled: true
-    powerline_symbol: 
-    style: plain
     template: '{{ if gt .Code 0 }}<parentBackground,background></><transparent> </> {{ reason .Code }} <background,transparent></>{{ else }}<parentBackground,transparent></>{{ end }}'
 status.2:
     foreground: '#ffffff'
@@ -75,12 +67,10 @@ status.2:
         - '{{ if gt .Code 0 }}#ff0000{{ end }}'
     options:
         always_enabled: true
-    style: plain
     template: '❯ '
 time:
     background: '#5a3d29'
     foreground: '#43CCEA'
     options:
         time_format: 3:04:05 PM
-    style: plain
     template: '<transparent>  </>{{ .LastDate | date .Format }} '

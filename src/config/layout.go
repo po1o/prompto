@@ -5,6 +5,7 @@ import (
 	"maps"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/po1o/prompto/src/color"
@@ -21,8 +22,8 @@ type PromptLayout struct {
 	TrailingStyle     string   `yaml:"trailing_style,omitempty"`
 	LeadingSeparator  string   `yaml:"leading_separator,omitempty"`
 	TrailingSeparator string   `yaml:"trailing_separator,omitempty"`
-	LeadingDiamond    string   `yaml:"leading_diamond,omitempty"`
-	TrailingDiamond   string   `yaml:"trailing_diamond,omitempty"`
+	LeadingGlyph      string   `yaml:"-"`
+	TrailingGlyph     string   `yaml:"-"`
 	Segments          []string `yaml:"segments,omitempty"`
 }
 
@@ -111,8 +112,18 @@ var knownLayoutTopLevelKeys = func() map[string]bool {
 	return keys
 }()
 
-var removedLayoutTopLevelKeys = map[string]bool{
-	"upgrade": true,
+// removedLayoutTopLevelKeys are keys this format used to carry. They are
+// rejected by name because a segment table can be named anything: without this
+// an old `blocks:` is taken for a segment and reported as one missing a type,
+// which points the user at the wrong problem entirely.
+var removedLayoutTopLevelKeys = map[string]string{
+	"upgrade":           "",
+	"blocks":            "use prompt, rprompt, secondary, transient or rtransient",
+	"version":           "",
+	"extends":           "",
+	"secondary_prompt":  "use secondary",
+	"transient_prompt":  "use transient",
+	"transient_rprompt": "use rtransient",
 }
 
 func LoadLayout(configFile string) (*LayoutConfig, error) {
@@ -153,6 +164,10 @@ func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
 	}
 
 	if err := validateLayoutTopLevelKeys(doc); err != nil {
+		return nil, err
+	}
+
+	if err := rejectLineGlyphKeys(doc); err != nil {
 		return nil, err
 	}
 
@@ -200,9 +215,9 @@ func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
 		return nil, err
 	}
 
-	normalizeExtraSegment(layout.DebugPrompt)
-	normalizeExtraSegment(layout.ValidLine)
-	normalizeExtraSegment(layout.ErrorLine)
+	if err := normalizeExtraSegments(doc, layout); err != nil {
+		return nil, err
+	}
 
 	if err := validateLayoutSegmentRefs(layout); err != nil {
 		return nil, err
@@ -213,8 +228,12 @@ func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
 
 func validateLayoutTopLevelKeys(doc map[string]any) error {
 	for key, value := range doc {
-		if removedLayoutTopLevelKeys[key] {
-			return fmt.Errorf("unknown top-level key %q", key)
+		if replacement, removed := removedLayoutTopLevelKeys[key]; removed {
+			if replacement == "" {
+				return fmt.Errorf("top-level key %q no longer exists", key)
+			}
+
+			return fmt.Errorf("top-level key %q no longer exists, %s", key, replacement)
 		}
 
 		if knownLayoutTopLevelKeys[key] {
@@ -288,6 +307,15 @@ func (cfg *LayoutConfig) ApplyMetadata(target *Config) {
 	}
 }
 
+// layoutTableNames are the top-level keys holding prompt lines.
+var layoutTableNames = map[string]bool{
+	"prompt":     true,
+	"rprompt":    true,
+	"secondary":  true,
+	"transient":  true,
+	"rtransient": true,
+}
+
 type separatorPair struct {
 	left  string
 	right string
@@ -303,6 +331,32 @@ var separatorAliases = map[string]separatorPair{
 	"flame":          {left: "\uE0C0", right: "\uE0C1"},
 	"pixel":          {left: "\uE0C6", right: "\uE0C6"},
 	"lego":           {left: "\uE0CE", right: "\uE0CF"},
+}
+
+// mirroredGlyphs pairs each separator glyph with the one facing the other way.
+// Derived from separatorAliases rather than written out again, so an alias
+// cannot be added in one place and forgotten in the other.
+var mirroredGlyphs = func() map[string]string {
+	mirrored := make(map[string]string, len(separatorAliases)*2)
+
+	for _, pair := range separatorAliases {
+		mirrored[pair.left] = pair.right
+		mirrored[pair.right] = pair.left
+	}
+
+	return mirrored
+}()
+
+// MirrorGlyph returns the glyph that faces the other way, so a separator
+// written for a left-aligned line reads correctly on a right-aligned one. A
+// glyph with no mirror — a custom one, or a symmetric alias like pixel — is
+// returned unchanged.
+func MirrorGlyph(glyph string) string {
+	if mirrored, ok := mirroredGlyphs[glyph]; ok {
+		return mirrored
+	}
+
+	return glyph
 }
 
 func normalizePromptLayouts(cfg *LayoutConfig) error {
@@ -339,50 +393,56 @@ func normalizePromptLayouts(cfg *LayoutConfig) error {
 	return nil
 }
 
+// rejectLineGlyphKeys keeps the compiled glyph fields out of user YAML. They
+// are what the parser produces from style and separator keys, so accepting them
+// as input would let a config bypass alias resolution and alignment.
+func rejectLineGlyphKeys(doc map[string]any) error {
+	for table := range layoutTableNames {
+		lines, ok := doc[table].([]any)
+		if !ok {
+			continue
+		}
+
+		for _, line := range lines {
+			fields, ok := line.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			for _, key := range []string{"leading_glyph", "trailing_glyph"} {
+				if value, ok := fields[key]; ok && value != nil {
+					return fmt.Errorf("%s does not allow %s, it is set by the parser", table, key)
+				}
+			}
+
+			if err := rejectRemovedSeparatorKeys(fields, table); err != nil {
+				return err
+			}
+
+			if _, ok := fields["keep_when_empty"]; ok {
+				return fmt.Errorf("%s does not allow keep_when_empty, it belongs on a segment", table)
+			}
+		}
+	}
+
+	return nil
+}
+
 func normalizePromptLayout(layout *PromptLayout, rightAligned bool, table string) error {
-	if layout.LeadingDiamond != "" || layout.TrailingDiamond != "" {
-		return fmt.Errorf("%s does not allow leading_diamond/trailing_diamond", table)
-	}
-
-	if layout.LeadingStyle != "" && layout.LeadingSeparator != "" {
-		return fmt.Errorf("%s cannot define both leading_style and leading_separator", table)
-	}
-
-	if layout.TrailingStyle != "" && layout.TrailingSeparator != "" {
-		return fmt.Errorf("%s cannot define both trailing_style and trailing_separator", table)
-	}
-
-	if layout.Style != "" {
-		if layout.LeadingStyle != "" || layout.TrailingStyle != "" || layout.LeadingSeparator != "" || layout.TrailingSeparator != "" {
-			return fmt.Errorf("%s cannot define style together with explicit leading/trailing separator settings", table)
-		}
-
-		if !isSeparatorAlias(layout.Style) {
-			return fmt.Errorf("%s uses unknown style alias %q", table, layout.Style)
-		}
-
-		// Shortcut behavior:
-		// - left aligned lines use trailing separators
-		// - right aligned lines use leading separators
-		if rightAligned {
-			layout.LeadingStyle = layout.Style
-		} else {
-			layout.TrailingStyle = layout.Style
-		}
-	}
-
-	leading, err := resolveSeparator(layout.LeadingStyle, layout.LeadingSeparator, true)
+	leading, trailing, err := resolveSeparatorPair(separatorSpec{
+		style:             layout.Style,
+		leadingStyle:      layout.LeadingStyle,
+		trailingStyle:     layout.TrailingStyle,
+		leadingSeparator:  layout.LeadingSeparator,
+		trailingSeparator: layout.TrailingSeparator,
+	}, rightAligned, table)
 	if err != nil {
-		return fmt.Errorf("%s leading separator: %w", table, err)
+		return err
 	}
 
-	trailing, err := resolveSeparator(layout.TrailingStyle, layout.TrailingSeparator, false)
-	if err != nil {
-		return fmt.Errorf("%s trailing separator: %w", table, err)
-	}
+	layout.LeadingGlyph = leading
+	layout.TrailingGlyph = trailing
 
-	layout.LeadingDiamond = leading
-	layout.TrailingDiamond = trailing
 	layout.Style = ""
 	layout.LeadingStyle = ""
 	layout.TrailingStyle = ""
@@ -393,13 +453,7 @@ func normalizePromptLayout(layout *PromptLayout, rightAligned bool, table string
 }
 
 func decodeLayoutSegmentTables(doc map[string]any, segmentsByName map[string]*Segment) error {
-	lineTables := map[string]bool{
-		"prompt":     true,
-		"rprompt":    true,
-		"secondary":  true,
-		"transient":  true,
-		"rtransient": true,
-	}
+	lineTables := layoutTableNames
 	reservedTables := map[string]bool{
 		"vim-mode": true,
 	}
@@ -419,7 +473,7 @@ func decodeLayoutSegmentTables(doc map[string]any, segmentsByName map[string]*Se
 		}
 
 		if hasScalarFields(table) {
-			if shouldSkipLayoutTable(key, table) {
+			if shouldSkipLayoutTable(key) {
 				continue
 			}
 
@@ -502,7 +556,7 @@ func decodeLayoutSegmentTable(name string, raw map[string]any, defaultType Segme
 		segment.Alias = name
 	}
 
-	if err := validateSegmentOptions(&segment); err != nil {
+	if err := validateSegmentOptions(&segment, name); err != nil {
 		return err
 	}
 
@@ -511,7 +565,9 @@ func decodeLayoutSegmentTable(name string, raw map[string]any, defaultType Segme
 	return nil
 }
 
-func validateSegmentOptions(segment *Segment) error {
+// validateSegmentOptions takes the name separately: tooltips and the extra
+// lines have no alias to fall back on, and an error naming nothing is no help.
+func validateSegmentOptions(segment *Segment, name string) error {
 	if segment == nil {
 		return nil
 	}
@@ -525,59 +581,174 @@ func validateSegmentOptions(segment *Segment) error {
 		return nil
 	}
 
-	return fmt.Errorf("segment %s uses unsupported time_format %q", segment.Alias, format)
+	return fmt.Errorf("segment %s uses unsupported time_format %q", name, format)
+}
+
+// removedSeparatorKeys names the keys this config format used to carry, so an
+// old config fails loudly instead of rendering as something else. A value of ""
+// means the key has no replacement.
+var removedSeparatorKeys = map[string]string{
+	"powerline_symbol":         "trailing_separator",
+	"leading_powerline_symbol": "leading_separator",
+	"invert_powerline":         "",
+	"leading_diamond":          "leading_separator or leading_style",
+	"trailing_diamond":         "trailing_separator or trailing_style",
+}
+
+// removedSeparatorKeyNames is sorted so a config carrying several removed keys
+// always reports the same one, rather than whichever the map iteration reached
+// first.
+var removedSeparatorKeyNames = func() []string {
+	names := make([]string, 0, len(removedSeparatorKeys))
+	for name := range removedSeparatorKeys {
+		names = append(names, name)
+	}
+
+	sort.Strings(names)
+
+	return names
+}()
+
+func rejectRemovedSeparatorKeys(raw map[string]any, name string) error {
+	for _, key := range removedSeparatorKeyNames {
+		if _, ok := raw[key]; !ok {
+			continue
+		}
+
+		replacement := removedSeparatorKeys[key]
+		if replacement == "" {
+			return fmt.Errorf("%s uses %s, which no longer exists", name, key)
+		}
+
+		return fmt.Errorf("%s uses %s, use %s instead", name, key, replacement)
+	}
+
+	return nil
+}
+
+// separatorSpec is the separator vocabulary as written in config, before it is
+// compiled to glyphs.
+type separatorSpec struct {
+	style             string
+	leadingStyle      string
+	trailingStyle     string
+	leadingSeparator  string
+	trailingSeparator string
+}
+
+// resolveSeparatorPair validates the separator keys and compiles them to the
+// oriented glyphs the engine reads. Lines and segments share it so the rules
+// cannot drift apart: they did once, and the two paths reported different
+// errors for the same input.
+//
+// style is alignment-aware on a line — left lines close with it, right lines
+// open with it. A segment has no alignment of its own, so its style always sets
+// the trailing separator.
+func resolveSeparatorPair(spec separatorSpec, rightAligned bool, name string) (leadingGlyph, trailingGlyph string, err error) {
+	if spec.leadingStyle != "" && spec.leadingSeparator != "" {
+		return "", "", fmt.Errorf("%s cannot define both leading_style and leading_separator", name)
+	}
+
+	if spec.trailingStyle != "" && spec.trailingSeparator != "" {
+		return "", "", fmt.Errorf("%s cannot define both trailing_style and trailing_separator", name)
+	}
+
+	// The error has to name the key the user wrote, not the side the shortcut
+	// happened to expand to.
+	leadingKey, trailingKey := "leading_style", "trailing_style"
+
+	if spec.style != "" {
+		if spec.leadingStyle != "" || spec.trailingStyle != "" || spec.leadingSeparator != "" || spec.trailingSeparator != "" {
+			return "", "", fmt.Errorf("%s cannot define style together with explicit leading/trailing separator settings", name)
+		}
+
+		if rightAligned {
+			spec.leadingStyle = spec.style
+			leadingKey = "style"
+		} else {
+			spec.trailingStyle = spec.style
+			trailingKey = "style"
+		}
+	}
+
+	leadingGlyph, err = resolveSeparator(spec.leadingStyle, spec.leadingSeparator, true)
+	if err != nil {
+		return "", "", fmt.Errorf("%s %s: %w", name, leadingKey, err)
+	}
+
+	trailingGlyph, err = resolveSeparator(spec.trailingStyle, spec.trailingSeparator, false)
+	if err != nil {
+		return "", "", fmt.Errorf("%s %s: %w", name, trailingKey, err)
+	}
+
+	return leadingGlyph, trailingGlyph, nil
+}
+
+// separatorString reads one separator key, rejecting a value YAML decoded as
+// something other than a string. Left unchecked, `style: 1` would be dropped
+// silently and the segment would render flat with no diagnostic.
+func separatorString(raw map[string]any, key, name string) (string, error) {
+	value, ok := raw[key]
+	if !ok || value == nil {
+		return "", nil
+	}
+
+	text, ok := value.(string)
+	if !ok {
+		return "", fmt.Errorf("%s %s must be a string", name, key)
+	}
+
+	return text, nil
 }
 
 func normalizeSegmentSeparators(raw map[string]any, name string) error {
-	if val, ok := raw["leading_diamond"]; ok && val != nil {
-		return fmt.Errorf("%s does not allow leading_diamond", name)
+	if val, ok := raw["leading_glyph"]; ok && val != nil {
+		return fmt.Errorf("%s does not allow leading_glyph, it is set by the parser", name)
 	}
 
-	if val, ok := raw["trailing_diamond"]; ok && val != nil {
-		return fmt.Errorf("%s does not allow trailing_diamond", name)
+	if val, ok := raw["trailing_glyph"]; ok && val != nil {
+		return fmt.Errorf("%s does not allow trailing_glyph, it is set by the parser", name)
 	}
 
-	leadingStyle, _ := raw["leading_style"].(string)
-	leadingSeparator, _ := raw["leading_separator"].(string)
-	trailingStyle, _ := raw["trailing_style"].(string)
-	trailingSeparator, _ := raw["trailing_separator"].(string)
-	styleValue, _ := raw["style"].(string)
-
-	if leadingStyle != "" && leadingSeparator != "" {
-		return fmt.Errorf("%s cannot define both leading_style and leading_separator", name)
+	if err := rejectRemovedSeparatorKeys(raw, name); err != nil {
+		return err
 	}
 
-	if trailingStyle != "" && trailingSeparator != "" {
-		return fmt.Errorf("%s cannot define both trailing_style and trailing_separator", name)
-	}
+	var spec separatorSpec
 
-	if isSeparatorAlias(styleValue) {
-		if leadingStyle != "" || trailingStyle != "" || leadingSeparator != "" || trailingSeparator != "" {
-			return fmt.Errorf("%s cannot define style together with explicit leading/trailing separator settings", name)
+	for _, field := range []struct {
+		target *string
+		key    string
+	}{
+		{&spec.style, "style"},
+		{&spec.leadingStyle, "leading_style"},
+		{&spec.trailingStyle, "trailing_style"},
+		{&spec.leadingSeparator, "leading_separator"},
+		{&spec.trailingSeparator, "trailing_separator"},
+	} {
+		value, err := separatorString(raw, field.key, name)
+		if err != nil {
+			return err
 		}
 
-		// Shortcut behavior: style defines trailing separator style, leading remains flat.
-		trailingStyle = styleValue
-		// Alias styles compile to diamond rendering with normalized separators.
-		raw["style"] = string(Diamond)
+		*field.target = value
 	}
 
-	leading, err := resolveSeparator(leadingStyle, leadingSeparator, true)
+	// A segment definition can appear on lines of either alignment, so its
+	// style is never alignment-aware.
+	leading, trailing, err := resolveSeparatorPair(spec, false, name)
 	if err != nil {
-		return fmt.Errorf("%s leading separator: %w", name, err)
+		return err
 	}
 
-	trailing, err := resolveSeparator(trailingStyle, trailingSeparator, false)
-	if err != nil {
-		return fmt.Errorf("%s trailing separator: %w", name, err)
-	}
+	delete(raw, "style")
 
 	if leading != "" {
-		raw["leading_diamond"] = leading
+		raw["leading_glyph"] = leading
 	}
 
 	if trailing != "" {
-		raw["trailing_diamond"] = trailing
+		raw["trailing_glyph"] = trailing
 	}
 
 	delete(raw, "leading_style")
@@ -599,7 +770,7 @@ func resolveSeparator(style, separator string, leading bool) (string, error) {
 
 	pair, ok := separatorAliases[strings.ToLower(style)]
 	if !ok {
-		return "", fmt.Errorf("unknown style alias %q", style)
+		return "", fmt.Errorf("%q is not a separator alias, expected one of: %s", style, separatorAliasNames())
 	}
 
 	leftGlyph := pair.left
@@ -612,13 +783,17 @@ func resolveSeparator(style, separator string, leading bool) (string, error) {
 	return rightGlyph, nil
 }
 
-func isSeparatorAlias(style string) bool {
-	if style == "" {
-		return false
+// separatorAliasNames lists the aliases in a stable order so the error a user
+// sees names every value they could have meant.
+func separatorAliasNames() string {
+	names := make([]string, 0, len(separatorAliases))
+	for name := range separatorAliases {
+		names = append(names, name)
 	}
 
-	_, ok := separatorAliases[strings.ToLower(style)]
-	return ok
+	sort.Strings(names)
+
+	return strings.Join(names, ", ")
 }
 
 func hasScalarFields(table map[string]any) bool {
@@ -631,45 +806,111 @@ func hasScalarFields(table map[string]any) bool {
 	return false
 }
 
-func shouldSkipLayoutTable(name string, table map[string]any) bool {
-	if _, explicitType := table["type"]; explicitType {
-		return false
-	}
+// metadataTables are reserved top-level keys. They are never segment names, so
+// they must not be registered as segments even when they carry a type: the
+// extra segment tables among them are decoded separately.
+var metadataTables = map[string]bool{
+	"palette":        true,
+	"palettes":       true,
+	"maps":           true,
+	"var":            true,
+	"cycle":          true,
+	"iterm_features": true,
+	"debug_prompt":   true,
+	"valid_line":     true,
+	"error_line":     true,
+}
 
-	if isKnownSegmentType(SegmentType(name)) {
-		return false
-	}
-
-	if idx := strings.Index(name, "."); idx > 0 {
-		prefix := SegmentType(name[:idx])
-		if isKnownSegmentType(prefix) {
-			return false
-		}
-	}
-
-	metadataTables := map[string]bool{
-		"palette":        true,
-		"palettes":       true,
-		"maps":           true,
-		"var":            true,
-		"cycle":          true,
-		"iterm_features": true,
-		"debug_prompt":   true,
-		"valid_line":     true,
-		"error_line":     true,
-	}
-
+// shouldSkipLayoutTable reports that a top-level table is a reserved key rather
+// than a segment definition. Segment names are arbitrary, so this is the only
+// thing standing between `palette:` and being parsed as a segment called
+// "palette".
+func shouldSkipLayoutTable(name string) bool {
 	return metadataTables[name]
 }
 
-func normalizeExtraSegment(segment *Segment) {
-	if segment == nil {
-		return
+// extraSegmentTables are segments the config addresses by role rather than by
+// name. They are decoded from the raw document so they pass through the same
+// separator normalization as named segments, which both compiles their
+// separator keys and rejects the engine-level ones.
+var extraSegmentTables = []string{"debug_prompt", "valid_line", "error_line"}
+
+func normalizeExtraSegments(doc map[string]any, layout *LayoutConfig) error {
+	targets := map[string]**Segment{
+		"debug_prompt": &layout.DebugPrompt,
+		"valid_line":   &layout.ValidLine,
+		"error_line":   &layout.ErrorLine,
 	}
 
-	if segment.Type == "" {
-		segment.Type = TEXT
+	for _, name := range extraSegmentTables {
+		table, ok := doc[name].(map[string]any)
+		if !ok {
+			continue
+		}
+
+		segment, err := decodeExtraSegment(table, name, TEXT)
+		if err != nil {
+			return err
+		}
+
+		*targets[name] = segment
 	}
+
+	tooltips, ok := doc["tooltips"].([]any)
+	if !ok {
+		return nil
+	}
+
+	layout.Tooltips = make([]*Segment, 0, len(tooltips))
+
+	for i, item := range tooltips {
+		table, ok := item.(map[string]any)
+		if !ok {
+			return fmt.Errorf("tooltip %d is not a table", i)
+		}
+
+		segment, err := decodeExtraSegment(table, fmt.Sprintf("tooltip %d", i), "")
+		if err != nil {
+			return err
+		}
+
+		layout.Tooltips = append(layout.Tooltips, segment)
+	}
+
+	return nil
+}
+
+func decodeExtraSegment(raw map[string]any, name string, defaultType SegmentType) (*Segment, error) {
+	copyMap := make(map[string]any, len(raw)+1)
+	maps.Copy(copyMap, raw)
+
+	if err := normalizeSegmentSeparators(copyMap, name); err != nil {
+		return nil, err
+	}
+
+	if _, ok := copyMap["type"]; !ok && defaultType != "" {
+		copyMap["type"] = string(defaultType)
+	}
+
+	yamlData, err := yaml.Marshal(copyMap)
+	if err != nil {
+		return nil, err
+	}
+
+	var segment Segment
+	if err := yaml.Unmarshal(yamlData, &segment); err != nil {
+		return nil, err
+	}
+
+	if !isKnownSegmentType(segment.Type) {
+		return nil, fmt.Errorf("unsupported segment type %q for %s", segment.Type, name)
+	}
+
+	if err := validateSegmentOptions(&segment, name); err != nil {
+		return nil, err
+	}
+
+	return &segment, nil
 }
 
 func isKnownSegmentType(segmentType SegmentType) bool {

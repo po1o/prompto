@@ -10,8 +10,7 @@ git:
     options:
         fetch_status: true
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 path:
     background: '#feae34'
@@ -19,8 +18,6 @@ path:
     leading_separator: 
     options:
         style: folder
-    powerline_symbol: 
-    style: diamond
     template: '  {{ .Path }} '
     trailing_separator: 
 prompt:
@@ -36,6 +33,5 @@ status:
     leading_separator: <transparent,background></>
     options:
         always_enabled: true
-    style: diamond
     template: '  '
     trailing_separator: 

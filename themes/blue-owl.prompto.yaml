@@ -6,7 +6,6 @@ executiontime:
     options:
         style: dallas
         threshold: 0
-    style: diamond
     template: ' {{ .FormattedMs }}s '
     trailing_separator: 
 git:
@@ -19,13 +18,11 @@ git:
     foreground: '#000000'
     options:
         fetch_status: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }}{{ if .Staging.Changed }}<#FF6F00>  {{ .Staging.String }}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 os:
     background: transparent
     foreground: '#ffffff'
-    style: plain
     template: '{{ if .WSL }}WSL at {{ end }}{{.Icon}} '
 path:
     background: '#01579B'
@@ -36,7 +33,6 @@ path:
         folder_separator_icon: <transparent>  </>
         home_icon: 
         style: agnoster_short
-    style: diamond
     template: ' {{ .Path }} '
     trailing_separator: 
 prompt:
@@ -52,7 +48,6 @@ prompt:
 root:
     background: '#a313a8'
     foreground: '#FFEB3B'
-    style: plain
     template: '⚡ '
 rprompt:
     - segments:
@@ -62,14 +57,12 @@ session:
     background: '#29315A'
     foreground: '#43CCEA'
     leading_separator: 
-    style: diamond
     template: '  {{ .UserName }}<transparent> / </>{{ .HostName }} '
     trailing_separator: 
 status:
     background: '#910000'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '<transparent> </> {{ reason .Code }} '
 status.2:
     foreground: '#ffffff'
@@ -77,7 +70,6 @@ status.2:
         - '{{ if gt .Code 0 }}#ff0000{{ end }}'
     options:
         always_enabled: true
-    style: plain
     template: '❯ '
 time:
     background: '#29315A'
@@ -85,5 +77,4 @@ time:
     leading_separator: 
     options:
         time_format: "15:04:05"
-    style: diamond
     template: ' {{ .LastDate | date .Format }} '

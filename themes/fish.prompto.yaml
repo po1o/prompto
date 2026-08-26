@@ -1,7 +1,6 @@
 git:
     background: '#007ACC'
     foreground: '#ffffff'
-    style: plain
     template: '<#ffffff></> {{ .HEAD }} '
 path:
     background: '#007ACC'
@@ -10,7 +9,6 @@ path:
         folder_icon: 
         folder_separator_icon: '  '
         style: full
-    style: plain
     template: '<transparent></> {{ .Path }} '
 prompt:
     - segments:
@@ -22,17 +20,13 @@ prompt:
         - text
 root:
     foreground: '#100e23'
-    style: plain
     template: '  '
 session:
     foreground: '#ffffff'
-    style: plain
     template: ' {{ .UserName }}@{{ .HostName }} '
 status:
     foreground: '#ffffff'
-    style: plain
     template: ' {{ reason .Code }}'
 text:
     foreground: '#007ACC'
-    style: plain
     template: ' '

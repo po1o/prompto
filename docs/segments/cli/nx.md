@@ -16,8 +16,7 @@ prompt:
 
 nx:
   type: "nx"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#000000"
   background: "#1976d2"
   template: "  {{ .Full }} "

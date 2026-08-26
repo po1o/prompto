@@ -16,7 +16,6 @@ prompt:
 
 text:
   type: "text"
-  style: "plain"
   foreground: "#E06C75"
   template: "❯"
 ```

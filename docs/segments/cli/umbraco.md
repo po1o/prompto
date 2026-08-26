@@ -30,9 +30,8 @@ umbraco:
   type: "umbraco"
   background: "#ffffff"
   foreground: "#d886f1"
-  style: "diamond"
-  leading_diamond: ""
-  trailing_diamond: ""
+  leading_separator: ""
+  trailing_separator: ""
   template: "󰕉 {{ .Version }}"
   background_templates: ["{{ if (.Modern) }}#3544B1{{ end }}", "{{ if not (.Modern) }}#F79C37{{ end }}"]
 ```

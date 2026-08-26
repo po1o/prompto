@@ -20,16 +20,14 @@ func TestDefaultUsesMinimalFallbackLayout(t *testing.T) {
 
 	path := cfg.Layout.Segments["path"]
 	require.NotNil(t, path)
-	assert.Equal(t, Plain, path.Style)
 	assert.Equal(t, "transparent", path.Background.String())
 	assert.Empty(t, path.Foreground.String())
 	assert.Equal(t, " {{ path .Path .Location }} \ue0b1", path.Template)
 
 	status := cfg.Layout.Segments["status"]
 	require.NotNil(t, status)
-	assert.Equal(t, Diamond, status.Style)
-	assert.Equal(t, "\ue0b6", status.LeadingDiamond)
-	assert.Equal(t, "\ue0b4", status.TrailingDiamond)
+	assert.Equal(t, "\ue0b6", status.LeadingGlyph)
+	assert.Equal(t, "\ue0b4", status.TrailingGlyph)
 	assert.Equal(t, "p:red", status.Background.String())
 	assert.Equal(t, "p:white", status.Foreground.String())
 }

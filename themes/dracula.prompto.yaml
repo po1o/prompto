@@ -1,9 +1,7 @@
 aws:
     background: '#f1fa8c'
     foreground: '#282a36'
-    invert_powerline: true
     leading_separator: 
-    style: diamond
     template: '  {{.Profile}}{{if .Region}}@{{.Region}}{{end}}'
     trailing_separator: 
 cursor_padding: true
@@ -14,22 +12,19 @@ git:
         branch_icon: ""
         fetch_status: false
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  ({{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }}) '
 node:
     background: '#8be9fd'
     foreground: '#f8f8f2'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 path:
     background: '#bd93f9'
     foreground: '#f8f8f2'
     options:
         style: folder
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -45,13 +40,11 @@ session:
     background: '#6272a4'
     foreground: '#f8f8f2'
     leading_separator: 
-    style: diamond
     template: '{{ .UserName }} '
 time:
     background: '#ff79c6'
     foreground: '#f8f8f2'
     options:
         time_format: "15:04"
-    style: diamond
     template: ' ♥ {{ .LastDate | date .Format }} '
     trailing_separator: 

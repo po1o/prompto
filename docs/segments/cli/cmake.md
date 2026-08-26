@@ -16,8 +16,7 @@ prompt:
 
 cmake:
   type: "cmake"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#E8EAEE"
   background: "#1E9748"
   template: "  cmake {{ .Full }} "

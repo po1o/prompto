@@ -20,10 +20,9 @@ prompt:
 
 connection:
   type: "connection"
-  style: "powerline"
   background: "#8822ee"
   foreground: "#222222"
-  powerline_symbol: ""
+  trailing_separator: ""
 ```
 
 ## Options

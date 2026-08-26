@@ -26,13 +26,13 @@ rtransient:
       - time.transient
 
 session:
-  style: powerline
+  trailing_separator: ""
   foreground: "#ffff00"
   background: "#000000"
   template: "{{ if .SSHSession }} {{ .UserName }}@{{ .HostName }} {{ end }}"
 
 path:
-  style: powerline
+  trailing_separator: ""
   foreground: "#ffffff"
   foreground_templates:
     - "{{ if not .Writable }}#ff5f57{{ end }}"
@@ -43,7 +43,7 @@ path:
     max_width: 40
 
 path.transient:
-  style: powerline
+  trailing_separator: ""
   foreground: "#5a5a5a"
   foreground_templates:
     - "{{ if not .Writable }}#ff5f57{{ end }}"
@@ -54,7 +54,7 @@ path.transient:
     max_width: 40
 
 git:
-  style: powerline
+  trailing_separator: ""
   foreground: "#3a3a3a"
   render_pending_background: darkGray
   background_templates:
@@ -72,7 +72,7 @@ git:
     git_icon: "\uf1d3"
 
 git.transient:
-  style: powerline
+  trailing_separator: ""
   foreground: "#3a3a3a"
   background_templates:
     - "{{ if or (.Working.Changed) (.Staging.Changed) }}#ffe57f{{ else }}#b9f6ca{{ end }}"
@@ -89,7 +89,7 @@ git.transient:
     git_icon: "\uf1d3"
 
 time.transient:
-  style: powerline
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#7a7a7a"
   template: " {{ .CurrentDate }} "
@@ -97,7 +97,7 @@ time.transient:
     time_format: "15:04"
 
 vim:
-  style: powerline
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#ff5f57"
   template: "{{ if .Normal }} NORMAL {{ end }}"

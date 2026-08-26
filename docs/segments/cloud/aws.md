@@ -18,8 +18,7 @@ prompt:
 
 aws:
   type: "aws"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#FFA400"
   template: "  {{.Profile}}{{if .Region}}@{{.Region}}{{end}}"

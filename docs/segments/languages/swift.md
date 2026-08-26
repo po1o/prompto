@@ -16,8 +16,7 @@ prompt:
 
 swift:
   type: "swift"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#f6553c"
   template: "  {{ .Full }} "

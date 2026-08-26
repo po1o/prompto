@@ -26,8 +26,7 @@ prompt:
 
 carbonintensity:
   type: "carbonintensity"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#000000"
   background: "#ffffff"
   background_templates:

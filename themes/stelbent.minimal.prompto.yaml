@@ -20,16 +20,14 @@ git:
         no_commits_icon: '[no commits]'
         rebase_icon: 'Ɫ '
         tag_icon: '▶ '
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} │{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 path:
     background: '#91ddff'
     foreground: '#100e23'
     options:
         style: folder
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -43,7 +41,6 @@ prompt:
         - text.2
 root:
     foreground: '#ff8080'
-    style: plain
     template: ' <#757575,>as</> root'
 rprompt:
     - segments:
@@ -52,35 +49,28 @@ rprompt:
         - time
 session:
     foreground: '#757575'
-    style: plain
     template: '┌ {{ .UserName }}@{{ .HostName }} '
 shell:
     foreground: '#007acc'
-    style: plain
     template: '{{ .Name }}'
 status:
     background: '#ff8080'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' error '
 terraform:
     background: '#ffee58'
     foreground: '#100e23'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .WorkspaceName }} '
 text:
     foreground: '#757575'
-    style: plain
     template: '└ '
 text.2:
     foreground: '#ffffff'
-    style: plain
     template: $
 time:
     foreground: '#689f38'
     options:
         time_format: "15:04:05"
-    style: plain
     template: ' <#757575,>|</> {{ .LastDate | date .Format }}'

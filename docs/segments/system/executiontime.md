@@ -16,8 +16,7 @@ prompt:
 
 executiontime:
   type: "executiontime"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#8800dd"
   template: " <#fefefe></> {{ .FormattedMs }} "

@@ -3,35 +3,32 @@ battery:
         - '{{if eq "Charging" .State.String}}#4caf50{{end}}'
         - '{{if eq "Discharging" .State.String}}#40c4ff{{end}}'
         - '{{if eq "Full" .State.String}}#ff0000{{end}}'
-    invert_powerline: true
     options:
         charged_icon: ' '
         charging_icon: ' '
-    style: powerline
+    trailing_separator: ""
     template: '| {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}  '
 dart:
     foreground: '#06A4CE'
-    style: powerline
+    trailing_separator: ""
     template: '|  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 git:
     foreground: '#F1502F'
     options:
         fetch_status: true
-    style: plain
     template: ':: {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }} '
 node:
     foreground: '#6CA35E'
-    style: powerline
+    trailing_separator: ""
     template: '|  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 os:
     foreground: cyan
-    style: powerline
+    trailing_separator: ""
     template: '{{ if .WSL }}WSL at {{ end }}{{.Icon}}'
 path:
     foreground: cyan
     options:
         style: full
-    style: plain
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -45,11 +42,9 @@ python:
     options:
         display_mode: context
         fetch_virtual_env: true
-    style: plain
     template: '|  {{ .Venv }} '
 root:
     foreground: red
-    style: plain
     template: '| root '
 rprompt:
     - segments:
@@ -65,9 +60,8 @@ status:
         - '{{ if gt .Code 0 }}red{{ end }}'
     options:
         always_enabled: true
-    style: powerline
+    trailing_separator: ""
     template: '➜ '
 time:
     foreground: lightGreen
-    style: plain
     template: '| {{ .LastDate | date .Format }} '

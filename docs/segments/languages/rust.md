@@ -16,8 +16,7 @@ prompt:
 
 rust:
   type: "rust"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#193549"
   background: "#99908a"
   template: "  {{ .Full }} "

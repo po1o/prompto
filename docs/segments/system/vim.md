@@ -24,7 +24,6 @@ prompt:
 
 vim:
   type: vim
-  style: diamond
   foreground: white
   background: "#4c566a"
   background_templates:
@@ -32,8 +31,8 @@ vim:
     - "{{ if .Normal }}#ffb300{{ end }}"
     - "{{ if .Visual }}#7e57c2{{ end }}"
     - "{{ if .Replace }}#ef5350{{ end }}"
-  leading_diamond: ""
-  trailing_diamond: ""
+  leading_separator: ""
+  trailing_separator: ""
 ```
 
 ## Behavior

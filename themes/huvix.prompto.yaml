@@ -8,7 +8,7 @@ battery:
         charged_icon: ' '
         charging_icon: ' '
         discharging_icon: ' '
-    style: powerline
+    trailing_separator: ""
     template: '[{{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}]'
 executiontime:
     foreground: '#FFAB91'
@@ -16,24 +16,22 @@ executiontime:
         always_enabled: false
         style: austin
         threshold: 100
-    style: powerline
+    trailing_separator: ""
     template: '{{ .FormattedMs }}'
 cursor_padding: true
 git:
     foreground: '#56B6C2'
     options:
         branch_icon: ""
-    style: plain
     template: <#E8CC97>git(</>{{ .HEAD }}<#E8CC97>) </>
 go:
     foreground: '#7FD5EA'
-    style: powerline
+    trailing_separator: ""
     template: '({{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}) '
 path:
     foreground: '#56B6C2'
     options:
         style: agnoster_short
-    style: plain
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -47,9 +45,8 @@ prompt:
         - battery
 python:
     foreground: '#9e7eff'
-    style: powerline
+    trailing_separator: ""
     template: '( {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}) '
 session:
     foreground: '#FFE082'
-    style: plain
     template: '@{{ .UserName }} ➜'

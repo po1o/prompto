@@ -22,20 +22,6 @@ import (
 	"golang.org/x/text/language"
 )
 
-// SegmentStyle the style of segment, for more information, see the constants
-type SegmentStyle string
-
-func (s *SegmentStyle) resolve(context any) SegmentStyle {
-	value, err := template.Render(string(*s), context)
-
-	// default to Plain
-	if err != nil || value == "" {
-		return Plain
-	}
-
-	return SegmentStyle(value)
-}
-
 type Segment struct {
 	writer SegmentWriter
 	env    runtime.Environment
@@ -49,20 +35,16 @@ type Segment struct {
 	Options                 options.Map `yaml:"options,omitempty"`
 	Cache                   *Cache      `yaml:"cache,omitempty"`
 	Alias                   string      `yaml:"alias,omitempty"`
-	styleCache              SegmentStyle
 	name                    string
-	LeadingDiamond          string         `yaml:"leading_diamond,omitempty"`
-	TrailingDiamond         string         `yaml:"trailing_diamond,omitempty"`
+	LeadingGlyph            string         `yaml:"leading_glyph,omitempty"`
+	TrailingGlyph           string         `yaml:"trailing_glyph,omitempty"`
 	RenderPendingIcon       string         `yaml:"render_pending_icon,omitempty"`
 	Template                string         `yaml:"template,omitempty"`
 	Foreground              color.Ansi     `yaml:"foreground,omitempty"`
 	TemplatesLogic          template.Logic `yaml:"templates_logic,omitempty"`
-	PowerlineSymbol         string         `yaml:"powerline_symbol,omitempty"`
 	Background              color.Ansi     `yaml:"background,omitempty"`
 	Filler                  string         `yaml:"filler,omitempty"`
 	Type                    SegmentType    `yaml:"type,omitempty"`
-	Style                   SegmentStyle   `yaml:"style,omitempty"`
-	LeadingPowerlineSymbol  string         `yaml:"leading_powerline_symbol,omitempty"`
 	RenderPendingBackground color.Ansi     `yaml:"render_pending_background,omitempty"`
 	ForegroundTemplates     template.List  `yaml:"foreground_templates,omitempty"`
 	Tips                    []string       `yaml:"tips,omitempty"`
@@ -80,7 +62,7 @@ type Segment struct {
 	Interactive             bool           `yaml:"interactive,omitempty"`
 	Enabled                 bool           `yaml:"-"`
 	Newline                 bool           `yaml:"newline,omitempty"`
-	InvertPowerline         bool           `yaml:"invert_powerline,omitempty"`
+	KeepWhenEmpty           bool           `yaml:"keep_when_empty,omitempty"`
 	Force                   bool           `yaml:"force,omitempty"`
 	restored                bool           `yaml:"-"`
 	Toggled                 bool           `yaml:"toggled,omitempty"`
@@ -103,7 +85,6 @@ func (segment *Segment) Clone() *Segment {
 	// a possibly still-running execution goroutine, so it must exist before
 	// the goroutine starts (lazy allocation would race on the pointer).
 	cloned.abandoned = &atomic.Bool{}
-	cloned.styleCache = ""
 	cloned.name = ""
 	cloned.Needs = nil
 	cloned.Duration = 0
@@ -307,27 +288,14 @@ func (segment *Segment) ResolveBackground() color.Ansi {
 	return segment.Background
 }
 
-func (segment *Segment) ResolveStyle() SegmentStyle {
-	if len(segment.styleCache) != 0 {
-		return segment.styleCache
-	}
-
-	segment.styleCache = segment.Style.resolve(segment.writer)
-
-	return segment.styleCache
-}
-
-func (segment *Segment) IsPowerline() bool {
-	style := segment.ResolveStyle()
-	return style == Powerline || style == Accordion
-}
-
-func (segment *Segment) HasEmptyDiamondAtEnd() bool {
-	if segment.ResolveStyle() != Diamond {
-		return false
-	}
-
-	return segment.TrailingDiamond == ""
+// HasEmptyGlyphAtEnd reports that a shaped segment stops at its own background
+// edge. The next segment's leading glyph is then carved out of that background
+// so the two shapes meet without a gap of terminal background between them.
+//
+// A segment carrying no glyph at all is not shaped: it is bare text, and the
+// segment after it opens against the terminal instead.
+func (segment *Segment) HasEmptyGlyphAtEnd() bool {
+	return segment.LeadingGlyph != "" && segment.TrailingGlyph == ""
 }
 
 func (segment *Segment) hasCache() bool {
@@ -540,13 +508,15 @@ func (segment *Segment) evaluateNeeds() {
 }
 
 // GetPendingText computes the text to display for a segment in pending state.
-func (segment *Segment) GetPendingText(cachedText string, cfg *Config) (enabled bool, text string, background color.Ansi) {
+// A pending segment always has something to show — its cached text, or an
+// ellipsis — so there is no "nothing to render" case to report.
+func (segment *Segment) GetPendingText(cachedText string, cfg *Config) (text string, background color.Ansi) {
 	pendingIcon := segment.getPendingIcon(cfg)
 	if cachedText == "" {
 		cachedText = "..."
 	}
 
-	return true, pendingIcon + cachedText, segment.getPendingBackground(cfg)
+	return pendingIcon + cachedText, segment.getPendingBackground(cfg)
 }
 
 func (segment *Segment) getPendingIcon(cfg *Config) string {

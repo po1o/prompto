@@ -16,11 +16,10 @@ prompt:
 
 status:
   type: "status"
-  style: "diamond"
   foreground: "#ffffff"
   background: "#00897b"
   background_templates: ["{{ if .Error }}#e91e63{{ end }}"]
-  trailing_diamond: ""
+  trailing_separator: ""
   template: "<#193549></>  "
   options:
     always_enabled: true

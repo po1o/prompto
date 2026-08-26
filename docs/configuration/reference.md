@@ -70,7 +70,6 @@
 - `style` cannot be combined with explicit leading or trailing style or separator fields.
 - `leading_style` and `leading_separator` are mutually exclusive.
 - `trailing_style` and `trailing_separator` are mutually exclusive.
-- `leading_diamond` and `trailing_diamond` are not allowed in YAML layout input.
 
 ## Segment Fields
 
@@ -78,7 +77,7 @@
 | --- | --- | --- |
 | `type` | string | segment type |
 | `alias` | string | runtime alias used for toggles and references |
-| `style` | string | segment render style or separator shortcut |
+| `style` | string | separator alias shortcut |
 | `template` | string | single template for rendered text |
 | `templates` | `[]string` | template list |
 | `templates_logic` | string | `join` or `first_match` |
@@ -90,8 +89,7 @@
 | `trailing_style` | string | trailing separator alias for the segment |
 | `leading_separator` | string | leading separator glyph |
 | `trailing_separator` | string | trailing separator glyph |
-| `leading_diamond` | string | explicit leading diamond glyph |
-| `trailing_diamond` | string | explicit trailing diamond glyph |
+| `keep_when_empty` | bool | keep the segment's separators when it renders no text, instead of hiding it |
 | `render_pending_icon` | string | per-segment pending icon override |
 | `render_pending_background` | color | per-segment pending background override |
 | `options` | map | segment-specific options |
@@ -107,17 +105,18 @@
 | `tips` | `[]string` | tooltip trigger words |
 | `newline` | bool | segment requests a newline |
 
-## Segment Render Styles
+## Separators
 
-These are the actual render styles used by the segment engine:
+Separators are the only thing that shapes a segment. A segment draws its leading separator, its text, then its
+trailing separator. A segment with no separators renders as bare text.
 
-- `plain`
-- `powerline`
-- `accordion`
-- `diamond`
+Set them in one of two ways, on a line or on a segment:
 
-If a segment `style` is one of the separator aliases below, layout normalization treats it as shorthand and resolves
-it into `diamond` with concrete separator glyphs.
+- by alias, with `style`, `leading_style`, or `trailing_style`
+- by literal glyph, with `leading_separator` or `trailing_separator`
+
+`style` is alignment-aware: on left-aligned lines it sets the trailing separator, on right-aligned lines the
+leading one. Right-aligned prompts also mirror their separators, so `` becomes ``.
 
 ## Separator Aliases
 

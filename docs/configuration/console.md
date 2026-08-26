@@ -105,12 +105,11 @@ actually has:
 
 **Drop Powerline and Nerd Font glyphs.** That means:
 
-- `style: plain` with `background: transparent` instead of `powerline` or
-  `diamond` segments
-- no `style: rounded` and no other separator alias on prompt lines, since every
-  alias is a Powerline glyph
-- ASCII separators written into the templates instead, e.g. a `>` closing the
-  left prompt and a `<` opening the right one
+- no `style`, `leading_style`, or `trailing_style`, since every separator alias
+  is a Powerline glyph
+- either no separators at all, with `background: transparent`, or ASCII ones via
+  `leading_separator` and `trailing_separator` — for example `(` and `)`, or a
+  `>` closing the left prompt and a `<` opening the right one
 - no `branch_icon`, `github_icon`, or `git_icon`; set `fetch_upstream_icon:
   false`
 - ASCII replacements for typographic characters: `..` for `…`, `↑`/`↓` for
@@ -123,7 +122,6 @@ prompt:
   - segments: [path]
 
 path:
-  style: plain
   foreground: lightWhite
   background: transparent
   template: "{{ .Path }} <red>></>"

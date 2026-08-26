@@ -37,22 +37,38 @@ rprompt:
     segments: [git, time]
 ```
 
-## `style` Shortcut Semantics
+## Line Separators Wrap the Line
 
-`style` is alignment-aware:
+The separator keys on a line object apply to the line's outer edges, not between its segments.
+A line's leading separator is drawn once before the first segment, and its trailing separator once after
+the last one. The separators between segments come from the segment definitions.
 
-- On left-aligned lines (`prompt`, `secondary`, `transient`), it sets the trailing separator.
-- On right-aligned lines (`rprompt`, `rtransient`), it sets the leading separator.
-
-That means this:
+So this:
 
 ```yaml
 prompt:
   - style: rounded
-    segments: [path]
+    segments: [session, path]
 ```
 
-is shorthand for a left prompt line that uses the `rounded` trailing separator.
+closes the line with a single `rounded` glyph after `path`. `session` and `path` still butt together
+unless they define separators of their own.
+
+## `style` Shortcut Semantics
+
+On a line, `style` is alignment-aware:
+
+- On left-aligned lines (`prompt`, `secondary`, `transient`), it sets the trailing separator.
+- On right-aligned lines (`rprompt`, `rtransient`), it sets the leading separator.
+
+That is the edge the prompt ends on in each case.
+
+On a segment, `style` always sets the trailing separator. A segment definition can be listed on both a
+left-aligned and a right-aligned line, so there is no alignment for it to follow. Use `leading_style` or
+`leading_separator` when a segment needs a leading one.
+
+Where a line and its last segment both define a trailing separator, the line's wins, because it is
+closing the whole line rather than that one segment.
 
 ## Mutual Exclusion Rules
 

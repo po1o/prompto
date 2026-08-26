@@ -34,9 +34,8 @@ prompt:
 
 copilot:
   type: "copilot"
-  style: "diamond"
-  leading_diamond: ""
-  trailing_diamond: ""
+  leading_separator: ""
+  trailing_separator: ""
   foreground: "#111111"
   background: "#fee898"
   template: "  {{ .Premium.Percent.Gauge }} "

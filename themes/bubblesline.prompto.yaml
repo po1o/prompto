@@ -10,7 +10,6 @@ battery:
         charged_icon: '● '
         charging_icon: '⇡ '
         discharging_icon: '⇣ '
-    style: diamond
     template: '{{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}'
     trailing_separator: 
 git:
@@ -19,7 +18,6 @@ git:
     leading_separator: ' '
     options:
         branch_icon: ""
-    style: diamond
     template: '{{ .HEAD }}'
     trailing_separator: 
 go:
@@ -28,7 +26,6 @@ go:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
     trailing_separator: 
 java:
@@ -37,7 +34,6 @@ java:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
     trailing_separator: 
 julia:
@@ -46,7 +42,6 @@ julia:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
     trailing_separator: 
 node:
@@ -55,7 +50,6 @@ node:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}
     trailing_separator: 
 path:
@@ -64,7 +58,6 @@ path:
     leading_separator: 
     options:
         style: folder
-    style: diamond
     template:  {{ .Path }}
     trailing_separator: 
 prompt:
@@ -76,7 +69,6 @@ python:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}
     trailing_separator: 
 rprompt:
@@ -96,13 +88,11 @@ ruby:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
     trailing_separator: 
 session:
     background: '#424242'
     foreground: '#9B6BDF'
     leading_separator: 
-    style: diamond
     template: '{{ .UserName }} ❯'
     trailing_separator: ' '

@@ -16,8 +16,7 @@ prompt:
 
 mojo:
   type: "mojo"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#100e23"
   background: "#906cff"
   template: " 🔥 {{ .Full }} "

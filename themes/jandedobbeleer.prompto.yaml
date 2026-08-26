@@ -5,8 +5,7 @@ aws:
     foreground: '#ffffff'
     options:
         display_default: false
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} '
 azfunc:
     background: '#FEAC19'
@@ -14,8 +13,7 @@ azfunc:
     options:
         display_mode: files
         fetch_version: false
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 battery:
     background: '#f36943'
@@ -24,13 +22,11 @@ battery:
         - '{{if eq "Discharging" .State.String}}#ff5722{{end}}'
         - '{{if eq "Full" .State.String}}#4caf50{{end}}'
     foreground: '#ffffff'
-    invert_powerline: true
     options:
         charged_icon: ' '
         charging_icon: ' '
         discharging_icon: ' '
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }} '
 console_title_template: '{{ .Shell }} in {{ .Folder }}'
 executiontime:
@@ -38,7 +34,6 @@ executiontime:
     foreground: '#ffffff'
     options:
         always_enabled: true
-    style: plain
     template: <transparent></>  {{ .FormattedMs }}⠀
 cursor_padding: true
 git:
@@ -54,8 +49,6 @@ git:
         branch_template: '{{ trunc 25 .Branch }}'
         fetch_status: true
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: diamond
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
     trailing_separator: 
 go:
@@ -63,24 +56,21 @@ go:
     foreground: '#111111'
     options:
         fetch_version: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 julia:
     background: '#4063D8'
     foreground: '#111111'
     options:
         fetch_version: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 node:
     background: '#6CA35E'
     foreground: '#ffffff'
     options:
         fetch_version: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 path:
     background: '#ff479c'
@@ -89,8 +79,7 @@ path:
         folder_separator_icon: '  '
         home_icon: "~"
         style: folder
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '   {{ .Path }} '
 prompt:
     - segments:
@@ -113,14 +102,12 @@ python:
     options:
         display_mode: files
         fetch_virtual_env: false
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 root:
     background: '#ffff66'
     foreground: '#111111'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  '
 rprompt:
     - segments:
@@ -134,20 +121,17 @@ ruby:
     options:
         display_mode: files
         fetch_version: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 session:
     background: '#c386f1'
     foreground: '#ffffff'
     leading_separator: 
-    style: diamond
     template: ' {{ .UserName }} '
     trailing_separator: 
 shell:
     background: '#0077c2'
     foreground: '#ffffff'
-    style: plain
     template: <#0077c2,transparent></>  {{ .Name }} <transparent,#0077c2></>
 status:
     background: '#00897b'
@@ -156,24 +140,19 @@ status:
     foreground: '#ffffff'
     options:
         always_enabled: true
-    style: diamond
     template: '<parentBackground></>  '
     trailing_separator: 
 time:
     background: '#2e9599'
     foreground: '#111111'
-    invert_powerline: true
     leading_separator: 
-    style: diamond
     template: ' {{ .LastDate | date .Format }} '
     trailing_separator: 
 ytm:
     background: '#1BD760'
     foreground: '#111111'
-    invert_powerline: true
     options:
         paused_icon: ' '
         playing_icon: ' '
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Icon }}{{ if ne .Status "stopped" }}{{ .Artist }} - {{ .Track }}{{ end }} '

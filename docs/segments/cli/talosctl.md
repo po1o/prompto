@@ -19,8 +19,7 @@ prompt:
 
 talosctl:
   type: "talosctl"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#FFFFFF"
   background: "#FF6C00"
   template: " 󱃾 {{ .Context }}"

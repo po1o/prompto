@@ -30,8 +30,7 @@ prompt:
 
 brewfather:
   type: "brewfather"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#33158A"
   background_templates: ["{{ if and (.Reading) (eq .Status \"Fermenting\") (gt .ReadingAge 4) }}#cc1515{{end}}"]

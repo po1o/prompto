@@ -16,7 +16,6 @@ prompt:
 
 buf:
   type: "buf"
-  style: "plain"
   foreground: "#1000D6"
   template: " 🐃 {{ .Full }} "
 ```

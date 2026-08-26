@@ -2,8 +2,7 @@ cursor_padding: true
 git:
     background: '#95ffa4'
     foreground: '#193549'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }} '
 path:
     background: '#91ddff'
@@ -13,8 +12,7 @@ path:
         folder_separator_icon: '  '
         home_icon: 
         style: agnoster
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -27,12 +25,10 @@ rprompt:
 session:
     background: '#ffffff'
     foreground: '#100e23'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UserName }}@{{ .HostName }} '
 time:
     foreground: '#007ACC'
     options:
         time_format: "15:04:05"
-    style: plain
     template: ' {{ .LastDate | date .Format }} '

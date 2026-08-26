@@ -16,8 +16,7 @@ prompt:
 
 sapling:
   type: "sapling"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#193549"
   background: "#4C9642"
   background_templates: ["{{ if .Bookmark }}#4C9642{{ end }}"]

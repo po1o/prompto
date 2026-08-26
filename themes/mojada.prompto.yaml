@@ -5,20 +5,17 @@ battery:
         - '{{if eq "Discharging" .State.String}}#ff5722{{end}}'
         - '{{if eq "Full" .State.String}}#4caf50{{end}}'
     foreground: '#ffffff'
-    invert_powerline: true
     options:
         charged_icon: ' '
         charging_icon: ' '
         discharging_icon: ' '
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}% '
 console_title_template: '{{.UserName}}@{{.HostName}} : {{.Folder}}'
 executiontime:
     foreground: '#ffffff'
     options:
         always_enabled: true
-    style: plain
     template: '{{ .FormattedMs }} '
 cursor_padding: true
 git:
@@ -32,8 +29,7 @@ git:
     options:
         fetch_status: true
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 os:
     background: '#fbfbfb'
@@ -49,7 +45,6 @@ os:
         opensuse: 
         ubuntu: 
         windows: 
-    style: diamond
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
 path:
     background: '#0077c2'
@@ -59,8 +54,7 @@ path:
         home_icon: "~"
         max_depth: 2
         style: letter
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Path }} '
 prompt:
     - segments:
@@ -73,8 +67,7 @@ prompt:
 root:
     background: '#e06c75'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' ⠀'
 rprompt:
     - segments:
@@ -85,25 +78,20 @@ rprompt:
 session:
     background: '#fbfbfb'
     foreground: '#0077c2'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '{{ .UserName }}<#000000>@</><#e06c75>{{ .HostName }}</> '
 status:
     foreground: '#ffffff'
     options:
         always_enabled: true
-    style: plain
     template: " {{ if gt .Code 0 }}\U000F0030{{ else }}{{ end }} "
 text:
     foreground: '#FFD54F'
-    style: plain
     template: ' {{if .Root}}#{{else}}${{end}}'
 time:
     background: '#61afef'
     foreground: '#ffffff'
-    invert_powerline: true
     options:
         time_format: 15:04 (Mon)
-    style: diamond
     template: ' {{ .LastDate | date .Format }} '
     trailing_separator: 

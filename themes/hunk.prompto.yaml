@@ -1,11 +1,9 @@
 executiontime:
     background: '#83769c'
     foreground: '#ffffff'
-    invert_powerline: true
     options:
         always_enabled: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .FormattedMs }} '
 cursor_padding: true
 git:
@@ -19,14 +17,12 @@ git:
     options:
         fetch_status: true
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UpstreamIcon }} {{ .HEAD }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }} '
 node:
     background: '#f78fb3'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 os:
     background: '#c44569'
@@ -34,15 +30,13 @@ os:
     leading_separator: 
     options:
         windows: 
-    style: diamond
     template: '{{ if .WSL }}WSL at {{ end }}{{.Icon}}'
 path:
     background: '#c44569'
     foreground: '#ffffff'
     options:
         style: full
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '{{ .Path }} '
 prompt:
     - segments:
@@ -59,18 +53,14 @@ python:
     foreground: '#ffffff'
     options:
         fetch_version: false
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
 root:
     background: '#86BBD8'
     foreground: '#FFD700'
-    invert_powerline: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' ⚡'
 root.2:
-    style: plain
     template: '  '
 rprompt:
     - segments:
@@ -81,18 +71,13 @@ rprompt:
 session:
     background: '#86BBD8'
     foreground: '#ffffff'
-    invert_powerline: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UserName }} '
 shell:
     background: '#33658A'
     foreground: '#ffffff'
-    invert_powerline: true
-    style: diamond
     template: ' {{ .Name }} '
     trailing_separator: 
 text:
     foreground: '#ffffff'
-    style: plain
     template: <#69FF94>❯</>

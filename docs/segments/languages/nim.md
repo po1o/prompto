@@ -16,8 +16,7 @@ prompt:
 
 nim:
   type: "nim"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#193549"
   background: "#f3d400"
   template: "  {{ .Full }} "

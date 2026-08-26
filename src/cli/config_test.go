@@ -146,14 +146,14 @@ func TestWriteBundledThemeInstallsConsoleVariantAlongside(t *testing.T) {
 }
 
 // A theme without a console variant must not leave a stray config.console.yaml.
+// Every bundled theme ships one, so the absence has to be staged.
 func TestWriteBundledThemeWithoutConsoleVariantWritesOnlyMainConfig(t *testing.T) {
 	setDefaultConfigEnv(t)
 
-	_, ok := bundledthemes.GetConsole("tokyo")
-	require.False(t, ok, "tokyo is expected to have no console variant")
-
-	cmd := newTestConfigCommand()
-	require.NoError(t, writeBundledTheme(cmd, "tokyo"))
+	bundledthemes.WithoutConsoleVariant("tokyo", func() {
+		cmd := newTestConfigCommand()
+		require.NoError(t, writeBundledTheme(cmd, "tokyo"))
+	})
 
 	assert.NoFileExists(t, config.ConsoleVariant(resolveDefaultConfigPath()))
 }
@@ -171,7 +171,9 @@ func TestWriteBundledThemeWarnsAboutStaleConsoleVariant(t *testing.T) {
 	cmd := newTestConfigCommand()
 	cmd.SetIn(bytes.NewBufferString("y\n"))
 
-	require.NoError(t, writeBundledTheme(cmd, "tokyo"))
+	bundledthemes.WithoutConsoleVariant("tokyo", func() {
+		require.NoError(t, writeBundledTheme(cmd, "tokyo"))
+	})
 
 	stderr, ok := cmd.ErrOrStderr().(*bytes.Buffer)
 	require.True(t, ok)

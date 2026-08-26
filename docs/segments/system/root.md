@@ -16,8 +16,7 @@ prompt:
 
 root:
   type: "root"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#111111"
   background: "#ffff66"
   template: ""

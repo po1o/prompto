@@ -16,8 +16,7 @@ prompt:
 
 node:
   type: "node"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#6CA35E"
   template: "  {{ .Full }} "

@@ -4,7 +4,6 @@ executiontime:
     foreground: '#ffffff'
     options:
         always_enabled: true
-    style: plain
     template: <transparent></> {{ .FormattedMs }}⠀
 cursor_padding: true
 git:
@@ -19,8 +18,7 @@ git:
         branch_template: '{{ trunc 25 .Branch }}'
         fetch_status: true
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 path:
     background: '#ff479c'
@@ -29,8 +27,7 @@ path:
         folder_separator_icon: '  '
         home_icon: "~"
         style: folder
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '   {{ .Path }} '
 prompt:
     - segments:
@@ -44,7 +41,6 @@ session:
     background: '#c386f1'
     foreground: '#ffffff'
     leading_separator: 
-    style: diamond
     template: ' {{ .UserName }} '
     trailing_separator: 
 status:
@@ -54,7 +50,6 @@ status:
     foreground: '#ffffff'
     options:
         always_enabled: true
-    style: diamond
     template: '<parentBackground></>  '
     trailing_separator: 
 strava:
@@ -72,5 +67,5 @@ strava:
         access_token: 0ccbd2ac1e37a5b84101468df3d367177fe02ab3
         http_timeout: 1500
         refresh_token: "111111111111111111111111111111"
-    style: powerline
+    trailing_separator: ""
     template: ' {{.Name}} {{.Ago}} {{.Icon}} '

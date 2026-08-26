@@ -3,7 +3,6 @@ dotnet:
     foreground: '#ffffff'
     options:
         fetch_version: false
-    style: plain
     template: '  '
 executiontime:
     background: '#007ACC'
@@ -11,7 +10,6 @@ executiontime:
     options:
         style: austin
         threshold: 321
-    style: plain
     template: ' {{ .FormattedMs }} '
 git:
     background: '#cf432B'
@@ -27,19 +25,16 @@ git:
         rebase_icon: ' '
         revert_icon: ' '
         tag_icon: ' '
-    style: plain
     template: ' {{ .HEAD }} '
 go:
     background: '#7FD5EA'
     foreground: '#ffffff'
     options:
         fetch_version: false
-    style: plain
     template: '  '
 os:
     background: '#222222'
     foreground: '#666666'
-    style: plain
     template: ' {{ if .WSL }} {{ end }}{{.Icon}}'
 path:
     background: '#444444'
@@ -47,7 +42,6 @@ path:
     options:
         folder_icon: …
         style: mixed
-    style: plain
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -69,24 +63,20 @@ python:
     foreground: '#100e23'
     options:
         fetch_version: false
-    style: plain
     template: '  '
 root:
     background: '#ffcc88'
     foreground: '#222222'
-    style: plain
     template: 
 rust:
     background: '#99908a'
     foreground: '#193549'
     options:
         fetch_version: false
-    style: plain
     template: '  '
 session:
     background: '#222222'
     foreground: '#666666'
-    style: plain
     template: ' {{ if .SSHSession }} {{ end }}{{ .UserName }}@{{ .HostName }} '
 shell:
     foreground: '#007ACC'
@@ -100,10 +90,8 @@ shell:
             pwsh: ❯
             shell: ❯
             zsh: '%'
-    style: plain
     template: '{{ .Name }} '
 status:
     background: '#880000'
     foreground: '#ff8888'
-    style: plain
     template: '{{ if gt .Code 0 }} {{ .Code }} {{ end }}'

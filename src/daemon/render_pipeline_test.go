@@ -263,7 +263,6 @@ prompt:
 
 status:
   type: status
-  style: plain
   options:
     always_enabled: true
   template: '{{ if gt .Code 0 }}ERROR{{ else }}OK{{ end }}'

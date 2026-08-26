@@ -16,8 +16,7 @@ prompt:
 
 gcp:
   type: "gcp"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#47888d"
   template: " 󱇶 {{.Project}} :: {{.Account}} "

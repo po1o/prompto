@@ -16,8 +16,7 @@ prompt:
 
 kotlin:
   type: "kotlin"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#906cff"
   template: "  {{ .Full }} "

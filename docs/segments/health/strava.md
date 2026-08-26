@@ -33,8 +33,7 @@ prompt:
 
 strava:
   type: "strava"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#000000"
   background_templates: ["{{ if gt .Hours 100 }}#dc3545{{ end }}", "{{ if and (lt .Hours 100) (gt .Hours 50) }}#ffc107{{ end }}", "{{ if lt .Hours 50 }}#28a745{{ end }}"]

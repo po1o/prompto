@@ -16,8 +16,7 @@ prompt:
 
 kubectl:
   type: "kubectl"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#000000"
   background: "#ebcc34"
   template: " 󱃾 {{.Context}}{{if .Namespace}} :: {{.Namespace}}{{end}} "

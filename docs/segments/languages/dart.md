@@ -16,8 +16,7 @@ prompt:
 
 dart:
   type: "dart"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#06A4CE"
   template: "  {{ .Full }} "

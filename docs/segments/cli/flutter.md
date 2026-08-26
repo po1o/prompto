@@ -16,8 +16,7 @@ prompt:
 
 flutter:
   type: "flutter"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#06A4CE"
   template: "  {{ .Full }} "

@@ -117,7 +117,6 @@ prompt:
 slow.main:
   type: "slow_test"
   template: "SLOW"
-  style: "plain"
   foreground: "#ffffff"
   background: "#000000"
 `
@@ -185,7 +184,6 @@ prompt:
 
 slow.main:
   type: "slow_test_layout"
-  style: "plain"
   template: "SLOW"
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
@@ -257,22 +255,18 @@ rtransient:
 slow.main:
   type: "slow_test_transient"
   template: "MAIN"
-  style: "plain"
 
 slow.right:
   type: "slow_test_transient"
   template: "RIGHT"
-  style: "plain"
 
 slow.transient:
   type: "slow_test_transient"
   template: "TRANSIENT"
-  style: "plain"
 
 slow.rtransient:
   type: "slow_test_transient"
   template: "RTRANSIENT"
-  style: "plain"
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
 
@@ -388,7 +382,6 @@ prompt:
 
 blocking.main:
   type: "blocking_init_test"
-  style: "plain"
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
 
@@ -427,11 +420,9 @@ rprompt:
 
 session:
   type: "session"
-  style: "plain"
   template: "L"
 
 vim:
-  style: "plain"
   template: "{{ if .Insert }} INSERT {{ end }}{{ if .Normal }} NORMAL {{ end }}"
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
@@ -461,7 +452,6 @@ prompt:
 
 session:
   type: "session"
-  style: "plain"
   template: "L"
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
@@ -551,7 +541,6 @@ prompt:
 
 test.main:
   type: "repaint_execute_guard"
-  style: "plain"
   template: "X"
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
@@ -592,7 +581,6 @@ prompt:
 
 test.main:
   type: "repaint_render_guard"
-  style: "plain"
   template: "X"
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
@@ -655,14 +643,12 @@ prompt:
 
 test.guard:
   type: "repaint_template_guard"
-  style: "plain"
   template: "G"
   foreground_templates:
     - '{{ if .Danger }}red{{ end }}'
 
 test.next:
   type: "repaint_template_next"
-  style: "plain"
   template: "N"
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
@@ -703,7 +689,6 @@ prompt:
 
 session:
   type: "session"
-  style: "plain"
   template: "L"
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
@@ -793,7 +778,6 @@ prompt:
 slow.main:
   type: "slow_test_cancel"
   template: "SLOW"
-  style: "plain"
 `
 	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
 

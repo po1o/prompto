@@ -16,13 +16,12 @@ prompt:
 
 sysinfo:
   type: "sysinfo"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#8f43f3"
   template: "  {{ round .PhysicalPercentUsed .Precision }}% "
   options:
     precision: 2
-  style: "powerline"
 ```
 
 ## Options

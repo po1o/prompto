@@ -16,11 +16,10 @@ prompt:
 
 http:
   type: "http"
-  style: "diamond"
   foreground: "#ffffff"
   background: "#c386f1"
-  leading_diamond: ""
-  trailing_diamond: ""
+  leading_separator: ""
+  trailing_separator: ""
   template: "{{ .Result }}"
   options:
     url: "https://jsonplaceholder.typicode.com/posts/1"

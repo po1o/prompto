@@ -16,8 +16,7 @@ prompt:
 
 bazel:
   type: "bazel"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#43a047"
 ```

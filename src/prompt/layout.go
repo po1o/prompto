@@ -52,12 +52,12 @@ func (e *Engine) shouldInlineTransientRPrompt() bool {
 
 func (e *Engine) layoutBlock(layout *config.PromptLayout, blockType config.BlockType, alignment config.BlockAlignment, newline bool) *config.Block {
 	block := &config.Block{
-		Type:            blockType,
-		Alignment:       alignment,
-		Filler:          layout.Filler,
-		LeadingDiamond:  layout.LeadingDiamond,
-		TrailingDiamond: layout.TrailingDiamond,
-		Newline:         newline,
+		Type:          blockType,
+		Alignment:     alignment,
+		Filler:        layout.Filler,
+		LeadingGlyph:  layout.LeadingGlyph,
+		TrailingGlyph: layout.TrailingGlyph,
+		Newline:       newline,
 	}
 
 	for _, name := range layout.Segments {
@@ -68,10 +68,10 @@ func (e *Engine) layoutBlock(layout *config.PromptLayout, blockType config.Block
 
 		segment := segmentDef.Clone()
 		if alignment == config.Right {
-			orientedLeading := mirrorSeparator(segment.TrailingDiamond)
-			orientedTrailing := mirrorSeparator(segment.LeadingDiamond)
-			segment.LeadingDiamond = orientedLeading
-			segment.TrailingDiamond = orientedTrailing
+			orientedLeading := config.MirrorGlyph(segment.TrailingGlyph)
+			orientedTrailing := config.MirrorGlyph(segment.LeadingGlyph)
+			segment.LeadingGlyph = orientedLeading
+			segment.TrailingGlyph = orientedTrailing
 		}
 
 		block.Segments = append(block.Segments, segment)
@@ -131,39 +131,4 @@ func (e *Engine) layoutPrimaryBlocks() []*config.Block {
 	}
 
 	return e.composeLayoutBlocks(e.LayoutConfig.Prompt, e.LayoutConfig.RPrompt, e.shouldInlinePrimaryRPrompt())
-}
-
-func mirrorSeparator(input string) string {
-	switch input {
-	case "\uE0B0":
-		return "\uE0B2"
-	case "\uE0B2":
-		return "\uE0B0"
-	case "\uE0B1":
-		return "\uE0B3"
-	case "\uE0B3":
-		return "\uE0B1"
-	case "\uE0B4":
-		return "\uE0B6"
-	case "\uE0B6":
-		return "\uE0B4"
-	case "\uE0BA":
-		return "\uE0BC"
-	case "\uE0BC":
-		return "\uE0BA"
-	case "\uE0BE":
-		return "\uE0B8"
-	case "\uE0B8":
-		return "\uE0BE"
-	case "\uE0C0":
-		return "\uE0C1"
-	case "\uE0C1":
-		return "\uE0C0"
-	case "\uE0CE":
-		return "\uE0CF"
-	case "\uE0CF":
-		return "\uE0CE"
-	default:
-		return input
-	}
 }

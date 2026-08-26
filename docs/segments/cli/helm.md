@@ -17,9 +17,8 @@ prompt:
 helm:
   background: "#a7cae1"
   foreground: "#100e23"
-  powerline_symbol: ""
+  trailing_separator: ""
   template: "  {{ .Version }}"
-  style: "powerline"
   type: "helm"
 ```
 

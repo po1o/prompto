@@ -28,9 +28,8 @@ prompt:
 nba:
   background: "#e9ac2f"
   foreground: "#8748dc"
-  leading_diamond: ""
-  style: "diamond"
-  trailing_diamond: ""
+  leading_separator: ""
+  trailing_separator: ""
   type: "nba"
   options:
     team: "LAL"

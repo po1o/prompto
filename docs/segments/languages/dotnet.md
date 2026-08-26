@@ -16,8 +16,7 @@ prompt:
 
 dotnet:
   type: "dotnet"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#000000"
   background: "#00ffff"
   template: "  {{ .Full }} "

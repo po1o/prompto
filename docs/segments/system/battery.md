@@ -20,8 +20,7 @@ prompt:
 
 battery:
   type: "battery"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#193549"
   background: "#ffeb3b"
   background_templates: ["{{if eq \"Charging\" .State.String}}#40c4ff{{end}}", "{{if eq \"Discharging\" .State.String}}#ff5722{{end}}", "{{if eq \"Full\" .State.String}}#4caf50{{end}}"]

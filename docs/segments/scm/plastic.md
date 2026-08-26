@@ -18,8 +18,7 @@ prompt:
 
 plastic:
   type: "plastic"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#193549"
   background: "#ffeb3b"
   background_templates: ["{{ if .MergePending }}#006060{{ end }}", "{{ if .Changed }}#FF9248{{ end }}", "{{ if and .Changed .Behind }}#ff4500{{ end }}", "{{ if .Behind }}#B388FF{{ end }}"]

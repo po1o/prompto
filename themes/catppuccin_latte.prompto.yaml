@@ -12,11 +12,9 @@ git:
         rebase_icon: ' '
         revert_icon: ' '
         tag_icon: ' '
-    style: plain
     template: '{{ .HEAD }} '
 os:
     foreground: p:os
-    style: plain
     template: '{{.Icon}} '
 palette:
     blue: '#1e66f5'
@@ -30,7 +28,6 @@ path:
         folder_icon: ....
         home_icon: "~"
         style: agnoster_short
-    style: plain
     template: '{{ .Path }} '
 prompt:
     - segments:
@@ -41,9 +38,7 @@ prompt:
         - text
 session:
     foreground: p:blue
-    style: plain
     template: '{{ .UserName }}@{{ .HostName }} '
 text:
     foreground: p:closer
-    style: plain
     template: 

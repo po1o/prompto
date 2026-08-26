@@ -19,8 +19,7 @@ prompt:
 
 firebase:
   type: "firebase"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#FFA000"
   template: " 󰥧 {{ .Project }}"
