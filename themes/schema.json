@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/schema.json",
+  "$id": "https://raw.githubusercontent.com/po1o/prompto/main/themes/schema.json",
   "type": "object",
   "title": "The Prompto theme definition",
   "description": "https://prompto.dev/docs/configuration/general",
@@ -210,156 +210,11 @@
         }
       }
     },
-    "block": {
-      "type": "object",
-      "description": "https://prompto.dev/docs/configuration/block",
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "prompt"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "type",
-              "alignment",
-              "segments"
-            ],
-            "title": "Prompt definition, contains 1 or more segments to render"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "rprompt"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "type",
-              "segments"
-            ],
-            "title": "RPrompt definition, contains 1 or more segments to render to the right of the cursor"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "prompt"
-              },
-              "alignment": {
-                "const": "right"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "overflow": {
-                "type": "string",
-                "title": "Block overflow",
-                "description": "https://prompto.dev/docs/configuration/block#overflow",
-                "enum": [
-                  "break",
-                  "hide"
-                ],
-                "default": ""
-              },
-              "filler": {
-                "$ref": "#/definitions/filler",
-                "description": "https://prompto.dev/docs/configuration/block#filler"
-              }
-            }
-          }
-        }
-      ],
-      "properties": {
-        "type": {
-          "type": "string",
-          "title": "Block type",
-          "description": "https://prompto.dev/docs/configuration/block#type",
-          "enum": [
-            "prompt",
-            "rprompt"
-          ],
-          "default": "prompt"
-        },
-        "alignment": {
-          "type": "string",
-          "title": "Block alignment",
-          "description": "https://prompto.dev/docs/configuration/block#alignment",
-          "enum": [
-            "left",
-            "right"
-          ],
-          "default": "left"
-        },
-        "newline": {
-          "type": "boolean",
-          "title": "Newline",
-          "description": "https://prompto.dev/docs/configuration/block#newline",
-          "default": false
-        },
-        "filler": {
-          "type": "string",
-          "title": "Filler",
-          "description": "https://prompto.dev/docs/configuration/block#filler",
-          "default": ""
-        },
-        "overflow": {
-          "type": "string",
-          "title": "Overflow",
-          "description": "https://prompto.dev/docs/configuration/block#overflow",
-          "default": ""
-        },
-        "leading_diamond": {
-          "type": "string",
-          "title": "Leading diamond",
-          "description": "https://prompto.dev/docs/configuration/block#leading-diamond",
-          "default": ""
-        },
-        "trailing_diamond": {
-          "type": "string",
-          "title": "Trailing diamond",
-          "description": "https://prompto.dev/docs/configuration/block#trailing-diamond",
-          "default": ""
-        },
-        "segments": {
-          "type": "array",
-          "title": "Segments list, prompt elements to display based on context",
-          "description": "https://prompto.dev/docs/configuration/block#segments",
-          "default": [],
-          "items": {
-            "$ref": "#/definitions/segment"
-          }
-        },
-        "force": {
-          "type": "boolean",
-          "title": "Force",
-          "description": "https://prompto.dev/docs/configuration/block#force",
-          "default": false
-        },
-        "index": {
-          "type": "integer",
-          "title": "Index",
-          "description": "https://prompto.dev/docs/configuration/block#index"
-        }
-      }
-    },
     "segment": {
       "type": "object",
       "title": "Segment",
-      "description": "https://prompto.dev/docs/configuration/segment",
+      "description": "https://prompto.dev/docs/configuration/segments — type is optional when the table name implies it",
       "default": {},
-      "required": [
-        "type",
-        "style"
-      ],
       "properties": {
         "type": {
           "type": "string",
@@ -474,19 +329,43 @@
         "style": {
           "title": "Segment Style",
           "description": "https://prompto.dev/docs/configuration/segment#style",
-          "anyOf": [
-            {
-              "enum": [
-                "plain",
-                "powerline",
-                "diamond",
-                "accordion"
-              ]
-            },
-            {
-              "type": "string"
-            }
+          "enum": [
+            "powerline",
+            "powerline_thin",
+            "rounded",
+            "rounded_thin",
+            "slant",
+            "block",
+            "flame",
+            "pixel",
+            "lego"
           ]
+        },
+        "leading_style": {
+          "type": "string",
+          "title": "Leading separator alias",
+          "description": "https://prompto.dev/docs/configuration/segment#style"
+        },
+        "trailing_style": {
+          "type": "string",
+          "title": "Trailing separator alias",
+          "description": "https://prompto.dev/docs/configuration/segment#style"
+        },
+        "leading_separator": {
+          "type": "string",
+          "title": "Leading separator glyph",
+          "description": "https://prompto.dev/docs/configuration/segment#style"
+        },
+        "trailing_separator": {
+          "type": "string",
+          "title": "Trailing separator glyph",
+          "description": "https://prompto.dev/docs/configuration/segment#style"
+        },
+        "keep_when_empty": {
+          "type": "boolean",
+          "title": "Keep the separators when the segment renders no text",
+          "description": "https://prompto.dev/docs/configuration/segment#keep-when-empty",
+          "default": false
         },
         "foreground": {
           "$ref": "#/definitions/color"
@@ -594,6 +473,80 @@
               ]
             }
           }
+        },
+        "powerline_symbol": {
+          "title": "Removed: use trailing_separator",
+          "not": {}
+        },
+        "leading_powerline_symbol": {
+          "title": "Removed: use leading_separator",
+          "not": {}
+        },
+        "invert_powerline": {
+          "title": "Removed: removed, no replacement",
+          "not": {}
+        },
+        "leading_diamond": {
+          "title": "Removed: use leading_separator or leading_style",
+          "not": {}
+        },
+        "trailing_diamond": {
+          "title": "Removed: use trailing_separator or trailing_style",
+          "not": {}
+        },
+        "leading_glyph": {
+          "title": "Removed: set by the parser, not configurable",
+          "not": {}
+        },
+        "trailing_glyph": {
+          "title": "Removed: set by the parser, not configurable",
+          "not": {}
+        },
+        "render_pending_icon": {
+          "type": "string",
+          "title": "Per-segment pending icon override"
+        },
+        "render_pending_background": {
+          "$ref": "#/definitions/color",
+          "title": "Per-segment pending background override"
+        },
+        "filler": {
+          "type": "string",
+          "title": "Repeated fill text"
+        },
+        "tips": {
+          "type": "array",
+          "title": "Tooltip trigger words",
+          "items": {
+            "type": "string"
+          }
+        },
+        "templates": {
+          "type": "array",
+          "title": "Template list",
+          "items": {
+            "type": "string"
+          }
+        },
+        "timeout": {
+          "type": "integer",
+          "title": "Timeout in milliseconds"
+        },
+        "index": {
+          "type": "integer",
+          "title": "Segment index"
+        },
+        "newline": {
+          "type": "boolean",
+          "title": "Segment requests a newline"
+        },
+        "force": {
+          "type": "boolean",
+          "title": "Render even when the text would be empty"
+        },
+        "toggled": {
+          "type": "boolean",
+          "title": "Start disabled in the toggle cache"
         }
       },
       "allOf": [
@@ -603,7 +556,10 @@
               "type": {
                 "const": "angular"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Angular CLI Segment",
@@ -637,7 +593,10 @@
               "type": {
                 "const": "argocd"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "ArgoCD Segment",
@@ -650,7 +609,10 @@
               "type": {
                 "const": "aurelia"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Aurelia Segment",
@@ -684,7 +646,10 @@
               "type": {
                 "const": "aws"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "AWS Segment",
@@ -710,7 +675,10 @@
               "type": {
                 "const": "az"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Azure Segment",
@@ -740,7 +708,10 @@
               "type": {
                 "const": "azd"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Azure Developer CLI Segment",
@@ -753,7 +724,10 @@
               "type": {
                 "const": "azfunc"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Azure Function Segment",
@@ -790,7 +764,10 @@
               "type": {
                 "const": "battery"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Battery Segment",
@@ -840,7 +817,10 @@
               "type": {
                 "const": "bazel"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Bazel Segment",
@@ -879,7 +859,7 @@
                     "type": "string",
                     "title": "Icon",
                     "description": "The icon representing Bazel's logo",
-                    "default": "\ue63a"
+                    "default": ""
                   }
                 }
               }
@@ -892,7 +872,10 @@
               "type": {
                 "const": "brewfather"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Brewfather Batch Status",
@@ -931,79 +914,79 @@
                     "type": "string",
                     "title": "Temperature trend icon, very high positive change",
                     "description": "Delta between this and prior temperature reading is very high (> 4C by default), available intemplate as .TemperatureTrend",
-                    "default": "\u2191\u2191"
+                    "default": "↑↑"
                   },
                   "singleup_icon": {
                     "type": "string",
                     "title": "Temperature trend icon, high positive change",
                     "description": "Delta between this and prior temperature reading is high (2C < delta < 4C by default), available intemplate as .TemperatureTrend",
-                    "default": "\u2191"
+                    "default": "↑"
                   },
                   "fortyfiveup_icon": {
                     "type": "string",
                     "title": "Temperature trend icon, positive change",
                     "description": "Delta between this and prior temperature reading is positive (0.5C < delta < 2C by default), available intemplate as .TemperatureTrend",
-                    "default": "\u2197"
+                    "default": "↗"
                   },
                   "flat_icon": {
                     "type": "string",
                     "title": "Temperature trend icon, flat/small change",
                     "description": "Delta between this and prior temperature and this temperature reading (< +-0.5C change), available intemplate as .TemperatureTrend",
-                    "default": "\u2192"
+                    "default": "→"
                   },
                   "fortyfivedown_icon": {
                     "type": "string",
                     "title": "Temperature trend icon, v. negative change",
                     "description": "Delta between this and prior temperature reading is negative (-0.5C > delta > -2C by default), available intemplate as .TemperatureTrend",
-                    "default": "\u2198"
+                    "default": "↘"
                   },
                   "singledown_icon": {
                     "type": "string",
                     "title": "Temperature trend icon, high negative change",
                     "description": "Delta between this and prior temperature reading is large negative (-2C > delta > -4C by default), available intemplate as .TemperatureTrend",
-                    "default": "\u2193"
+                    "default": "↓"
                   },
                   "doubledown_icon": {
                     "type": "string",
                     "title": "Temperature trend icon, very high negative change",
                     "description": "Delta between this and prior temperature reading is very large negative (> -4C by default), available intemplate as .TemperatureTrend",
-                    "default": "\u2193\u2193"
+                    "default": "↓↓"
                   },
                   "planning_status_icon": {
                     "type": "string",
                     "title": "Icon for batch in planning",
                     "description": "Available in template as .StatusIcon",
-                    "default": "\uf8ea"
+                    "default": ""
                   },
                   "brewing_status_icon": {
                     "type": "string",
                     "title": "Icon for batch being brewed",
                     "description": "Available in template as .StatusIcon",
-                    "default": "\uf7de"
+                    "default": ""
                   },
                   "fermenting_status_icon": {
                     "type": "string",
                     "title": "Icon for batch fermenting",
                     "description": "Available in template as .StatusIcon",
-                    "default": "\uf499"
+                    "default": ""
                   },
                   "conditioning_status_icon": {
                     "type": "string",
                     "title": "Icon for batch conditioning",
                     "description": "Available in template as .StatusIcon",
-                    "default": "\ue372"
+                    "default": ""
                   },
                   "completed_status_icon": {
                     "type": "string",
                     "title": "Icon for completed batch",
                     "description": "Available in template as .StatusIcon",
-                    "default": "\uf7a5"
+                    "default": ""
                   },
                   "archived_status_icon": {
                     "type": "string",
                     "title": "Icon for archived batch",
                     "description": "Available in template as .StatusIcon",
-                    "default": "\uf187"
+                    "default": ""
                   }
                 },
                 "unevaluatedProperties": false
@@ -1017,7 +1000,10 @@
               "type": {
                 "const": "buf"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Buf Segment",
@@ -1053,7 +1039,10 @@
               "type": {
                 "const": "bun"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Bun CLI Segment",
@@ -1088,7 +1077,10 @@
               "type": {
                 "const": "carbonintensity"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Carbon Intensity Segment",
@@ -1111,7 +1103,10 @@
               "type": {
                 "const": "cds"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "CDS (SAP CAP) segment",
@@ -1147,7 +1142,10 @@
               "type": {
                 "const": "cf"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Clound Foundry CLI segment",
@@ -1182,7 +1180,10 @@
               "type": {
                 "const": "cftarget"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Clound Foundry Target segment",
@@ -1221,7 +1222,10 @@
               "type": {
                 "const": "clojure"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Clojure Segment",
@@ -1262,7 +1266,10 @@
               "type": {
                 "const": "cmake"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Cmake Segment",
@@ -1297,7 +1304,10 @@
               "type": {
                 "const": "claude"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Claude Code Segment",
@@ -1315,7 +1325,10 @@
               "type": {
                 "const": "copilot"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "GitHub Copilot Segment",
@@ -1338,7 +1351,10 @@
               "type": {
                 "const": "connection"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Connection Segment",
@@ -1370,7 +1386,10 @@
               "type": {
                 "const": "crystal"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Crystal Segment",
@@ -1405,7 +1424,10 @@
               "type": {
                 "const": "dart"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Dart Segment",
@@ -1448,7 +1470,10 @@
               "type": {
                 "const": "deno"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Deno CLI Segment",
@@ -1481,35 +1506,13 @@
         {
           "if": {
             "properties": {
-              "style": {
-                "const": "diamond"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "leading_diamond": {
-                "type": "string",
-                "title": "Leading diamond",
-                "description": "https://prompto.dev/docs/configuration/segment#leading-diamond",
-                "default": ""
-              },
-              "trailing_diamond": {
-                "type": "string",
-                "title": "Trailing diamond",
-                "description": "https://prompto.dev/docs/configuration/segment#trailing-diamond",
-                "default": ""
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
               "type": {
                 "const": "docker"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Docker Segment",
@@ -1551,7 +1554,10 @@
               "type": {
                 "const": "dotnet"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Dotnet Segment",
@@ -1602,7 +1608,10 @@
               "type": {
                 "const": "elixir"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Elixir Segment",
@@ -1638,7 +1647,10 @@
               "type": {
                 "const": "executiontime"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Displays the execution time of the previously executed command",
@@ -1687,7 +1699,10 @@
               "type": {
                 "const": "firebase"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Firebase Segment",
@@ -1700,7 +1715,10 @@
               "type": {
                 "const": "flutter"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Flutter Segment",
@@ -1743,7 +1761,10 @@
               "type": {
                 "const": "fortran"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Fortran Segment",
@@ -1793,7 +1814,10 @@
               "type": {
                 "const": "fossil"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Fossil Segment",
@@ -1816,7 +1840,10 @@
               "type": {
                 "const": "gcp"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "GCP Segment",
@@ -1829,7 +1856,10 @@
               "type": {
                 "const": "git"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Git Segment",
@@ -1877,115 +1907,115 @@
                     "type": "string",
                     "title": "Branch Icon",
                     "description": "The icon to use in front of the git branch name",
-                    "default": "\ue0a0 "
+                    "default": " "
                   },
                   "branch_identical_icon": {
                     "type": "string",
                     "title": "Branch Identical Icon",
                     "description": "The icon to display when remote and local are identical",
-                    "default": "\u2261"
+                    "default": "≡"
                   },
                   "branch_ahead_icon": {
                     "type": "string",
                     "title": "Branch Ahead Icon",
                     "description": "The icon to display when the local branch is ahead of its remote",
-                    "default": "\u2191"
+                    "default": "↑"
                   },
                   "branch_behind_icon": {
                     "type": "string",
                     "title": "Branch Behind Icon",
                     "description": "The icon to display when the local branch is behind its remote",
-                    "default": "\u2193"
+                    "default": "↓"
                   },
                   "branch_gone_icon": {
                     "type": "string",
                     "title": "Branch Gone Icon",
                     "description": "The icon to display when there's no remote branch",
-                    "default": "\u2262"
+                    "default": "≢"
                   },
                   "commit_icon": {
                     "type": "string",
                     "title": "Commit Icon",
                     "description": "Icon/text to display before the commit context (detached HEAD)",
-                    "default": "\uf417"
+                    "default": ""
                   },
                   "tag_icon": {
                     "type": "string",
                     "title": "Tag Icon",
                     "description": "Icon/text to display before the tag context",
-                    "default": "\uf412"
+                    "default": ""
                   },
                   "rebase_icon": {
                     "type": "string",
                     "title": "Rebase Icon",
                     "description": "Icon/text to display before the context when in a rebase",
-                    "default": "\ue728"
+                    "default": ""
                   },
                   "cherry_pick_icon": {
                     "type": "string",
                     "title": "Cherry-pick Icon",
                     "description": "Icon/text to display before the context when doing a cherry-pick",
-                    "default": "\ue29b"
+                    "default": ""
                   },
                   "revert_icon": {
                     "type": "string",
                     "title": "Revert Icon",
                     "description": "Icon/text to display before the context when doing a revert",
-                    "default": "\uf0e2"
+                    "default": ""
                   },
                   "merge_icon": {
                     "type": "string",
                     "title": "Merge Icon",
                     "description": "Icon/text to display before the merge context",
-                    "default": "\ue727"
+                    "default": ""
                   },
                   "no_commits_icon": {
                     "type": "string",
                     "title": "No Commits Icon",
                     "description": "Icon/text to display when there are no commits in the repo",
-                    "default": "\uf594"
+                    "default": ""
                   },
                   "github_icon": {
                     "type": "string",
                     "title": "GitHub Icon",
                     "description": "Icon/text to display when the upstream is GitHub",
-                    "default": "\uf408"
+                    "default": ""
                   },
                   "gitlab_icon": {
                     "type": "string",
                     "title": "GitLab Icon",
                     "description": "Icon/text to display when the upstream is GitLab",
-                    "default": "\uf296"
+                    "default": ""
                   },
                   "bitbucket_icon": {
                     "type": "string",
                     "title": "Bitbucket Icon",
                     "description": "Icon/text to display when the upstream is Bitbucket",
-                    "default": "\uf171"
+                    "default": ""
                   },
                   "azure_devops_icon": {
                     "type": "string",
                     "title": "Azure DevOps Icon",
                     "description": "Icon/text to display when the upstream is Azure DevOps",
-                    "default": "\uebe8"
+                    "default": ""
                   },
                   "codecommit_icon": {
                     "type": "string",
                     "title": "CodeCommit Icon",
                     "description": "Icon/text to display when the upstream is CodeCommit",
-                    "default": "\uf270"
+                    "default": ""
                   },
                   "codeberg_icon": {
                     "type": "string",
                     "title": "Codeberg Icon",
                     "description": "Icon/text to display when the upstream is Codeberg",
-                    "default": "\uf330"
+                    "default": ""
                   },
                   "git_icon": {
                     "type": "string",
                     "title": "Git Icon",
                     "description": "Icon/text to display when the upstream is not known/mapped",
-                    "default": "\ue5fb"
+                    "default": ""
                   },
                   "upstream_icons": {
                     "type": "object",
@@ -2038,7 +2068,10 @@
               "type": {
                 "const": "gitversion"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Display GitVersion segment",
@@ -2051,7 +2084,10 @@
               "type": {
                 "const": "go"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Golang Segment",
@@ -2102,7 +2138,10 @@
               "type": {
                 "const": "haskell"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Haskell Segment",
@@ -2152,7 +2191,10 @@
               "type": {
                 "const": "helm"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Helm segment",
@@ -2180,7 +2222,10 @@
               "type": {
                 "const": "http"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "HTTP segment",
@@ -2216,7 +2261,10 @@
               "type": {
                 "const": "ipify"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Display your external IP Address",
@@ -2249,7 +2297,10 @@
               "type": {
                 "const": "java"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Java Segment",
@@ -2295,7 +2346,10 @@
               "type": {
                 "const": "jujutsu"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Jujutsu Segment",
@@ -2331,7 +2385,7 @@
                     "type": "string",
                     "title": "Ahead icon",
                     "description": "Icon to separate bookmark name and ahead counter",
-                    "default": "\u21e1"
+                    "default": "⇡"
                   },
                   "native_fallback": {
                     "$ref": "#/definitions/native_fallback"
@@ -2351,7 +2405,10 @@
               "type": {
                 "const": "julia"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Julia Segment",
@@ -2385,7 +2442,10 @@
               "type": {
                 "const": "kotlin"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Kotlin Segment",
@@ -2421,7 +2481,10 @@
               "type": {
                 "const": "kubectl"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Kubectl Segment",
@@ -2465,7 +2528,10 @@
               "type": {
                 "const": "lastfm"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "LastFM Segment",
@@ -2477,13 +2543,13 @@
                     "type": "string",
                     "title": "Playing Icon",
                     "description": "Text/icon to show when playing",
-                    "default": "\ue602 "
+                    "default": " "
                   },
                   "stopped_icon": {
                     "type": "string",
                     "title": "Stopped Icon",
                     "description": "Text/icon to show when stopped",
-                    "default": "\uf04d "
+                    "default": " "
                   },
                   "api_key": {
                     "type": "string",
@@ -2512,7 +2578,10 @@
               "type": {
                 "const": "lua"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Lua Segment",
@@ -2553,7 +2622,10 @@
               "type": {
                 "const": "mercurial"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Mercurial Segment",
@@ -2585,7 +2657,10 @@
               "type": {
                 "const": "mojo"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Mojo Segment",
@@ -2633,7 +2708,10 @@
               "type": {
                 "const": "mvn"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Maven Segment",
@@ -2667,7 +2745,10 @@
               "type": {
                 "const": "nbgv"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Nerdbank.GitVersion Segment",
@@ -2680,7 +2761,10 @@
               "type": {
                 "const": "nightscout"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Display Nightscout segment",
@@ -2718,7 +2802,10 @@
               "type": {
                 "const": "nba"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "NBA Segment",
@@ -2753,7 +2840,10 @@
               "type": {
                 "const": "nim"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Nim Segment",
@@ -2788,7 +2878,10 @@
               "type": {
                 "const": "nix-shell"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Nix Shell",
@@ -2801,7 +2894,10 @@
               "type": {
                 "const": "node"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Node Segment",
@@ -2824,25 +2920,25 @@
                     "type": "string",
                     "title": "PNPM Icon",
                     "description": "Icon/text to use for PNPM",
-                    "default": "\ue865"
+                    "default": ""
                   },
                   "yarn_icon": {
                     "type": "string",
                     "title": "Yarn Icon",
                     "description": "Icon/text to use for Yarn",
-                    "default": "\ue6a7"
+                    "default": ""
                   },
                   "npm_icon": {
                     "type": "string",
                     "title": "NPM Icon",
                     "description": "Icon/text to use for NPM",
-                    "default": "\ue71e"
+                    "default": ""
                   },
                   "bun_icon": {
                     "type": "string",
                     "title": "Bun Icon",
                     "description": "Icon/text to use for Bun",
-                    "default": "\ue76f"
+                    "default": ""
                   },
                   "extensions": {
                     "default": [
@@ -2871,7 +2967,10 @@
               "type": {
                 "const": "npm"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "NPM Segment",
@@ -2906,7 +3005,10 @@
               "type": {
                 "const": "nx"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Nx Segment",
@@ -2941,7 +3043,10 @@
               "type": {
                 "const": "ocaml"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "OCaml Segment",
@@ -2979,7 +3084,10 @@
               "type": {
                 "const": "os"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Operating System Segment",
@@ -2991,13 +3099,13 @@
                     "type": "string",
                     "title": "MacOS Icon",
                     "description": "Icon/text to use for macOS",
-                    "default": "\uf179"
+                    "default": ""
                   },
                   "linux": {
                     "type": "string",
                     "title": "Linux Icon",
                     "description": "Icon/text to use for Linux",
-                    "default": "\uf17c"
+                    "default": ""
                   },
                   "display_distro_name": {
                     "type": "boolean",
@@ -3009,193 +3117,193 @@
                     "type": "string",
                     "title": "Alma Icon",
                     "description": "The icon to use for Alma",
-                    "default": "\uf31d"
+                    "default": ""
                   },
                   "almalinux": {
                     "type": "string",
                     "title": "AlmaLinux Icon",
                     "description": "The icon to use for AlmaLinux",
-                    "default": "\uf31d"
+                    "default": ""
                   },
                   "almalinux9": {
                     "type": "string",
                     "title": "AlmaLinux9 Icon",
                     "description": "The icon to use for AlmaLinux9",
-                    "default": "\uf31d"
+                    "default": ""
                   },
                   "alpine": {
                     "type": "string",
                     "title": "Alpine Icon",
                     "description": "The icon to use for Alpine",
-                    "default": "\uf300"
+                    "default": ""
                   },
                   "android": {
                     "type": "string",
                     "title": "Android Icon",
                     "description": "The icon to use for Android",
-                    "default": "\ue70e"
+                    "default": ""
                   },
                   "aosc": {
                     "type": "string",
                     "title": "Aosc Icon",
                     "description": "The icon to use for Aosc",
-                    "default": "\uf301"
+                    "default": ""
                   },
                   "arch": {
                     "type": "string",
                     "title": "Arch Icon",
                     "description": "The icon to use for Arch",
-                    "default": "\uf303"
+                    "default": ""
                   },
                   "centos": {
                     "type": "string",
                     "title": "Centos Icon",
                     "description": "The icon to use for Centos",
-                    "default": "\uf304"
+                    "default": ""
                   },
                   "coreos": {
                     "type": "string",
                     "title": "Coreos Icon",
                     "description": "The icon to use for Coreos",
-                    "default": "\uf305"
+                    "default": ""
                   },
                   "debian": {
                     "type": "string",
                     "title": "Debian Icon",
                     "description": "The icon to use for Debian",
-                    "default": "\uf306"
+                    "default": ""
                   },
                   "deepin": {
                     "type": "string",
                     "title": "Deepin Icon",
                     "description": "The icon to use for Deepin",
-                    "default": "\uf321"
+                    "default": ""
                   },
                   "devuan": {
                     "type": "string",
                     "title": "Devuan Icon",
                     "description": "The icon to use for Devuan",
-                    "default": "\uf307"
+                    "default": ""
                   },
                   "elementary": {
                     "type": "string",
                     "title": "Elementary Icon",
                     "description": "The icon to use for Elementary",
-                    "default": "\uf309"
+                    "default": ""
                   },
                   "endeavouros": {
                     "type": "string",
                     "title": "EndeavourOS Icon",
                     "description": "The icon to use for EndeavourOS",
-                    "default": "\uf322"
+                    "default": ""
                   },
                   "fedora": {
                     "type": "string",
                     "title": "Fedora Icon",
                     "description": "The icon to use for Fedora",
-                    "default": "\uf30a"
+                    "default": ""
                   },
                   "freebsd": {
                     "type": "string",
                     "title": "FreeBSD Icon",
                     "description": "The icon to use for FreeBSD",
-                    "default": "\udb82\udce0"
+                    "default": "󰣠"
                   },
                   "gentoo": {
                     "type": "string",
                     "title": "Gentoo Icon",
                     "description": "The icon to use for Gentoo",
-                    "default": "\uf30d"
+                    "default": ""
                   },
                   "kali": {
                     "type": "string",
                     "title": "Kali Icon",
                     "description": "The icon to use for Kali",
-                    "default": "\uf327"
+                    "default": ""
                   },
                   "mageia": {
                     "type": "string",
                     "title": "Mageia Icon",
                     "description": "The icon to use for Mageia",
-                    "default": "\uf310"
+                    "default": ""
                   },
                   "manjaro": {
                     "type": "string",
                     "title": "Manjaro Icon",
                     "description": "The icon to use for Manjaro",
-                    "default": "\uf312"
+                    "default": ""
                   },
                   "mint": {
                     "type": "string",
                     "title": "Mint Icon",
                     "description": "The icon to use for Mint",
-                    "default": "\udb82\udced"
+                    "default": "󰣭"
                   },
                   "neon": {
                     "type": "string",
                     "title": "Neon Icon",
                     "description": "The icon to use for Neon",
-                    "default": "\uf331"
+                    "default": ""
                   },
                   "nixos": {
                     "type": "string",
                     "title": "Nixos Icon",
                     "description": "The icon to use for Nixos",
-                    "default": "\uf313"
+                    "default": ""
                   },
                   "opensuse": {
                     "type": "string",
                     "title": "Opensuse Icon",
                     "description": "The icon to use for Opensuse",
-                    "default": "\uf314"
+                    "default": ""
                   },
                   "opensuse-tumbleweed": {
                     "type": "string",
                     "title": "OpenSUSE Tumbleweed Icon",
                     "description": "The icon to use for OpenSUSE Tumbleweed",
-                    "default": "\uf314"
+                    "default": ""
                   },
                   "raspbian": {
                     "type": "string",
                     "title": "Raspbian Icon",
                     "description": "The icon to use for Raspbian",
-                    "default": "\uf315"
+                    "default": ""
                   },
                   "redhat": {
                     "type": "string",
                     "title": "Redhat Icon",
                     "description": "The icon to use for Redhat",
-                    "default": "\uf316"
+                    "default": ""
                   },
                   "rocky": {
                     "type": "string",
                     "title": "Rocky Icon",
                     "description": "The icon to use for Rocky",
-                    "default": "\uf32b"
+                    "default": ""
                   },
                   "sabayon": {
                     "type": "string",
                     "title": "Sabayon Icon",
                     "description": "The icon to use for Sabayon",
-                    "default": "\uf317"
+                    "default": ""
                   },
                   "slackware": {
                     "type": "string",
                     "title": "Slackware Icon",
                     "description": "The icon to use for Slackware",
-                    "default": "\uf319"
+                    "default": ""
                   },
                   "ubuntu": {
                     "type": "string",
                     "title": "Ubuntu Icon",
                     "description": "The icon to use for Ubuntu",
-                    "default": "\uf31b"
+                    "default": ""
                   },
                   "void": {
                     "type": "string",
                     "title": "Void Icon",
                     "description": "The icon to use for Void",
-                    "default": "\uf32e"
+                    "default": ""
                   }
                 },
                 "unevaluatedProperties": false
@@ -3209,7 +3317,10 @@
               "type": {
                 "const": "owm"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Open Weather Map Segment",
@@ -3255,7 +3366,10 @@
               "type": {
                 "const": "path"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Path Segment",
@@ -3425,7 +3539,10 @@
               "type": {
                 "const": "perl"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Perl Segment",
@@ -3462,7 +3579,10 @@
               "type": {
                 "const": "php"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "PHP Segment",
@@ -3500,7 +3620,10 @@
               "type": {
                 "const": "plastic"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Plastic SCM Segment",
@@ -3521,19 +3644,19 @@
                     "type": "string",
                     "title": "Branch Icon",
                     "description": "The icon to use in front of the selector branch name",
-                    "default": "\ue0a0 "
+                    "default": " "
                   },
                   "commit_icon": {
                     "type": "string",
                     "title": "Commit Icon",
                     "description": "Icon/text to display before the selector changeset",
-                    "default": "\uf417"
+                    "default": ""
                   },
                   "tag_icon": {
                     "type": "string",
                     "title": "Tag Icon",
                     "description": "Icon/text to display before the seletor label",
-                    "default": "\uf412"
+                    "default": ""
                   },
                   "branch_template": {
                     "$ref": "#/definitions/branch_template"
@@ -3556,7 +3679,10 @@
               "type": {
                 "const": "pnpm"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "PNPM Segment",
@@ -3588,41 +3714,13 @@
         {
           "if": {
             "properties": {
-              "style": {
-                "const": "powerline"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "powerline_symbol": {
-                "type": "string",
-                "title": "Powerline Symbol",
-                "description": "https://prompto.dev/docs/configuration/segment#powerline-symbol",
-                "default": "\ue0b0"
-              },
-              "leading_powerline_symbol": {
-                "type": "string",
-                "title": "Leading Powerline Symbol",
-                "description": "https://prompto.dev/docs/configuration/segment#powerline-symbol",
-                "default": "\ue0d7"
-              },
-              "invert_powerline": {
-                "type": "boolean",
-                "title": "Flip the Powerline symbol vertically",
-                "description": "https://prompto.dev/docs/configuration/segment#invert-powerline",
-                "default": false
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
               "type": {
                 "const": "project"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Project Segment",
@@ -3647,7 +3745,10 @@
               "type": {
                 "const": "pulumi"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Pulumi Segment",
@@ -3679,7 +3780,10 @@
               "type": {
                 "const": "python"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Python Segment",
@@ -3758,7 +3862,10 @@
               "type": {
                 "const": "quasar"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Quasar Segment",
@@ -3799,7 +3906,10 @@
               "type": {
                 "const": "r"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "R Segment",
@@ -3841,7 +3951,10 @@
               "type": {
                 "const": "react"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "React Segment",
@@ -3875,7 +3988,10 @@
               "type": {
                 "const": "root"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Root Segment",
@@ -3888,7 +4004,10 @@
               "type": {
                 "const": "ruby"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Ruby Segment",
@@ -3928,7 +4047,10 @@
               "type": {
                 "const": "rust"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Rust Segment",
@@ -3964,7 +4086,10 @@
               "type": {
                 "const": "sapling"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Sapling Segment",
@@ -3996,7 +4121,10 @@
               "type": {
                 "const": "session"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Session Segment",
@@ -4009,7 +4137,10 @@
               "type": {
                 "const": "shell"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Shell Segment",
@@ -4024,7 +4155,7 @@
                       "type": "string"
                     },
                     "example": {
-                      "bash": "\udb84\udd83",
+                      "bash": "󱆃",
                       "zsh": "",
                       "pwsh": "",
                       "shell": "$"
@@ -4042,7 +4173,10 @@
               "type": {
                 "const": "sitecore"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Sitecore Segment",
@@ -4068,7 +4202,10 @@
               "type": {
                 "const": "spotify"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Spotify Segment",
@@ -4080,19 +4217,19 @@
                     "type": "string",
                     "title": "Playing Icon",
                     "description": "Text/icon to show when playing",
-                    "default": "\ue602 "
+                    "default": " "
                   },
                   "paused_icon": {
                     "type": "string",
                     "title": "Paused Icon",
                     "description": "Text/icon to show when paused",
-                    "default": "\uf04c "
+                    "default": " "
                   },
                   "stopped_icon": {
                     "type": "string",
                     "title": "Stopped Icon",
                     "description": "Text/icon to show when stopped",
-                    "default": "\uf04d "
+                    "default": " "
                   }
                 },
                 "unevaluatedProperties": false
@@ -4106,7 +4243,10 @@
               "type": {
                 "const": "status"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Status Segment",
@@ -4144,7 +4284,10 @@
               "type": {
                 "const": "strava"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Display training data from Strava",
@@ -4156,31 +4299,31 @@
                     "type": "string",
                     "title": "Ride icon",
                     "description": "Alternative icon for this activity type",
-                    "default": "\uf206"
+                    "default": ""
                   },
                   "run_icon": {
                     "type": "string",
                     "title": "Run icon",
                     "description": "Alternative icon for this activity type",
-                    "default": "\ue213"
+                    "default": ""
                   },
                   "skiing_icon": {
                     "type": "string",
                     "title": "Skiing icon",
                     "description": "Alternative icon for this activity type",
-                    "default": "\ue213"
+                    "default": ""
                   },
                   "workout_icon": {
                     "type": "string",
                     "title": "Workout icon",
                     "description": "Alternative icon for this activity type",
-                    "default": "\ue213"
+                    "default": ""
                   },
                   "unknown_activity_icon": {
                     "type": "string",
                     "title": "Fallback icon",
                     "description": "Fallback icon for other activity types",
-                    "default": "\ue213"
+                    "default": ""
                   },
                   "http_timeout": {
                     "$ref": "#/definitions/http_timeout"
@@ -4206,7 +4349,10 @@
               "type": {
                 "const": "svelte"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Svelte Segment",
@@ -4240,7 +4386,10 @@
               "type": {
                 "const": "svn"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "SVN Segment",
@@ -4272,7 +4421,10 @@
               "type": {
                 "const": "swift"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Swift Segment",
@@ -4308,7 +4460,10 @@
               "type": {
                 "const": "sysinfo"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Get sysinfo",
@@ -4334,7 +4489,10 @@
               "type": {
                 "const": "talosctl"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Talosctl Segment",
@@ -4347,7 +4505,10 @@
               "type": {
                 "const": "tauri"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Tauri Segment",
@@ -4386,7 +4547,10 @@
               "type": {
                 "const": "terraform"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Terraform Segment",
@@ -4418,7 +4582,10 @@
               "type": {
                 "const": "text"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Text Segment",
@@ -4431,7 +4598,10 @@
               "type": {
                 "const": "time"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Time Segment",
@@ -4454,10 +4624,13 @@
         {
           "if": {
             "properties": {
-              "type":{
+              "type": {
                 "const": "todoist"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Todoist Segment",
@@ -4485,7 +4658,10 @@
               "type": {
                 "const": "ui5tooling"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "UI5 tooling CLI segment",
@@ -4519,7 +4695,10 @@
               "type": {
                 "const": "umbraco"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Umbraco Segment",
@@ -4532,7 +4711,10 @@
               "type": {
                 "const": "unity"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Unity Segment",
@@ -4555,7 +4737,10 @@
               "type": {
                 "const": "v"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "V Segment",
@@ -4589,7 +4774,10 @@
               "type": {
                 "const": "vala"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Vala Segment",
@@ -4623,7 +4811,10 @@
               "type": {
                 "const": "wakatime"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Wakatime",
@@ -4652,7 +4843,10 @@
               "type": {
                 "const": "withings"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Display activity data from Withings",
@@ -4684,7 +4878,10 @@
               "type": {
                 "const": "xmake"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "XMake Segment",
@@ -4718,7 +4915,10 @@
               "type": {
                 "const": "yarn"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Yarn Segment",
@@ -4753,7 +4953,10 @@
               "type": {
                 "const": "ytm"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "YouTube Music Desktop App Segment",
@@ -4765,25 +4968,25 @@
                     "type": "string",
                     "title": "Playing Icon",
                     "description": "Text/icon to show when playing",
-                    "default": "\uf04b "
+                    "default": " "
                   },
                   "paused_icon": {
                     "type": "string",
                     "title": "Paused Icon",
                     "description": "Text/icon to show when paused",
-                    "default": "\uf04c "
+                    "default": " "
                   },
                   "stopped_icon": {
                     "type": "string",
                     "title": "Stopped Icon",
                     "description": "Text/icon to show when stopped",
-                    "default": "\uf04d "
+                    "default": " "
                   },
                   "ad_icon": {
                     "type": "string",
                     "title": "Advertisement Icon",
                     "description": "Text/icon to show when an advertisement is playing",
-                    "default": "\ueebb "
+                    "default": " "
                   },
                   "http_timeout": {
                     "$ref": "#/definitions/http_timeout"
@@ -4800,7 +5003,10 @@
               "type": {
                 "const": "zig"
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           },
           "then": {
             "title": "Zig Segment",
@@ -4829,12 +5035,173 @@
             }
           }
         }
-      ]
+      ],
+      "additionalProperties": false
+    },
+    "prompt_line": {
+      "type": "object",
+      "description": "https://prompto.dev/docs/configuration/layout",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "prompt"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "type",
+              "alignment",
+              "segments"
+            ],
+            "title": "Prompt definition, contains 1 or more segments to render"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "rprompt"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "type",
+              "segments"
+            ],
+            "title": "RPrompt definition, contains 1 or more segments to render to the right of the cursor"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "prompt"
+              },
+              "alignment": {
+                "const": "right"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "overflow": {
+                "type": "string",
+                "title": "Block overflow",
+                "description": "https://prompto.dev/docs/configuration/block#overflow",
+                "enum": [
+                  "break",
+                  "hide"
+                ],
+                "default": ""
+              },
+              "filler": {
+                "$ref": "#/definitions/filler",
+                "description": "https://prompto.dev/docs/configuration/block#filler"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "filler": {
+          "type": "string",
+          "title": "Filler",
+          "description": "https://prompto.dev/docs/configuration/block#filler",
+          "default": ""
+        },
+        "leading_separator": {
+          "type": "string",
+          "title": "Leading separator glyph",
+          "description": "https://prompto.dev/docs/configuration/block#style"
+        },
+        "trailing_separator": {
+          "type": "string",
+          "title": "Trailing separator glyph",
+          "description": "https://prompto.dev/docs/configuration/block#style"
+        },
+        "style": {
+          "title": "Separator alias shortcut",
+          "description": "https://prompto.dev/docs/configuration/block#style",
+          "enum": [
+            "powerline",
+            "powerline_thin",
+            "rounded",
+            "rounded_thin",
+            "slant",
+            "block",
+            "flame",
+            "pixel",
+            "lego"
+          ]
+        },
+        "leading_style": {
+          "type": "string",
+          "title": "Leading separator alias",
+          "description": "https://prompto.dev/docs/configuration/block#style"
+        },
+        "trailing_style": {
+          "type": "string",
+          "title": "Trailing separator alias",
+          "description": "https://prompto.dev/docs/configuration/block#style"
+        },
+        "segments": {
+          "type": "array",
+          "title": "Segment names rendered on this line",
+          "description": "https://prompto.dev/docs/configuration/layout#prompt-line-object",
+          "items": {
+            "type": "string"
+          }
+        },
+        "powerline_symbol": {
+          "title": "Removed: use trailing_separator",
+          "not": {}
+        },
+        "leading_powerline_symbol": {
+          "title": "Removed: use leading_separator",
+          "not": {}
+        },
+        "invert_powerline": {
+          "title": "Removed: removed, no replacement",
+          "not": {}
+        },
+        "leading_diamond": {
+          "title": "Removed: use leading_separator or leading_style",
+          "not": {}
+        },
+        "trailing_diamond": {
+          "title": "Removed: use trailing_separator or trailing_style",
+          "not": {}
+        },
+        "leading_glyph": {
+          "title": "Removed: set by the parser, not configurable",
+          "not": {}
+        },
+        "trailing_glyph": {
+          "title": "Removed: set by the parser, not configurable",
+          "not": {}
+        },
+        "keep_when_empty": {
+          "title": "Removed here: keep_when_empty belongs on a segment",
+          "not": {}
+        }
+      },
+      "title": "Prompt line",
+      "additionalProperties": false
     }
   },
-  "required": [
-    "blocks"
-  ],
   "properties": {
     "cursor_padding": {
       "type": "boolean",
@@ -4874,15 +5241,6 @@
     "terminal_background": {
       "$ref": "#/definitions/color"
     },
-    "blocks": {
-      "type": "array",
-      "title": "Block array",
-      "default": [],
-      "description": "https://prompto.dev/docs/configuration/general#blocks",
-      "items": {
-        "$ref": "#/definitions/block"
-      }
-    },
     "tooltips": {
       "type": "array",
       "title": "Tooltip list, prompt elements to display based on context",
@@ -4908,26 +5266,6 @@
         ]
       }
     },
-    "transient_prompt": {
-      "$ref": "#/definitions/extra_prompt",
-      "title": "Transient Prompt Setting",
-      "description": "https://prompto.dev/docs/configuration/transient",
-      "anyOf": [
-        {
-          "properties": {
-            "filler": {
-              "$ref": "#/definitions/filler"
-            },
-            "newline": {
-              "type": "boolean",
-              "title": "Newline",
-              "description": "Add a newline before the prompt",
-              "default": false
-            }
-          }
-        }
-      ]
-    },
     "valid_line": {
       "$ref": "#/definitions/extra_prompt",
       "title": "Valid Line Setting (for PowerShell only)",
@@ -4937,11 +5275,6 @@
       "$ref": "#/definitions/extra_prompt",
       "title": "Error Line Setting (for PowerShell only)",
       "description": "https://prompto.dev/docs/configuration/line-error"
-    },
-    "secondary_prompt": {
-      "$ref": "#/definitions/extra_prompt",
-      "title": "Secondary Prompt Setting",
-      "description": "https://prompto.dev/docs/configuration/secondary-prompt"
     },
     "debug_prompt": {
       "$ref": "#/definitions/extra_prompt",
@@ -5053,17 +5386,101 @@
       ],
       "default": "replace"
     },
-    "version": {
+    "prompt": {
+      "type": "array",
+      "title": "Left-aligned primary prompt lines",
+      "description": "https://prompto.dev/docs/configuration/layout#prompt-families",
+      "default": [],
+      "items": {
+        "$ref": "#/definitions/prompt_line"
+      }
+    },
+    "rprompt": {
+      "type": "array",
+      "title": "Right-aligned primary prompt lines",
+      "description": "https://prompto.dev/docs/configuration/layout#prompt-families",
+      "default": [],
+      "items": {
+        "$ref": "#/definitions/prompt_line"
+      }
+    },
+    "secondary": {
+      "type": "array",
+      "title": "Continuation prompt lines",
+      "description": "https://prompto.dev/docs/configuration/layout#prompt-families",
+      "default": [],
+      "items": {
+        "$ref": "#/definitions/prompt_line"
+      }
+    },
+    "transient": {
+      "type": "array",
+      "title": "Left transient prompt lines",
+      "description": "https://prompto.dev/docs/configuration/layout#prompt-families",
+      "default": [],
+      "items": {
+        "$ref": "#/definitions/prompt_line"
+      }
+    },
+    "rtransient": {
+      "type": "array",
+      "title": "Right transient prompt lines",
+      "description": "https://prompto.dev/docs/configuration/layout#prompt-families",
+      "default": [],
+      "items": {
+        "$ref": "#/definitions/prompt_line"
+      }
+    },
+    "daemon_timeout": {
       "type": "integer",
-      "title": "Version",
-      "description": "https://prompto.dev/docs/configuration/general",
-      "default": 4
+      "title": "Initial daemon wait in milliseconds"
+    },
+    "daemon_idle_timeout": {
+      "type": "string",
+      "title": "Daemon idle shutdown, in minutes or \"none\""
+    },
+    "render_pending_icon": {
+      "type": "string",
+      "title": "Global pending icon"
+    },
+    "render_pending_background": {
+      "$ref": "#/definitions/color",
+      "title": "Global pending background"
+    },
+    "vim-mode": {
+      "type": "object",
+      "title": "Vim mode and cursor settings"
+    },
+    "blocks": {
+      "title": "Removed: use prompt, rprompt, secondary, transient or rtransient",
+      "not": {}
+    },
+    "version": {
+      "title": "Removed: no longer exists",
+      "not": {}
     },
     "extends": {
-      "type": "string",
-      "title": "Extends",
-      "description": "https://prompto.dev/docs/configuration/general#extends",
-      "default": ""
+      "title": "Removed: no longer exists",
+      "not": {}
+    },
+    "secondary_prompt": {
+      "title": "Removed: use secondary",
+      "not": {}
+    },
+    "transient_prompt": {
+      "title": "Removed: use transient",
+      "not": {}
+    },
+    "transient_rprompt": {
+      "title": "Removed: use rtransient",
+      "not": {}
+    },
+    "upgrade": {
+      "title": "Removed: no longer exists",
+      "not": {}
     }
+  },
+  "additionalProperties": {
+    "$ref": "#/definitions/segment"
   }
 }
