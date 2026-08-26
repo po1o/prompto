@@ -8,6 +8,7 @@ import (
 	"github.com/po1o/prompto/src/runtime/mock"
 	"github.com/po1o/prompto/src/segments"
 	"github.com/po1o/prompto/src/segments/options"
+	"github.com/po1o/prompto/src/template"
 
 	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v3"
@@ -272,4 +273,27 @@ func TestDaemonCacheKeySkipsWriterCacheKeyWhenNoExplicitCache(t *testing.T) {
 	}
 
 	assert.Equal(t, "daemon_cache_git_/tmp", segment.DaemonCacheKey())
+}
+
+// Blocks are reused across the renders of one generation, so resolving a color
+// must not write it back: this render's answer would become the next render's
+// fallback, and a segment whose template stopped matching would keep the stale
+// color instead of returning to its configured one.
+func TestResolveColorsDoNotOverwriteTheConfiguredValue(t *testing.T) {
+	segment := &Segment{
+		Foreground:          "white",
+		Background:          "blue",
+		ForegroundTemplates: template.List{"#00ff00"},
+		BackgroundTemplates: template.List{"#ff0000"},
+	}
+
+	assert.Equal(t, color.Ansi("#00ff00"), segment.ResolveForeground())
+	assert.Equal(t, color.Ansi("#ff0000"), segment.ResolveBackground())
+
+	assert.Equal(t, color.Ansi("white"), segment.Foreground, "the configured foreground must survive")
+	assert.Equal(t, color.Ansi("blue"), segment.Background, "the configured background must survive")
+
+	// Resolving again must give the same answer, not one built on the last.
+	assert.Equal(t, color.Ansi("#00ff00"), segment.ResolveForeground())
+	assert.Equal(t, color.Ansi("#ff0000"), segment.ResolveBackground())
 }
