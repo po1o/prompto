@@ -156,3 +156,33 @@ func TestLeadingSeparatorFloatsAfterASegmentWithNoSeparators(t *testing.T) {
 	require.Contains(t, got, inBlue+"<", "b's separator should keep its outline")
 	require.NotContains(t, got, onRed+inBlue+"<", "b's separator must not be carved from bare text")
 }
+
+// A separator is the segment's own block shaped into a point, so it is drawn in
+// the segment's background color. Without one there is nothing to draw it with:
+// the trailing separator is written on the terminal in the terminal's own
+// color and disappears. Documented in docs/configuration/segments.md under
+// "Separators Need a Background", and pinned here because nothing warns about
+// it — a trailing_separator simply never appears.
+func TestSeparatorsNeedABackgroundToBeDrawn(t *testing.T) {
+	render := func(background string) string {
+		return renderTwoSegments(t,
+			separatorSegment("a", background, "(", ")"),
+			separatorSegment("b", blue, "", ""),
+		)
+	}
+
+	withBackground := render(red)
+	require.Contains(t, withBackground, "(", "a leading separator should be drawn")
+	require.Contains(t, withBackground, ")", "a trailing separator should be drawn")
+
+	// No background: the leading separator falls back to the terminal's default
+	// foreground, the trailing one is lost.
+	none := render("")
+	require.Contains(t, none, "(", "the leading separator survives on the default foreground")
+	require.NotContains(t, none, ")", "the trailing separator has no color to be drawn in")
+
+	// Explicitly transparent: neither is drawn.
+	transparent := render("transparent")
+	require.NotContains(t, transparent, "(")
+	require.NotContains(t, transparent, ")")
+}
