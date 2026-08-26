@@ -270,19 +270,28 @@ func (segment *Segment) EnsureWriter(env runtime.Environment) error {
 	return segment.MapSegmentWithWriter(env)
 }
 
+// ResolveForeground returns the color to draw with, which is the first
+// foreground template that renders to something, or the configured color.
+//
+// The result is deliberately not written back to the segment. Blocks are reused
+// across the renders of one generation, so an assignment here would make this
+// render's resolved color the next render's fallback: a segment whose template
+// stops matching would keep the old color instead of returning to its
+// configured one. It would also save nothing, since the templates are still
+// evaluated on every call.
 func (segment *Segment) ResolveForeground() color.Ansi {
 	if len(segment.ForegroundTemplates) != 0 {
-		match := segment.ForegroundTemplates.FirstMatch(segment.writer, segment.Foreground.String())
-		segment.Foreground = color.Ansi(match)
+		return color.Ansi(segment.ForegroundTemplates.FirstMatch(segment.writer, segment.Foreground.String()))
 	}
 
 	return segment.Foreground
 }
 
+// ResolveBackground mirrors ResolveForeground, and does not write back for the
+// same reason.
 func (segment *Segment) ResolveBackground() color.Ansi {
 	if len(segment.BackgroundTemplates) != 0 {
-		match := segment.BackgroundTemplates.FirstMatch(segment.writer, segment.Background.String())
-		segment.Background = color.Ansi(match)
+		return color.Ansi(segment.BackgroundTemplates.FirstMatch(segment.writer, segment.Background.String()))
 	}
 
 	return segment.Background
