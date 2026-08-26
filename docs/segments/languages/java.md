@@ -16,8 +16,7 @@ prompt:
 
 java:
   type: "java"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#4063D8"
   template: "  {{ .Full }}"

@@ -5,7 +5,6 @@ executiontime:
     options:
         always_enabled: true
         style: roundrock
-    style: diamond
     template: ' {{ .FormattedMs }} '
 cursor_padding: true
 git:
@@ -19,13 +18,11 @@ git:
         branch_template: '{{ trunc 25 .Branch }}'
         fetch_status: true
         fetch_upstream_icon: true
-    style: plain
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 path:
     foreground: '#61AFEF'
     options:
         style: full
-    style: plain
     template:  {{ .Path }}
 prompt:
     - segments:
@@ -39,7 +36,6 @@ prompt:
         - text
 root:
     foreground: '#E06C75'
-    style: plain
     template: '!'
 rprompt:
     - segments:
@@ -53,21 +49,17 @@ shell:
             cmd: Cmd
             powershell: Shell
             pwsh: Shell
-    style: plain
     template: '  {{ .Name }}'
 status:
     foreground: '#b8ff75'
     foreground_templates:
         - '{{ if gt .Code 0 }}#E06C75{{ end }}'
-    style: plain
     template: ' x{{ reason .Code }}'
 text:
     foreground: '#E06C75'
-    style: plain
     template: ❯
 time:
     foreground: '#E5C07B'
     options:
         time_format: "15:04"
-    style: plain
     template: '[{{ .LastDate | date .Format }}]'

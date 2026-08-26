@@ -3,11 +3,9 @@ crystal:
     options:
         display_mode: files
         fetch_version: true
-    style: plain
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
 git:
     foreground: lightYellow
-    style: plain
     template: ':: <lightBlue>git(</>{{ .HEAD }}<lightBlue>)</>'
 node:
     foreground: '#68a063'
@@ -17,17 +15,15 @@ node:
         fetch_version: true
         npm_icon: /npm
         yarn_icon: /yarn
-    style: plain
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}'
 os:
     foreground: cyan
-    style: powerline
+    trailing_separator: ""
     template: '{{ .Icon }}'
 path:
     foreground: cyan
     options:
         style: full
-    style: plain
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -41,7 +37,6 @@ python:
     options:
         display_mode: context
         fetch_virtual_env: false
-    style: plain
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
 rprompt:
     - segments:
@@ -55,7 +50,6 @@ ruby:
     options:
         display_mode: files
         fetch_version: true
-    style: plain
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
 status:
     foreground: lightGreen
@@ -63,9 +57,8 @@ status:
         - '{{ if gt .Code 0 }}red{{ end }}'
     options:
         always_enabled: true
-    style: powerline
+    trailing_separator: ""
     template: '➜ '
 time:
     foreground: lightGreen
-    style: plain
     template: ' {{ .LastDate | date .Format }} '

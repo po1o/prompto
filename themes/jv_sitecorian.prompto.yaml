@@ -2,11 +2,9 @@ console_title_template: '{{if .Root}}Admin: {{end}} {{.Folder}}'
 executiontime:
     background: '#2B2B2B'
     foreground: '#ffffff'
-    invert_powerline: true
     leading_separator: 
     options:
         always_enabled: true
-    style: diamond
     template: ' {{ .FormattedMs }}<#ffffff>  </>'
     trailing_separator: 
 cursor_padding: true
@@ -16,14 +14,12 @@ git:
     options:
         fetch_status: true
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 os:
     background: '#2B2B2B'
     foreground: '#1CA6A3'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
 path:
     background: '#185F7B'
@@ -31,7 +27,6 @@ path:
     options:
         home_icon: '  '
         style: mixed
-    style: diamond
     template: '{{ .Path }} '
     trailing_separator: 
 prompt:
@@ -52,8 +47,7 @@ prompt:
 root:
     background: '#2B2B2B'
     foreground: '#FBD951'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' '
 rprompt:
     - segments:
@@ -64,13 +58,11 @@ rprompt:
 session:
     background: '#DC291E'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UserName }} '
 shell:
     background: '#000000'
     foreground: '#666666'
-    style: plain
     template:  {{ .Name }}
 status:
     background: '#4caf50'
@@ -79,36 +71,27 @@ status:
     foreground: '#ffffff'
     options:
         always_enabled: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if gt .Code 0 }}{{ else }} ♥{{ end }} '
 text:
     foreground: '#ffffff'
-    style: plain
 text.2:
     foreground: '#185F7B'
-    style: plain
     template: 
 text.3:
     background: '#185F7B'
     foreground: '#185F7B'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
 text.4:
-    leading_separator: <transparent,#49404f></>
-    style: plain
-    trailing_separator: 
+    template: ''
 text.5:
     foreground: '#2B2B2B'
-    style: plain
     template: 
 time:
     background: '#2B2B2B'
     foreground: '#ffffff'
-    invert_powerline: true
     leading_separator: 
     options:
         time_format: 3:04:05 PM
-    style: diamond
     template: ' {{ .LastDate | date .Format }}<#ffffff>  </>'
     trailing_separator: 

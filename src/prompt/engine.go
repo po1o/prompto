@@ -268,22 +268,24 @@ func (e *Engine) setActiveSegment(segment *config.Segment) {
 func (e *Engine) renderActiveSegment() {
 	e.writeSeparator(false)
 
-	switch e.activeSegment.ResolveStyle() {
-	case config.Plain, config.Powerline:
-		terminal.Write(color.Background, color.Foreground, e.activeSegment.Text())
-	case config.Diamond:
-		background := color.Transparent
+	background := color.Transparent
 
-		if e.previousActiveSegment != nil && e.previousActiveSegment.HasEmptyDiamondAtEnd() {
-			background = e.previousActiveSegment.ResolveBackground()
+	// A previous segment that ends flat still shows its background at the
+	// boundary, so the leading glyph is carved out of it. An empty background
+	// must stay empty here: the writer reads that as "the active segment's
+	// background", which would paint the glyph onto itself and hide it.
+	if e.previousActiveSegment != nil && e.previousActiveSegment.HasEmptyGlyphAtEnd() {
+		if previous := e.previousActiveSegment.ResolveBackground(); previous != "" {
+			background = previous
 		}
+	}
 
-		terminal.Write(background, color.Background, e.activeSegment.LeadingDiamond)
+	terminal.Write(background, color.Background, e.activeSegment.LeadingGlyph)
+
+	// A segment kept via keep_when_empty draws its glyphs but no text, so the
+	// prompt holds its shape instead of reflowing.
+	if e.activeSegment.Enabled {
 		terminal.Write(color.Background, color.Foreground, e.activeSegment.Text())
-	case config.Accordion:
-		if e.activeSegment.Enabled {
-			terminal.Write(color.Background, color.Foreground, e.activeSegment.Text())
-		}
 	}
 
 	e.previousActiveSegment = e.activeSegment
@@ -296,114 +298,41 @@ func (e *Engine) writeSeparator(final bool) {
 		return
 	}
 
-	isCurrentDiamond := e.activeSegment.ResolveStyle() == config.Diamond
-	if final && isCurrentDiamond {
-		terminal.Write(color.Transparent, color.Background, e.activeSegment.TrailingDiamond)
+	if final {
+		terminal.Write(color.Transparent, color.Background, e.activeSegment.TrailingGlyph)
 		return
 	}
 
-	isPreviousDiamond := e.previousActiveSegment != nil && e.previousActiveSegment.ResolveStyle() == config.Diamond
-	if isPreviousDiamond {
-		e.adjustTrailingDiamondColorOverrides()
-	}
-
-	if isPreviousDiamond && isCurrentDiamond && e.activeSegment.LeadingDiamond == "" {
-		terminal.Write(color.Background, color.ParentBackground, e.previousActiveSegment.TrailingDiamond)
+	if e.previousActiveSegment == nil || e.previousActiveSegment.TrailingGlyph == "" {
 		return
 	}
 
-	if isPreviousDiamond && len(e.previousActiveSegment.TrailingDiamond) > 0 {
-		terminal.Write(color.Transparent, color.ParentBackground, e.previousActiveSegment.TrailingDiamond)
-	}
+	e.adjustTrailingGlyphColorOverrides()
 
-	isPowerline := e.activeSegment.IsPowerline()
-
-	shouldOverridePowerlineLeadingSymbol := func() bool {
-		if !isPowerline {
-			return false
-		}
-
-		if isPowerline && e.activeSegment.LeadingPowerlineSymbol == "" {
-			return false
-		}
-
-		if e.previousActiveSegment != nil && e.previousActiveSegment.IsPowerline() {
-			return false
-		}
-
-		return true
-	}
-
-	if shouldOverridePowerlineLeadingSymbol() {
-		terminal.Write(color.Transparent, color.Background, e.activeSegment.LeadingPowerlineSymbol)
+	// A shaped segment that opens flat lets the previous trailing glyph land on
+	// its own background, which is what makes a run of segments read as one
+	// continuous ribbon. A segment carrying no glyph is bare text rather than a
+	// link in that ribbon, so the glyph closes onto the terminal background and
+	// keeps its shape instead of merging into a block of colour.
+	if e.activeSegment.LeadingGlyph == "" && e.activeSegment.TrailingGlyph != "" {
+		terminal.Write(color.Background, color.ParentBackground, e.previousActiveSegment.TrailingGlyph)
 		return
 	}
 
-	resolvePowerlineSymbol := func() string {
-		if isPowerline {
-			return e.activeSegment.PowerlineSymbol
-		}
-
-		if e.previousActiveSegment != nil && e.previousActiveSegment.IsPowerline() {
-			return e.previousActiveSegment.PowerlineSymbol
-		}
-
-		return ""
-	}
-
-	symbol := resolvePowerlineSymbol()
-	if symbol == "" {
-		return
-	}
-
-	bgColor := color.Background
-	if final || !isPowerline {
-		bgColor = color.Transparent
-	}
-
-	if e.activeSegment.ResolveStyle() == config.Diamond && e.activeSegment.LeadingDiamond == "" {
-		bgColor = color.Background
-	}
-
-	if e.activeSegment.InvertPowerline || (e.previousActiveSegment != nil && e.previousActiveSegment.InvertPowerline) {
-		terminal.Write(e.getPowerlineColor(), bgColor, symbol)
-		return
-	}
-
-	terminal.Write(bgColor, e.getPowerlineColor(), symbol)
+	terminal.Write(color.Transparent, color.ParentBackground, e.previousActiveSegment.TrailingGlyph)
 }
 
-func (e *Engine) getPowerlineColor() color.Ansi {
-	if e.previousActiveSegment == nil {
-		return color.Transparent
-	}
-
-	if e.previousActiveSegment.ResolveStyle() == config.Diamond && e.previousActiveSegment.TrailingDiamond == "" {
-		return e.previousActiveSegment.ResolveBackground()
-	}
-
-	if e.activeSegment.ResolveStyle() == config.Diamond && e.activeSegment.LeadingDiamond == "" {
-		return e.previousActiveSegment.ResolveBackground()
-	}
-
-	if !e.previousActiveSegment.IsPowerline() {
-		return color.Transparent
-	}
-
-	return e.previousActiveSegment.ResolveBackground()
-}
-
-func (e *Engine) adjustTrailingDiamondColorOverrides() {
+func (e *Engine) adjustTrailingGlyphColorOverrides() {
 	// as we now already adjusted the activeSegment, we need to change the value
 	// of background and foreground to parentBackground and parentForeground
 	// this will still break when using parentBackground and parentForeground as keywords
 	// in a trailing diamond, but let's fix that when it happens as it requires either a rewrite
 	// of the logic for diamonds or storing grandparents as well like one happy family.
-	if e.previousActiveSegment == nil || e.previousActiveSegment.TrailingDiamond == "" {
+	if e.previousActiveSegment == nil || e.previousActiveSegment.TrailingGlyph == "" {
 		return
 	}
 
-	trailingDiamond := e.previousActiveSegment.TrailingDiamond
+	trailingDiamond := e.previousActiveSegment.TrailingGlyph
 	// Optimize: check both conditions in a single pass
 	hasBg := strings.Contains(trailingDiamond, string(color.Background))
 	hasFg := strings.Contains(trailingDiamond, string(color.Foreground))
@@ -428,7 +357,7 @@ func (e *Engine) adjustTrailingDiamondColorOverrides() {
 		}
 
 		newAnchor := strings.Replace(match[terminal.ANCHOR], string(override), string(newOverride), 1)
-		e.previousActiveSegment.TrailingDiamond = strings.Replace(e.previousActiveSegment.TrailingDiamond, anchor, newAnchor, 1)
+		e.previousActiveSegment.TrailingGlyph = strings.Replace(e.previousActiveSegment.TrailingGlyph, anchor, newAnchor, 1)
 	}
 
 	if len(match[terminal.BG]) > 0 {

@@ -1,13 +1,11 @@
 cursor_padding: true
 git:
     foreground: '#C2C206'
-    style: plain
     template: '{{ .HEAD }} '
 path:
     foreground: '#ffffff'
     options:
         style: full
-    style: plain
     template: '{{ .Path }} '
 prompt:
     - segments:
@@ -19,13 +17,10 @@ prompt:
         - text
 root:
     foreground: '#B5B50D'
-    style: plain
     template: '  '
 status:
     foreground: '#C94A16'
-    style: plain
     template: 'x{{ reason .Code }} '
 text:
     foreground: '#007ACC'
-    style: plain
     template: 

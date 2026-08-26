@@ -23,16 +23,14 @@ git:
         tag_icon: '▶ '
         untracked_modes:
             /Users/user/Projects/prompto/: "no"
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} │{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 path:
     background: '#91ddff'
     foreground: '#100e23'
     options:
         style: agnoster_full
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -47,31 +45,25 @@ prompt:
         - text.2
 session:
     foreground: '#757575'
-    style: plain
     template: '┌ {{ if .SSHSession }} {{ end }}{{ .UserName }}@{{ .HostName }} '
 status:
     background: '#ff8080'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if gt .Code 0 }}error{{ else }}{{ end }} '
 terraform:
     background: '#ffee58'
     foreground: '#100e23'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .WorkspaceName }}{{ if .Version }} {{ .Version }}{{ end }} '
 text:
     foreground: '#757575'
-    style: plain
     template: └
 text.2:
     foreground: '#ffffff'
-    style: plain
     template: $
 time:
     foreground: '#689f38'
     options:
         time_format: "15:04:05"
-    style: plain
     template: ' <#757575,>|</> {{ .LastDate | date .Format }}'

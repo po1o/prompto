@@ -16,8 +16,7 @@ prompt:
 
 shell:
   type: "shell"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#0077c2"
   options:

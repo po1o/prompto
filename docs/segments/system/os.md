@@ -16,7 +16,6 @@ prompt:
 
 os:
   type: "os"
-  style: "plain"
   foreground: "#26C6DA"
   background: "#546E7A"
   template: " {{ if .WSL }}WSL at {{ end }}{{.Icon}}"

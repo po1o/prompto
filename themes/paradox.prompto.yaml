@@ -1,8 +1,7 @@
 git:
     background: '#95ffa4'
     foreground: '#193549'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }} '
 path:
     background: '#91ddff'
@@ -11,8 +10,7 @@ path:
         folder_icon: 
         folder_separator_icon: '  '
         style: full
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -27,28 +25,23 @@ prompt:
 python:
     background: '#906cff'
     foreground: '#100e23'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
 root:
     background: '#ffe9aa'
     foreground: '#100e23'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  '
 session:
     background: '#ffffff'
     foreground: '#100e23'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UserName }}@{{ .HostName }} '
 status:
     background: '#ff8080'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  '
 text:
     foreground: '#007ACC'
-    style: plain
     template: '❯ '

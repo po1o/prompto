@@ -1,20 +1,17 @@
 git:
     background: '#D4E157'
     foreground: '#000000'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }} '
 go:
     background: '#7FD5EA'
     foreground: '#ffffff'
     leading_separator: 
-    style: diamond
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} <transparent></>'
 os:
     background: '#ffffff'
     foreground: '#000000'
     leading_separator: 
-    style: diamond
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
     trailing_separator: 
 path:
@@ -22,8 +19,7 @@ path:
     foreground: '#ffffff'
     options:
         style: full
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -37,15 +33,13 @@ python:
     background: '#D4E157'
     foreground: '#000000'
     leading_separator: 
-    style: diamond
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} <transparent></>'
 root:
     background: '#0000ff'
     foreground: '#000000'
     options:
         style: full
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  '
 rprompt:
     - segments:
@@ -58,7 +52,6 @@ status:
         - '{{ if gt .Code 0 }}#FF5252{{ end }}'
     options:
         always_enabled: true
-    style: plain
     template: '❯ '
 time:
     background: '#ffffff'
@@ -66,6 +59,5 @@ time:
     leading_separator: 
     options:
         time_format: "15:04:05"
-    style: diamond
     template: ' {{ .LastDate | date .Format }} '
     trailing_separator: 

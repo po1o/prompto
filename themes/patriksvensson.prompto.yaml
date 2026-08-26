@@ -1,6 +1,5 @@
 dotnet:
     foreground: magenta
-    style: plain
     template: ' [.NET] {{ if .Unsupported }}{{ else }}{{ .Full }}{{ end }} '
 cursor_padding: true
 git:
@@ -14,7 +13,6 @@ git:
         fetch_status: true
         fetch_upstream_icon: true
         github_icon: ' '
-    style: plain
     template: ' on {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}<red>  {{ .Working.String }}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}<yellow>  {{ .Staging.String }}</>{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }}'
 path:
     foreground: blue
@@ -23,7 +21,6 @@ path:
         folder_separator_icon: /
         home_icon: 
         style: agnoster
-    style: plain
     template: '{{ .Path }}'
 prompt:
     - segments:
@@ -36,16 +33,12 @@ prompt:
         - text
 root:
     foreground: red
-    powerline_symbol: 
-    style: plain
     template: ' '
 text:
     foreground: green
-    style: plain
     template: ❯
 time:
     foreground: yellow
     options:
         time_format: "15:04:05"
-    style: plain
     template: '{{ .LastDate | date .Format }} '

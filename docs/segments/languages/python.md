@@ -17,8 +17,7 @@ prompt:
 
 python:
   type: "python"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffd43b"
   background: "#306998"
   template: "  {{ .Full }} "

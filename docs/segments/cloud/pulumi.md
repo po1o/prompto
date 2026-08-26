@@ -20,8 +20,7 @@ prompt:
 
 pulumi:
   type: "pulumi"
-  style: "diamond"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#662d91"
   template: " {{ .Stack }}{{if .User }} :: {{ .User }}@{{ end }}{{ if .URL }}{{ .URL }}{{ end }}"

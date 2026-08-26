@@ -5,8 +5,7 @@ battery:
         - '{{if eq "Discharging" .State.String}}#FFCD58{{end}}'
         - '{{if eq "Full" .State.String}}#0476d0{{end}}'
     foreground: '#193549'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}  '
 cursor_padding: true
 git:
@@ -14,20 +13,17 @@ git:
     foreground: '#193549'
     options:
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 kubectl:
     background: '#0077c2'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{.Context}} :: {{if .Namespace}}{{.Namespace}}{{else}}default{{end}} '
 node:
     background: '#6CA35E'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 os:
     background: '#546E7A'
@@ -35,7 +31,6 @@ os:
     leading_separator: 
     options:
         macos: mac
-    style: diamond
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
     trailing_separator: 
 path:
@@ -43,8 +38,7 @@ path:
     foreground: '#193549'
     options:
         style: folder
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Path }} '
 prompt:
     - segments:
@@ -62,14 +56,12 @@ prompt:
 root:
     background: '#ffff66'
     foreground: '#193549'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  '
 session:
     background: '#546E7A'
     foreground: '#26C6DA'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UserName }}@{{ .HostName }} '
 status:
     background: '#007800'
@@ -79,10 +71,8 @@ status:
     leading_separator: <transparent,background></>
     options:
         always_enabled: true
-    style: diamond
     template: '  '
     trailing_separator: 
 text:
     foreground: '#007ACC'
-    style: plain
     template: '➜ '

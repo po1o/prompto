@@ -16,8 +16,7 @@ prompt:
 
 clojure:
   type: "clojure"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#9068B0"
   template: "  {{ .Full }}"

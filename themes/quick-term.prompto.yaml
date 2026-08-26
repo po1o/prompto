@@ -1,12 +1,10 @@
 executiontime:
     background: '#e4e4e4'
     foreground: '#585858'
-    invert_powerline: true
     options:
         always_enabled: true
         style: austin
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .FormattedMs }} '
 cursor_padding: true
 git:
@@ -24,7 +22,6 @@ git:
         branch_identical_icon: 
         branch_template: '{{ trunc 25 .Branch }}'
         fetch_status: true
-    style: diamond
     template: ' {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} <transparent></> <#121318> {{ .Working.String }}</>{{ end }}{{ if .Staging.Changed }} <transparent></> <#121318> {{ .Staging.String }}</>{{ end }}{{ if gt .StashCount 0 }} <transparent></> <#121318> {{ .StashCount }}</>{{ end }} '
     trailing_separator: 
 os:
@@ -47,7 +44,6 @@ os:
         raspbian: 
         ubuntu: 
         windows: 
-    style: diamond
     template: ' {{ .Icon }} '
 path:
     background: '#0087af'
@@ -57,8 +53,7 @@ path:
         folder_separator_icon: ' <transparent></> '
         max_depth: 3
         style: agnoster_short
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -75,19 +70,15 @@ rprompt:
 session:
     background: '#e4e4e4'
     foreground: '#4e4e4e'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UserName }} '
 text:
     foreground: '#d75f00'
-    style: plain
     template: ╰─ {{ if .Root }}#{{else}}${{end}}
 time:
     background: '#d75f00'
     foreground: '#f2f3f8'
-    invert_powerline: true
     options:
         time_format: "15:04:05"
-    style: diamond
     template: '  {{ .LastDate | date .Format }} '
     trailing_separator: 

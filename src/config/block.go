@@ -26,14 +26,14 @@ const (
 
 // Block defines a part of the prompt with optional segments
 type Block struct {
-	Type            BlockType      `yaml:"type,omitempty"`
-	Alignment       BlockAlignment `yaml:"alignment,omitempty"`
-	Filler          string         `yaml:"filler,omitempty"`
-	Overflow        Overflow       `yaml:"overflow,omitempty"`
-	LeadingDiamond  string         `yaml:"leading_diamond,omitempty"`
-	TrailingDiamond string         `yaml:"trailing_diamond,omitempty"`
-	Segments        []*Segment     `yaml:"segments,omitempty"`
-	Index           int            `yaml:"index,omitempty"`
-	Newline         bool           `yaml:"newline,omitempty"`
-	Force           bool           `yaml:"force,omitempty"`
+	Type          BlockType      `yaml:"type,omitempty"`
+	Alignment     BlockAlignment `yaml:"alignment,omitempty"`
+	Filler        string         `yaml:"filler,omitempty"`
+	Overflow      Overflow       `yaml:"overflow,omitempty"`
+	LeadingGlyph  string         `yaml:"-"`
+	TrailingGlyph string         `yaml:"-"`
+	Segments      []*Segment     `yaml:"segments,omitempty"`
+	Index         int            `yaml:"index,omitempty"`
+	Newline       bool           `yaml:"newline,omitempty"`
+	Force         bool           `yaml:"force,omitempty"`
 }

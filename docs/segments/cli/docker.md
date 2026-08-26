@@ -16,8 +16,7 @@ prompt:
 
 docker:
   type: "docker"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#000000"
   background: "#0B59E7"
   template: "  {{ .Context }} "

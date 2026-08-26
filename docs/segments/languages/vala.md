@@ -16,8 +16,7 @@ prompt:
 
 vala:
   type: "vala"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#5E20A4"
   template: "  {{ .Full }} "

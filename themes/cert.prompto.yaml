@@ -5,7 +5,6 @@ git:
     leading_separator: 
     options:
         branch_icon: ""
-    style: diamond
     template: ' git({{ .HEAD }}) '
     trailing_separator: 
 path:
@@ -14,7 +13,6 @@ path:
     leading_separator: 
     options:
         style: folder
-    style: diamond
     template: ' {{ .Path }} '
     trailing_separator: 
 prompt:
@@ -27,7 +25,6 @@ session:
     background: '#E36464'
     foreground: '#fff'
     leading_separator: 
-    style: diamond
     template: '{{ .UserName }} '
     trailing_separator: 
 time:
@@ -36,6 +33,5 @@ time:
     leading_separator: 
     options:
         time_format: "15:04"
-    style: diamond
     template: ' {{ .LastDate | date .Format }} '
     trailing_separator: 

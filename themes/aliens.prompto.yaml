@@ -2,16 +2,14 @@ cursor_padding: true
 git:
     background: '#95ffa4'
     foreground: '#193549'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }} '
 path:
     background: '#C678DD'
     foreground: '#ffffff'
     options:
         style: full
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -23,13 +21,11 @@ python:
     background: '#FF6471'
     foreground: '#ffffff'
     leading_separator: <transparent,background></>
-    style: diamond
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
     trailing_separator: 
 session:
     background: '#61AFEF'
     foreground: '#ffffff'
     leading_separator: 
-    style: diamond
     template: ' {{ .UserName }}@{{ .HostName }} '
     trailing_separator: 

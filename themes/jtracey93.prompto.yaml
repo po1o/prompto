@@ -4,7 +4,6 @@ executiontime:
     options:
         style: dallas
         threshold: 0
-    style: plain
     template: ' {{ .FormattedMs }}s '
 cursor_padding: true
 git:
@@ -12,14 +11,12 @@ git:
     foreground: '#ffffff'
     options:
         fetch_status: true
-    style: plain
     template: ' branch ({{ .HEAD }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}) '
 path:
     background: lightYellow
     foreground: '#3f3f3f'
     options:
         style: full
-    style: plain
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -36,7 +33,6 @@ session:
     background: '#EB9654'
     foreground: '#ffffff'
     leading_separator: 
-    style: diamond
     template: '{{ if .SSHSession }} {{ end }}{{ .UserName }} '
 spotify:
     background: '#1BD760'
@@ -45,7 +41,6 @@ spotify:
         paused_icon: ""
         playing_icon: ""
         stopped_icon: ""
-    style: plain
     template: ' {{ .Icon }}{{ if ne .Status "stopped" }}{{ .Artist }} - {{ .Track }}{{ end }} '
 status:
     background: '#00897b'
@@ -54,7 +49,6 @@ status:
     foreground: '#ffffff'
     options:
         always_enabled: true
-    style: diamond
     trailing_separator: 
 status.2:
     foreground: '#ffffff'
@@ -62,12 +56,10 @@ status.2:
         - '{{ if gt .Code 0 }}#ff0000{{ end }}'
     options:
         always_enabled: true
-    style: plain
     template: '❯ '
 time:
     background: '#cc00ff'
     foreground: '#ffffff'
     options:
         time_format: "15:04:05"
-    style: plain
     template: ' {{ .LastDate | date .Format }} '

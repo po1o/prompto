@@ -17,9 +17,8 @@ prompt:
 cf:
   background: "#a7cae1"
   foreground: "#100e23"
-  powerline_symbol: ""
+  trailing_separator: ""
   template: "  cf {{ .Full }} "
-  style: "powerline"
   type: "cf"
 ```
 

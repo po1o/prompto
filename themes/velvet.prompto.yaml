@@ -4,8 +4,7 @@ executiontime:
     foreground: '#EFDCF9'
     options:
         always_enabled: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .FormattedMs }} '
 cursor_padding: true
 git:
@@ -15,8 +14,7 @@ git:
         branch_template: '{{ trunc 25 .Branch }}'
         fetch_status: true
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 go:
     background: '#4c1f5e'
@@ -24,7 +22,6 @@ go:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
     trailing_separator: 
 java:
@@ -33,7 +30,6 @@ java:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
     trailing_separator: 
 node:
@@ -42,7 +38,6 @@ node:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}
     trailing_separator: 
 os:
@@ -58,7 +53,6 @@ os:
         opensuse: 
         ubuntu: 
         windows: 
-    style: diamond
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
 path:
     background: '#170B3B'
@@ -69,8 +63,7 @@ path:
         home_icon: "~"
         max_depth: 3
         style: agnoster_short
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -87,7 +80,6 @@ python:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}
     trailing_separator: 
 rprompt:
@@ -103,7 +95,6 @@ ruby:
     leading_separator: ' '
     options:
         fetch_version: false
-    style: diamond
     template: {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
     trailing_separator: 
 status:
@@ -113,7 +104,6 @@ status:
         - '{{ if gt .Code 0 }}#FF3C3C{{ end }}'
     options:
         always_enabled: true
-    style: diamond
     template: ' {{ if gt .Code 0 }} {{.Code}}{{ end }} '
     trailing_separator: 
 time:
@@ -121,6 +111,5 @@ time:
     foreground: '#EFDCF9'
     options:
         time_format: "15:04:05"
-    style: diamond
     template: ' {{ .LastDate | date .Format }} '
     trailing_separator: 

@@ -3,7 +3,6 @@ crystal:
     options:
         display_mode: files
         fetch_version: true
-    style: plain
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
 git:
     background: '#29315A'
@@ -18,7 +17,6 @@ git:
         branch_template: '{{ trunc 25 .Branch }}'
         fetch_status: true
         fetch_upstream_icon: true
-    style: diamond
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
     trailing_separator: 
 node:
@@ -30,7 +28,6 @@ node:
         npm_icon: '<#e5272d> npm</> '
         pnpm_icon: "<#e5a100>\U000F02C1 pnpm</> "
         yarn_icon: '<#37aee5> yarn</> '
-    style: plain
     template: '{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }} {{ .Full }}'
 path:
     background: '#29315A'
@@ -38,7 +35,6 @@ path:
     leading_separator: 
     options:
         style: mixed
-    style: diamond
     template:  {{ .Path }}
     trailing_separator: 
 prompt:
@@ -53,7 +49,6 @@ python:
     options:
         display_mode: context
         fetch_virtual_env: false
-    style: plain
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
 rprompt:
     - segments:
@@ -66,13 +61,10 @@ ruby:
     options:
         display_mode: files
         fetch_version: true
-    style: plain
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
 status:
     foreground: '#C94A16'
-    style: plain
     template: 'x '
 text:
     foreground: '#63F08C'
-    style: plain
     template: '➜ '

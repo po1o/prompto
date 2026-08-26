@@ -16,7 +16,6 @@ prompt:
 
 sitecore:
   type: "sitecore"
-  style: "plain"
   foreground: "#000000"
   background: "#FFFFFF"
   template: "Env: {{ .EndpointName }}{{ if .CmHost }} CM: {{ .CmHost }}{{ end }}"

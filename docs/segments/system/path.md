@@ -16,8 +16,7 @@ prompt:
 
 path:
   type: "path"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#61AFEF"
   options:

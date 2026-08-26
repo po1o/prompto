@@ -5,7 +5,6 @@ executiontime:
     options:
         style: austin
         threshold: 0
-    style: plain
     template: '{{.FormattedMs}}'
 cursor_padding: true
 git:
@@ -13,7 +12,6 @@ git:
     foreground: p:black
     options:
         branch_icon: '  '
-    style: plain
     template: '{{.HEAD}}⠀'
 os:
     background: '#464646'
@@ -23,7 +21,6 @@ os:
         macos: 
         ubuntu: 
         windows: 
-    style: plain
     template: ' {{.Icon}}{{if .WSL}} (WSL){{end}}⠀'
 palette:
     black: '#111111'
@@ -36,7 +33,6 @@ path:
         folder_separator_template: <#93d0ff> » </>
         home_icon: 
         style: agnoster
-    style: plain
     template: <p:white>└</><#93d0ff>[</> {{.Path}} <#93d0ff>]</>
 prompt:
     - segments:
@@ -56,12 +52,10 @@ rprompt:
 session:
     background: '#ffe093'
     foreground: p:black
-    style: plain
     template: '  {{.HostName}}{{.UserName}}⠀'
 shell:
     background: p:white
     foreground: p:black
-    style: plain
     template: '  {{.Name}}⠀'
 status:
     background: transparent
@@ -70,17 +64,14 @@ status:
         - '{{if gt .Code 0}}#ff3030{{end}}'
     options:
         always_enabled: true
-    style: plain
     template: ❯
 text:
     background: transparent
     foreground: p:white
-    style: plain
     template: ┌
 time:
     background: transparent
     foreground: '#b3ffde'
     options:
         time_format: 02/01/06 15:04
-    style: plain
     template: <p:white> · </>{{.LastDate | date .Format}}

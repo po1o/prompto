@@ -16,11 +16,10 @@ prompt:
 
 session:
   type: "session"
-  style: "diamond"
   foreground: "#ffffff"
   background: "#c386f1"
-  leading_diamond: ""
-  trailing_diamond: ""
+  leading_separator: ""
+  trailing_separator: ""
   template: "{{ if .SSHSession }} {{ end }}{{ .UserName }}"
 ```
 

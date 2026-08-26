@@ -11,14 +11,12 @@ git:
     options:
         fetch_status: true
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 go:
     background: '#ffffff'
     foreground: '#06aad5'
     leading_separator: 
-    style: diamond
     template:  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
     trailing_separator: ' '
 node:
@@ -29,7 +27,6 @@ node:
         fetch_package_manager: true
         npm_icon: ' <#cc3a3a></> '
         yarn_icon: ' <#348cba></>'
-    style: diamond
     template:  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}
     trailing_separator: ' '
 pwd: osc99
@@ -41,8 +38,7 @@ path:
         folder_separator_icon: ' <transparent></> '
         home_icon: 
         style: agnoster
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ path .Path .Location }} '
 prompt:
     - segments:
@@ -55,7 +51,6 @@ python:
     background: '#306998'
     foreground: '#FFE873'
     leading_separator: 
-    style: diamond
     template:  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}
     trailing_separator: ' '
 rprompt:
@@ -68,14 +63,11 @@ session:
     background: '#2e9599'
     foreground: '#ffffff'
     leading_separator: 
-    powerline_symbol: 
-    style: diamond
     template: "\U000F041D {{ .HostName }} "
 text:
     foreground: '#FFF'
     foreground_templates:
         - '{{ if gt .Code 0 }}#D51111{{ end }}'
-    style: plain
     template: '  '
 time:
     background: '#2e9599'
@@ -85,6 +77,5 @@ time:
     leading_separator: 
     options:
         time_format: _2, 15:04:05
-    style: diamond
     template: '  {{ .LastDate | date .Format }} '
     trailing_separator: 

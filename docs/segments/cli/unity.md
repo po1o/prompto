@@ -26,8 +26,7 @@ prompt:
 
 unity:
   type: "unity"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#111111"
   background: "#ffffff"
   options:

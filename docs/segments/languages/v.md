@@ -16,8 +16,7 @@ prompt:
 
 v:
   type: "v"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#193549"
   background: "#4F87FF"
   template: "  {{ .Full }} "

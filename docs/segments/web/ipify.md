@@ -16,11 +16,10 @@ prompt:
 
 ipify:
   type: "ipify"
-  style: "diamond"
   foreground: "#ffffff"
   background: "#c386f1"
-  leading_diamond: ""
-  trailing_diamond: ""
+  leading_separator: ""
+  trailing_separator: ""
   template: "{{ .IP }}"
   options:
     http_timeout: 1000

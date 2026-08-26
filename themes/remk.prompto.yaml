@@ -4,14 +4,12 @@ git:
     foreground: '#ffffff'
     options:
         branch_icon: ""
-    style: plain
     template: ' git({{ .HEAD }}) '
 path:
     background: lightYellow
     foreground: '#3f3f3f'
     options:
         style: folder
-    style: plain
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -23,13 +21,11 @@ session:
     background: lightMagenta
     foreground: '#ffffff'
     leading_separator: 
-    style: diamond
     template: '{{ .UserName }} '
 time:
     background: lightGreen
     foreground: '#ffffff'
     options:
         time_format: "15:04"
-    style: diamond
     template: ' {{ .LastDate | date .Format }} '
     trailing_separator: 

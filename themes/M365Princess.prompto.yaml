@@ -6,14 +6,12 @@ git:
         branch_icon: ""
         fetch_status: false
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' ➜ ({{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }}) '
 node:
     background: p:sky
     foreground: p:white
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 palette:
     blush: '#DA627D'
@@ -29,8 +27,7 @@ path:
     foreground: p:white
     options:
         style: folder
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -48,24 +45,20 @@ session:
     background: p:plum
     foreground: p:white
     leading_separator: 
-    style: diamond
     template: '{{ .UserName }} '
 text:
     background: p:tan
     foreground: p:white
     leading_separator: 
-    style: diamond
     template: '{{ if .Env.PNPPSHOST }}  {{ .Env.PNPPSHOST }} {{ end }}'
 text.2:
     background: p:teal
     foreground: p:white
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '{{ if .Env.PNPPSSITE }}  {{ .Env.PNPPSSITE }}{{ end }}'
 text.3:
     background: p:teal
     foreground: p:white
-    style: diamond
     template: '{{ if .Env.PNPPSSITE }} {{ end }}'
     trailing_separator: 
 time:
@@ -73,6 +66,5 @@ time:
     foreground: p:white
     options:
         time_format: "15:04"
-    style: diamond
     template: ' ♥ {{ .LastDate | date .Format }} '
     trailing_separator: 

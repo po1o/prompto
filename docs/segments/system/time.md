@@ -31,7 +31,6 @@ prompt:
 
 time:
   type: time
-  style: plain
   foreground: "#007ACC"
   options:
     time_format: "15:04:05"

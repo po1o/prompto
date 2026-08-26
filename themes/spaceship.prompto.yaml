@@ -3,13 +3,11 @@ git:
     foreground: '#ff94df'
     options:
         branch_icon: ' <#ff94df><b> </b></>'
-    style: plain
     template: '<#ffffff>on</> {{ .HEAD }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 path:
     foreground: cyan
     options:
         style: folder
-    style: plain
     template: '<#ffffff>in</> {{ .Path }} '
 prompt:
     - segments:
@@ -20,9 +18,7 @@ prompt:
         - text
 session:
     foreground: lightYellow
-    style: plain
     template: '{{ .UserName }} '
 text:
     foreground: lightGreen
-    style: plain
     template: ❯

@@ -8,19 +8,16 @@ git:
         branch_template: '{{ trunc 30 .Branch }}'
         fetch_status: true
         fetch_upstream_icon: true
-    style: plain
     template: ' [{{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}<#BD6200>  {{ .Working.String }}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}<#053F22>  {{ .Staging.String }}</>{{ end }}] '
 os:
     background: '#E0E0E0'
     foreground: '#EF7D00'
-    style: plain
     template: ' {{ .Icon }} '
 path:
     background: '#E0E0E0'
     foreground: '#424242'
     options:
         style: full
-    style: plain
     template: ' {{ .Path }}'
 prompt:
     - segments:
@@ -36,20 +33,15 @@ python:
     foreground: '#424242'
     options:
         text: 
-    powerline_symbol: 
-    style: plain
     template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
 root:
     background: '#E0E0E0'
     foreground: '#BF231D'
-    style: plain
     template: '  '
 session:
     background: '#E0E0E0'
     foreground: '#424242'
-    style: plain
     template: '{{ .UserName }}'
 text:
     foreground: '#E0E0E0'
-    style: plain
     template: ' '

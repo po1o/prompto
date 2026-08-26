@@ -17,9 +17,8 @@ prompt:
 cftarget:
   background: "#a7cae1"
   foreground: "#100e23"
-  powerline_symbol: ""
+  trailing_separator: ""
   template: "  {{ .Org }}/{{ .Space }} "
-  style: "powerline"
   type: "cftarget"
 ```
 

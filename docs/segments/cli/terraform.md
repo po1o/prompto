@@ -16,8 +16,7 @@ prompt:
 
 terraform:
   type: "terraform"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#000000"
   background: "#ebcc34"
   template: "  {{.WorkspaceName}}"

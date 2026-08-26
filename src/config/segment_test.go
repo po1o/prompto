@@ -229,9 +229,7 @@ func TestEvaluateNeeds(t *testing.T) {
 
 func TestGetPendingTextDefaults(t *testing.T) {
 	segment := &Segment{}
-	enabled, text, background := segment.GetPendingText("", nil)
-
-	assert.True(t, enabled)
+	text, background := segment.GetPendingText("", nil)
 	assert.Equal(t, "\uf254 ...", text)
 	assert.Equal(t, color.Ansi(""), background)
 }
@@ -243,9 +241,7 @@ func TestGetPendingTextUsesGlobalConfigOverrides(t *testing.T) {
 		RenderPendingBackground: "red",
 	}
 
-	enabled, text, background := segment.GetPendingText("cached", cfg)
-
-	assert.True(t, enabled)
+	text, background := segment.GetPendingText("cached", cfg)
 	assert.Equal(t, "⌛ cached", text)
 	assert.Equal(t, color.Ansi("red"), background)
 }
@@ -260,9 +256,7 @@ func TestGetPendingTextUsesSegmentOverrides(t *testing.T) {
 		RenderPendingBackground: "red",
 	}
 
-	enabled, text, background := segment.GetPendingText("cached", cfg)
-
-	assert.True(t, enabled)
+	text, background := segment.GetPendingText("cached", cfg)
 	assert.Equal(t, "⏱ cached", text)
 	assert.Equal(t, color.Ansi("blue"), background)
 }

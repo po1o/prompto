@@ -3,13 +3,11 @@ git:
     foreground: '#D4AAFC'
     options:
         branch_icon: ""
-    style: plain
     template: ' <#DDB15F>git(</>{{ .HEAD }}<#DDB15F>)</>'
 path:
     foreground: '#56B6C2'
     options:
         style: folder
-    style: plain
     template: ' {{ .Path }}'
 prompt:
     - segments:
@@ -20,13 +18,10 @@ prompt:
         - status
 session:
     foreground: '#E36464'
-    style: plain
     template: '@{{ .UserName }} '
 status:
     foreground: '#DCB977'
-    style: plain
     template: ' '
 text:
     foreground: '#62ED8B'
-    style: plain
     template: ➜

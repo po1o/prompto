@@ -25,8 +25,7 @@ prompt:
 
 spotify:
   type: "spotify"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#1BD760"
   options:

@@ -16,8 +16,7 @@ prompt:
 
 xmake:
   type: "xmake"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#e0f2f1"
   background: "#22a079"
   template: " xmake v{{ .Full }} "

@@ -31,6 +31,27 @@ func GetConsole(name string) (string, bool) {
 	return lookup(bundledConsoleThemes, name)
 }
 
+// WithoutConsoleVariant hides a theme's console variant for the duration of fn,
+// so tests can still reach the path a theme takes when it ships none. Every
+// bundled theme currently has one, which would otherwise leave that path
+// untested until a console-safe theme is added and silently uncovers it.
+//
+// It mutates package state, so tests using it must not run in parallel.
+func WithoutConsoleVariant(name string, fn func()) {
+	name = normalizeName(name)
+
+	content, existed := bundledConsoleThemes[name]
+	delete(bundledConsoleThemes, name)
+
+	defer func() {
+		if existed {
+			bundledConsoleThemes[name] = content
+		}
+	}()
+
+	fn()
+}
+
 func lookup(themes map[string]string, name string) (string, bool) {
 	name = normalizeName(name)
 	if name == "" {

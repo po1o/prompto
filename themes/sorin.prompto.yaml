@@ -1,12 +1,10 @@
 git:
     foreground: '#C1C106'
-    style: plain
     template: '<#ffffff>git:</>{{ .HEAD }} '
 path:
     foreground: '#0973C0'
     options:
         style: full
-    style: plain
     template: '{{ .Path }} '
 prompt:
     - segments:
@@ -19,21 +17,16 @@ prompt:
         - text
 python:
     foreground: '#100e23'
-    style: plain
     template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
 root:
     foreground: '#CECE04'
-    style: plain
     template: '  '
 session:
     foreground: '#FFFFFF'
-    style: plain
     template: '{{ .UserName }}@{{ .HostName }} '
 status:
     foreground: '#CB4B16'
-    style: plain
     template: ' {{ reason .Code }} '
 text:
     foreground: '#ffffff'
-    style: plain
     template: '<#CB4B16>❯</><#CACA02>❯</><#4E9A06>❯</> '

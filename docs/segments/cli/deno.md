@@ -16,7 +16,6 @@ prompt:
 
 deno:
   type: "deno"
-  style: "plain"
   foreground: "#3C82F6"
   template: "  {{ .Full }} "
 ```

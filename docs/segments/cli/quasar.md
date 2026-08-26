@@ -17,8 +17,7 @@ prompt:
 
 quasar:
   type: "quasar"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#00B4FF"
   template: "  {{.Full}}{{ if .HasVite }}  {{ .Vite.Version }}{{ end }} "
 ```

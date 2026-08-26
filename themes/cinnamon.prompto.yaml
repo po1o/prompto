@@ -5,14 +5,12 @@ git:
     options:
         branch_icon: ""
         fetch_upstream_icon: true
-    style: plain
     template: ' {{ .UpstreamIcon }}{{ .HEAD }} '
 path:
     background: '#3e9022'
     foreground: '#ffffff'
     options:
         style: folder
-    style: plain
     template: '  {{ .Path }} '
 prompt:
     - segments:
@@ -25,7 +23,6 @@ session:
     background: '#07585c'
     foreground: '#ffffff'
     leading_separator: 
-    style: diamond
     template: ' {{ .UserName }}@{{ .HostName }} '
 spotify:
     background: '#491545'
@@ -34,7 +31,6 @@ spotify:
         paused_icon: ' '
         playing_icon: ' '
         stopped_icon: ' '
-    style: plain
     template: '  {{ .Icon }}{{ if ne .Status "stopped" }}{{ .Artist }} - {{ .Track }}{{ end }} '
 status:
     background: '#491515'
@@ -43,6 +39,5 @@ status:
     foreground: '#ffffff'
     options:
         always_enabled: true
-    style: diamond
     template: '  '
     trailing_separator: 

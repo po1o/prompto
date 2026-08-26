@@ -5,9 +5,7 @@ battery:
         - '{{if eq "Discharging" .State.String}}#FFCD58{{end}}'
         - '{{if eq "Full" .State.String}}#0476d0{{end}}'
     foreground: '#242424'
-    invert_powerline: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}  '
 console_title_template: '{{ .Shell }} in {{ .Folder }}'
 cursor_padding: true
@@ -21,16 +19,14 @@ git:
     foreground: '#193549'
     options:
         fetch_status: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 os:
     background: '#003543'
     foreground: '#fff'
     options:
         windows: 
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}}'
 path:
     background: '#0087D8'
@@ -38,8 +34,7 @@ path:
     options:
         folder_separator_icon: /
         style: full
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Path }} '
 prompt:
     - segments:
@@ -54,16 +49,13 @@ prompt:
 python:
     background: '#0087D8'
     foreground: '#003544'
-    invert_powerline: true
     options:
         display_mode: context
         fetch_virtual_env: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Venv }} '
 root:
     foreground: '#FFD700'
-    style: plain
     template: ' ⚡ '
 rprompt:
     - segments:
@@ -73,8 +65,7 @@ rprompt:
 session:
     background: '#003543'
     foreground: '#d2ff5e'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '{{ .UserName }} '
 status:
     background: '#33DD2D'
@@ -83,19 +74,15 @@ status:
     foreground: '#242424'
     options:
         always_enabled: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  '
 text:
     foreground: '#f1184c'
-    style: plain
     template: "\U0001F680 "
 time:
     background: '#003543'
     foreground: '#fff'
-    invert_powerline: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '<#fff>  </>{{ .LastDate | date .Format }} '
 transient:
     - segments:

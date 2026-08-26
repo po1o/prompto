@@ -13,15 +13,12 @@ git:
         rebase_icon: ' '
         revert_icon: ' '
         tag_icon: ' '
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }}'
 os:
     background: p:blue
     foreground: p:wight
     leading_separator: 
-    powerline_symbol: 
-    style: diamond
     template: '{{.Icon}} '
 palette:
     blue: '#8AADF4'
@@ -37,8 +34,7 @@ path:
         folder_icon: ....
         home_icon: "~"
         style: agnoster_short
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }}'
 prompt:
     - segments:
@@ -49,6 +45,4 @@ prompt:
 session:
     background: p:blue
     foreground: p:text
-    powerline_symbol: 
-    style: diamond
     template: '{{ .UserName }}@{{ .HostName }}'

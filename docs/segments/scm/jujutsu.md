@@ -16,8 +16,7 @@ prompt:
 
 jujutsu:
   type: "jujutsu"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#193549"
   background: "#ffeb3b"
   options:

@@ -5,14 +5,12 @@ executiontime:
     leading_separator: 
     options:
         style: austin
-    style: diamond
     template: ' {{ .FormattedMs }} '
 cursor_padding: true
 git:
     background: '#3feb56'
     foreground: '#193549'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }} '
 path:
     background: '#ec9706'
@@ -26,8 +24,7 @@ path:
             C:\Windows: 
         mixed_threshold: 8
         style: mixed
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ path .Path .Location }} '
 prompt:
     - segments:
@@ -38,8 +35,7 @@ prompt:
 python:
     background: '#906cff'
     foreground: '#100e23'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
 rprompt:
     - segments:
@@ -57,12 +53,11 @@ session:
     background_templates:
         - '{{if .Root}}#ff3026{{else}}#cfcfc4{{end}}'
     foreground: '#100e23'
-    style: powerline
+    trailing_separator: ""
     template: '{{if .Root}}  {{.UserName}} {{else}} {{.UserName}} {{end}}'
 status:
     background: '#ff4040'
     foreground: '#ffffff'
     leading_separator: 
-    style: diamond
     template: '  '
     trailing_separator: 

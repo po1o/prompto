@@ -32,7 +32,6 @@ rtransient:
 
 session:
   type: "session"
-  style: "plain"
 
 path:
   leading_style: "rounded"
@@ -50,8 +49,8 @@ git.main:
 	require.Len(t, cfg.Prompt, 1)
 	assert.Equal(t, []string{"session", "path"}, cfg.Prompt[0].Segments)
 	assert.Equal(t, " ", cfg.Prompt[0].Filler)
-	assert.Equal(t, "\uE0B2", cfg.Prompt[0].LeadingDiamond)
-	assert.Equal(t, "\uE0B0", cfg.Prompt[0].TrailingDiamond)
+	assert.Equal(t, "\uE0B2", cfg.Prompt[0].LeadingGlyph)
+	assert.Equal(t, "\uE0B0", cfg.Prompt[0].TrailingGlyph)
 	assert.Empty(t, cfg.Prompt[0].LeadingStyle)
 	assert.Empty(t, cfg.Prompt[0].TrailingStyle)
 	assert.Empty(t, cfg.Prompt[0].LeadingSeparator)
@@ -59,8 +58,8 @@ git.main:
 
 	require.Len(t, cfg.RPrompt, 1)
 	assert.Equal(t, []string{"git.main"}, cfg.RPrompt[0].Segments)
-	assert.Equal(t, "\uE0B2", cfg.RPrompt[0].LeadingDiamond)
-	assert.Equal(t, "\uE0B0", cfg.RPrompt[0].TrailingDiamond)
+	assert.Equal(t, "\uE0B2", cfg.RPrompt[0].LeadingGlyph)
+	assert.Equal(t, "\uE0B0", cfg.RPrompt[0].TrailingGlyph)
 	assert.Empty(t, cfg.RPrompt[0].LeadingStyle)
 	assert.Empty(t, cfg.RPrompt[0].TrailingStyle)
 	assert.Empty(t, cfg.RPrompt[0].LeadingSeparator)
@@ -74,8 +73,8 @@ git.main:
 	assert.Equal(t, "session", cfg.Segments["session"].Alias)
 	assert.Equal(t, PATH, cfg.Segments["path"].Type)
 	assert.Equal(t, "path", cfg.Segments["path"].Alias)
-	assert.Equal(t, "\uE0B6", cfg.Segments["path"].LeadingDiamond)
-	assert.Equal(t, ">", cfg.Segments["path"].TrailingDiamond)
+	assert.Equal(t, "\uE0B6", cfg.Segments["path"].LeadingGlyph)
+	assert.Equal(t, ">", cfg.Segments["path"].TrailingGlyph)
 	assert.Equal(t, GIT, cfg.Segments["git.main"].Type)
 	assert.Equal(t, "git.main", cfg.Segments["git.main"].Alias)
 	assert.Equal(t, 20, cfg.Segments["git.main"].Options["branch_max_length"])
@@ -99,12 +98,12 @@ session:
 	require.NoError(t, err)
 
 	require.Len(t, cfg.Prompt, 1)
-	assert.Equal(t, "", cfg.Prompt[0].LeadingDiamond)
-	assert.Equal(t, "\uE0B0", cfg.Prompt[0].TrailingDiamond)
+	assert.Equal(t, "", cfg.Prompt[0].LeadingGlyph)
+	assert.Equal(t, "\uE0B0", cfg.Prompt[0].TrailingGlyph)
 
 	require.Len(t, cfg.RPrompt, 1)
-	assert.Equal(t, "\uE0B2", cfg.RPrompt[0].LeadingDiamond)
-	assert.Equal(t, "", cfg.RPrompt[0].TrailingDiamond)
+	assert.Equal(t, "\uE0B2", cfg.RPrompt[0].LeadingGlyph)
+	assert.Equal(t, "", cfg.RPrompt[0].TrailingGlyph)
 }
 
 func TestParseLayoutYAMLStyleShortcutOnPromptLinesRoundedThin(t *testing.T) {
@@ -125,12 +124,12 @@ session:
 	require.NoError(t, err)
 
 	require.Len(t, cfg.Prompt, 1)
-	assert.Equal(t, "", cfg.Prompt[0].LeadingDiamond)
-	assert.Equal(t, "\uE0B5", cfg.Prompt[0].TrailingDiamond)
+	assert.Equal(t, "", cfg.Prompt[0].LeadingGlyph)
+	assert.Equal(t, "\uE0B5", cfg.Prompt[0].TrailingGlyph)
 
 	require.Len(t, cfg.RPrompt, 1)
-	assert.Equal(t, "\uE0B7", cfg.RPrompt[0].LeadingDiamond)
-	assert.Equal(t, "", cfg.RPrompt[0].TrailingDiamond)
+	assert.Equal(t, "\uE0B7", cfg.RPrompt[0].LeadingGlyph)
+	assert.Equal(t, "", cfg.RPrompt[0].TrailingGlyph)
 }
 
 func TestParseLayoutYAMLStyleShortcutOnSegments(t *testing.T) {
@@ -147,9 +146,8 @@ git:
 
 	segment := cfg.Segments["git"]
 	require.NotNil(t, segment)
-	assert.Equal(t, Diamond, segment.Style)
-	assert.Equal(t, "", segment.LeadingDiamond)
-	assert.Equal(t, "\uE0B0", segment.TrailingDiamond)
+	assert.Equal(t, "", segment.LeadingGlyph)
+	assert.Equal(t, "\uE0B0", segment.TrailingGlyph)
 }
 
 func TestParseLayoutYAMLReturnsErrorForUnknownSegmentReference(t *testing.T) {
@@ -286,11 +284,11 @@ git:
 	assert.Equal(t, "git.main", cfg.Segments["git.main"].Alias)
 }
 
-func TestParseLayoutYAMLReturnsErrorForDirectPromptDiamonds(t *testing.T) {
+func TestParseLayoutYAMLReturnsErrorForDirectPromptGlyphs(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["session"]
-    leading_diamond: "<"
+    leading_glyph: "<"
 
 session:
   type: "session"
@@ -298,7 +296,7 @@ session:
 
 	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "does not allow leading_diamond/trailing_diamond")
+	assert.ErrorContains(t, err, "does not allow leading_glyph")
 }
 
 func TestParseLayoutYAMLReturnsErrorForMutuallyExclusiveLineSeparatorConfig(t *testing.T) {
@@ -333,19 +331,19 @@ session:
 	assert.ErrorContains(t, err, "cannot define style together with explicit leading/trailing separator settings")
 }
 
-func TestParseLayoutYAMLReturnsErrorForDirectSegmentDiamonds(t *testing.T) {
+func TestParseLayoutYAMLReturnsErrorForDirectSegmentGlyphs(t *testing.T) {
 	raw := `
 prompt:
   - segments: ["session"]
 
 session:
   type: "session"
-  leading_diamond: "<"
+  leading_glyph: "<"
 `
 
 	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "does not allow leading_diamond")
+	assert.ErrorContains(t, err, "does not allow leading_glyph")
 }
 
 func TestParseLayoutYAMLReturnsErrorForMutuallyExclusiveSegmentSeparatorConfig(t *testing.T) {
@@ -467,7 +465,7 @@ session:
 
 	_, err := ParseLayoutYAML([]byte(raw))
 	require.Error(t, err)
-	assert.ErrorContains(t, err, `unknown top-level key "upgrade"`)
+	assert.ErrorContains(t, err, `top-level key "upgrade" no longer exists`)
 }
 
 func TestParseLayoutYAMLSupportsSecondaryAndTransient(t *testing.T) {
@@ -549,4 +547,265 @@ func TestLayoutConfigApplyMetadata(t *testing.T) {
 	require.NotNil(t, target.DebugPrompt)
 	assert.True(t, target.HasSecondary)
 	assert.True(t, target.HasTransient)
+}
+
+// The render styles are gone: a config carrying one has to say so instead of
+// silently rendering as something else.
+func TestParseLayoutYAMLReturnsErrorForRemovedSegmentRenderStyles(t *testing.T) {
+	for _, style := range []string{"plain", "diamond", "accordion"} {
+		t.Run(style, func(t *testing.T) {
+			raw := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+  style: "` + style + `"
+`
+
+			_, err := ParseLayoutYAML([]byte(raw))
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "is not a separator alias")
+		})
+	}
+}
+
+func TestParseLayoutYAMLReturnsErrorForRemovedLineRenderStyles(t *testing.T) {
+	for _, style := range []string{"plain", "diamond", "accordion"} {
+		t.Run(style, func(t *testing.T) {
+			raw := `
+prompt:
+  - style: "` + style + `"
+    segments: ["session"]
+
+session:
+  type: "session"
+`
+
+			_, err := ParseLayoutYAML([]byte(raw))
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "is not a separator alias")
+		})
+	}
+}
+
+// style is a config-level shortcut; the engine must never see it back.
+func TestParseLayoutYAMLDropsStyleAfterCompiling(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+  style: "rounded"
+`
+
+	cfg, err := ParseLayoutYAML([]byte(raw))
+	require.NoError(t, err)
+
+	segment := cfg.Segments["session"]
+	require.NotNil(t, segment)
+	assert.Equal(t, "", segment.LeadingGlyph)
+	assert.Equal(t, "\uE0B4", segment.TrailingGlyph)
+}
+
+func TestParseLayoutYAMLReadsKeepWhenEmpty(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+  keep_when_empty: true
+`
+
+	cfg, err := ParseLayoutYAML([]byte(raw))
+	require.NoError(t, err)
+	assert.True(t, cfg.Segments["session"].KeepWhenEmpty)
+}
+
+// The keys this format used to carry must fail loudly: silently ignoring them
+// renders something the user did not ask for and gives no clue why.
+func TestParseLayoutYAMLReturnsErrorForRemovedSegmentKeys(t *testing.T) {
+	// The full message is asserted, not just the key: one key is a substring of
+	// another, and the replacement is the part a user actually needs.
+	for key, expected := range map[string]struct{ value, message string }{
+		"powerline_symbol":         {`">"`, "session uses powerline_symbol, use trailing_separator instead"},
+		"leading_powerline_symbol": {`"<"`, "session uses leading_powerline_symbol, use leading_separator instead"},
+		"invert_powerline":         {"true", "session uses invert_powerline, which no longer exists"},
+		"leading_diamond":          {`"("`, "session uses leading_diamond, use leading_separator or leading_style instead"},
+		"trailing_diamond":         {`")"`, "session uses trailing_diamond, use trailing_separator or trailing_style instead"},
+	} {
+		t.Run(key, func(t *testing.T) {
+			raw := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+  ` + key + `: ` + expected.value + `
+`
+
+			_, err := ParseLayoutYAML([]byte(raw))
+			require.Error(t, err)
+			assert.EqualError(t, err, expected.message)
+		})
+	}
+}
+
+func TestParseLayoutYAMLReturnsErrorForRemovedLineKeys(t *testing.T) {
+	raw := `
+prompt:
+  - leading_diamond: "("
+    segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	_, err := ParseLayoutYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "leading_diamond")
+}
+
+// keep_when_empty is about one segment's text, so a line cannot claim it.
+func TestParseLayoutYAMLReturnsErrorForKeepWhenEmptyOnLine(t *testing.T) {
+	raw := `
+prompt:
+  - keep_when_empty: true
+    segments: ["session"]
+
+session:
+  type: "session"
+`
+
+	_, err := ParseLayoutYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "keep_when_empty")
+}
+
+// Tooltips and the debug/valid/error lines are segments too, so the separator
+// vocabulary has to reach them and the engine fields must stay out.
+func TestParseLayoutYAMLCompilesSeparatorsOnTooltips(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+
+tooltips:
+  - type: "aws"
+    tips: ["aws"]
+    style: "rounded"
+`
+
+	cfg, err := ParseLayoutYAML([]byte(raw))
+	require.NoError(t, err)
+	require.Len(t, cfg.Tooltips, 1)
+	assert.Equal(t, "\uE0B4", cfg.Tooltips[0].TrailingGlyph)
+}
+
+func TestParseLayoutYAMLRejectsGlyphsOnTooltips(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+
+tooltips:
+  - type: "aws"
+    tips: ["aws"]
+    leading_glyph: "<"
+`
+
+	_, err := ParseLayoutYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "does not allow leading_glyph")
+}
+
+func TestParseLayoutYAMLCompilesSeparatorsOnExtraLines(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+
+valid_line:
+  template: "V"
+  leading_separator: "("
+
+error_line:
+  template: "E"
+  style: "rounded"
+`
+
+	cfg, err := ParseLayoutYAML([]byte(raw))
+	require.NoError(t, err)
+
+	require.NotNil(t, cfg.ValidLine)
+	assert.Equal(t, "(", cfg.ValidLine.LeadingGlyph)
+	assert.Equal(t, TEXT, cfg.ValidLine.Type)
+
+	require.NotNil(t, cfg.ErrorLine)
+	assert.Equal(t, "\uE0B4", cfg.ErrorLine.TrailingGlyph)
+
+	// They are addressed by role, never by name, so they must not become
+	// segments a prompt line could reference.
+	assert.NotContains(t, cfg.Segments, "valid_line")
+	assert.NotContains(t, cfg.Segments, "error_line")
+}
+
+func TestParseLayoutYAMLRejectsGlyphsOnExtraLines(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+
+valid_line:
+  template: "V"
+  trailing_glyph: ">"
+`
+
+	_, err := ParseLayoutYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "does not allow trailing_glyph")
+}
+
+// debug_prompt behaved differently depending on whether it carried a type.
+func TestParseLayoutYAMLRejectsRemovedStyleOnDebugPromptWithoutType(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+
+debug_prompt:
+  template: "D"
+  style: "diamond"
+`
+
+	_, err := ParseLayoutYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "is not a separator alias")
+}
+
+// The mirror table is derived from the alias table; this pins that they stay in
+// step, which a hand-written mirror did not.
+func TestMirrorGlyphCoversEverySeparatorAlias(t *testing.T) {
+	for alias, pair := range separatorAliases {
+		assert.Equal(t, pair.right, MirrorGlyph(pair.left), "%s left", alias)
+		assert.Equal(t, pair.left, MirrorGlyph(pair.right), "%s right", alias)
+	}
+}
+
+// A glyph the user wrote themselves has no mirror to look up.
+func TestMirrorGlyphLeavesUnknownGlyphsAlone(t *testing.T) {
+	assert.Equal(t, ">", MirrorGlyph(">"))
+	assert.Equal(t, "", MirrorGlyph(""))
 }

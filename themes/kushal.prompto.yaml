@@ -1,8 +1,7 @@
 cmake:
     background: '#1E9748'
     foreground: '#E8EAEE'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '   cmake {{ .Full }} '
 console_title_template: '{{ if .Root }}root @ {{ end }}{{ .Shell }} in {{ .Folder }}'
 executiontime:
@@ -11,7 +10,6 @@ executiontime:
     options:
         style: roundrock
         threshold: 0
-    style: diamond
     template: '  {{ .FormattedMs }} '
     trailing_separator: 
 git:
@@ -26,14 +24,12 @@ git:
         branch_icon: ' '
         fetch_status: true
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}<#CAEBE1>  {{ .Staging.String }}</>{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 go:
     background: '#7FD5EA'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' ‭ {{ .Full }} '
 os:
     background: '#575656'
@@ -55,7 +51,6 @@ os:
         raspbian: 
         ubuntu: 
         windows: 
-    style: diamond
     template: ' {{ if .WSL }} on {{ end }}{{ .Icon }} '
 pwd: osc99
 path:
@@ -67,7 +62,6 @@ path:
         home_icon: ' '
         max_depth: 3
         style: agnoster_short
-    style: diamond
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -91,14 +85,12 @@ python:
     foreground: '#011627'
     options:
         display_mode: context
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }} '
 root:
     background: '#EF541C'
     foreground: '#D6DEEB'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  admin '
 rprompt:
     - segments:
@@ -107,8 +99,7 @@ rprompt:
 rust:
     background: '#99908A'
     foreground: '#193549'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Full }} '
 secondary:
     - segments:
@@ -120,8 +111,7 @@ text.secondary:
 shell:
     background: '#00C7FC'
     foreground: '#011627'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Name }} '
 status:
     background: '#03DED3'
@@ -133,27 +123,22 @@ status:
     leading_separator: 
     options:
         always_enabled: true
-    style: diamond
     template: ' {{ if gt .Code 0 }}{{ else }}{{ end }} '
 status.2:
     foreground: '#D6DEEB'
     options:
         always_enabled: true
-    style: plain
     template: '❯ '
 text:
     foreground: '#D6DEEB'
-    style: plain
     template: ╭─
 text.2:
     foreground: '#D6DEEB'
-    style: plain
     template: ╰─
 time:
     foreground: '#F2D3B6'
     options:
         time_format: "15:04:05"
-    style: plain
     template: '<#D6DEEB></> {{ .LastDate | date .Format }} <#79DFE1>|</>  {{ .LastDate | date "2 Jan, Monday" }} <#79DFE1>|</>'
 transient:
     - segments:

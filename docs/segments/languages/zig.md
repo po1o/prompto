@@ -16,8 +16,7 @@ prompt:
 
 zig:
   type: "zig"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#342311"
   background: "#ffad55"
   template: "  {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "

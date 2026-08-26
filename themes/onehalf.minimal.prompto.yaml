@@ -3,7 +3,6 @@ git:
     options:
         branch_icon: ""
         fetch_status: true
-    style: plain
     template: <p:yellow>git</>:({{ if or (.Working.Changed) (.Staging.Changed) (gt .StashCount 0) }}<p:magenta>{{ .HEAD }}</>{{ else }}<p:green>{{ .HEAD }}</>{{ end }}{{ if (gt .Ahead 0)}}<p:cyan>{{ .BranchStatus }}</>{{ end }}{{ if (gt .Behind 0)}}<p:cyan>{{ .BranchStatus }}</>{{ end }}{{ if .Staging.Changed }} <p:green>{{ .Staging.String }}</>{{ end }}{{ if .Working.Changed }} <p:red>{{ .Working.String }}</>{{ end }})
 palette:
     background: '#282c34'
@@ -20,7 +19,6 @@ path:
     foreground: p:blue
     options:
         style: full
-    style: plain
     template: '{{ .Path }} '
 prompt:
     - segments:
@@ -31,12 +29,10 @@ prompt:
         - status
 session:
     foreground: p:yellow
-    style: plain
     template: '{{ .UserName }}@{{ .HostName }} '
 status:
     foreground: p:foreground
     options:
         always_enabled: true
-    style: plain
     template: '{{ if gt .Code 0 }}<p:red>({{ .Code }}) </>{{ else }}<p:green>({{ .Code }}) </>{{ end }}> '
 terminal_background: p:background

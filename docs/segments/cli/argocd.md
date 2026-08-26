@@ -16,8 +16,7 @@ prompt:
 
 argocd:
   type: "argocd"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#FFA400"
   template: "  {{ .Name }}:{{ .User }}@{{ .Server }} "

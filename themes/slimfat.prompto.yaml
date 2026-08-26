@@ -2,14 +2,12 @@ console_title_template: '{{if .Root}}root :: {{end}}{{.Shell}} :: {{.Folder}}'
 dotnet:
     background: '#2f2f2f'
     foreground: '#3891A6'
-    style: diamond
     template: '  {{ if .Unsupported }}{{ else }}{{ .Full }}{{ end }}<#7a7a7a> </>'
 executiontime:
     foreground: '#FFCE5C'
     options:
         style: roundrock
         threshold: 500
-    style: plain
     template: ' {{ .FormattedMs }}<#fafafa>  </>'
 cursor_padding: true
 git:
@@ -22,12 +20,10 @@ git:
     options:
         fetch_status: true
         fetch_upstream_icon: true
-    style: diamond
     template: '<#7a7a7a> </>{{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}<#E84855>  {{ .Working.String }}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}<#2FDA4E>  {{ .Staging.String }}</>{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 node:
     background: '#2f2f2f'
     foreground: '#6CA35E'
-    style: diamond
     template: '  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}<#7a7a7a> </>'
 os:
     background: '#2f2f2f'
@@ -49,7 +45,6 @@ os:
         raspbian: 
         ubuntu: 
         windows: 
-    style: diamond
     template: ' {{ if .WSL }} on {{ end }}{{ .Icon }}<#7a7a7a> </>'
 path:
     background: '#2f2f2f'
@@ -57,7 +52,6 @@ path:
     options:
         folder_icon: <#B5B2C2> </>
         style: full
-    style: diamond
     template: '<#f2f200>  </>{{ .Path }} '
 prompt:
     - segments:
@@ -72,12 +66,10 @@ prompt:
 python:
     background: '#2f2f2f'
     foreground: '#96E072'
-    style: diamond
     template: '  {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}<#7a7a7a> </>'
 root:
     background: '#2f2f2f'
     foreground: '#ffff66'
-    style: diamond
     template: ' <#7a7a7a> </>'
 rprompt:
     - segments:
@@ -93,7 +85,6 @@ rprompt:
 session:
     background: '#2f2f2f'
     foreground: '#fafafa'
-    style: diamond
     template: ' {{ if ne .Env.PROMPTO_SESSION_DEFAULT_USER .UserName }}<#77f5d6>{{ .UserName }}</><#7a7a7a></>{{ end }}<#2EEFBF>{{ .HostName }}</><#7a7a7a> </>'
 status:
     foreground: '#9FD356'
@@ -101,32 +92,26 @@ status:
         - '{{ if gt .Code 0 }}#E84855{{ end }}'
     options:
         always_enabled: true
-    style: plain
     template: '  {{ if gt .Code 0 }}{{ .Code }}{{ end }} '
 text:
     background: '#2f2f2f'
     foreground: '#fafafa'
-    style: diamond
     trailing_separator: 
 text.2:
     background: '#2f2f2f'
     foreground: '#fafafa'
     leading_separator: 
-    style: diamond
 text.3:
     foreground: '#7a7a7a'
-    style: plain
     template: ' ~#@❯ '
 text.4:
     foreground: '#7a7a7a'
-    style: plain
     template: ' ❮ '
 time:
     background: '#2f2f2f'
     foreground: '#fafafa'
     options:
         time_format: "15:04:05"
-    style: diamond
     template: ' {{ .LastDate | date .Format }}<#007ACC>  </>'
     trailing_separator: ▓
 transient:

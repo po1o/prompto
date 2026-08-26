@@ -4,21 +4,21 @@ executiontime:
     options:
         style: dallas
         threshold: 0
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .FormattedMs }}s <#ffffff></>'
 git:
     foreground: '#f14e32'
     options:
         branch_icon: ' '
-    style: powerline
+    trailing_separator: ""
     template: ({{ .HEAD }})
 node:
     foreground: '#45bf17'
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Full }} '
 npm:
     foreground: '#FE4A49'
-    style: powerline
+    trailing_separator: ""
     template: '<#F3EFF5>and</>  {{ .Full }} '
 path:
     foreground: '#ffafd2'
@@ -27,7 +27,7 @@ path:
         folder_separator_icon: ' ❯ '
         home_icon: home
         style: agnoster_full
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -44,7 +44,6 @@ status:
     foreground: '#00c7fc'
     options:
         always_enabled: true
-    style: diamond
     template: '<#00c7fc>❯</>_: '
 transient:
     - segments:

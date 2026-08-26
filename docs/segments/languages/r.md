@@ -16,8 +16,7 @@ prompt:
 
 r:
   type: "r"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "blue"
   background: "lightWhite"
   template: "  {{ .Full }} "

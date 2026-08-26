@@ -4,28 +4,24 @@ git:
     foreground: '#193549'
     options:
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 node:
     background: '#6CA35E'
     foreground: '#ffffff'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 os:
     background: '#3A86FF'
     foreground: '#ffffff'
     leading_separator: 
-    style: diamond
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
 path:
     background: '#ff479c'
     foreground: '#ffffff'
     options:
         style: full
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Path }} '
 prompt:
     - segments:
@@ -42,13 +38,12 @@ prompt:
 root:
     background: '#ffff66'
     foreground: '#193549'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  '
 session:
     background: '#3A86FF'
     foreground: '#ffffff'
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .UserName }}@{{ .HostName }} '
 status:
     background: '#2e9599'
@@ -58,18 +53,15 @@ status:
     leading_separator: <transparent,background></>
     options:
         always_enabled: true
-    style: diamond
     template: '  '
     trailing_separator: 
 text:
     foreground: '#f1184c'
-    style: plain
     template: ' '
 time:
     background: '#4caf50'
     foreground: '#193549'
     options:
         time_format: "2006-01-02 15:04:05"
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .LastDate | date .Format }} '

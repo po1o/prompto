@@ -214,12 +214,11 @@ func TestPrimaryMirrorsRightAlignedDiamondSegmentSeparators(t *testing.T) {
 		},
 		Segments: map[string]*config.Segment{
 			"right_git": {
-				Type:            config.TEXT,
-				Alias:           "right_git",
-				Style:           config.Diamond,
-				Template:        "R",
-				LeadingDiamond:  "",
-				TrailingDiamond: "\uE0B0",
+				Type:          config.TEXT,
+				Alias:         "right_git",
+				Template:      "R",
+				LeadingGlyph:  "",
+				TrailingGlyph: "\uE0B0",
 			},
 		},
 	})
@@ -261,4 +260,105 @@ func newLayoutTestEngine(t *testing.T, layout *config.LayoutConfig) *Engine {
 		LayoutConfig: layout,
 		Plain:        true,
 	}
+}
+
+// A segment that resolves to no text normally disappears; keep_when_empty
+// holds its place so the shapes around it do not reflow.
+func TestPrimaryKeepWhenEmptyDrawsGlyphsWithoutText(t *testing.T) {
+	newEngine := func(keep bool) *Engine {
+		return newLayoutTestEngine(t, &config.LayoutConfig{
+			Prompt: []config.PromptLayout{
+				{Segments: []string{"before", "empty", "after"}},
+			},
+			Segments: map[string]*config.Segment{
+				"before": {Type: config.TEXT, Alias: "before", Template: "B", Background: "red", Foreground: "white"},
+				"empty": {
+					Type:          config.TEXT,
+					Alias:         "empty",
+					Template:      "",
+					Background:    "blue",
+					Foreground:    "white",
+					LeadingGlyph:  "[",
+					TrailingGlyph: "]",
+					KeepWhenEmpty: keep,
+				},
+				"after": {Type: config.TEXT, Alias: "after", Template: "A", Background: "green", Foreground: "white"},
+			},
+		})
+	}
+
+	dropped := newEngine(false).Primary()
+	require.NotContains(t, dropped, "[")
+	require.NotContains(t, dropped, "]")
+
+	kept := newEngine(true).Primary()
+	require.Contains(t, kept, "[")
+	require.Contains(t, kept, "]")
+}
+
+// A line closes itself: where a line and its last segment both define a
+// trailing separator, the line's is the one drawn.
+func TestBlockTrailingSeparatorWinsOverTheLastSegment(t *testing.T) {
+	shared := &config.Segment{
+		Type:          config.TEXT,
+		Alias:         "shared",
+		Template:      "S",
+		Background:    "blue",
+		Foreground:    "white",
+		TrailingGlyph: ")",
+	}
+
+	engine := newLayoutTestEngine(t, &config.LayoutConfig{
+		Prompt: []config.PromptLayout{
+			{Segments: []string{"shared"}, TrailingGlyph: ">"},
+		},
+		TransientPrompt: []config.PromptLayout{
+			{Segments: []string{"shared"}, TrailingGlyph: "]"},
+		},
+		Segments: map[string]*config.Segment{"shared": shared},
+	})
+
+	primary := engine.Primary()
+	require.Contains(t, primary, ">")
+	require.NotContains(t, primary, ")")
+
+	// The same definition on a second line takes that line's separator, not a
+	// leftover from the first.
+	transient := engine.ExtraPrompt(Transient)
+	require.Contains(t, transient, "]")
+	require.NotContains(t, transient, ">")
+
+	require.Equal(t, ")", shared.TrailingGlyph, "the definition itself must be untouched")
+}
+
+// Right-aligned lines mirror their separators. The alias table pins that every
+// alias has a mirror; this pins that the mirroring is applied to a real render,
+// in the right direction. rounded_thin is used deliberately: its mirror was the
+// one missing from the hand-written table, and identity would pass unnoticed
+// with a symmetric pair.
+func TestRPromptMirrorsSegmentSeparators(t *testing.T) {
+	engine := newLayoutTestEngine(t, &config.LayoutConfig{
+		RPrompt: []config.PromptLayout{
+			{Segments: []string{"right"}},
+		},
+		Segments: map[string]*config.Segment{
+			"right": {
+				Type:  config.TEXT,
+				Alias: "right",
+				// Written as it would be for a left-aligned line: closes with
+				// the right-facing thin cap, opens flat.
+				TrailingGlyph: "\uE0B5",
+				Template:      "R",
+				Background:    "blue",
+				Foreground:    "white",
+			},
+		},
+	})
+
+	_ = engine.Primary()
+	got := engine.RPrompt()
+
+	// On the right the block opens instead, so the cap has to face the other way.
+	require.Contains(t, got, "\uE0B7", "the trailing cap should mirror into a leading one")
+	require.NotContains(t, got, "\uE0B5", "the unmirrored cap points away from its block")
 }

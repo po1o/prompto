@@ -27,12 +27,11 @@ prompt:
 lastfm:
   background: "p:sky"
   foreground: "p:white"
-  powerline_symbol: ""
+  trailing_separator: ""
   options:
     api_key: "<YOUR_API_KEY>"
     username: "<LASTFM_USERNAME>"
     http_timeout: 20000
-  style: "powerline"
   template: " {{ .Icon }}{{ if ne .Status \"stopped\" }}{{ .Full }}{{ end }} "
   type: "lastfm"
 ```

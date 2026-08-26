@@ -2,13 +2,11 @@ git:
     foreground: '#D0666F'
     options:
         branch_icon: ""
-    style: plain
     template: <#5FAAE8>git:(</>{{ .HEAD }}<#5FAAE8>)</>
 path:
     foreground: '#56B6C2'
     options:
         style: folder
-    style: plain
     template: '{{ .Path }} '
 prompt:
     - segments:
@@ -20,13 +18,10 @@ prompt:
         - text.2
 status:
     foreground: '#DCB977'
-    style: plain
     template: '  '
 text:
     foreground: '#ffffff'
-    style: plain
     template: '<#C591E8>❯</><#69FF94>❯</> '
 text.2:
     foreground: '#ffffff'
-    style: plain
     template: ' '

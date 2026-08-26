@@ -4,14 +4,12 @@ executiontime:
     foreground: '#ffffff'
     options:
         always_enabled: true
-    style: plain
     template: '  {{ .FormattedMs }} '
 cursor_padding: true
 git:
     background: '#95ffa4'
     foreground: '#193549'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .HEAD }} '
 path:
     background: '#C678DD'
@@ -21,8 +19,7 @@ path:
         folder_separator_icon: '  '
         max_depth: 2
         style: agnoster_short
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -36,11 +33,9 @@ rprompt:
 session:
     background: '#61AFEF'
     foreground: '#ffffff'
-    style: diamond
     template: '{{if .Root}}  {{.UserName}} {{else}} {{.UserName}} {{end}}'
     trailing_separator: 
 time:
     background: '#003543'
     foreground: '#ffffff'
-    style: plain
     template: '  {{ .LastDate | date .Format }} '

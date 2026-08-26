@@ -1,23 +1,19 @@
 battery:
     background: '#0057b7'
     foreground: '#FBD951'
-    invert_powerline: true
     leading_separator: 
     options:
         charged_icon: ' '
         charging_icon: ' '
         discharging_icon: ' '
-    style: diamond
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}% <#111111></>'
 console_title_template: '{{if .Root}}Admin: {{end}} {{.Folder}}'
 executiontime:
     background: '#0057b7'
     foreground: '#FBD951'
-    invert_powerline: true
     leading_separator: 
     options:
         always_enabled: true
-    style: diamond
     template: '  {{ .FormattedMs }} <#111111></>'
 cursor_padding: true
 git:
@@ -26,8 +22,7 @@ git:
     options:
         fetch_status: true
         fetch_upstream_icon: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '   {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Staging.Changed) (.Working.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0}} {{ .StashCount }}{{ end }}{{ if gt .WorktreeCount 0}}  {{ .WorktreeCount }}{{ end }} '
 git.2:
     background: '#3379c5'
@@ -40,14 +35,12 @@ git.2:
     options:
         fetch_status: false
         fetch_upstream_icon: false
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: 
 os:
     background: '#0057b7'
     foreground: '#ffd700'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
 path:
     background: '#0057b7'
@@ -55,7 +48,6 @@ path:
     options:
         home_icon: 
         style: mixed
-    style: diamond
     template: '{{ .Path }} '
     trailing_separator: 
 prompt:
@@ -77,8 +69,7 @@ prompt:
 root:
     background: '#0057b7'
     foreground: '#FBD951'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' '
 rprompt:
     - segments:
@@ -94,8 +85,7 @@ rprompt:
 session:
     background: '#FBD951'
     foreground: '#0057b7'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: ' {{ if .SSHSession }} {{ end }}{{ .UserName }} '
 status:
     background: '#ffd700'
@@ -105,59 +95,45 @@ status:
     leading_separator: <transparent,#ffd700></>
     options:
         always_enabled: true
-    style: diamond
     template: ' {{ if gt .Code 0 }}  {{ else }} ♥ {{ end }}'
     trailing_separator: 
 text:
     foreground: '#ffffff'
-    style: plain
 text.2:
     foreground: '#0057b7'
-    style: plain
     template: 
 text.3:
     background: '#0057b7'
     foreground: '#FBD951'
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  '
 text.4:
-    leading_separator: <transparent,#49404f></>
-    style: plain
-    trailing_separator: 
+    template: ''
 text.5:
     background: '#0057b7'
     foreground: '#FBD951'
     leading_separator: 
-    style: diamond
     template: '  <#111111></>'
 text.6:
     foreground: '#0057b7'
-    style: plain
     template: 
 text.7:
     foreground: '#0057b7'
-    style: plain
     template: 
 text.8:
     foreground: '#FBD951'
-    style: plain
     template: 
 text.9:
     foreground: '#0057b7'
-    style: plain
     template: 
 text.10:
     foreground: '#FBD951'
-    style: plain
     template:   Ukraine
 time:
     background: '#0057b7'
     foreground: '#FBD951'
-    invert_powerline: true
     leading_separator: 
     options:
         time_format: _2,15:04
-    style: diamond
     template: '  {{ .LastDate | date .Format }}'
     trailing_separator: 

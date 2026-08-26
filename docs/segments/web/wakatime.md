@@ -21,8 +21,7 @@ prompt:
 
 wakatime:
   type: "wakatime"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#007acc"
   options:

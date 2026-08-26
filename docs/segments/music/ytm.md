@@ -37,8 +37,7 @@ prompt:
 
 ytm:
   type: "ytm"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#FF0000"
   options:

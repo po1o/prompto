@@ -591,10 +591,7 @@ func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, 
 		key := segmentKey(scope, blockIndex, segmentPosition, segment)
 		if e.pendingSegments[key] {
 			cachedVal := e.cachedValues[key]
-			enabled, text, background := segment.GetPendingText(cachedVal, e.Config)
-			if !enabled {
-				continue
-			}
+			text, background := segment.GetPendingText(cachedVal, e.Config)
 
 			restores = append(restores, pendingRestore{
 				segment:             segment,
@@ -639,10 +636,12 @@ func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, 
 		}
 
 		if e.repaintOnly && segment.Type != config.VIM {
+			e.writeKeptSegment(block, segment)
 			continue
 		}
 
 		if !segment.Render(segmentIndex, e.forceRender) {
+			e.writeKeptSegment(block, segment)
 			continue
 		}
 
@@ -653,11 +652,7 @@ func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, 
 		e.writeSegment(block, segment)
 	}
 
-	if e.activeSegment != nil && len(block.TrailingDiamond) > 0 {
-		e.activeSegment.TrailingDiamond = block.TrailingDiamond
-	}
-
-	e.writeSeparator(true)
+	e.writeBlockSeparator(block)
 
 	for _, restore := range restores {
 		restore.segment.SetText(restore.text)

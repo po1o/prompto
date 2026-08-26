@@ -16,8 +16,7 @@ prompt:
 
 elixir:
   type: "elixir"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#422251"
   template: "  {{ .Full }} "

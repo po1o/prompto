@@ -88,6 +88,7 @@ time.short:
 - `interactive`
 - `force`
 - `toggled`
+- `keep_when_empty`
 - `include_folders`, `exclude_folders`
 - `min_width`, `max_width`
 - `render_pending_icon`, `render_pending_background`
@@ -242,6 +243,49 @@ prompto toggle aws
 
 Normally a segment with only whitespace resolves to disabled.
 Set `force: true` when you want it to render anyway.
+
+## Separators and the Ribbon
+
+A Powerline-style prompt is a run of interlocking blocks. Whether two neighbours interlock depends on how
+the *second* one opens:
+
+| The next segment has | Its neighbour's trailing separator is drawn on |
+| --- | --- |
+| a trailing separator and no leading one | that segment's background — the blocks interlock |
+| a leading separator | the terminal background — each block keeps its own outline |
+| no separators at all | the terminal background |
+
+A segment that opens with a leading separator is already drawing its own edge, so filling the separator
+behind it would put a block of color behind that outline. A segment with no separators is bare text that
+happens to have colors, not a link in the ribbon.
+
+The practical rule: **for a continuous ribbon, give every segment a trailing separator and leave its
+leading separator unset.** Set a leading separator only on a segment that should open against the
+terminal — the first segment of a line, or one that starts a new run.
+
+This also applies to a segment that draws its own opening inside its `template` rather than with
+`leading_separator`. Several bundled themes do that with `<transparent>` markup; such a segment must leave
+both separators unset, or the separator before it gains a filled block behind the outline the template
+draws.
+
+## `keep_when_empty`
+
+A segment that renders no text disappears, and the segments around it close the gap.
+Set `keep_when_empty: true` to draw its separators anyway, with no text between them.
+
+```yaml
+git:
+  keep_when_empty: true
+  leading_separator: "("
+  trailing_separator: ")"
+  template: " {{ .HEAD }} "
+```
+
+Outside a repository this renders `()` instead of vanishing, so the rest of the prompt keeps its position.
+Use it when a segment appears and disappears often and the movement is distracting.
+
+`force` and `keep_when_empty` solve different problems: `force` makes an empty segment render its text anyway,
+`keep_when_empty` keeps the shape of a segment that has no text to render.
 
 ## `interactive`
 

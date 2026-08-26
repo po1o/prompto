@@ -3,7 +3,6 @@ executiontime:
     foreground: '#A3BE8C'
     options:
         style: austin
-    style: plain
     template: ' {{ .FormattedMs }} '
 git:
     foreground: '#6C6C6C'
@@ -14,13 +13,11 @@ git:
         fetch_status: true
         fetch_upstream_icon: true
         github_icon: ""
-    style: plain
     template: '{{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}<#FFAFD7>*</>{{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 path:
     foreground: '#81A1C1'
     options:
         style: full
-    style: plain
     template: '{{ .Path }} '
 prompt:
     - segments:
@@ -34,7 +31,6 @@ prompt:
         - status
 session:
     foreground: '#BF616A'
-    style: plain
     template: '{{ .UserName }} '
 status:
     foreground: '#B48EAD'
@@ -42,7 +38,6 @@ status:
         - '{{ if gt .Code 0 }}#BF616A{{ end }}'
     options:
         always_enabled: true
-    style: plain
     template: '❯ '
 transient:
     - segments:

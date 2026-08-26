@@ -3,7 +3,6 @@ executiontime:
     options:
         style: austin
         threshold: 0
-    style: plain
     template: ⟨{{ .FormattedMs }}⟩ <#eaeaea>⎫</>
 git:
     foreground: '#62beff'
@@ -11,13 +10,11 @@ git:
         branch_icon: 
         branch_identical_icon: ≡
         fetch_status: true
-    style: plain
     template: ⟨{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} ∆{{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}⟩
 node:
     foreground: '#98C379'
     options:
         fetch_version: true
-    style: plain
     template: '<#ffffff>◦</> ☢{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 path:
     foreground: '#ffaed8'
@@ -25,7 +22,6 @@ path:
         folder_separator_icon: ' | '
         home_icon: 
         style: letter
-    style: plain
     template: '<#eaeaea>⎧</> ⟨{{ .Path }}⟩ '
 prompt:
     - segments:
@@ -37,7 +33,7 @@ prompt:
         - text
 python:
     foreground: '#b1ff4f'
-    style: powerline
+    trailing_separator: ""
     template: "[\U0001F40D {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}] "
 rprompt:
     - segments:
@@ -47,15 +43,12 @@ rprompt:
         - time
 status:
     foreground: '#fb0207'
-    style: plain
     template: ' ××× '
 text:
     foreground: '#3ce6bf'
-    style: plain
     template: '<#eaeaea>⎩</>⟩⟩⟩⟩⟩⟩ '
 time:
     foreground: '#f5f5a6'
     options:
         time_format: "15:04:05"
-    style: plain
     template: ⟨{{ .LastDate | date .Format }}⟩ <#eaeaea>⎭</>

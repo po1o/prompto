@@ -16,8 +16,7 @@ prompt:
 
 go:
   type: "go"
-  style: "powerline"
-  powerline_symbol: ""
+  trailing_separator: ""
   foreground: "#ffffff"
   background: "#7FD5EA"
   template: "  {{ .Full }} "

@@ -13,13 +13,11 @@ git:
         rebase_icon: ""
         revert_icon: ""
         tag_icon: ""
-    style: plain
     template: '<#ffffff>on</> {{ .HEAD }}{{ if .Staging.Changed }}<#87FF00> ● {{ .Staging.String }}</>{{ end }}{{ if .Working.Changed }}<#D75F00> ● {{ .Working.String }}</>{{ end }} '
 path:
     foreground: '#87FF00'
     options:
         style: full
-    style: plain
     template: '{{ .Path }} '
 prompt:
     - segments:
@@ -30,13 +28,10 @@ prompt:
         - text.2
 session:
     foreground: '#7E46B6'
-    style: plain
     template: '{{ .UserName }} '
 text:
     foreground: '#ffffff'
-    style: plain
     template: 'in '
 text.2:
     foreground: '#D75F00'
-    style: plain
     template: 'λ '

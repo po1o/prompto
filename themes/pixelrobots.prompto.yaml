@@ -3,24 +3,21 @@ aws:
     foreground: '#000000'
     options:
         display_default: true
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: " \U000F0E0F {{.Profile}}{{if .Region}}@{{.Region}}{{end}}"
 az:
     background: '#008AD7'
     foreground: '#000000'
     options:
         source: cli
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Name }} [ {{ .Origin }} ] '
 az.2:
     background: '#012456'
     foreground: '#FFFFFF'
     options:
         source: pwsh
-    powerline_symbol: 
-    style: powerline
+    trailing_separator: ""
     template: '  {{ .Name }} [ {{ .Origin }} ] '
 console_title_template: '{{if .Root}}root :: {{end}}{{.Shell}} :: {{.Folder}}'
 cursor_padding: true
@@ -34,12 +31,11 @@ git:
     options:
         fetch_status: true
         fetch_upstream_icon: true
-    style: diamond
     template: '<#ffea00> </>{{ .UpstreamIcon }}{{ .HEAD }}{{ .BranchStatus }}{{ if .Working.Changed }}<#E84855>  {{ .Working.String }}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}<#2FDA4E>  {{ .Staging.String }}</>{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} '
 kubectl:
     background: '#ffea00'
     foreground: '#000000'
-    style: powerline
+    trailing_separator: ""
     template: " \U000F10FE {{.Context}}{{if .Namespace}} :: {{.Namespace}}{{end}} "
 os:
     background: '#2f2f2f'
@@ -61,7 +57,6 @@ os:
         raspbian: 
         ubuntu: 
         windows: 
-    style: diamond
     template: ' {{ if .WSL }}{{ .Icon }} on {{ end }} <#ffea00></>'
 path:
     background: '#2f2f2f'
@@ -71,7 +66,6 @@ path:
         folder_separator_icon: <#ffea00> </>
         home_icon: '  '
         style: agnoster_short
-    style: diamond
     template: '<#f2f200>  </>{{ .Path }} '
 prompt:
     - segments:
@@ -92,24 +86,19 @@ prompt:
 root:
     background: '#2f2f2f'
     foreground: '#ffea00'
-    style: diamond
     template: ' <#ffea00> </>'
 session:
     background: '#2f2f2f'
     foreground: '#ffea00'
-    style: diamond
     template: ' {{ if ne .Env.PROMPTO_SESSION_DEFAULT_USER .UserName }}{{ .UserName }}{{ end }}<#ffea00> </>'
 text:
     background: '#ffea00'
     foreground: '#000000'
     leading_separator: ▓
-    style: diamond
 text.2:
     background: '#2f2f2f'
     foreground: '#fafafa'
-    style: diamond
     trailing_separator: 
 text.3:
     foreground: '#ffea00'
-    style: plain
     template: ' ❯ '

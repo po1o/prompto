@@ -2,13 +2,11 @@ git:
     options:
         branch_icon: ""
         fetch_status: true
-    style: plain
     template: git:{{ if or (.Working.Changed) (.Staging.Changed) (gt .StashCount 0) }}<#ffdd86>{{ .HEAD }}</>{{ else }}{{ .HEAD }}{{ end }}{{ if .Staging.Changed }} <#98c379>{{ .Staging.String }}</>{{ end }}{{ if .Working.Changed }} <#d16971>{{ .Working.String }}</>{{ end }}
 path:
     foreground: '#42a9ff'
     options:
         style: full
-    style: plain
     template: '{{ .Path }} '
 prompt:
     - segments:
@@ -19,7 +17,6 @@ prompt:
         - status
 session:
     foreground: '#ffdd86'
-    style: plain
     template: '{{ .UserName }}@{{ .HostName }} '
 status:
     foreground: '#ffdd86'
@@ -27,5 +24,4 @@ status:
         - '{{ if gt .Code 0 }}#42a9ff{{ end }}'
     options:
         always_enabled: true
-    style: plain
     template: '> '

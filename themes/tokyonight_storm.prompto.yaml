@@ -10,19 +10,15 @@ git:
     options:
         branch_icon: ' '
         fetch_status: true
-    style: plain
     template: ({{ .HEAD}})
 go:
     foreground: p:light-sky-blue
-    style: plain
     template: ﳑ {{ .Full}}
 julia:
     foreground: p:terminal-magenta
-    style: plain
     template:  {{ .Full }}
 node:
     foreground: p:pistachio-green
-    style: plain
     template: ' {{ .Full }} '
 palette:
     blue-bell: '#9aa5ce'
@@ -45,11 +41,9 @@ path:
     foreground: p:terminal-magenta
     options:
         style: folder
-    style: plain
     template: <b>{{ .Path }}</b> <p:light-sky-blue>⚡</>
 php:
     foreground: p:terminal-blue
-    style: plain
     template: ' {{ .Full }} '
 prompt:
     - segments:
@@ -61,7 +55,6 @@ prompt:
         - text.2
 python:
     foreground: p:terminal-yellow
-    style: plain
     template:  {{ .Full }}
 rprompt:
     - segments:
@@ -73,7 +66,6 @@ rprompt:
         - go
 ruby:
     foreground: p:terminal-red
-    style: plain
     template:  {{ .Full}}
 secondary:
     - segments:
@@ -84,17 +76,14 @@ text.secondary:
     template: '➜ '
 status:
     foreground: p:terminal-red
-    style: plain
     template: ' '
 terminal_background: p:t-background
 text:
     background: transparent
     foreground: p:terminal-blue
-    style: plain
     template: '➜ '
 text.2:
     foreground: p:pistachio-green
-    style: plain
     template: ▶
 transient:
     - segments:
