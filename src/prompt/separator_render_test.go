@@ -130,6 +130,27 @@ func TestLeadingSeparatorIsCarvedFromAFlatEndingNeighbour(t *testing.T) {
 	require.Contains(t, got, onRed+inBlue+"<", "b's separator should be carved from a's background")
 }
 
+// A line's own leading separator stands in for the first segment's, so that
+// segment is shaped even though its definition carries no leading glyph. The
+// segment after it must see that: it carves its opening out of a flat-ending
+// shaped neighbour, and a segment the line opened for is exactly that.
+//
+// The restore of the substituted glyph therefore cannot happen when the first
+// segment is done rendering — the second one has not read it yet.
+func TestLeadingSeparatorIsCarvedFromANeighbourTheLineOpenedFor(t *testing.T) {
+	first := separatorSegment("a", red, "", "")
+	second := separatorSegment("b", blue, "<", "")
+
+	engine := newSeparatorTestEngine(t, &config.LayoutConfig{
+		Prompt:   []config.PromptLayout{{Segments: []string{"a", "b"}, LeadingGlyph: "<"}},
+		Segments: map[string]*config.Segment{"a": first, "b": second},
+	})
+
+	got := engine.Primary()
+
+	require.Contains(t, got, onRed+inBlue+"<", "b's separator should be carved from a's background")
+}
+
 // The neighbour's background is only usable when it has one. An empty
 // background reaches the writer as "the active segment's background", which
 // would draw b's separator in b's own color on b's own color: invisible.
