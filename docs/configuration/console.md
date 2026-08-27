@@ -43,9 +43,10 @@ So the feature is opt-in, and creating the file is the whole opt-in.
 A bundled theme can ship its own console variant as `<name>.console.prompto.yaml`, and `prompto config set`
 installs both files when it does.
 
-Most bundled themes have none — at present `polo` is the only one. For every other theme, a console session falls
-back to `config.yaml` as described above, so writing your own `config.console.yaml` is still the way to get a
-usable console prompt. See [Themes](../themes.md#console-variants).
+Every bundled theme currently ships one, so `prompto config set <theme>` gives you a usable console prompt
+without any extra work. The variants are hand-maintained, though, and nothing generates them: a theme added
+without one falls back to `config.yaml` on the console exactly as described above, which is the unreadable
+prompt this feature exists to avoid. See [Themes](../themes.md#console-variants).
 
 ## Naming Rule
 

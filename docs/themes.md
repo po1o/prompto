@@ -57,15 +57,15 @@ wrote ~/.config/prompto/config.yaml
 wrote ~/.config/prompto/config.console.yaml (console variant)
 ```
 
-Most themes have no variant, in which case only `config.yaml` is written. Switching from a theme that has one to
-a theme that does not leaves the old `config.console.yaml` in place — `prompto` warns about this rather than
-deleting a file you may have written yourself:
+Every bundled theme currently ships a variant, so both files are written. A theme without one writes only
+`config.yaml`, and any `config.console.yaml` left by a previous theme stays in place and keeps applying on the
+console. `prompto` warns rather than deleting a file you may have written yourself:
 
 ```console
-$ prompto config set tokyo
+$ prompto config set some-theme-without-a-variant
 wrote ~/.config/prompto/config.yaml
 warning: ~/.config/prompto/config.console.yaml is left over from another config and still applies on the
-console; remove it to use "tokyo" there
+console; remove it to use "some-theme-without-a-variant" there
 ```
 
 See [Console config](./configuration/console.md) for how the variant is selected at runtime and how to write one.
