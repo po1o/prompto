@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/po1o/prompto/src/color"
@@ -703,7 +704,62 @@ tooltips:
 	cfg, err := ParseLayoutYAML([]byte(raw))
 	require.NoError(t, err)
 	require.Len(t, cfg.Tooltips, 1)
-	assert.Equal(t, "\uE0B4", cfg.Tooltips[0].TrailingGlyph)
+
+	// A tooltip only ever renders in a right-aligned block, and nothing mirrors
+	// it on the way there, so style has to compile to the right-aligned
+	// orientation here: the alias opens the tooltip rather than closing it.
+	assert.Equal(t, "\uE0B6", cfg.Tooltips[0].LeadingGlyph)
+	assert.Empty(t, cfg.Tooltips[0].TrailingGlyph)
+}
+
+// Every separator key has to orient the same way on a tooltip, not just the
+// style shortcut: a user copying keys from a working rprompt segment into a
+// tooltip should get the same shape. Compared against a named segment mirrored
+// the way layoutBlock mirrors one onto a right-aligned line.
+func TestTooltipSeparatorsMatchARightAlignedSegment(t *testing.T) {
+	for _, key := range []string{
+		`style: "rounded"`,
+		`leading_style: "rounded"`,
+		`trailing_style: "rounded"`,
+		`leading_separator: "Y"`,
+		`trailing_separator: "X"`,
+	} {
+		t.Run(key, func(t *testing.T) {
+			onLine, err := ParseLayoutYAML(fmt.Appendf(nil,
+				"rprompt:\n  - segments: [\"s\"]\ns:\n  type: \"session\"\n  %s\n", key))
+			require.NoError(t, err)
+
+			expected := onLine.Segments["s"].Clone()
+			expected.MirrorSeparators()
+
+			asTooltip, err := ParseLayoutYAML(fmt.Appendf(nil,
+				"prompt:\n  - segments: [\"s\"]\ns:\n  type: \"session\"\ntooltips:\n  - type: \"aws\"\n    tips: [\"aws\"]\n    %s\n", key))
+			require.NoError(t, err)
+			require.Len(t, asTooltip.Tooltips, 1)
+
+			assert.Equal(t, expected.LeadingGlyph, asTooltip.Tooltips[0].LeadingGlyph, "leading")
+			assert.Equal(t, expected.TrailingGlyph, asTooltip.Tooltips[0].TrailingGlyph, "trailing")
+		})
+	}
+}
+
+// A typeless tooltip is rejected rather than silently never rendering, which is
+// what it did before tooltips went through the segment decoder.
+func TestParseLayoutYAMLRejectsATooltipWithoutAType(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["session"]
+
+session:
+  type: "session"
+
+tooltips:
+  - tips: ["aws"]
+`
+
+	_, err := ParseLayoutYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "tooltip 0 is missing type")
 }
 
 func TestParseLayoutYAMLRejectsGlyphsOnTooltips(t *testing.T) {
@@ -808,4 +864,82 @@ func TestMirrorGlyphCoversEverySeparatorAlias(t *testing.T) {
 func TestMirrorGlyphLeavesUnknownGlyphsAlone(t *testing.T) {
 	assert.Equal(t, ">", MirrorGlyph(">"))
 	assert.Equal(t, "", MirrorGlyph(""))
+}
+
+// options and cache are the only segment keys that decode to a map, so a
+// segment configured with nothing else looked exactly like a group of named
+// instances and was parsed as one — leaving the segment itself unregistered and
+// reporting the line that referenced it as the error.
+func TestParseLayoutYAMLSegmentWithOnlyMapValuedKeys(t *testing.T) {
+	for name, raw := range map[string]string{
+		"options": "prompt:\n  - segments: [\"git\"]\ngit:\n  options:\n    fetch_status: true\n",
+		"cache":   "prompt:\n  - segments: [\"git\"]\ngit:\n  cache:\n    duration: \"1h\"\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			cfg, err := ParseLayoutYAML([]byte(raw))
+			require.NoError(t, err)
+			require.Contains(t, cfg.Segments, "git")
+			assert.Equal(t, GIT, cfg.Segments["git"].Type)
+		})
+	}
+}
+
+// The nested form still has to work, or the fix above would have traded one
+// misparse for the other.
+func TestParseLayoutYAMLStillReadsNestedInstances(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["git.work"]
+
+git:
+  work:
+    template: " a "
+  personal:
+    template: " b "
+`
+
+	cfg, err := ParseLayoutYAML([]byte(raw))
+	require.NoError(t, err)
+	require.Contains(t, cfg.Segments, "git.work")
+	require.Contains(t, cfg.Segments, "git.personal")
+	assert.Equal(t, GIT, cfg.Segments["git.work"].Type)
+}
+
+// A misspelled key on an otherwise bare segment falls out of the segment branch
+// and is read as a group of named instances. The error has to name the key, or
+// it describes a nested table the user never wrote.
+func TestParseLayoutYAMLNamesAMisspelledSegmentKey(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["git"]
+
+git:
+  templat: " x "
+`
+
+	_, err := ParseLayoutYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "templat")
+	assert.ErrorContains(t, err, "is not a segment key")
+}
+
+// An instance named after a segment key makes the table read as one segment,
+// silently losing every other instance in it. Reported against the table that
+// caused it rather than the prompt line that referenced the missing instance.
+func TestParseLayoutYAMLRejectsAnInstanceNameCollidingWithASegmentKey(t *testing.T) {
+	raw := `
+prompt:
+  - segments: ["git.work"]
+
+git:
+  cache:
+    template: " a "
+  work:
+    template: " b "
+`
+
+	_, err := ParseLayoutYAML([]byte(raw))
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "named instances")
+	assert.ErrorContains(t, err, "work")
 }

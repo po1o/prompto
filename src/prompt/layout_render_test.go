@@ -362,3 +362,64 @@ func TestRPromptMirrorsSegmentSeparators(t *testing.T) {
 	require.Contains(t, got, "\uE0B7", "the trailing cap should mirror into a leading one")
 	require.NotContains(t, got, "\uE0B5", "the unmirrored cap points away from its block")
 }
+
+// force is a config key, not just the --force flag. Clone used to reset it
+// before every render, so a segment that asked to render its whitespace was
+// dropped exactly as if it had never set the key.
+func TestSegmentForceRendersWhitespaceOnlyText(t *testing.T) {
+	definition := &config.Segment{
+		Type:     config.TEXT,
+		Alias:    "blank",
+		Template: "   ",
+		Force:    true,
+	}
+
+	engine := newLayoutTestEngine(t, &config.LayoutConfig{
+		Prompt: []config.PromptLayout{{Segments: []string{"blank", "after"}}},
+		Segments: map[string]*config.Segment{
+			"blank": definition,
+			"after": {Type: config.TEXT, Alias: "after", Template: "B"},
+		},
+	})
+
+	require.Equal(t, "   B", engine.Primary(), "the forced segment should keep its whitespace")
+}
+
+// force overrides the emptiness test and nothing else. A segment held back by
+// exclude_folders, a width gate, or `prompto toggle` is not "empty" — it was
+// decided against before a template was ever rendered — and force must not
+// resurrect it. Folding force into the entry guard instead of the emptiness
+// test is what silently breaks all three at once.
+func TestSegmentForceDoesNotOverrideTheEnablementGates(t *testing.T) {
+	for name, definition := range map[string]*config.Segment{
+		"excluded folder": {
+			Type:           config.TEXT,
+			Alias:          "gated",
+			Template:       "G",
+			Force:          true,
+			ExcludeFolders: []string{".*"},
+		},
+		// `prompto toggle` is the third gate and behaves the same way, but it
+		// reads the session toggle cache rather than the segment, so it is not
+		// reachable from this harness.
+		"max width": {
+			Type:     config.TEXT,
+			Alias:    "gated",
+			Template: "G",
+			Force:    true,
+			MaxWidth: 1,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			engine := newLayoutTestEngine(t, &config.LayoutConfig{
+				Prompt: []config.PromptLayout{{Segments: []string{"gated", "after"}}},
+				Segments: map[string]*config.Segment{
+					"gated": definition,
+					"after": {Type: config.TEXT, Alias: "after", Template: "B"},
+				},
+			})
+
+			require.Equal(t, "B", engine.Primary(), "the gated segment must stay hidden")
+		})
+	}
+}

@@ -245,7 +245,7 @@ func validateLayoutTopLevelKeys(doc map[string]any) error {
 			return fmt.Errorf("unknown top-level key %q", key)
 		}
 
-		if hasScalarFields(table) {
+		if describesASegment(table) {
 			continue
 		}
 
@@ -472,9 +472,13 @@ func decodeLayoutSegmentTables(doc map[string]any, segmentsByName map[string]*Se
 			continue
 		}
 
-		if hasScalarFields(table) {
+		if describesASegment(table) {
 			if shouldSkipLayoutTable(key) {
 				continue
+			}
+
+			if err := rejectAmbiguousSegmentTable(key, table); err != nil {
+				return err
 			}
 
 			if err := decodeLayoutSegmentTable(key, table, "", segmentsByName); err != nil {
@@ -490,7 +494,12 @@ func decodeLayoutSegmentTables(doc map[string]any, segmentsByName map[string]*Se
 		for nestedKey, nestedValue := range table {
 			nestedTable, ok := nestedValue.(map[string]any)
 			if !ok {
-				return fmt.Errorf("invalid nested segment table")
+				// Reached when the table carries no key the segment format
+				// declares, so it was read as a group of named instances. A
+				// single misspelled key on an otherwise bare segment lands
+				// here, and naming it is the whole diagnostic.
+				return fmt.Errorf("%s: %q is not a segment key, and %s.%s is not a segment table either",
+					key, nestedKey, key, nestedKey)
 			}
 
 			name := fmt.Sprintf("%s.%s", key, nestedKey)
@@ -501,6 +510,67 @@ func decodeLayoutSegmentTables(doc map[string]any, segmentsByName map[string]*Se
 	}
 
 	return nil
+}
+
+// rejectAmbiguousSegmentTable catches a table under a segment type name that
+// reads as both forms at once: some keys the segment format declares, and some
+// map-valued keys that look like named instances.
+//
+// `git:` carrying `cache:` and `work:` is the case. It is taken for one segment
+// whose cache is configured, so `git.work` silently never exists and the error
+// surfaces on whichever prompt line referenced it. Naming the collision here
+// points at the table that actually caused it.
+func rejectAmbiguousSegmentTable(name string, table map[string]any) error {
+	if !isKnownSegmentType(SegmentType(name)) {
+		return nil
+	}
+
+	var instances []string
+
+	for key, value := range table {
+		if segmentFieldNames[key] {
+			continue
+		}
+
+		if _, ok := value.(map[string]any); !ok {
+			continue
+		}
+
+		instances = append(instances, key)
+	}
+
+	if len(instances) == 0 {
+		return nil
+	}
+
+	sort.Strings(instances)
+
+	return fmt.Errorf("%s mixes segment keys with what look like named instances (%s); "+
+		"give the instances their own table, or rename one that collides with a segment key",
+		name, strings.Join(instances, ", "))
+}
+
+// inferSegmentType names the type of a segment table that did not declare one.
+// A table is named either for its type ("git:") or for one instance of it
+// ("git.work:"), so both forms resolve without the user repeating themselves.
+func inferSegmentType(name string, defaultType SegmentType) (string, error) {
+	if defaultType != "" {
+		return string(defaultType), nil
+	}
+
+	if isKnownSegmentType(SegmentType(name)) {
+		return name, nil
+	}
+
+	// The instance part has to be non-empty: `git.` names no instance, and
+	// accepting it would let a segment through that the schema rejects.
+	if idx := strings.Index(name, "."); idx > 0 && idx < len(name)-1 {
+		if candidate := SegmentType(name[:idx]); isKnownSegmentType(candidate) {
+			return string(candidate), nil
+		}
+	}
+
+	return "", fmt.Errorf("segment %s is missing type", name)
 }
 
 func decodeLayoutSegmentTable(name string, raw map[string]any, defaultType SegmentType, segmentsByName map[string]*Segment) error {
@@ -516,26 +586,12 @@ func decodeLayoutSegmentTable(name string, raw map[string]any, defaultType Segme
 	}
 
 	if _, ok := copyMap["type"]; !ok {
-		if defaultType != "" {
-			copyMap["type"] = string(defaultType)
-		} else {
-			if isKnownSegmentType(SegmentType(name)) {
-				copyMap["type"] = name
-			}
-
-			if _, exists := copyMap["type"]; !exists {
-				if idx := strings.Index(name, "."); idx > 0 {
-					candidateType := SegmentType(name[:idx])
-					if isKnownSegmentType(candidateType) {
-						copyMap["type"] = string(candidateType)
-					}
-				}
-			}
-
-			if _, exists := copyMap["type"]; !exists {
-				return fmt.Errorf("segment %s is missing type", name)
-			}
+		segmentType, err := inferSegmentType(name, defaultType)
+		if err != nil {
+			return err
 		}
+
+		copyMap["type"] = segmentType
 	}
 
 	yamlData, err := yaml.Marshal(copyMap)
@@ -644,11 +700,7 @@ type separatorSpec struct {
 // style is alignment-aware on a line — left lines close with it, right lines
 // open with it. A segment has no alignment of its own, so its style always sets
 // the trailing separator.
-func resolveSeparatorPair(config *separatorSpec, rightAligned bool, name string) (leadingGlyph, trailingGlyph string, err error) {
-	// Copied because the shortcut below rewrites the style fields, and the
-	// caller's value is not ours to change.
-	spec := *config
-
+func resolveSeparatorPair(spec *separatorSpec, rightAligned bool, name string) (leadingGlyph, trailingGlyph string, err error) {
 	if spec.leadingStyle != "" && spec.leadingSeparator != "" {
 		return "", "", fmt.Errorf("%s cannot define both leading_style and leading_separator", name)
 	}
@@ -657,30 +709,34 @@ func resolveSeparatorPair(config *separatorSpec, rightAligned bool, name string)
 		return "", "", fmt.Errorf("%s cannot define both trailing_style and trailing_separator", name)
 	}
 
+	// Resolved locally rather than by rewriting spec: the caller's value is not
+	// ours to change.
+	leadingStyle, trailingStyle := spec.leadingStyle, spec.trailingStyle
+
 	// The error has to name the key the user wrote, not the side the shortcut
 	// happened to expand to.
 	leadingKey, trailingKey := "leading_style", "trailing_style"
 
 	if spec.style != "" {
-		if spec.leadingStyle != "" || spec.trailingStyle != "" || spec.leadingSeparator != "" || spec.trailingSeparator != "" {
+		if leadingStyle != "" || trailingStyle != "" || spec.leadingSeparator != "" || spec.trailingSeparator != "" {
 			return "", "", fmt.Errorf("%s cannot define style together with explicit leading/trailing separator settings", name)
 		}
 
 		if rightAligned {
-			spec.leadingStyle = spec.style
-			leadingKey = "style"
-		} else {
-			spec.trailingStyle = spec.style
-			trailingKey = "style"
+			leadingStyle, leadingKey = spec.style, "style"
+		}
+
+		if !rightAligned {
+			trailingStyle, trailingKey = spec.style, "style"
 		}
 	}
 
-	leadingGlyph, err = resolveSeparator(spec.leadingStyle, spec.leadingSeparator, true)
+	leadingGlyph, err = resolveSeparator(leadingStyle, spec.leadingSeparator, true)
 	if err != nil {
 		return "", "", fmt.Errorf("%s %s: %w", name, leadingKey, err)
 	}
 
-	trailingGlyph, err = resolveSeparator(spec.trailingStyle, spec.trailingSeparator, false)
+	trailingGlyph, err = resolveSeparator(trailingStyle, spec.trailingSeparator, false)
 	if err != nil {
 		return "", "", fmt.Errorf("%s %s: %w", name, trailingKey, err)
 	}
@@ -738,8 +794,9 @@ func normalizeSegmentSeparators(raw map[string]any, name string) error {
 		*field.target = value
 	}
 
-	// A segment definition can appear on lines of either alignment, so its
-	// style is never alignment-aware.
+	// A segment definition can appear on lines of either alignment, so it is
+	// always compiled left-aligned; the caller mirrors it when the line it lands
+	// on turns out to be right-aligned.
 	leading, trailing, err := resolveSeparatorPair(&spec, false, name)
 	if err != nil {
 		return err
@@ -800,9 +857,60 @@ func separatorAliasNames() string {
 	return strings.Join(names, ", ")
 }
 
-func hasScalarFields(table map[string]any) bool {
-	for _, value := range table {
-		if _, ok := value.(map[string]any); !ok {
+// separatorConfigKeys are the separator keys a user writes. They are compiled
+// to glyphs and deleted before the table is decoded, so the Segment struct does
+// not declare them and they have to be listed here.
+var separatorConfigKeys = []string{
+	"style",
+	"leading_style",
+	"trailing_style",
+	"leading_separator",
+	"trailing_separator",
+}
+
+// segmentFieldNames are the YAML keys a segment table can carry: the fields the
+// struct decodes, plus the keys the parser consumes before decoding. The
+// removed keys count too, so a table carrying nothing but `powerline_symbol` is
+// still recognised as a segment and gets the error naming its replacement.
+var segmentFieldNames = func() map[string]bool {
+	fields := make(map[string]bool)
+
+	for field := range reflect.TypeFor[Segment]().Fields() {
+		key, _, _ := strings.Cut(field.Tag.Get("yaml"), ",")
+		if key == "" || key == "-" {
+			continue
+		}
+
+		fields[key] = true
+	}
+
+	for _, key := range separatorConfigKeys {
+		fields[key] = true
+	}
+
+	for key := range removedSeparatorKeys {
+		fields[key] = true
+	}
+
+	// properties is the pre-rename spelling of options, accepted in
+	// Segment.UnmarshalYAML.
+	fields["properties"] = true
+	fields["leading_glyph"] = true
+	fields["trailing_glyph"] = true
+
+	return fields
+}()
+
+// describesASegment reports that a table is one segment rather than a group of
+// named instances of one type (`git:` carrying `work:` and `personal:`).
+//
+// Testing for a key the Segment struct declares rather than for a scalar value:
+// `options` and `cache` are the only segment keys that decode to a map, so a
+// segment configured with nothing but those looked exactly like an instance
+// group and was parsed as one, leaving the segment itself unregistered.
+func describesASegment(table map[string]any) bool {
+	for key := range table {
+		if segmentFieldNames[key] {
 			return true
 		}
 	}
@@ -878,6 +986,13 @@ func normalizeExtraSegments(doc map[string]any, layout *LayoutConfig) error {
 			return err
 		}
 
+		// A tooltip only ever renders in a right-aligned block, and Tooltip()
+		// builds that block directly rather than going through layoutBlock, so
+		// nothing else would turn its separators around. Mirroring here is what
+		// makes a tooltip carry the same separator keys as a segment named on an
+		// rprompt line and get the same shape.
+		segment.MirrorSeparators()
+
 		layout.Tooltips = append(layout.Tooltips, segment)
 	}
 
@@ -904,6 +1019,10 @@ func decodeExtraSegment(raw map[string]any, name string, defaultType SegmentType
 	var segment Segment
 	if err := yaml.Unmarshal(yamlData, &segment); err != nil {
 		return nil, err
+	}
+
+	if segment.Type == "" {
+		return nil, fmt.Errorf("%s is missing type", name)
 	}
 
 	if !isKnownSegmentType(segment.Type) {

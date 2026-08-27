@@ -43,7 +43,6 @@ type Segment struct {
 	Foreground              color.Ansi     `yaml:"foreground,omitempty"`
 	TemplatesLogic          template.Logic `yaml:"templates_logic,omitempty"`
 	Background              color.Ansi     `yaml:"background,omitempty"`
-	Filler                  string         `yaml:"filler,omitempty"`
 	Type                    SegmentType    `yaml:"type,omitempty"`
 	RenderPendingBackground color.Ansi     `yaml:"render_pending_background,omitempty"`
 	ForegroundTemplates     template.List  `yaml:"foreground_templates,omitempty"`
@@ -58,14 +57,17 @@ type Segment struct {
 	MinWidth                int            `yaml:"min_width,omitempty"`
 	Duration                time.Duration  `yaml:"-"`
 	NameLength              int            `yaml:"-"`
-	Index                   int            `yaml:"index,omitempty"`
-	Interactive             bool           `yaml:"interactive,omitempty"`
-	Enabled                 bool           `yaml:"-"`
-	Newline                 bool           `yaml:"newline,omitempty"`
-	KeepWhenEmpty           bool           `yaml:"keep_when_empty,omitempty"`
-	Force                   bool           `yaml:"force,omitempty"`
-	restored                bool           `yaml:"-"`
-	Toggled                 bool           `yaml:"toggled,omitempty"`
+	// Index is the segment's position in the block, set per render from the
+	// loop counter. Clone resets it, so a value read from YAML could never
+	// survive to be used.
+	Index         int  `yaml:"-"`
+	Interactive   bool `yaml:"interactive,omitempty"`
+	Enabled       bool `yaml:"-"`
+	Newline       bool `yaml:"newline,omitempty"`
+	KeepWhenEmpty bool `yaml:"keep_when_empty,omitempty"`
+	Force         bool `yaml:"force,omitempty"`
+	restored      bool `yaml:"-"`
+	Toggled       bool `yaml:"toggled,omitempty"`
 }
 
 // segmentAlias avoids recursion during YAML unmarshaling.
@@ -91,7 +93,6 @@ func (segment *Segment) Clone() *Segment {
 	cloned.NameLength = 0
 	cloned.Index = 0
 	cloned.Enabled = false
-	cloned.Force = false
 	cloned.restored = false
 
 	return &cloned
@@ -199,19 +200,27 @@ func (segment *Segment) isAbandoned() bool {
 	return segment.abandoned != nil && segment.abandoned.Load()
 }
 
+// Render draws the segment, reporting whether it produced anything.
+//
+// The two forces are deliberately not the same. force comes from --force and
+// overrides everything, including a segment Execute decided not to enable at
+// all. Segment.Force is the segment's own config key and overrides only the
+// emptiness test, which is all it has ever been documented to do: a segment
+// held back by exclude_folders, min_width/max_width, `prompto toggle`, or its
+// own writer reporting that it does not apply here stays hidden.
+//
+// Neither is written back. Tooltip renders the definitions themselves rather
+// than clones, so a forced render would otherwise leave `force: true` on a
+// segment the user never configured that way.
 func (segment *Segment) Render(index int, force bool) bool {
 	if !segment.Enabled && !force {
 		return false
 	}
 
-	if force {
-		segment.Force = true
-	}
-
 	segment.writer.SetIndex(index)
 
 	text := segment.string()
-	segment.Enabled = segment.Force || len(strings.ReplaceAll(text, " ", "")) > 0
+	segment.Enabled = force || segment.Force || len(strings.ReplaceAll(text, " ", "")) > 0
 
 	if !segment.Enabled {
 		template.Cache.RemoveSegmentData(segment.Name())
@@ -295,6 +304,19 @@ func (segment *Segment) ResolveBackground() color.Ansi {
 	}
 
 	return segment.Background
+}
+
+// MirrorSeparators turns a segment's separators around for a right-aligned
+// block: the pair swaps sides and each glyph is replaced by the one facing the
+// other way, so a definition written for a left-aligned line reads correctly on
+// the right. Segment definitions are compiled left-aligned because the same
+// definition can appear on lines of either alignment.
+func (segment *Segment) MirrorSeparators() {
+	leading := MirrorGlyph(segment.TrailingGlyph)
+	trailing := MirrorGlyph(segment.LeadingGlyph)
+
+	segment.LeadingGlyph = leading
+	segment.TrailingGlyph = trailing
 }
 
 // HasEmptyGlyphAtEnd reports that a shaped segment stops at its own background
