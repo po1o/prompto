@@ -79,6 +79,102 @@ func TestSchemaRejectsRemovedSegmentKeys(t *testing.T) {
 	}
 }
 
+// An editor reads the enum to decide which segment types exist. A type the
+// parser knows and the enum lacks is red-underlined while being perfectly
+// valid; one the enum has and the parser lacks is green-lit right up until it
+// fails to load with "unsupported segment type".
+func TestSchemaTypeEnumMatchesTheParser(t *testing.T) {
+	var schema struct {
+		Definitions map[string]struct {
+			Properties struct {
+				Type struct {
+					Enum []string `json:"enum"`
+				} `json:"type"`
+			} `json:"properties"`
+		} `json:"definitions"`
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "..", "themes", "schema.json"))
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(data, &schema))
+
+	enum := schema.Definitions["segment"].Properties.Type.Enum
+	require.NotEmpty(t, enum)
+
+	declared := make(map[string]bool, len(enum))
+	for _, name := range enum {
+		declared[name] = true
+	}
+
+	for segmentType := range Segments {
+		require.True(t, declared[string(segmentType)], "schema is missing segment type %q", segmentType)
+	}
+
+	for _, name := range enum {
+		require.True(t, isKnownSegmentType(SegmentType(name)), "schema declares segment type %q, which the parser rejects", name)
+	}
+}
+
+// The root gates the nested-instance form on a regex alternation of the segment
+// types, so that list has to track config.Segments too. The enum test above
+// forces the enum to be updated when a type is added; nothing would force the
+// regex, and a stale one silently rejects the nested form for the new type in
+// every editor while loading fine.
+func TestSchemaPatternPropertiesCoverEverySegmentType(t *testing.T) {
+	var schema struct {
+		PatternProperties map[string]json.RawMessage `json:"patternProperties"`
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "..", "themes", "schema.json"))
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(data, &schema))
+	require.NotEmpty(t, schema.PatternProperties)
+
+	// Two patterns: the bare type name (`git:`) and a named instance of it
+	// (`git.work:`, `text.2:`). Both list every type, and both must stay in
+	// step with the parser.
+	for pattern := range schema.PatternProperties {
+		t.Run(pattern[:min(len(pattern), 24)], func(t *testing.T) {
+			alternation := strings.TrimPrefix(pattern, "^(")
+
+			alternation, _, found := strings.Cut(alternation, ")")
+			require.True(t, found, "pattern is not the expected ^(a|b|c) alternation")
+
+			declared := make(map[string]bool)
+			for name := range strings.SplitSeq(alternation, "|") {
+				declared[name] = true
+			}
+
+			for segmentType := range Segments {
+				require.True(t, declared[string(segmentType)], "pattern is missing segment type %q", segmentType)
+			}
+
+			for name := range declared {
+				require.True(t, isKnownSegmentType(SegmentType(name)), "pattern declares segment type %q, which the parser rejects", name)
+			}
+		})
+	}
+}
+
+// The extra prompt lines decode through the same path as a named segment, so
+// they accept the same keys and reject the same removed ones. Referencing the
+// segment definition is what keeps that true; spelling the keys out again is
+// how the schema drifted the first time.
+func TestSchemaExtraPromptReusesTheSegmentDefinition(t *testing.T) {
+	var schema struct {
+		Definitions map[string]map[string]any `json:"definitions"`
+	}
+
+	data, err := os.ReadFile(filepath.Join("..", "..", "themes", "schema.json"))
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(data, &schema))
+
+	extra, ok := schema.Definitions["extra_prompt"]
+	require.True(t, ok, "schema is missing the extra_prompt definition")
+	require.Equal(t, "#/definitions/segment", extra["$ref"])
+	require.NotContains(t, extra, "properties", "extra_prompt must not redeclare segment keys")
+}
+
 // The schema is closed, so a field the struct has and the schema lacks turns a
 // valid config into an "additional properties are not allowed" error. Pin every
 // field of both decoded types.
