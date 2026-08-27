@@ -852,3 +852,60 @@ vim:
 	require.Contains(t, repainted, "NORMAL", "expected the repaint to have happened")
 	require.Contains(t, repainted, "[]", "the kept segment should still hold its shape after a repaint")
 }
+
+// The streaming blocks are built once and re-rendered for the life of the
+// session, so the line's leading glyph — which writeSegment substitutes onto
+// whichever segment happens to be first — must be taken back off again when the
+// block ends. Left in place, a segment that is first in one render still
+// carries the line's opening glyph in a later one where it is not, and draws it
+// mid-line.
+//
+// This is why the restore moved from a defer in writeSegment to endBlock: the
+// defer ran too early for the next segment, and never running it would leak the
+// substitution into the next render.
+func TestPrimaryStreamingRestoresTheBlockLeadingGlyph(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "leading-glyph.omp.yaml")
+	cfg := `
+prompt:
+  - leading_style: rounded
+    segments: ["text.first", "text.second"]
+
+text.first:
+  type: "text"
+  template: " FIRST "
+  foreground: "#ffffff"
+  background: "#000000"
+
+text.second:
+  type: "text"
+  template: " SECOND "
+  foreground: "#ffffff"
+  background: "#7a7a7a"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	flags := &runtime.Flags{
+		ConfigPath: configPath,
+		Plain:      true,
+		Shell:      shell.GENERIC,
+	}
+
+	engine := New(flags)
+	t.Cleanup(engine.WaitForSegmentExecutions)
+
+	first := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	require.NotEmpty(t, first)
+
+	require.NotEmpty(t, engine.streamingBlocks)
+	block := engine.streamingBlocks[0]
+	require.Equal(t, "", block.LeadingGlyph, "the line should carry the compiled glyph")
+	require.NotEmpty(t, block.Segments)
+
+	for _, segment := range block.Segments {
+		require.Empty(t, segment.LeadingGlyph,
+			"%s kept the line's leading glyph after the block ended", segment.Name())
+	}
+
+	// The glyph still has to be drawn — the restore must not cost the opening.
+	require.Contains(t, first, "")
+}

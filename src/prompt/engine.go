@@ -23,6 +23,10 @@ type Engine struct {
 	activeSegment         *config.Segment
 	sharedProviderFactory map[config.SegmentType]sharedProviderFactory
 	updateCallback        func(string)
+	// restoreLeadingGlyph undoes the block-level leading glyph substitution made
+	// in writeSegment. It is held until the block ends rather than run on
+	// return, because the next segment still reads the substituted value.
+	restoreLeadingGlyph   func()
 	Config                *config.Config
 	sessionCache          map[string]segmentRenderCache
 	sharedProviders       map[config.SegmentType]*onceProvider[sharedExecutionResult]
@@ -328,10 +332,9 @@ func (e *Engine) adjustTrailingGlyphColorOverrides() {
 	// this will still break when using parentBackground and parentForeground as keywords
 	// in a trailing diamond, but let's fix that when it happens as it requires either a rewrite
 	// of the logic for diamonds or storing grandparents as well like one happy family.
-	if e.previousActiveSegment == nil || e.previousActiveSegment.TrailingGlyph == "" {
-		return
-	}
-
+	//
+	// The caller has already established that previousActiveSegment carries a
+	// trailing glyph, so this reads it directly.
 	trailingDiamond := e.previousActiveSegment.TrailingGlyph
 	// Optimize: check both conditions in a single pass
 	hasBg := strings.Contains(trailingDiamond, string(color.Background))

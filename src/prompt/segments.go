@@ -32,8 +32,7 @@ func (e *Engine) writeBlockSegments(block *config.Block) (string, int) {
 
 	e.writeBlockSeparator(block)
 
-	e.activeSegment = nil
-	e.previousActiveSegment = nil
+	e.endBlock()
 
 	return terminal.String()
 }
@@ -219,17 +218,35 @@ func (e *Engine) writeSegment(block *config.Block, segment *config.Segment) {
 
 	// Same restore as writeBlockSeparator: the block opens the line, but the
 	// segment must not carry that glyph into the next render it appears in.
+	//
+	// The restore is deferred to the end of the block rather than to the end of
+	// this call, because the *next* segment reads this one's LeadingGlyph
+	// through HasEmptyGlyphAtEnd to decide whether to carve its own opening out
+	// of this segment's background. Undoing it here would make a segment the
+	// line opened for look like bare text, and the next glyph would float.
 	if terminal.Len() == 0 && len(block.LeadingGlyph) > 0 {
 		previous := segment.LeadingGlyph
 		segment.LeadingGlyph = block.LeadingGlyph
 
-		defer func() {
+		e.restoreLeadingGlyph = func() {
 			segment.LeadingGlyph = previous
-		}()
+		}
 	}
 
 	e.setActiveSegment(segment)
 	e.renderActiveSegment()
+}
+
+// endBlock closes out the per-block engine state. It runs the leading glyph
+// restore writeSegment deferred, so the substitution never outlives the block.
+func (e *Engine) endBlock() {
+	if e.restoreLeadingGlyph != nil {
+		e.restoreLeadingGlyph()
+		e.restoreLeadingGlyph = nil
+	}
+
+	e.activeSegment = nil
+	e.previousActiveSegment = nil
 }
 
 // canRenderSegment now uses map for O(1) lookups instead of O(n) slice search

@@ -663,8 +663,7 @@ func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, 
 		restore.segment.Enabled = restore.enabled
 	}
 
-	e.activeSegment = nil
-	e.previousActiveSegment = nil
+	e.endBlock()
 
 	return terminal.String()
 }
