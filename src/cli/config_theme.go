@@ -87,6 +87,15 @@ func writeBundledTheme(cmd *cobra.Command, name string) error {
 		return fmt.Errorf("aborted")
 	}
 
+	// Written in place, one file at a time. Confirming up front (above) removes
+	// the failure this order could otherwise cause — being asked about the
+	// second file after the first was already replaced — but a write that fails
+	// partway still leaves a new config.yaml beside a stale config.console.yaml.
+	// Staging both files and renaming them in would narrow that window, at the
+	// cost of replacing a symlinked config with a regular file and resetting the
+	// target's permissions: os.WriteFile writes through a symlink and preserves
+	// the mode of a file that already exists, and rename does neither. Rerunning
+	// the command recovers a partial write; a deleted symlink is not recoverable.
 	for _, write := range writes {
 		if err := os.WriteFile(write.path, []byte(write.content), 0o644); err != nil {
 			return err
