@@ -68,10 +68,7 @@ func (e *Engine) layoutBlock(layout *config.PromptLayout, blockType config.Block
 
 		segment := segmentDef.Clone()
 		if alignment == config.Right {
-			orientedLeading := config.MirrorGlyph(segment.TrailingGlyph)
-			orientedTrailing := config.MirrorGlyph(segment.LeadingGlyph)
-			segment.LeadingGlyph = orientedLeading
-			segment.TrailingGlyph = orientedTrailing
+			segment.MirrorSeparators()
 		}
 
 		block.Segments = append(block.Segments, segment)
