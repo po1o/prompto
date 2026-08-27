@@ -18,7 +18,7 @@ func Download(url string, isCacheEnabled bool) ([]byte, error) {
 
 	// some users use the blob url, we need to convert it to the raw url
 	themeBlob := "https://github.com/po1o/prompto/blob/main/themes/"
-	url = strings.Replace(url, themeBlob, "https://raw.githubusercontent.com/JanDeDobbeleer/prompto/main/themes/", 1)
+	url = strings.Replace(url, themeBlob, "https://raw.githubusercontent.com/po1o/prompto/main/themes/", 1)
 
 	ctx, cncl := context.WithTimeout(context.Background(), time.Second*time.Duration(5))
 	defer cncl()
