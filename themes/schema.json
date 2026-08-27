@@ -187,28 +187,7 @@
       "default": {}
     },
     "extra_prompt": {
-      "type": "object",
-      "default": {},
-      "properties": {
-        "template": {
-          "type": "string",
-          "title": "Prompt Template"
-        },
-        "foreground": {
-          "$ref": "#/definitions/color"
-        },
-        "foreground_templates": {
-          "$ref": "#/definitions/templates",
-          "description": "https://prompto.dev/docs/configuration/colors#color-templates"
-        },
-        "background": {
-          "$ref": "#/definitions/color"
-        },
-        "background_templates": {
-          "$ref": "#/definitions/templates",
-          "description": "https://prompto.dev/docs/configuration/colors#color-templates"
-        }
-      }
+      "$ref": "#/definitions/segment"
     },
     "segment": {
       "type": "object",
@@ -237,11 +216,10 @@
             "cds",
             "cf",
             "cftarget",
-            "claude",
             "clojure",
             "cmake",
-            "copilot",
             "connection",
+            "copilot",
             "crystal",
             "dart",
             "deno",
@@ -249,6 +227,7 @@
             "dotnet",
             "elixir",
             "executiontime",
+            "exit",
             "firebase",
             "flutter",
             "fortran",
@@ -318,6 +297,7 @@
             "unity",
             "v",
             "vala",
+            "vim",
             "wakatime",
             "withings",
             "xmake",
@@ -510,10 +490,6 @@
           "$ref": "#/definitions/color",
           "title": "Per-segment pending background override"
         },
-        "filler": {
-          "type": "string",
-          "title": "Repeated fill text"
-        },
         "tips": {
           "type": "array",
           "title": "Tooltip trigger words",
@@ -532,21 +508,17 @@
           "type": "integer",
           "title": "Timeout in milliseconds"
         },
-        "index": {
-          "type": "integer",
-          "title": "Segment index"
-        },
         "newline": {
           "type": "boolean",
           "title": "Segment requests a newline"
         },
-        "force": {
-          "type": "boolean",
-          "title": "Render even when the text would be empty"
-        },
         "toggled": {
           "type": "boolean",
           "title": "Start disabled in the toggle cache"
+        },
+        "force": {
+          "type": "boolean",
+          "title": "Render even when the text would be empty"
         }
       },
       "allOf": [
@@ -5262,7 +5234,8 @@
           }
         },
         "required": [
-          "tips"
+          "tips",
+          "type"
         ]
       }
     },
@@ -5481,6 +5454,38 @@
     }
   },
   "additionalProperties": {
-    "$ref": "#/definitions/segment"
+    "title": "A segment instance; type is required because the name does not imply it",
+    "allOf": [
+      {
+        "$ref": "#/definitions/segment"
+      },
+      {
+        "required": [
+          "type"
+        ]
+      }
+    ]
+  },
+  "patternProperties": {
+    "^(angular|argocd|aurelia|aws|az|azd|azfunc|battery|bazel|brewfather|buf|bun|carbonintensity|cds|cf|cftarget|clojure|cmake|connection|copilot|crystal|dart|deno|docker|dotnet|elixir|executiontime|exit|firebase|flutter|fortran|fossil|gcp|git|gitversion|go|haskell|helm|http|ipify|java|jujutsu|julia|kotlin|kubectl|lastfm|lua|mercurial|mojo|mvn|nba|nbgv|nightscout|nim|nix-shell|node|npm|nx|ocaml|os|owm|path|perl|php|plastic|pnpm|project|pulumi|python|quasar|r|react|root|ruby|rust|sapling|session|shell|sitecore|spotify|status|strava|svelte|svn|swift|sysinfo|talosctl|tauri|terraform|text|time|todoist|ui5tooling|umbraco|unity|v|vala|vim|wakatime|withings|xmake|yarn|ytm|zig)$": {
+      "title": "A segment definition, or named instances of this segment type",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/segment"
+        },
+        {
+          "type": "object",
+          "title": "Named instances of one segment type, e.g. git.work",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/definitions/segment"
+          }
+        }
+      ]
+    },
+    "^(angular|argocd|aurelia|aws|az|azd|azfunc|battery|bazel|brewfather|buf|bun|carbonintensity|cds|cf|cftarget|clojure|cmake|connection|copilot|crystal|dart|deno|docker|dotnet|elixir|executiontime|exit|firebase|flutter|fortran|fossil|gcp|git|gitversion|go|haskell|helm|http|ipify|java|jujutsu|julia|kotlin|kubectl|lastfm|lua|mercurial|mojo|mvn|nba|nbgv|nightscout|nim|nix-shell|node|npm|nx|ocaml|os|owm|path|perl|php|plastic|pnpm|project|pulumi|python|quasar|r|react|root|ruby|rust|sapling|session|shell|sitecore|spotify|status|strava|svelte|svn|swift|sysinfo|talosctl|tauri|terraform|text|time|todoist|ui5tooling|umbraco|unity|v|vala|vim|wakatime|withings|xmake|yarn|ytm|zig)\\..+$": {
+      "title": "One named instance of a segment type, e.g. git.work",
+      "$ref": "#/definitions/segment"
+    }
   }
 }
