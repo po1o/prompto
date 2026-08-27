@@ -38,14 +38,16 @@ func GetConsole(name string) (string, bool) {
 //
 // It mutates package state, so tests using it must not run in parallel.
 func WithoutConsoleVariant(name string, fn func()) {
-	name = normalizeName(name)
+	// Matched the way GetConsole matches, or a caller passing "Tokyo" would
+	// delete nothing and run fn against the variant it meant to hide.
+	key, existed := lookupKey(bundledConsoleThemes, name)
 
-	content, existed := bundledConsoleThemes[name]
-	delete(bundledConsoleThemes, name)
+	content := bundledConsoleThemes[key]
+	delete(bundledConsoleThemes, key)
 
 	defer func() {
 		if existed {
-			bundledConsoleThemes[name] = content
+			bundledConsoleThemes[key] = content
 		}
 	}()
 
@@ -53,17 +55,28 @@ func WithoutConsoleVariant(name string, fn func()) {
 }
 
 func lookup(themes map[string]string, name string) (string, bool) {
+	key, ok := lookupKey(themes, name)
+	if !ok {
+		return "", false
+	}
+
+	return themes[key], true
+}
+
+// lookupKey finds the stored key for name, matching case-insensitively so a
+// theme can be named the way the user typed it.
+func lookupKey(themes map[string]string, name string) (string, bool) {
 	name = normalizeName(name)
 	if name == "" {
 		return "", false
 	}
 
-	for key, content := range themes {
+	for key := range themes {
 		if !strings.EqualFold(key, name) {
 			continue
 		}
 
-		return content, true
+		return key, true
 	}
 
 	return "", false
