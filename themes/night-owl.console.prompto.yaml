@@ -12,74 +12,74 @@
 angular:
     background: lightWhite
     foreground: red
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 aurelia:
     background: lightWhite
     foreground: magenta
-    leading_separator: <
+    leading_style: powerline
     template: 'a {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 aws:
     background: darkGray
     foreground: lightRed
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} '
     trailing_separator: (
 az:
     background: lightWhite
     foreground: cyan
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ .EnvironmentName }} '
     trailing_separator: (
 azfunc:
     background: lightWhite
     foreground: cyan
-    leading_separator: <
+    leading_style: powerline
     template: '<lightYellow></> {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 cds:
     background: darkGray
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     template: ' cds {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 cf:
     background: lightWhite
     foreground: darkGray
-    leading_separator: <
+    leading_style: powerline
     template: ' cf {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 cftarget:
     background: lightWhite
     foreground: darkGray
-    leading_separator: <
+    leading_style: powerline
     template: ' {{if .Org }}{{ .Org }}{{ end }}{{ if .Space }}/{{ .Space }}{{ end }} '
     trailing_separator: (
 cmake:
     background: white
     foreground: green
-    leading_separator: <
+    leading_style: powerline
     template: '<blue></> <red></> cmake {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 console_title_template: '{{ .Folder }}'
 crystal:
     background: lightWhite
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 dart:
     background: lightWhite
     foreground: cyan
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 dotnet:
     background: black
     foreground: cyan
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Unsupported }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 executiontime:
@@ -90,12 +90,12 @@ executiontime:
         style: roundrock
         threshold: 0
     template: ' {{ .FormattedMs }}'
-    trailing_separator: )
+    trailing_style: rounded
 cursor_padding: true
 flutter:
     background: cyan
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 git:
@@ -127,54 +127,54 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }} {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 go:
     background: lightWhite
     foreground: cyan
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 haskell:
     background: black
     foreground: lightBlue
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 java:
     background: lightWhite
     foreground: lightRed
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 julia:
     background: lightBlue
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
     template: '<yellow></> {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 kotlin:
     background: lightBlue
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
     template: 'K {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 kubectl:
     background: lightBlue
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
     template: ' {{.Context}} :: {{if .Namespace}}{{.Namespace}}{{else}}default{{end}} '
     trailing_separator: (
 lua:
     background: lightWhite
     foreground: blue
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 node:
     background: darkGray
     foreground: darkGray
-    leading_separator: <
+    leading_style: powerline
     options:
         fetch_package_manager: true
         npm_icon: '<lightRed></> '
@@ -184,7 +184,7 @@ node:
 nx:
     background: white
     foreground: darkGray
-    leading_separator: <
+    leading_style: powerline
     template: 'Nx {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 os:
@@ -198,7 +198,7 @@ os:
         linux: linux
         macos: mac
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
-    trailing_separator: '>'
+    trailing_style: powerline
 path:
     background: white
     foreground: black
@@ -208,18 +208,18 @@ path:
         home_icon: ' '
         style: agnoster
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: '{{ path .Path .Location }}'
 perl:
     background: darkGray
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 php:
     background: white
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 prompt:
@@ -236,19 +236,19 @@ prompt:
 python:
     background: darkGray
     foreground: lightYellow
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}'
     trailing_separator: (
 r:
     background: white
     foreground: cyan
-    leading_separator: <
+    leading_style: powerline
     template: 'R {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 root:
     background: lightRed
     foreground: lightYellow
-    trailing_separator: '>'
+    style: powerline
     template: ' # '
 rprompt:
     - segments:
@@ -287,25 +287,25 @@ rprompt:
 ruby:
     background: lightWhite
     foreground: red
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 rust:
     background: lightWhite
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 shell:
     background: lightWhite
     foreground: black
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ .Name }} '
     trailing_separator: (
 spotify:
     background: green
     foreground: black
-    leading_separator: (
+    leading_style: rounded
     options:
         playing_icon: ' '
         paused_icon: '|| '
@@ -322,13 +322,13 @@ status:
 swift:
     background: lightRed
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
     trailing_separator: (
 sysinfo:
     background: lightBlue
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ round .PhysicalPercentUsed .Precision }}% '
     trailing_separator: (
 text:
@@ -337,11 +337,11 @@ text:
 time:
     background: darkGray
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
     options:
         time_format: "15:04:05"
     template: ' {{ .LastDate | date .Format }}'
-    trailing_separator: )
+    trailing_style: rounded
 transient:
     - segments:
         - text.transient

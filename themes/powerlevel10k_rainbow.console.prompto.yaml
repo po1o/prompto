@@ -16,7 +16,7 @@ aws:
     foreground: lightWhite
     options:
         display_default: false
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} '
 azfunc:
     background: lightYellow
@@ -24,13 +24,13 @@ azfunc:
     options:
         display_mode: files
         fetch_version: false
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 console_title_template: '{{ .Shell }} in {{ .Folder }}'
 executiontime:
     background: yellow
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .FormattedMs }} '
 cursor_padding: true
 git:
@@ -59,28 +59,28 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 go:
     background: cyan
     foreground: black
     options:
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 julia:
     background: lightBlue
     foreground: black
     options:
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 node:
     background: darkGray
     foreground: lightWhite
     options:
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 os:
     background: white
@@ -99,7 +99,7 @@ path:
         home_icon: "~"
         style: full
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -114,12 +114,12 @@ python:
     options:
         display_mode: files
         fetch_virtual_env: false
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 root:
     background: lightYellow
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' # '
 rprompt:
     - segments:
@@ -142,7 +142,7 @@ ruby:
     options:
         display_mode: files
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 status:
     background: black
@@ -151,7 +151,7 @@ status:
     foreground: white
     options:
         always_enabled: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if gt .Code 0 }}{{ reason .Code }}{{ else }}{{ end }} '
 text:
     foreground: white
@@ -164,4 +164,4 @@ time:
     foreground: black
     leading_separator: '>--'
     template: ' {{ .LastDate | date .Format }} '
-    trailing_separator: '>'
+    trailing_style: powerline

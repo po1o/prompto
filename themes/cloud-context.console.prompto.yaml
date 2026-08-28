@@ -12,21 +12,21 @@
 aws:
     background: p:background-color
     foreground: p:cloud-text-amazon
-    trailing_separator: '>'
+    style: powerline
     template: ' <p:symbol-color></> {{.Profile}}{{if .Region}} {{.Region}}{{end}}'
 az:
     background: p:background-color
     foreground: p:cloud-text-azure
     options:
         source: cli
-    trailing_separator: '>'
+    style: powerline
     template: ' <p:symbol-color></> {{ .Name }}'
 az.2:
     background: p:background-color
     foreground: p:cloud-text-azure
     options:
         source: pwsh
-    trailing_separator: '>'
+    style: powerline
     template: ' <p:symbol-color></> (PS) {{ .Name }}'
 console_title_template: '{{ if or .Root .Segments.Git.RepoName }}[ {{ if .Root }}Admin{{ end }}{{ if and .Root .Segments.Git.RepoName }}@{{ end }}{{ if .Segments.Git.RepoName }}{{ .Segments.Git.RepoName }}{{ end }} ]{{ end }} {{ .Folder }}'
 executiontime:
@@ -35,22 +35,22 @@ executiontime:
     options:
         style: austin
         threshold: 1
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' <p:symbol-color></> {{ .FormattedMs }}'
 firebase:
     background: p:background-color
     foreground: p:cloud-text-firebase
-    trailing_separator: '>'
+    style: powerline
     template: ' <p:symbol-color></> {{ .Project }}'
 gcp:
     background: p:background-color
     foreground: p:cloud-text-gcp
-    trailing_separator: '>'
+    style: powerline
     template: ' <p:symbol-color></> {{ .Project }}'
 git:
     background: p:background-color
     foreground: p:git-text
-    trailing_separator: '>'
+    style: powerline
     template: ' <p:symbol-color></> {{ .RepoName }}'
     options:
         azure_devops_icon: 'az '
@@ -88,12 +88,12 @@ git.2:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: '{{ .HEAD }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 kubectl:
     background: p:background-color
     foreground: p:kubernetes-text
-    trailing_separator: '>'
+    style: powerline
     template: <p:symbol-color></> {{.Context}}{{if .Namespace}} {{.Namespace}}{{end}}
 palette:
     background-color: transparent
@@ -115,7 +115,7 @@ path:
         folder_separator_icon: /
         style: folder
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ path .Path .Location }} '
 prompt:
     - segments:
@@ -149,7 +149,7 @@ status:
     foreground: p:symbol-color
     options:
         always_enabled: true
-    trailing_separator: '>'
+    style: powerline
     template: '{{ if eq .Code 0 }} {{ end }}'
 status.2:
     background: p:error-background
@@ -160,7 +160,7 @@ status.2:
 talosctl:
     background: p:background-color
     foreground: p:talosctl-text
-    trailing_separator: '>'
+    style: powerline
     template: <p:symbol-color></> {{.Context}}
 text:
     background: p:background-color
@@ -171,12 +171,12 @@ time:
     foreground: p:timer-text
     options:
         time_format: "15:04:05"
-    trailing_separator: '>'
+    style: powerline
     template: ' <p:symbol-color></> {{ dateInZone .Format .LastDate "UTC" }} '
 time.2:
     background: p:background-color
     foreground: p:timer-text
     options:
         time_format: "15:04:05"
-    trailing_separator: '>'
+    style: powerline
     template: ' <p:symbol-color></> {{ .LastDate | date .Format }} '

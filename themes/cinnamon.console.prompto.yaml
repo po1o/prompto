@@ -48,7 +48,7 @@ prompt:
 session:
     background: darkGray
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ .UserName }}@{{ .HostName }} '
 spotify:
     background: darkGray
@@ -66,4 +66,4 @@ status:
     options:
         always_enabled: true
     template: ' x '
-    trailing_separator: )
+    style: rounded

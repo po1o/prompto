@@ -59,7 +59,7 @@ prompt:
 session:
     background: lightRed
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: '{{ if .SSHSession }} {{ end }}{{ .UserName }} '
 spotify:
     background: lightGreen
@@ -76,7 +76,7 @@ status:
     foreground: lightWhite
     options:
         always_enabled: true
-    trailing_separator: '>'
+    style: powerline
 status.2:
     foreground: lightWhite
     foreground_templates:

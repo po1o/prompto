@@ -13,7 +13,7 @@ console_title_template: '{{if .Root}} ! {{end}}{{.UserName}} > {{.Folder}}'
 executiontime:
     background: darkGray
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
     options:
         style: austin
     template: ' {{ .FormattedMs }} '
@@ -21,7 +21,7 @@ cursor_padding: true
 git:
     background: lightGreen
     foreground: darkGray
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .HEAD }} '
     options:
         azure_devops_icon: 'az '
@@ -52,7 +52,7 @@ path:
         mixed_threshold: 8
         style: mixed
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ path .Path .Location }} '
 prompt:
     - segments:
@@ -63,7 +63,7 @@ prompt:
 python:
     background: lightBlue
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
 rprompt:
     - segments:
@@ -81,7 +81,7 @@ session:
     background_templates:
         - '{{if .Root}}lightRed{{else}}white{{end}}'
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: '{{if .Root}} {{.UserName}} {{else}} {{.UserName}} {{end}}'
 status:
     background: lightRed

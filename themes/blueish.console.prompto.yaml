@@ -16,7 +16,7 @@ battery:
         - '{{if eq "Discharging" .State.String}}lightYellow{{end}}'
         - '{{if eq "Full" .State.String}}cyan{{end}}'
     foreground: darkGray
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }} '
 cursor_padding: true
 git:
@@ -39,17 +39,17 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 kubectl:
     background: cyan
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{.Context}} :: {{if .Namespace}}{{.Namespace}}{{else}}default{{end}} '
 node:
     background: white
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 os:
     background: darkGray
@@ -61,14 +61,14 @@ os:
         android: android
         linux: linux
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} >'
-    trailing_separator: '>'
+    trailing_style: powerline
 path:
     background: cyan
     foreground: darkGray
     options:
         style: folder
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -86,12 +86,12 @@ prompt:
 root:
     background: lightYellow
     foreground: darkGray
-    trailing_separator: '>'
+    style: powerline
     template: ' # '
 session:
     background: darkGray
     foreground: cyan
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UserName }}@{{ .HostName }} '
 status:
     background: green
@@ -102,7 +102,7 @@ status:
     options:
         always_enabled: true
     template: ' x '
-    trailing_separator: '>'
+    trailing_style: powerline
 text:
     foreground: cyan
     template: '> '

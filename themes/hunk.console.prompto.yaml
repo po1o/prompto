@@ -14,7 +14,7 @@ executiontime:
     foreground: lightWhite
     options:
         always_enabled: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .FormattedMs }} '
 cursor_padding: true
 git:
@@ -43,17 +43,17 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }} {{ .HEAD }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }} '
 node:
     background: white
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 os:
     background: lightRed
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     options:
         windows: windows
         display_distro_name: true
@@ -67,7 +67,7 @@ path:
     options:
         style: full
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: '{{ .Path }} '
 prompt:
     - segments:
@@ -84,12 +84,12 @@ python:
     foreground: lightWhite
     options:
         fetch_version: false
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
 root:
     background: white
     foreground: lightYellow
-    trailing_separator: '>'
+    style: powerline
     template: ' !'
 root.2:
     template: ' '
@@ -102,13 +102,13 @@ rprompt:
 session:
     background: white
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UserName }} '
 shell:
     background: darkGray
     foreground: lightWhite
     template: ' {{ .Name }} '
-    trailing_separator: )
+    style: rounded
 text:
     foreground: lightWhite
     template: <lightGreen>></>

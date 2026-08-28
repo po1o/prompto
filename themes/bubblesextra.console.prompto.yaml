@@ -22,11 +22,11 @@ battery:
         charging_icon: '^ '
         discharging_icon: 'v '
     template: '{{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}'
-    trailing_separator: )
+    trailing_style: rounded
 executiontime:
     background: darkGray
     foreground: white
-    leading_separator: (
+    leading_style: rounded
     options:
         style: austin
         threshold: 150
@@ -62,7 +62,7 @@ git:
         revert_icon: 'revert '
         tag_icon: '#'
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
-    trailing_separator: )
+    trailing_style: rounded
 go:
     background: darkGray
     foreground: lightCyan
@@ -70,7 +70,7 @@ go:
     options:
         fetch_version: false
     template: '{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
-    trailing_separator: )
+    trailing_style: rounded
 java:
     background: darkGray
     foreground: lightRed
@@ -78,7 +78,7 @@ java:
     options:
         fetch_version: false
     template: '{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
-    trailing_separator: )
+    trailing_style: rounded
 julia:
     background: darkGray
     foreground: lightBlue
@@ -86,7 +86,7 @@ julia:
     options:
         fetch_version: false
     template: '{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
-    trailing_separator: )
+    trailing_style: rounded
 node:
     background: darkGray
     foreground: lightGreen
@@ -94,16 +94,16 @@ node:
     options:
         fetch_version: false
     template: '{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}'
-    trailing_separator: )
+    trailing_style: rounded
 path:
     background: darkGray
     foreground: lightGreen
-    leading_separator: (
+    leading_style: rounded
     options:
         style: folder
         windows_registry_icon: reg
     template: ' {{ .Path }}'
-    trailing_separator: )
+    trailing_style: rounded
 php:
     background: lightBlue
     foreground: lightWhite
@@ -111,7 +111,7 @@ php:
     options:
         fetch_version: false
     template: ' {{ .Full }} '
-    trailing_separator: )
+    trailing_style: rounded
 prompt:
     - segments:
         - executiontime
@@ -123,7 +123,7 @@ python:
     options:
         fetch_version: false
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}'
-    trailing_separator: )
+    trailing_style: rounded
 rprompt:
     - segments:
         - path
@@ -143,10 +143,10 @@ ruby:
     options:
         fetch_version: false
     template: '{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
-    trailing_separator: )
+    trailing_style: rounded
 text:
     background: darkGray
     foreground: lightRed
-    leading_separator: (
+    leading_style: rounded
     template: '{{ .UserName }} >'
-    trailing_separator: )
+    trailing_style: rounded

@@ -14,7 +14,7 @@ executiontime:
     foreground: lightWhite
     options:
         always_enabled: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .FormattedMs }} '
 cursor_padding: true
 git:
@@ -38,17 +38,17 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' > ({{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }}) '
 node:
     background: white
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 os:
     background: darkGray
     foreground: cyan
-    leading_separator: (
+    leading_style: rounded
     template: '{{ .Icon }} {{ .HostName }} '
     options:
         display_distro_name: true
@@ -64,7 +64,7 @@ path:
         home_icon: ""
         style: full
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' <black> </> {{ .Path }} '
 prompt:
     - segments:
@@ -89,7 +89,7 @@ status:
     options:
         always_enabled: true
     template: ' {{ if gt .Code 0 }}{{ else }}{{ end }} '
-    trailing_separator: )
+    style: rounded
 text:
     foreground: lightRed
     template: ' <lightCyan><b>!</b></><b>{{ .UserName }}</b> <cyan>></><lightCyan>></>'
@@ -98,5 +98,5 @@ time:
     foreground: lightWhite
     options:
         time_format: 3:04 PM
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .LastDate | date .Format }} '

@@ -16,7 +16,7 @@ battery:
         - '{{if eq "Discharging" .State.String}}lightYellow{{end}}'
         - '{{if eq "Full" .State.String}}cyan{{end}}'
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }} '
 console_title_template: '{{ .Shell }} in {{ .Folder }}'
 cursor_padding: true
@@ -45,7 +45,7 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .HEAD }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 os:
     background: darkGray
@@ -56,7 +56,7 @@ os:
         android: android
         linux: linux
         macos: mac
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}}'
 path:
     background: cyan
@@ -65,7 +65,7 @@ path:
         folder_separator_icon: /
         style: full
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -83,7 +83,7 @@ python:
     options:
         display_mode: context
         fetch_virtual_env: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Venv }} '
 root:
     foreground: lightYellow
@@ -96,7 +96,7 @@ rprompt:
 session:
     background: darkGray
     foreground: lightYellow
-    trailing_separator: '>'
+    style: powerline
     template: '{{ .UserName }} '
 status:
     background: lightGreen
@@ -105,7 +105,7 @@ status:
     foreground: black
     options:
         always_enabled: true
-    trailing_separator: '>'
+    style: powerline
     template: ' x '
 text:
     foreground: lightRed
@@ -113,7 +113,7 @@ text:
 time:
     background: darkGray
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: '<lightWhite> </>{{ .LastDate | date .Format }} '
 transient:
     - segments:

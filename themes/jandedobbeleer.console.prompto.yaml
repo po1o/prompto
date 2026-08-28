@@ -16,7 +16,7 @@ aws:
     foreground: lightWhite
     options:
         display_default: false
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} '
 azfunc:
     background: lightYellow
@@ -24,7 +24,7 @@ azfunc:
     options:
         display_mode: files
         fetch_version: false
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 battery:
     background: lightRed
@@ -37,7 +37,7 @@ battery:
         charged_icon: ' '
         charging_icon: ' '
         discharging_icon: ' '
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }} '
 console_title_template: '{{ .Shell }} in {{ .Folder }}'
 executiontime:
@@ -55,7 +55,7 @@ git:
         - '{{ if gt .Ahead 0 }}white{{ end }}'
         - '{{ if gt .Behind 0 }}white{{ end }}'
     foreground: darkGray
-    leading_separator: (
+    leading_style: rounded
     options:
         branch_template: '{{ trunc 25 .Branch }}'
         fetch_status: true
@@ -76,27 +76,27 @@ git:
         revert_icon: 'revert '
         tag_icon: '#'
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
-    trailing_separator: )
+    trailing_style: rounded
 go:
     background: lightCyan
     foreground: black
     options:
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 julia:
     background: lightBlue
     foreground: black
     options:
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 node:
     background: white
     foreground: lightWhite
     options:
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 path:
     background: lightRed
@@ -106,7 +106,7 @@ path:
         home_icon: "~"
         style: folder
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -129,12 +129,12 @@ python:
     options:
         display_mode: files
         fetch_virtual_env: false
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 root:
     background: lightYellow
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' # '
 rprompt:
     - segments:
@@ -148,14 +148,14 @@ ruby:
     options:
         display_mode: files
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 session:
     background: white
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ .UserName }} '
-    trailing_separator: '>'
+    trailing_style: powerline
 shell:
     background: cyan
     foreground: lightWhite
@@ -168,13 +168,13 @@ status:
     options:
         always_enabled: true
     template: '<parentBackground>></> '
-    trailing_separator: )
+    style: rounded
 time:
     background: cyan
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ .LastDate | date .Format }} '
-    trailing_separator: )
+    trailing_style: rounded
 ytm:
     background: lightGreen
     foreground: black
@@ -183,5 +183,5 @@ ytm:
         playing_icon: ' '
         ad_icon: 'ad '
         stopped_icon: '[] '
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Icon }}{{ if ne .Status "stopped" }}{{ .Artist }} - {{ .Track }}{{ end }} '

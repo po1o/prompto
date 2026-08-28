@@ -15,7 +15,7 @@ executiontime:
     options:
         style: dallas
         threshold: 0
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .FormattedMs }}s <lightWhite></>'
 git:
     foreground: lightRed
@@ -35,15 +35,15 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ({{ .HEAD }})
 node:
     foreground: green
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Full }} '
 npm:
     foreground: lightRed
-    trailing_separator: '>'
+    style: powerline
     template: '<lightWhite>and</> {{ .Full }} '
 path:
     foreground: white
@@ -53,7 +53,7 @@ path:
         home_icon: home
         style: agnoster_full
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:

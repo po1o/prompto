@@ -13,7 +13,7 @@ az:
     background: blue
     foreground: lightWhite
     template: ' {{ .Name }} '
-    trailing_separator: '>'
+    style: powerline
 console_title_template: '{{if .Root}}root :: {{end}}{{.Shell}} :: {{.Folder}}'
 cursor_padding: true
 git:
@@ -97,9 +97,9 @@ root:
 session:
     background: blue
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ .UserName }}@{{ .HostName }} '
-    trailing_separator: '>'
+    trailing_style: powerline
 status:
     background: blue
     background_templates:
@@ -109,11 +109,11 @@ status:
     options:
         always_enabled: true
     template: ' x '
-    trailing_separator: )
+    trailing_style: rounded
 terraform:
     background: lightWhite
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .WorkspaceName }} '
 text:
     background: blue
@@ -122,7 +122,7 @@ text:
 text.2:
     background: lightWhite
     foreground: black
-    trailing_separator: '>'
+    style: powerline
 text.3:
     foreground: blue
     template: ' > '

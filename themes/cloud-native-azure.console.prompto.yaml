@@ -12,7 +12,7 @@
 az:
     background: white
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' Subscription {{ .Name }} ({{ if .EnvironmentName | contains "AzureCloud" }}{{ "Global" }}{{ else }}{{ .EnvironmentName }}{{ end }}) '
 battery:
     background: lightRed
@@ -25,7 +25,7 @@ battery:
         charged_icon: ' '
         charging_icon: ' '
         discharging_icon: ' '
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }} '
 console_title_template: '{{ .Shell }} in {{ .Folder }}'
 cursor_padding: true
@@ -55,21 +55,21 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 kubectl:
     background: lightYellow
     foreground: black
-    leading_separator: (
+    leading_style: rounded
     template: ' Kubernetes {{.Context}} cluster {{if .Namespace}}- {{.Namespace}} namespace{{end}} '
-    trailing_separator: '>'
+    trailing_style: powerline
 path:
     background: lightRed
     foreground: lightWhite
     options:
         style: folder
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -90,9 +90,9 @@ rprompt:
 session:
     background: white
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ if .SSHSession }} {{ end }}{{ .UserName }}@{{ .HostName }} '
-    trailing_separator: '>'
+    trailing_style: powerline
 shell:
     background: cyan
     foreground: lightWhite
@@ -106,13 +106,13 @@ status:
     options:
         always_enabled: true
     template: ' {{ if gt .Code 0 }} {{ reason .Code }}{{ else }}{{ end }} '
-    trailing_separator: )
+    trailing_style: rounded
 text:
     foreground: lightRed
     template: ' ~ '
 time:
     background: cyan
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ .LastDate | date .Format }} '
-    trailing_separator: )
+    trailing_style: rounded

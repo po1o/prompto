@@ -30,12 +30,12 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 node:
     background: white
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 path:
     background: red
@@ -43,7 +43,7 @@ path:
     options:
         style: folder
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -58,23 +58,23 @@ prompt:
 root:
     background: lightYellow
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' # '
 session:
     background: darkGray
     foreground: red
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ .UserName }}@{{ .HostName }} '
-    trailing_separator: '>'
+    trailing_style: powerline
 shell:
     background: darkGray
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Name }} '
 spotify:
     background: lightGreen
     foreground: darkGray
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Icon }}{{ if ne .Status "stopped" }}{{ .Artist }} - {{ .Track }}{{ end }} '
     options:
         paused_icon: '|| '

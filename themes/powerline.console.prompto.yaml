@@ -13,7 +13,7 @@ cursor_padding: true
 git:
     background: lightGreen
     foreground: darkGray
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .HEAD }} '
     options:
         azure_devops_icon: 'az '
@@ -37,7 +37,7 @@ path:
     options:
         style: full
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -50,7 +50,7 @@ prompt:
 python:
     background: lightBlue
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
 root:
     foreground: lightYellow
@@ -61,5 +61,5 @@ session:
 status:
     background: lightRed
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' x '

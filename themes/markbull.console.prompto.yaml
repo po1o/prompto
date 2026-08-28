@@ -15,7 +15,7 @@ executiontime:
     foreground: lightWhite
     options:
         always_enabled: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .FormattedMs }} '
 cursor_padding: true
 git:
@@ -47,7 +47,7 @@ git:
         no_commits_icon: 'empty '
         rebase_icon: 'rebase '
         revert_icon: 'revert '
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if( .UpstreamIcon ) }}{{ url .UpstreamIcon .UpstreamURL }} {{ end }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} <lightRed> {{.Working.String}}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} <darkGray> {{.Staging.String}}</>{{ end }}{{ if gt .StashCount 0 }} {{.StashCount}}{{ end }}{{ if gt .WorktreeCount 0 }}{{if .IsWorkTree}}<green>{{ end }} {{if .IsWorkTree}}</>{{ end }}{{.WorktreeCount}}{{ end }} '
 os:
     background: lightMagenta
@@ -58,7 +58,7 @@ os:
         android: android
         linux: linux
         macos: mac
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
 path:
     background: lightMagenta
@@ -66,7 +66,7 @@ path:
     options:
         style: full
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: '{{ path .Path .Location }} '
 prompt:
     - segments:
@@ -83,12 +83,12 @@ prompt:
 session:
     background: lightYellow
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .SSHSession }} {{ end }}{{ .UserName }}@{{ .HostName }} '
 status:
     background: lightRed
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' >>{{ reason .Code }} '
 text:
     foreground: lightYellow

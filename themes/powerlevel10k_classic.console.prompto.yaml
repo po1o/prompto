@@ -65,7 +65,7 @@ rprompt:
 session:
     background: darkGray
     foreground: lightYellow
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UserName }}@{{ .HostName }} <cyan><</>'
 status:
     foreground: lightYellow

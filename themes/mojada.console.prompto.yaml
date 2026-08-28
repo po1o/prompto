@@ -20,7 +20,7 @@ battery:
         charged_icon: ' '
         charging_icon: ' '
         discharging_icon: ' '
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}% '
 console_title_template: '{{.UserName}}@{{.HostName}} : {{.Folder}}'
 executiontime:
@@ -55,12 +55,12 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 os:
     background: lightWhite
     foreground: cyan
-    leading_separator: (
+    leading_style: rounded
     options:
         arch: arch
         debian: debian
@@ -83,7 +83,7 @@ path:
         max_depth: 2
         style: letter
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -96,7 +96,7 @@ prompt:
 root:
     background: lightRed
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' #'
 rprompt:
     - segments:
@@ -107,7 +107,7 @@ rprompt:
 session:
     background: lightWhite
     foreground: cyan
-    trailing_separator: '>'
+    style: powerline
     template: '{{ .UserName }}<black>@</><lightRed>{{ .HostName }}</> '
 status:
     foreground: lightWhite
@@ -123,4 +123,4 @@ time:
     options:
         time_format: 15:04 (Mon)
     template: ' {{ .LastDate | date .Format }} '
-    trailing_separator: )
+    style: rounded

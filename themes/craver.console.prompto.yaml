@@ -13,7 +13,7 @@ console_title_template: '{{if .Root}}(Admin) {{end}}{{.Folder}}'
 dotnet:
     background: cyan
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Unsupported }}{{ else }}{{ .Full }}{{ end }} '
 executiontime:
     background: magenta
@@ -21,7 +21,7 @@ executiontime:
     options:
         style: austin
         threshold: 1
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' <lightWhite></> {{ .FormattedMs }} '
 git:
     background: black
@@ -44,7 +44,7 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: '{{ .UpstreamIcon }}{{ .HEAD }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 os:
     background: darkGray
@@ -63,7 +63,7 @@ path:
         folder_separator_icon: /
         style: folder
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -80,14 +80,14 @@ prompt:
 root:
     background: lightRed
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: '#'
 status:
     background: lightGreen
     background_templates:
         - '{{ if gt .Code 0 }}lightRed{{ end }}'
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' x '
 text:
     foreground: lightRed
@@ -97,5 +97,5 @@ time:
     foreground: lightYellow
     options:
         time_format: "15:04:05"
-    trailing_separator: '>'
+    style: powerline
     template: '{{ .LastDate | date .Format }} '

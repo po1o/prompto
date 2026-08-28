@@ -12,7 +12,7 @@
 battery:
     background: cyan
     foreground: lightYellow
-    leading_separator: <
+    leading_style: powerline
     options:
         charged_icon: ' '
         charging_icon: ' '
@@ -22,7 +22,7 @@ console_title_template: '{{if .Root}}Admin: {{end}} {{.Folder}}'
 executiontime:
     background: cyan
     foreground: lightYellow
-    leading_separator: <
+    leading_style: powerline
     options:
         always_enabled: true
     template: ' {{ .FormattedMs }} <black><</>'
@@ -48,7 +48,7 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Staging.Changed) (.Working.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0}} {{ .StashCount }}{{ end }}{{ if gt .WorktreeCount 0}} {{ .WorktreeCount }}{{ end }} '
 git.2:
     background: lightBlue
@@ -76,12 +76,12 @@ git.2:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ""
 os:
     background: cyan
     foreground: lightYellow
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
     options:
         display_distro_name: true
@@ -96,7 +96,7 @@ path:
         style: mixed
         windows_registry_icon: reg
     template: '{{ .Path }} '
-    trailing_separator: '>'
+    trailing_style: powerline
 prompt:
     - segments:
         - text
@@ -116,7 +116,7 @@ prompt:
 root:
     background: cyan
     foreground: lightYellow
-    trailing_separator: '>'
+    style: powerline
     template: '# '
 rprompt:
     - segments:
@@ -132,7 +132,7 @@ rprompt:
 session:
     background: lightYellow
     foreground: cyan
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .SSHSession }} {{ end }}{{ .UserName }} '
 status:
     background: lightYellow
@@ -143,7 +143,7 @@ status:
     options:
         always_enabled: true
     template: ' {{ if gt .Code 0 }} {{ else }} * {{ end }}'
-    trailing_separator: '>'
+    trailing_style: powerline
 text:
     foreground: lightWhite
 text.2:
@@ -152,14 +152,14 @@ text.2:
 text.3:
     background: cyan
     foreground: lightYellow
-    trailing_separator: '>'
+    style: powerline
     template: ' '
 text.4:
     template: ''
 text.5:
     background: cyan
     foreground: lightYellow
-    leading_separator: (
+    leading_style: rounded
     template: ' <black><</>'
 text.6:
     foreground: cyan
@@ -179,8 +179,8 @@ text.10:
 time:
     background: cyan
     foreground: lightYellow
-    leading_separator: <
+    leading_style: powerline
     options:
         time_format: _2,15:04
     template: ' {{ .LastDate | date .Format }}'
-    trailing_separator: )
+    trailing_style: rounded

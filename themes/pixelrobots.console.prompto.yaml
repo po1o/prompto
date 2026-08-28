@@ -14,21 +14,21 @@ aws:
     foreground: black
     options:
         display_default: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{.Profile}}{{if .Region}}@{{.Region}}{{end}}'
 az:
     background: cyan
     foreground: black
     options:
         source: cli
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Name }} [ {{ .Origin }} ] '
 az.2:
     background: darkGray
     foreground: lightWhite
     options:
         source: pwsh
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Name }} [ {{ .Origin }} ] '
 console_title_template: '{{if .Root}}root :: {{end}}{{.Shell}} :: {{.Folder}}'
 cursor_padding: true
@@ -61,7 +61,7 @@ git:
 kubectl:
     background: lightYellow
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{.Context}}{{if .Namespace}} :: {{.Namespace}}{{end}} '
 os:
     background: darkGray
@@ -127,7 +127,7 @@ text:
 text.2:
     background: darkGray
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
 text.3:
     foreground: lightYellow
     template: ' > '

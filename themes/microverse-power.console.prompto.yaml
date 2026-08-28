@@ -29,7 +29,7 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: '{{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 os:
     foreground: lightBlue
@@ -46,7 +46,7 @@ path:
         folder_separator_icon: /
         style: full
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -62,12 +62,12 @@ prompt:
 root:
     background: black
     foreground: lightRed
-    trailing_separator: '>'
+    style: powerline
     template: '- root '
 session:
     background: black
     foreground: lightRed
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UserName }}'
 status:
     background: lightGreen
@@ -76,7 +76,7 @@ status:
     foreground: black
     options:
         always_enabled: true
-    trailing_separator: '>'
+    style: powerline
     template: ' x '
 text:
     foreground: lightRed
@@ -86,5 +86,5 @@ time:
     foreground: lightYellow
     options:
         time_format: "2006-01-02 15:04:05"
-    trailing_separator: '>'
+    style: powerline
     template: '{{ .LastDate | date .Format }} '

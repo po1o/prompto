@@ -16,7 +16,7 @@ executiontime:
         style: dallas
         threshold: 0
     template: '<black>> </>{{ .FormattedMs }}s '
-    trailing_separator: '>'
+    trailing_style: powerline
 cursor_padding: true
 git:
     background: black
