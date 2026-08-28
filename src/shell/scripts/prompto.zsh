@@ -354,6 +354,13 @@ function _prompto_should_change_cursor() {
   return 0
 }
 
+# Mirrors config.IsConsole: PROMPTO_CONSOLE overrides, otherwise TERM.
+function _prompto_is_console() {
+  [[ "$PROMPTO_CONSOLE" == "1" ]] && return 0
+  [[ "$PROMPTO_CONSOLE" == "0" ]] && return 1
+  [[ "$TERM" == "linux" ]]
+}
+
 # Get current vim mode for segment template
 function _prompto_get_vim_mode() {
   case $KEYMAP in
@@ -367,22 +374,54 @@ function _prompto_get_vim_mode() {
 
 function _prompto_apply_cursor_shape() {
   # Change cursor shape if enabled and terminal doesn't handle it natively
-  if [[ "$_prompto_cursor_shape" == "1" ]] && _prompto_should_change_cursor; then
-    local block_code=2
-    local beam_code=6
-    if [[ "$_prompto_cursor_blink" == "1" ]]; then
-      block_code=1
-      beam_code=5
-    fi
+  if [[ "$_prompto_cursor_shape" != "1" ]] || ! _prompto_should_change_cursor; then
+    return
+  fi
+
+  # The Linux console ignores DECSCUSR, so the cursor stayed a block in every
+  # mode. It has its own interface -- ESC[?size;xor;and c, the VGA softcursor --
+  # where size is the kernel's CUR_* value: 2 underline, 6 block.
+  #
+  # The cursor blinks and that cannot be fixed while keeping the shapes. Adding
+  # 16 (CUR_SW) stops the blink but also sets `enable && !use_sw` in bitblit.c,
+  # which stops the cursor being drawn at all; a software cursor is rendered by
+  # recolouring the whole cell through the xor/set masks instead, so it has no
+  # shape. Shaped-and-blinking or unshaped-and-steady are the only two options,
+  # and the blink-interval escape clamps at 50ms so it cannot be zeroed either.
+  #
+  # There is no beam. The console cursor is a horizontal slab of scanlines
+  # spanning the whole cell with no width control, so an underline is the
+  # thinnest shape there is.
+  #
+  # The console check is not cosmetic: on a VT-style terminal ESC[?...c is a
+  # Device Attributes query, and the terminal's reply would land in the user's
+  # input line as stray text.
+  if _prompto_is_console; then
     case $KEYMAP in
       vicmd)
-        print -n "\e[${block_code} q"  # Block for normal mode
+        print -n "\e[?6c"  # Block for normal mode
         ;;
       viins|main|*)
-        print -n "\e[${beam_code} q"  # Beam for insert mode
+        print -n "\e[?2c"  # Underline: the thinnest the console offers
         ;;
     esac
+    return
   fi
+
+  local block_code=2
+  local beam_code=6
+  if [[ "$_prompto_cursor_blink" == "1" ]]; then
+    block_code=1
+    beam_code=5
+  fi
+  case $KEYMAP in
+    vicmd)
+      print -n "\e[${block_code} q"  # Block for normal mode
+      ;;
+    viins|main|*)
+      print -n "\e[${beam_code} q"  # Beam for insert mode
+      ;;
+  esac
 }
 
 # Vim mode keymap change handler
