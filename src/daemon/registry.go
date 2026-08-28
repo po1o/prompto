@@ -5,6 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/po1o/prompto/src/log"
 	"github.com/po1o/prompto/src/prompt"
 	"github.com/po1o/prompto/src/runtime"
 )
@@ -44,8 +45,18 @@ func (registry *EngineRegistry) GetOrCreateEngine(sessionID string, flags *runti
 	defer registry.mu.Unlock()
 
 	state, ok := registry.sessions[sessionID]
-	if ok {
+	if ok && engineServesConfig(state.engine, flags) {
 		return state.engine
+	}
+
+	if ok {
+		// The session is keyed by the client's pid, and the OS reuses pids, so
+		// a new shell can land on a dead one's entry. Nothing else reconciles
+		// the two: applyRenderFlags refreshes flags and env but never the
+		// config, so without this the first config a session rendered would
+		// keep rendering for the life of the daemon — a console config
+		// answering a desktop session, or the reverse.
+		log.Debugf("session %s changed config to %s, rebuilding engine", sessionID, flags.ConfigPath)
 	}
 
 	engine := registry.factory(flags)
@@ -54,6 +65,22 @@ func (registry *EngineRegistry) GetOrCreateEngine(sessionID string, flags *runti
 	}
 
 	return engine
+}
+
+// engineServesConfig reports whether the cached engine was built for the config
+// this request names. An empty request path means "whatever the daemon was
+// started with", which the server has already filled in, so it is only ever
+// empty here in tests.
+func engineServesConfig(engine *prompt.Engine, flags *runtime.Flags) bool {
+	if engine == nil || flags == nil || flags.ConfigPath == "" {
+		return true
+	}
+
+	if engine.LayoutConfig == nil {
+		return true
+	}
+
+	return engine.LayoutConfig.Source == flags.ConfigPath
 }
 
 // RenderHandle is one render generation for a session: its engine, the
