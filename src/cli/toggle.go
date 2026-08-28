@@ -45,7 +45,7 @@ var toggleCmd = &cobra.Command{
 		env := &runtime.Terminal{}
 		env.Init(&runtime.Flags{})
 
-		cache.Init(os.Getenv("PROMPTO_SHELL"), cache.Persist)
+		cache.Init(cache.Persist)
 
 		defer func() {
 			cache.Close()

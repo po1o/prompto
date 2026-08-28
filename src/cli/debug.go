@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/po1o/prompto/src/build"
@@ -48,7 +47,7 @@ func createDebugCmd() *cobra.Command {
 			env := &runtime.Terminal{}
 			env.Init(flags)
 
-			cache.Init(os.Getenv("PROMPTO_SHELL"))
+			cache.Init()
 
 			cfg := getDebugConfig(configFlag)
 

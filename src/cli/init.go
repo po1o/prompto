@@ -81,7 +81,7 @@ func runInit(sh string) {
 	configFlag = config.Resolve(configFlag)
 
 	cfg := config.Load(configFlag)
-	initCache(sh)
+	initCache()
 
 	flags := &runtime.Flags{
 		Shell:      sh,
@@ -161,6 +161,6 @@ func getFullCommand(cmd *cobra.Command, args []string) string {
 	return cmdPath
 }
 
-func initCache(sh string) {
-	cache.Init(sh, cache.NoSession)
+func initCache() {
+	cache.Init(cache.NoSession)
 }

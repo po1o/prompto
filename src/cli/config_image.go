@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/po1o/prompto/src/cache"
@@ -52,7 +51,7 @@ Exports the config to an image file ~/mytheme.png.
 Exports the config to an image file using customized output settings.`,
 	Args: cobra.NoArgs,
 	Run: func(_ *cobra.Command, _ []string) {
-		cache.Init(os.Getenv("PROMPTO_SHELL"))
+		cache.Init()
 
 		setConfigFlag()
 
