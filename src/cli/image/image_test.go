@@ -14,14 +14,14 @@ func TestSetOutputPath(t *testing.T) {
 		Expected string
 	}{
 		{Case: "default config", Expected: "prompt.png"},
-		{Case: "hidden file", Config: ".prompto.omp.json", Expected: "prompto.png"},
-		{Case: "hidden file toml", Config: ".prompto.omp.toml", Expected: "prompto.png"},
-		{Case: "hidden file yaml", Config: ".prompto.omp.yaml", Expected: "prompto.png"},
-		{Case: "hidden file yml", Config: ".prompto.omp.yml", Expected: "prompto.png"},
+		{Case: "hidden file", Config: ".prompto.yaml", Expected: "prompto.png"},
+		{Case: "hidden file yml", Config: ".prompto.yml", Expected: "prompto.png"},
 		{Case: "path provided", Path: "mytheme.png", Expected: "mytheme.png"},
-		{Case: "relative, no omp", Config: "~/jandedobbeleer.json", Expected: "jandedobbeleer.png"},
-		{Case: "relative path", Config: "~/jandedobbeleer.omp.json", Expected: "jandedobbeleer.png"},
-		{Case: "invalid config name", Config: "~/jandedobbeleer.omp.foo", Expected: "prompt.png"},
+		{Case: "plain config", Config: "~/config.yaml", Expected: "config.png"},
+		{Case: "theme file drops the marker", Config: "~/polo.prompto.yaml", Expected: "polo.png"},
+		{Case: "console variant keeps its marker", Config: "~/polo.console.prompto.yaml", Expected: "polo.console.png"},
+		{Case: "format the loader rejects", Config: "~/polo.json", Expected: "prompt.png"},
+		{Case: "invalid config name", Config: "~/polo.foo", Expected: "prompt.png"},
 	}
 
 	for _, tc := range cases {
