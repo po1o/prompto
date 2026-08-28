@@ -45,7 +45,7 @@ node:
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}'
 os:
     foreground: cyan
-    trailing_separator: '>'
+    style: powerline
     template: '{{ .Icon }}'
     options:
         display_distro_name: true
@@ -90,7 +90,7 @@ status:
         - '{{ if gt .Code 0 }}red{{ end }}'
     options:
         always_enabled: true
-    trailing_separator: '>'
+    style: powerline
     template: '> '
 time:
     foreground: lightGreen

@@ -30,17 +30,17 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 path:
     background: darkGray
     foreground: lightYellow
-    leading_separator: (
+    leading_style: rounded
     options:
         style: folder
         windows_registry_icon: reg
     template: ' {{ .Path }} '
-    trailing_separator: '>'
+    trailing_style: powerline
 prompt:
     - segments:
         - path
@@ -50,10 +50,10 @@ prompt:
 python:
     background: lightYellow
     foreground: darkGray
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} '
 root:
     background: lightYellow
     foreground: darkGray
-    trailing_separator: '>'
+    style: powerline
     template: ' # '

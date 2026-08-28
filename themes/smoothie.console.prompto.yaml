@@ -59,7 +59,7 @@ prompt:
         - text
 python:
     foreground: lightYellow
-    trailing_separator: '>'
+    style: powerline
     template: '[ {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}] '
 rprompt:
     - segments:

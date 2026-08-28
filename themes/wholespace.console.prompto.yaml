@@ -13,16 +13,16 @@ console_title_template: '{{ .Folder }}'
 executiontime:
     background: darkGray
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
     options:
         style: roundrock
         threshold: 0
     template: ' {{ .FormattedMs }} '
-    trailing_separator: '>'
+    trailing_style: powerline
 git:
     background: cyan
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     options:
         branch_icon: ' '
         fetch_status: true
@@ -42,11 +42,11 @@ git:
         revert_icon: 'revert '
         tag_icon: '#'
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
-    trailing_separator: '>'
+    trailing_style: powerline
 node:
     background: lightWhite
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     options:
         fetch_package_manager: true
         npm_icon: ' <lightRed></> '
@@ -56,7 +56,7 @@ node:
 os:
     background: lightWhite
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     options:
         macos: ' '
         ubuntu: ' '
@@ -98,7 +98,7 @@ status:
 sysinfo:
     background: lightBlue
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
     template: ' CPU: {{ round .PhysicalPercentUsed .Precision }}% | '
 sysinfo.2:
     background: lightBlue
@@ -108,7 +108,7 @@ sysinfo.2:
 time:
     background: lightWhite
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     options:
         time_format: "15:04:05"
     template: ' * {{ .LastDate | date .Format }} '

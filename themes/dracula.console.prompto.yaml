@@ -12,9 +12,9 @@
 aws:
     background: lightYellow
     foreground: darkGray
-    leading_separator: <
+    leading_style: powerline
     template: ' {{.Profile}}{{if .Region}}@{{.Region}}{{end}}'
-    trailing_separator: )
+    trailing_style: rounded
 cursor_padding: true
 git:
     background: lightYellow
@@ -37,12 +37,12 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' ({{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }}) '
 node:
     background: lightCyan
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 path:
     background: white
@@ -50,7 +50,7 @@ path:
     options:
         style: folder
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -65,7 +65,7 @@ rprompt:
 session:
     background: darkGray
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: '{{ .UserName }} '
 time:
     background: lightMagenta
@@ -73,4 +73,4 @@ time:
     options:
         time_format: "15:04"
     template: ' * {{ .LastDate | date .Format }} '
-    trailing_separator: '>'
+    style: powerline

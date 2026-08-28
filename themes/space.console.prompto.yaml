@@ -29,19 +29,19 @@ git:
     template: '<lightWhite>on</> {{ .HEAD }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 go:
     foreground: lightCyan
-    trailing_separator: '>'
+    style: powerline
     template: '[ {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}] '
 java:
     foreground: lightRed
-    trailing_separator: '>'
+    style: powerline
     template: '[ {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}] '
 julia:
     foreground: lightBlue
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 node:
     foreground: white
-    trailing_separator: '>'
+    style: powerline
     template: '[ {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}] '
 os:
     foreground: cyan
@@ -72,11 +72,11 @@ prompt:
         - text
 python:
     foreground: lightBlue
-    trailing_separator: '>'
+    style: powerline
     template: '[ {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}] '
 ruby:
     foreground: lightRed
-    trailing_separator: '>'
+    style: powerline
     template: '[{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}] '
 session:
     foreground: cyan

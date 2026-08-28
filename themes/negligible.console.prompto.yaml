@@ -17,11 +17,11 @@ battery:
     options:
         charged_icon: ' '
         charging_icon: ' '
-    trailing_separator: '>'
+    style: powerline
     template: '| {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }} '
 dart:
     foreground: cyan
-    trailing_separator: '>'
+    style: powerline
     template: '| {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 git:
     foreground: lightRed
@@ -45,11 +45,11 @@ git:
     template: ':: {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }} '
 node:
     foreground: white
-    trailing_separator: '>'
+    style: powerline
     template: '| {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 os:
     foreground: cyan
-    trailing_separator: '>'
+    style: powerline
     template: '{{ if .WSL }}WSL at {{ end }}{{.Icon}}'
     options:
         display_distro_name: true
@@ -92,7 +92,7 @@ status:
         - '{{ if gt .Code 0 }}red{{ end }}'
     options:
         always_enabled: true
-    trailing_separator: '>'
+    style: powerline
     template: '> '
 time:
     foreground: lightGreen

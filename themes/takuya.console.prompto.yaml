@@ -35,7 +35,7 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .HEAD }} {{ if .Working.Changed }}{{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}<lightRed> {{ .Staging.String }}</>{{ end }} '
 node:
     background: darkGray
@@ -46,14 +46,14 @@ node:
         npm_icon: ' <lightRed></> '
         yarn_icon: ' <cyan></>'
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}'
-    trailing_separator: )
+    trailing_style: rounded
 path:
     background: darkGray
     foreground: lightWhite
     options:
         style: full
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -94,4 +94,4 @@ time:
     foreground: lightWhite
     leading_separator: ' ('
     template: ' {{ .LastDate | date .Format }} '
-    trailing_separator: )
+    trailing_style: rounded

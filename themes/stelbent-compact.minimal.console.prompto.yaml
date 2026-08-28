@@ -42,7 +42,7 @@ git:
         github_icon: 'gh '
         gitlab_icon: 'gl '
         revert_icon: 'revert '
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 path:
     background: lightCyan
@@ -50,7 +50,7 @@ path:
     options:
         style: agnoster_full
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -69,12 +69,12 @@ session:
 status:
     background: lightRed
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if gt .Code 0 }}error{{ else }}{{ end }} '
 terraform:
     background: lightYellow
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .WorkspaceName }}{{ if .Version }} {{ .Version }}{{ end }} '
 text:
     foreground: darkGray

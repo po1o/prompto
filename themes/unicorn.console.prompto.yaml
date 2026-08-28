@@ -16,7 +16,7 @@ executiontime:
     options:
         always_enabled: true
     template: ' {{ .FormattedMs }} '
-    trailing_separator: )
+    style: rounded
 cursor_padding: true
 git:
     background: lightYellow
@@ -44,7 +44,7 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 os:
     background: darkGray
@@ -55,7 +55,7 @@ os:
         android: android
         linux: linux
         macos: mac
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}}'
 path:
     background: cyan
@@ -64,7 +64,7 @@ path:
         folder_separator_icon: /
         style: full
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -85,5 +85,5 @@ text:
 time:
     background: darkGray
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: '<lightWhite> </>{{ .LastDate | date .Format }} '

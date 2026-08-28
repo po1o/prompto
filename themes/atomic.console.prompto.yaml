@@ -24,13 +24,13 @@ aurelia:
 aws:
     background: darkGray
     foreground: lightRed
-    leading_separator: (
+    leading_style: rounded
     template: ' {{.Profile}}{{if .Region}}@{{.Region}}{{end}}'
     trailing_separator: ') '
 azfunc:
     background: lightWhite
     foreground: cyan
-    leading_separator: (
+    leading_style: rounded
     template: <lightYellow></> {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
     trailing_separator: ') '
 battery:
@@ -44,7 +44,7 @@ battery:
         charged_icon: ' '
         charging_icon: ' '
         discharging_icon: ' '
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }} '
 dart:
     background: lightWhite
@@ -55,7 +55,7 @@ dart:
 dotnet:
     background: black
     foreground: cyan
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ if .Unsupported }}{{ else }}{{ .Full }}{{ end }}'
     trailing_separator: ') '
 executiontime:
@@ -65,7 +65,7 @@ executiontime:
         style: roundrock
         threshold: 0
     template: ' {{ .FormattedMs }} '
-    trailing_separator: )
+    trailing_style: rounded
 git:
     background: lightYellow
     background_templates:
@@ -92,18 +92,18 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}<lightRed> {{ .Staging.String }}</>{{ end }} '
 go:
     background: lightWhite
     foreground: cyan
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
     trailing_separator: ') '
 java:
     background: cyan
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
     trailing_separator: ') '
 julia:
@@ -115,13 +115,13 @@ julia:
 kubectl:
     background: lightBlue
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: ' {{.Context}}{{if .Namespace}} :: {{.Namespace}}{{end}}'
-    trailing_separator: )
+    trailing_style: rounded
 node:
     background: darkGray
     foreground: darkGray
-    leading_separator: (
+    leading_style: rounded
     options:
         fetch_package_manager: true
         npm_icon: ' <lightRed></> '
@@ -137,7 +137,7 @@ nx:
 os:
     background: white
     foreground: black
-    leading_separator: (
+    leading_style: rounded
     options:
         linux: linux
         macos: macos
@@ -154,7 +154,7 @@ path:
         home_icon: ""
         style: folder
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -169,7 +169,7 @@ prompt:
 python:
     background: darkGray
     foreground: lightYellow
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}'
     trailing_separator: ') '
 root:
@@ -199,13 +199,13 @@ rprompt:
 ruby:
     background: lightWhite
     foreground: red
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
     trailing_separator: ') '
 rust:
     background: lightWhite
     foreground: yellow
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
     trailing_separator: ') '
 shell:
@@ -226,8 +226,8 @@ text:
 time:
     background: lightCyan
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
     options:
         time_format: _2,15:04
     template: ' {{ .LastDate | date .Format }} '
-    trailing_separator: )
+    trailing_style: rounded

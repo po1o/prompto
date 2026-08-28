@@ -44,7 +44,9 @@ path:
   foreground_templates:
     - "{{ if not .Writable }}lightRed{{ end }}"
   background: transparent
-  template: "{{ .Path }} <red>></>"
+  style: powerline
+  separator_foreground: red
+  template: "{{ .Path }} "
   options:
     style: powerlevel
     max_width: 40
@@ -92,6 +94,8 @@ time.transient:
     time_format: "15:04"
 
 vim:
+  style: powerline
+  separator_foreground: lightRed
   foreground: lightRed
   background: transparent
   template: "{{ if .Normal }} NORMAL{{ end }}"

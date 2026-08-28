@@ -12,18 +12,18 @@
 angular:
     background: black
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}<lightRed>?</>{{ else }}{{ .Full }}{{ end }} '
 aurelia:
     background: black
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}<magenta>?</>{{ else }}{{ .Full }}{{ end }} '
 console_title_template: '{{if .Root}} ! {{end}}{{.Folder | replace "~" "~" }} @ {{.HostName}}'
 dotnet:
     background: lightCyan
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Full }} '
 executiontime:
     background: darkGray
@@ -58,22 +58,22 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .HEAD }}{{ if .Staging.Changed }}<lightRed> {{ .Staging.String }}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 node:
     background: black
     foreground: green
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Full }} '
 npm:
     background: black
     foreground: lightRed
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Full }} '
 os:
     background: blue
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: '{{ if .WSL }}WSL at {{ end }}{{.Icon}} '
     options:
         display_distro_name: true
@@ -91,7 +91,7 @@ path:
         style: agnoster_short
         windows_registry_icon: reg
     template: ' {{ .Path }} '
-    trailing_separator: '>'
+    trailing_style: powerline
 prompt:
     - segments:
         - os
@@ -114,11 +114,11 @@ session:
     background: blue
     foreground: lightWhite
     template: '| {{ .UserName }}@{{ .HostName }} '
-    trailing_separator: '>'
+    style: powerline
 status:
     background: red
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: '<transparent> </> {{ reason .Code }} '
 status.2:
     foreground: lightWhite

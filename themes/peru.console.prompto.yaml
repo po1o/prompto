@@ -44,13 +44,13 @@ java:
     foreground: lightWhite
     leading_separator: ' ('
     template: ' {{ .Full }} '
-    trailing_separator: )
+    trailing_style: rounded
 node:
     background: white
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ .Full }} '
-    trailing_separator: )
+    trailing_style: rounded
 os:
     foreground: cyan
     template: '{{ if .WSL }}WSL at {{ end }}{{.Icon}} '
@@ -76,7 +76,7 @@ prompt:
         - text
 python:
     foreground: cyan
-    trailing_separator: '>'
+    style: powerline
     template: '> ({{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Major }}.{{ .Minor }}{{ end }}) '
 rprompt:
     - segments:

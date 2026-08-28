@@ -30,17 +30,17 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 node:
     background: white
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 os:
     background: lightBlue
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ if .WSL }}WSL at {{ end }}{{.Icon}} '
     options:
         display_distro_name: true
@@ -53,7 +53,7 @@ path:
     options:
         style: full
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -70,12 +70,12 @@ prompt:
 root:
     background: lightYellow
     foreground: darkGray
-    trailing_separator: '>'
+    style: powerline
     template: ' # '
 session:
     background: lightBlue
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UserName }}@{{ .HostName }} '
 status:
     background: cyan
@@ -86,7 +86,7 @@ status:
     options:
         always_enabled: true
     template: ' x '
-    trailing_separator: )
+    trailing_style: rounded
 text:
     foreground: lightRed
     template: ' '
@@ -95,5 +95,5 @@ time:
     foreground: darkGray
     options:
         time_format: "2006-01-02 15:04:05"
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .LastDate | date .Format }} '

@@ -15,7 +15,7 @@ executiontime:
     foreground: lightWhite
     options:
         always_enabled: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .FormattedMs }} '
 cursor_padding: true
 git:
@@ -40,7 +40,7 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 go:
     background: darkGray
@@ -49,7 +49,7 @@ go:
     options:
         fetch_version: false
     template: '{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
-    trailing_separator: )
+    trailing_style: rounded
 java:
     background: darkGray
     foreground: lightRed
@@ -57,7 +57,7 @@ java:
     options:
         fetch_version: false
     template: '{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
-    trailing_separator: )
+    trailing_style: rounded
 node:
     background: darkGray
     foreground: lightGreen
@@ -65,7 +65,7 @@ node:
     options:
         fetch_version: false
     template: '{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }}'
-    trailing_separator: )
+    trailing_style: rounded
 os:
     background: black
     foreground: lightWhite
@@ -92,7 +92,7 @@ path:
         max_depth: 3
         style: agnoster_short
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -110,7 +110,7 @@ python:
     options:
         fetch_version: false
     template: '{{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}'
-    trailing_separator: )
+    trailing_style: rounded
 rprompt:
     - segments:
         - python
@@ -125,7 +125,7 @@ ruby:
     options:
         fetch_version: false
     template: '{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
-    trailing_separator: )
+    trailing_style: rounded
 status:
     background: darkGray
     foreground: lightWhite
@@ -134,11 +134,11 @@ status:
     options:
         always_enabled: true
     template: ' {{ if gt .Code 0 }} {{.Code}}{{ end }} '
-    trailing_separator: )
+    style: rounded
 time:
     background: darkGray
     foreground: lightWhite
     options:
         time_format: "15:04:05"
     template: ' {{ .LastDate | date .Format }} '
-    trailing_separator: )
+    style: rounded

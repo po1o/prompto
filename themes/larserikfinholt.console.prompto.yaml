@@ -44,7 +44,7 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} '
 path:
     background: lightRed
@@ -54,7 +54,7 @@ path:
         home_icon: "~"
         style: folder
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -67,9 +67,9 @@ prompt:
 session:
     background: white
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ .UserName }} '
-    trailing_separator: '>'
+    trailing_style: powerline
 status:
     background: cyan
     background_templates:
@@ -78,7 +78,7 @@ status:
     options:
         always_enabled: true
     template: '<parentBackground>></> '
-    trailing_separator: )
+    style: rounded
 strava:
     background: black
     background_templates:
@@ -99,5 +99,5 @@ strava:
         skiing_icon: 'ski '
         unknown_activity_icon: 'activity '
         workout_icon: 'workout '
-    trailing_separator: '>'
+    style: powerline
     template: ' {{.Name}} {{.Ago}} {{.Icon}} '

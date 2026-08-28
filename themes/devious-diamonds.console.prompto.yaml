@@ -68,26 +68,26 @@ angular:
     foreground: black
     options:
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 aws:
     background: yellow
     foreground: black
     options:
         display_default: false
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} '
 aurelia:
     background: magenta
     foreground: white
     options:
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' a {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 az:
     background: lightBlue
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' Subscription {{ .Name }} ({{ if .EnvironmentName | contains "AzureCloud" }}{{ "Global" }}{{ else }}{{ .EnvironmentName }}{{ end }}) '
 azfunc:
     background: yellow
@@ -95,7 +95,7 @@ azfunc:
     options:
         display_mode: files
         fetch_version: false
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 executiontime:
     background: cyan
@@ -104,11 +104,11 @@ executiontime:
         style: austin
         threshold: 0
     template: ' {{ .FormattedMs }} '
-    trailing_separator: '>'
+    trailing_style: powerline
 git:
     background: magenta
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     options:
         branch_icon: ' '
         fetch_status: true
@@ -128,37 +128,37 @@ git:
         revert_icon: 'revert '
         tag_icon: '#'
     template: '{{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }}'
-    trailing_separator: '>'
+    trailing_style: powerline
 go:
     background: lightCyan
     foreground: black
     options:
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 java:
     background: lightCyan
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 julia:
     background: lightCyan
     foreground: black
     options:
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 kubectl:
     background: lightYellow
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{.Context}}{{if .Namespace}} :: {{.Namespace}}{{end}} '
 node:
     background: lightGreen
     foreground: black
     options:
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 os:
     foreground: cyan
@@ -193,17 +193,17 @@ path:
         max_depth: 3
         style: agnoster_short
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: '{{ if eq ( gt .Code 0 ) .Writable }} {{ end }} {{ .Path }}{{ if not .Writable }} {{ end }}{{ if and .Writable .Root }} {{end}} '
 php:
     background: lightCyan
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 project:
     background: lightYellow
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Version }} {{.Version}}{{ end }} {{ if .Name }}{{ .Name }}{{ end }}{{ end }} '
 python:
     background: lightYellow
@@ -211,7 +211,7 @@ python:
     options:
         display_mode: files
         fetch_virtual_env: false
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 ruby:
     background: red
@@ -219,7 +219,7 @@ ruby:
     options:
         display_mode: files
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 rust:
     background: lightRed
@@ -227,24 +227,24 @@ rust:
     options:
         display_mode: files
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 session:
     background: magenta
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .SSHSession }} {{ end }}{{ .UserName }}@{{ .HostName }} '
 shell:
     background: green
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     template: ' {{ .Name }} '
 status:
     background: blue
     background_templates:
         - '{{ if gt .Code 0 }}red{{ end }}'
     foreground: black
-    leading_separator: <
+    leading_style: powerline
     options:
         always_enabled: true
     template: ' {{ if gt .Code 0 }} {{ else }} {{ end }}{{ if eq ( gt .Code 0 ) .Segments.Path.Writable}} {{ end }}'
@@ -254,14 +254,14 @@ swift:
     options:
         display_mode: files
         fetch_version: true
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} '
 time:
     background: yellow
     foreground: black
     options:
         time_format: Mon | 15:04:05
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .LastDate | date .Format }} '
 text.corner:
     foreground: cyan
@@ -274,4 +274,4 @@ text.root:
     options:
         root_icon: ""
     template: '{{ if not .Root }} {{ end }}{{ if and .Root ( not .Segments.Path.Writable ) }} {{ end }}{{ if and .Root .Segments.Path.Writable }} {{ end }}'
-    trailing_separator: '>'
+    style: powerline

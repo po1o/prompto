@@ -76,7 +76,7 @@ session:
     template: '{{ .UserName }} '
 shell:
     foreground: white
-    trailing_separator: '>'
+    style: powerline
     template: ' <lightWhite></> {{ .Name }} '
 status:
     foreground: white

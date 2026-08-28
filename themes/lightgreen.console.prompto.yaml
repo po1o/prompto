@@ -12,7 +12,7 @@
 aws:
     background: darkGray
     foreground: lightRed
-    leading_separator: (
+    leading_style: rounded
     template: ' {{.Profile}}{{if .Region}}@{{.Region}}{{end}}'
     trailing_separator: ') '
 battery:
@@ -56,15 +56,15 @@ git:
 go:
     background: lightWhite
     foreground: cyan
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}'
     trailing_separator: ') '
 kubectl:
     background: lightBlue
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: ' {{.Context}}{{if .Namespace}} :: {{.Namespace}}{{end}}'
-    trailing_separator: )
+    trailing_style: rounded
 os:
     background: transparent
     foreground: lightWhite
@@ -90,12 +90,12 @@ os:
 path:
     background: black
     foreground: lightGreen
-    leading_separator: (
+    leading_style: rounded
     options:
         style: folder
         windows_registry_icon: reg
     template: ' {{ .Path }}'
-    trailing_separator: )
+    trailing_style: rounded
 prompt:
     - segments:
         - root
@@ -111,7 +111,7 @@ pwd: osc99
 python:
     background: darkGray
     foreground: lightYellow
-    leading_separator: (
+    leading_style: rounded
     template: ' {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }}'
     trailing_separator: ') '
 root:
@@ -131,7 +131,7 @@ sysinfo:
 terraform:
     background: lightYellow
     foreground: black
-    trailing_separator: '>'
+    style: powerline
     template: '{{.WorkspaceName}}'
 time:
     background: black

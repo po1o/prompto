@@ -50,7 +50,7 @@ prompt:
 session:
     background: lightRed
     foreground: lightWhite
-    leading_separator: (
+    leading_style: rounded
     template: '{{ .UserName }} '
     trailing_separator: (
 time:

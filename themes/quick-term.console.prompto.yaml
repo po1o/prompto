@@ -15,7 +15,7 @@ executiontime:
     options:
         always_enabled: true
         style: austin
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .FormattedMs }} '
 cursor_padding: true
 git:
@@ -48,7 +48,7 @@ git:
         revert_icon: 'revert '
         tag_icon: '#'
     template: ' {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} <transparent>></> <black> {{ .Working.String }}</>{{ end }}{{ if .Staging.Changed }} <transparent>></> <black> {{ .Staging.String }}</>{{ end }}{{ if gt .StashCount 0 }} <transparent>></> <black> {{ .StashCount }}</>{{ end }} '
-    trailing_separator: '>'
+    trailing_style: powerline
 os:
     background: yellow
     foreground: lightWhite
@@ -81,7 +81,7 @@ path:
         max_depth: 3
         style: agnoster_short
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -98,7 +98,7 @@ rprompt:
 session:
     background: lightWhite
     foreground: darkGray
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ .UserName }} '
 text:
     foreground: yellow
@@ -109,4 +109,4 @@ time:
     options:
         time_format: "15:04:05"
     template: ' {{ .LastDate | date .Format }} '
-    trailing_separator: '>'
+    style: powerline

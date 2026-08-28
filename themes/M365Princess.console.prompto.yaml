@@ -31,12 +31,12 @@ git:
         rebase_icon: 'rebase '
         revert_icon: 'revert '
         tag_icon: '#'
-    trailing_separator: '>'
+    style: powerline
     template: ' > ({{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }}) '
 node:
     background: p:sky
     foreground: p:white
-    trailing_separator: '>'
+    style: powerline
     template: ' {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} '
 palette:
     blush: lightRed
@@ -53,7 +53,7 @@ path:
     options:
         style: folder
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 prompt:
     - segments:
@@ -70,27 +70,27 @@ rprompt:
 session:
     background: p:plum
     foreground: p:white
-    leading_separator: (
+    leading_style: rounded
     template: '{{ .UserName }} '
 text:
     background: p:tan
     foreground: p:white
-    leading_separator: (
+    leading_style: rounded
     template: '{{ if .Env.PNPPSHOST }} {{ .Env.PNPPSHOST }} {{ end }}'
 text.2:
     background: p:teal
     foreground: p:white
-    trailing_separator: '>'
+    style: powerline
     template: '{{ if .Env.PNPPSSITE }} {{ .Env.PNPPSSITE }}{{ end }}'
 text.3:
     background: p:teal
     foreground: p:white
     template: '{{ if .Env.PNPPSSITE }} {{ end }}'
-    trailing_separator: )
+    style: rounded
 time:
     background: p:teal_blue
     foreground: p:white
     options:
         time_format: "15:04"
     template: ' * {{ .LastDate | date .Format }} '
-    trailing_separator: '>'
+    style: powerline

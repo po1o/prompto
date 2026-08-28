@@ -127,11 +127,11 @@ status:
 text:
     background: darkGray
     foreground: lightWhite
-    trailing_separator: '>'
+    style: powerline
 text.2:
     background: darkGray
     foreground: lightWhite
-    leading_separator: <
+    leading_style: powerline
 text.3:
     foreground: darkGray
     template: ~#@>

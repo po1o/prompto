@@ -20,22 +20,22 @@ battery:
         - '{{ if and (ge .Percentage 71) (le .Percentage 90) }}p:c-battery-90-less{{ end }}'
         - '{{ if and (ge .Percentage 91) (le .Percentage 100) }}p:c-battery-100-less{{ end }}'
     foreground: p:c-badge-text
-    leading_separator: (
+    leading_style: rounded
     template: '{{ if eq "True" (title (default "False" .Env.DISABLE_SEGMENT_BATTERY)) }}{{ else }}{{ if not .Error }}{{ if eq "Charging" .State.String }} {{ else if eq "Discharging" .State.String }}{{ else if eq "Full" .State.String }}~ {{ else }}? {{ end }}{{ if le .Percentage 15 }}{{ else if and (ge .Percentage 16) (le .Percentage 30) }}{{ else if and (ge .Percentage 31) (le .Percentage 45) }}{{ else if and (ge .Percentage 46) (le .Percentage 55)}}{{ else if and (ge .Percentage 56) (le .Percentage 70) }}{{ else if and (ge .Percentage 71) (le .Percentage 80) }}{{ else if and (ge .Percentage 81) (le .Percentage 95) }}{{ else }}{{ end }} {{ .Percentage }}%{{ else }}!{{ end }}{{ end }}'
-    trailing_separator: )
+    trailing_style: rounded
 console_title_template: '{{ if .Segments.Session.SSHSession }}SSH''d{{ if or .Root }} & {{ end }}{{ end }}{{ if .Root }}# (as {{ .UserName }}) | {{ end }}{{ if .WSL }}WSL | {{ end }}{{ .Folder }} ({{ .Shell }})'
 crystal:
     background_templates:
         - '{{ if empty .Full }}p:c-project-generic-error{{ else }}p:c-project-crystal{{ end }}'
     foreground: p:c-badge-text
-    leading_separator: (
+    leading_style: rounded
     template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_CRYSTAL)) }} {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}{{ end }}'
     trailing_separator: ') '
 dart:
     background_templates:
         - '{{ if empty .Full }}p:c-project-generic-error{{ else }}p:c-project-flutter{{ end }}'
     foreground: p:c-badge-text
-    leading_separator: (
+    leading_style: rounded
     template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_FLUTTER)) }}Flutter | {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}{{ end }}'
     trailing_separator: ') '
 executiontime:
@@ -45,7 +45,7 @@ executiontime:
         - '{{ if lt .Ms 10800000 }}p:c-exec-slow{{ end }}'
         - '{{ if ge .Ms 10800000 }}p:c-exec-slower{{ end }}'
     foreground: p:c-badge-text
-    leading_separator: (
+    leading_style: rounded
     options:
         style: austin
         threshold: 1
@@ -82,19 +82,19 @@ git:
         revert_icon: 'revert '
         tag_icon: '#'
     template: '{{ .HEAD }} {{ .BranchStatus }}{{ if .Working.Changed }} > ({{ .Working.String }}){{ end }}{{ if and .Working.Changed .Staging.Changed }} > {{ end }}{{ if .Staging.Changed }}{{ if not .Working.Changed }} {{ end }} ({{ .Staging.String }}){{ end }}{{ if .StashCount }} {{ .StashCount }} Stash{{ if gt .StashCount 1 }}es{{ end }}{{ end }}'
-    trailing_separator: )
+    trailing_style: rounded
 lua:
     background_templates:
         - '{{ if .Error }}p:c-project-generic-error{{ else }}p:c-project-lua{{ end }}'
     foreground: p:c-badge-text
-    leading_separator: (
+    leading_style: rounded
     template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_LUA)) }} {{ if or (.Error) (empty .Full) }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}{{ end }}'
     trailing_separator: ') '
 node:
     background_templates:
         - '{{ if empty .Full }}p:c-project-generic-error{{ else }}p:c-project-node{{ end }}'
     foreground: p:c-badge-text
-    leading_separator: (
+    leading_style: rounded
     template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_NODE)) }} {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}{{ end }}'
     trailing_separator: ') '
 palette:
@@ -150,7 +150,7 @@ path:
         - '{{ if not (empty .Env.OVERRIDE_FOLDER_BADGE_BG) }}{{ .Env.OVERRIDE_FOLDER_BADGE_BG }}{{ else }}p:c-badge-folder{{ end }}'
     foreground_templates:
         - '{{ if not (empty .Env.OVERRIDE_FOLDER_BADGE_FG) }}{{ .Env.OVERRIDE_FOLDER_BADGE_FG }}{{ else }}p:c-badge-text{{ end }}'
-    leading_separator: (
+    leading_style: rounded
     options:
         folder_separator_icon: /
         hide_root_location: true
@@ -158,7 +158,7 @@ path:
         style: agnoster_short
         windows_registry_icon: reg
     template: ' {{ .Path }}'
-    trailing_separator: )
+    trailing_style: rounded
 prompt:
     - segments:
         - path
@@ -177,7 +177,7 @@ python:
     background_templates:
         - '{{ if empty .Full }}p:c-project-generic-error{{ else }}p:c-project-python{{ end }}'
     foreground: p:c-badge-text
-    leading_separator: (
+    leading_style: rounded
     options:
         display_mode: context
     template: '{{ if or (eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_PYTHON))) (eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_PYTHON_VENV))) }} {{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_PYTHON)) }}{{ .Full }}{{ end }}{{ if and (.Venv) (eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_PYTHON))) (eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_PYTHON_VENV))) }} {{ end }}{{ if and (.Venv) (eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_PYTHON_VENV))) }}{{ if .Env.SEGMENT_PROJECT_PYTHON_ACTIVE_VENV_STR }}{{ .Env.SEGMENT_PROJECT_PYTHON_ACTIVE_VENV_STR }}{{ else }}{{ .Venv }}{{ end }}{{ end }}{{ end }}'
@@ -192,7 +192,7 @@ rust:
     background_templates:
         - '{{ if empty .Full }}p:c-project-generic-error{{ else }}p:c-project-rust{{ end }}'
     foreground: p:c-badge-text
-    leading_separator: (
+    leading_style: rounded
     template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_PROJECT_RUST)) }} {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}{{ end }}'
     trailing_separator: ') '
 secondary:
@@ -210,7 +210,7 @@ text:
         - '{{ if and (not .Segments.Session.SSHSession) (.Root) }}p:c-shell-state-root-active{{ end }}'
         - '{{ if and (.Segments.Session.SSHSession) (.Root) }}p:c-shell-state-root-ssh-active{{ end }}'
     foreground: p:c-badge-text
-    leading_separator: (
+    leading_style: rounded
     template: '{{ if or (.Segments.Session.SSHSession) (.Root) }}{{ if .Segments.Session.SSHSession }} SSH{{ end }}{{ if and (.Segments.Session.SSHSession) (.Root) }} {{ end }}{{ if .Root }}# Root{{ end }}{{ end }}'
     trailing_separator: ') '
 text.2:
@@ -225,7 +225,7 @@ time:
         - '{{ if regexMatch "(^(1[8-9])|(2[0-3])):" (.LastDate | date .Format) }}p:c-date-time-evening{{ end }}'
         - '{{ if regexMatch "^(0[0-5]):" (.LastDate | date .Format) }}p:c-date-time-night{{ end }}'
     foreground: p:c-badge-text
-    leading_separator: (
+    leading_style: rounded
     options:
         time_format: 15:04 (01/02)
     template: '{{ if eq "False" (title (default "False" .Env.DISABLE_SEGMENT_DTIME)) }} {{ .LastDate | date .Format }}{{ end }}'
@@ -246,7 +246,7 @@ wakatime:
         duration: 1m
         strategy: session
     foreground: p:c-badge-text
-    leading_separator: (
+    leading_style: rounded
     options:
         http_timeout: 2000
         url: https://wakatime.com/api/v1/users/current/summaries?start=today&end=today&api_key={{ .Env.WAKATIME_API_KEY }}

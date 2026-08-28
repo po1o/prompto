@@ -40,7 +40,7 @@ battery:
         - '{{if eq "Charging" .State.String }}p:green{{end}}'
         - '{{if eq "Discharging" .State.String}}p:orange{{end}}'
     foreground: p:white
-    leading_separator: <
+    leading_style: powerline
     options:
         charged_icon: ""
         charging_icon: ""
@@ -56,7 +56,7 @@ executiontime:
     options:
         always_enabled: true
         style: round
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .FormattedMs }} '
 path:
     background: p:orange
@@ -65,12 +65,12 @@ path:
         home_icon: ""
         style: folder
         windows_registry_icon: reg
-    trailing_separator: '>'
+    trailing_style: powerline
     template: ' {{ .Path }} '
 session:
     background: p:black
     foreground: p:white
-    trailing_separator: '>'
+    style: powerline
     template: '{{ .UserName }}@{{ .HostName }} '
 shell:
     background: p:black
@@ -84,7 +84,7 @@ status:
     options:
         always_enabled: true
     template: ' {{ if gt .Code 0 }} {{ reason .Code }}{{ else }}{{ end }} '
-    trailing_separator: )
+    style: rounded
 text.secondary:
     foreground: p:white
     template: ' '
