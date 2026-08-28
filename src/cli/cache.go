@@ -3,7 +3,6 @@ package cli
 import (
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/po1o/prompto/src/cache"
@@ -88,12 +87,12 @@ You can do the following:
 				}
 			}
 			// Fallback to CLI mode
-			cache.Init(os.Getenv("PROMPTO_SHELL"), cache.Persist)
+			cache.Init(cache.Persist)
 			cache.Set(cache.Device, cache.TTL, ttl, cache.INFINITE)
 			cache.Close()
 			fmt.Printf("TTL set to %d days\n", ttl)
 		case "show":
-			cache.Init(os.Getenv("PROMPTO_SHELL"))
+			cache.Init()
 			store := cache.Device
 			if session {
 				store = cache.Session

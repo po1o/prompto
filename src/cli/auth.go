@@ -38,7 +38,7 @@ Available services:
 		env := &runtime.Terminal{}
 		env.Init(flags)
 
-		cache.Init(env.Shell(), cache.Persist)
+		cache.Init(cache.Persist)
 
 		defer func() {
 			cache.Close()

@@ -64,9 +64,10 @@ func (s Store) get() *store {
 	}
 }
 
-// Init initializes a store.
-func (s Store) init(filePath string) {
-	defer log.Trace(time.Now(), string(s), filePath)
+// init resets a store. Nothing is read from or written to disk: both stores
+// live for the lifetime of the process.
+func (s Store) init() {
+	defer log.Trace(time.Now(), string(s))
 
 	store := s.get()
 	// Clear in place rather than reassigning store.cache: a render goroutine may

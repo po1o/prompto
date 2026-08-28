@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -33,7 +32,7 @@ var NoSession Option = func() {
 	noSession = true
 }
 
-func Init(shell string, options ...Option) {
+func Init(options ...Option) {
 	newSession = false
 	noSession = false
 
@@ -41,14 +40,13 @@ func Init(shell string, options ...Option) {
 		opt()
 	}
 
-	Device.init(DeviceStore)
+	Device.init()
 
 	if noSession {
 		return
 	}
 
-	sessionFileName := fmt.Sprintf("%s.%s.%s", shell, SessionID(), DeviceStore)
-	Session.init(sessionFileName)
+	Session.init()
 }
 
 func SessionID() string {
