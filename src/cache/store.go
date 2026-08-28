@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/po1o/prompto/src/log"
@@ -13,11 +12,6 @@ import (
 
 type store struct {
 	cache *maps.Concurrent[*Entry[any]]
-	// dirty is written from concurrent daemon render goroutines (via Set/Delete
-	// on the shared global stores), so it must be atomic. It is currently
-	// write-only: persistence is stubbed out (see close), but the flag is kept
-	// for when it returns.
-	dirty atomic.Bool
 }
 
 var (
@@ -73,13 +67,6 @@ func (s Store) init() {
 	// Clear in place rather than reassigning store.cache: a render goroutine may
 	// be reading the field concurrently, and swapping the pointer would race.
 	store.cache.Clear()
-	store.dirty.Store(false)
-}
-
-func (s Store) close() {
-	defer log.Trace(time.Now(), string(s))
-
-	log.Debugf("(%s) not persisting", string(s))
 }
 
 // Get retrieves a typed value from the specified store
@@ -102,7 +89,6 @@ func Get[T any](s Store, key string) (T, bool) {
 	if entry.Expired() {
 		log.Debugf("(%s) key expired: %s", string(s), key)
 		store.cache.Delete(key)
-		store.dirty.Store(true)
 		return zero, false
 	}
 
@@ -138,8 +124,6 @@ func Set[T any](s Store, key string, value T, duration Duration) {
 		Timestamp: time.Now().Unix(),
 		TTL:       seconds,
 	})
-
-	store.dirty.Store(true)
 }
 
 // Delete removes a key from the specified store
@@ -154,7 +138,6 @@ func Delete(s Store, key string) {
 
 	log.Debugf("(%s) deleting key: %s", string(s), key)
 	store.cache.Delete(key)
-	store.dirty.Store(true)
 }
 
 func DeleteAll(s Store) {
@@ -170,7 +153,6 @@ func DeleteAll(s Store) {
 	// its own gRPC handler goroutine, concurrent with render goroutines reading
 	// store.cache, so swapping the pointer would race on the field.
 	store.cache.Clear()
-	store.dirty.Store(true)
 }
 
 func Print(s Store) string {

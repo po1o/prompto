@@ -23,7 +23,6 @@ func Clear(force bool, excludedFiles ...string) error {
 		return os.RemoveAll(Path())
 	}
 
-	// get all files in the cache directory that start with omp.cache and delete them
 	files, err := os.ReadDir(Path())
 	if err != nil {
 		return err
@@ -39,7 +38,7 @@ func Clear(force bool, excludedFiles ...string) error {
 			return true
 		}
 
-		return strings.EqualFold(fileName, DeviceStore) || strings.HasPrefix(fileName, "init.")
+		return strings.HasPrefix(fileName, "init.")
 	}
 
 	if len(excludedFiles) > 0 {

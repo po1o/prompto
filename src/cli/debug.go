@@ -55,7 +55,6 @@ func createDebugCmd() *cobra.Command {
 
 			defer func() {
 				template.SaveCache()
-				cache.Close()
 			}()
 
 			terminal.Init(shell.GENERIC)

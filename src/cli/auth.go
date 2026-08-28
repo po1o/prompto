@@ -38,10 +38,9 @@ Available services:
 		env := &runtime.Terminal{}
 		env.Init(flags)
 
-		cache.Init(cache.Persist)
+		cache.Init()
 
 		defer func() {
-			cache.Close()
 		}()
 
 		switch args[0] {

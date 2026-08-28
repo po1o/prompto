@@ -45,10 +45,9 @@ var toggleCmd = &cobra.Command{
 		env := &runtime.Terminal{}
 		env.Init(&runtime.Flags{})
 
-		cache.Init(cache.Persist)
+		cache.Init()
 
 		defer func() {
-			cache.Close()
 		}()
 
 		// Get current toggles from cache as a map

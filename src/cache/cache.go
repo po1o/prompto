@@ -14,10 +14,6 @@ func init() {
 }
 
 const (
-	DeviceStore = "omp.cache"
-)
-
-const (
 	TEMPLATECACHE    = "template_cache"
 	TOGGLECACHE      = "toggle_cache"
 	PROMPTCOUNTCACHE = "prompt_count_cache"
