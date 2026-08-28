@@ -41,6 +41,7 @@ type Segment struct {
 	RenderPendingIcon       string         `yaml:"render_pending_icon,omitempty"`
 	Template                string         `yaml:"template,omitempty"`
 	Foreground              color.Ansi     `yaml:"foreground,omitempty"`
+	SeparatorForeground     color.Ansi     `yaml:"separator_foreground,omitempty"`
 	TemplatesLogic          template.Logic `yaml:"templates_logic,omitempty"`
 	Background              color.Ansi     `yaml:"background,omitempty"`
 	Type                    SegmentType    `yaml:"type,omitempty"`
@@ -306,14 +307,42 @@ func (segment *Segment) ResolveBackground() color.Ansi {
 	return segment.Background
 }
 
+// ResolveSeparatorForeground returns the color a separator glyph is drawn in.
+//
+// A separator is the edge of a filled block, so it takes the block's color:
+// that is what makes a run of segments read as one ribbon. Returning the
+// Background keyword rather than the resolved value keeps that lazy, which is
+// what every graphical theme has always relied on.
+//
+// separator_foreground overrides it, for a theme that wants the edge in a color
+// of its own. onConsole additionally falls back to the segment's foreground,
+// because a console theme leaves backgrounds transparent and the keyword would
+// resolve to nothing — an invisible separator. That fallback is deliberately
+// not on by default: it would repaint separators in eleven bundled themes.
+func (segment *Segment) ResolveSeparatorForeground(onConsole bool) color.Ansi {
+	if segment.SeparatorForeground != "" {
+		return segment.SeparatorForeground
+	}
+
+	if !onConsole {
+		return color.Background
+	}
+
+	if background := segment.ResolveBackground(); background != "" && background != color.Transparent {
+		return background
+	}
+
+	return segment.ResolveForeground()
+}
+
 // MirrorSeparators turns a segment's separators around for a right-aligned
 // block: the pair swaps sides and each glyph is replaced by the one facing the
 // other way, so a definition written for a left-aligned line reads correctly on
 // the right. Segment definitions are compiled left-aligned because the same
 // definition can appear on lines of either alignment.
-func (segment *Segment) MirrorSeparators() {
-	leading := MirrorGlyph(segment.TrailingGlyph)
-	trailing := MirrorGlyph(segment.LeadingGlyph)
+func (segment *Segment) MirrorSeparators(onConsole bool) {
+	leading := MirrorGlyph(segment.TrailingGlyph, onConsole)
+	trailing := MirrorGlyph(segment.LeadingGlyph, onConsole)
 
 	segment.LeadingGlyph = leading
 	segment.TrailingGlyph = trailing

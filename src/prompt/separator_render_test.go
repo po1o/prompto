@@ -207,3 +207,51 @@ func TestSeparatorsNeedABackgroundToBeDrawn(t *testing.T) {
 	require.NotContains(t, transparent, "(")
 	require.NotContains(t, transparent, ")")
 }
+
+// A console theme leaves backgrounds transparent, and a separator drawn in a
+// transparent background is drawn in nothing at all. On a console config it
+// falls back to the segment's own foreground so the shape survives.
+func TestConsoleSeparatorFallsBackToTheForeground(t *testing.T) {
+	segment := separatorSegment("a", "", "", ">")
+	segment.Background = "transparent"
+
+	engine := newSeparatorTestEngine(t, &config.LayoutConfig{
+		Console:  true,
+		Prompt:   []config.PromptLayout{{Segments: []string{"a"}}},
+		Segments: map[string]*config.Segment{"a": segment},
+	})
+
+	require.Contains(t, engine.Primary(), inWhite+">", "the separator should take the segment's foreground")
+}
+
+// The same config without the console flag keeps the old rule, where the
+// separator takes the background and a transparent one draws nothing. Eleven
+// bundled themes depend on that.
+func TestSeparatorStaysHiddenOnATransparentBackgroundOffConsole(t *testing.T) {
+	segment := separatorSegment("a", "", "", ">")
+	segment.Background = "transparent"
+
+	engine := newSeparatorTestEngine(t, &config.LayoutConfig{
+		Prompt:   []config.PromptLayout{{Segments: []string{"a"}}},
+		Segments: map[string]*config.Segment{"a": segment},
+	})
+
+	require.NotContains(t, engine.Primary(), ">", "a transparent background draws no separator")
+}
+
+// separator_foreground is the explicit override, and it wins over both rules —
+// including on a graphical theme, where it is the only way to color a separator
+// differently from the block it closes.
+func TestSeparatorForegroundOverridesTheBackground(t *testing.T) {
+	segment := separatorSegment("a", red, "", ">")
+	segment.SeparatorForeground = "#0000ff"
+
+	engine := newSeparatorTestEngine(t, &config.LayoutConfig{
+		Prompt:   []config.PromptLayout{{Segments: []string{"a"}}},
+		Segments: map[string]*config.Segment{"a": segment},
+	})
+
+	got := engine.Primary()
+	require.Contains(t, got, inBlue+">", "the separator should take separator_foreground")
+	require.NotContains(t, got, inRed+">", "not the segment's background")
+}

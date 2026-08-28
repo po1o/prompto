@@ -60,6 +60,18 @@ type LayoutConfig struct {
 	CursorPadding           bool                   `yaml:"cursor_padding,omitempty"`
 	PatchPwshBleed          bool                   `yaml:"patch_pwsh_bleed,omitempty"`
 	EnableCursorPositioning bool                   `yaml:"enable_cursor_positioning,omitempty"`
+	// Console marks a config written for a text console: separator aliases
+	// compile to ASCII rather than Nerd Font glyphs, and a separator on a
+	// segment with no background is drawn in the segment's foreground rather
+	// than vanishing.
+	//
+	// It is derived from the file name, not read from the document. A console
+	// config is already `config.console.yaml` — that is how Resolve finds it —
+	// so asking the user to also write `console: true` inside would be asking
+	// twice. Deriving it from the path also keeps it correct when one daemon
+	// serves a console session and a desktop session at once: each render
+	// carries its own config path.
+	Console bool `yaml:"-"`
 }
 
 type layoutRawConfig struct {
@@ -142,7 +154,7 @@ func LoadLayout(configFile string) (*LayoutConfig, error) {
 		return nil, ErrFileNotFound
 	}
 
-	cfg, err := ParseLayoutYAML(data)
+	cfg, err := ParseLayoutYAMLFrom(data, configFile)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +164,15 @@ func LoadLayout(configFile string) (*LayoutConfig, error) {
 	return cfg, nil
 }
 
+// ParseLayoutYAML reads a layout with no file behind it. Callers that have a
+// path should use ParseLayoutYAMLFrom so console configs are recognised.
 func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
+	return ParseLayoutYAMLFrom(data, "")
+}
+
+// ParseLayoutYAMLFrom reads a layout knowing which file it came from, which is
+// what tells a console config apart from a graphical one.
+func ParseLayoutYAMLFrom(data []byte, configFile string) (*LayoutConfig, error) {
 	var raw layoutRawConfig
 	if err := yaml.Unmarshal(data, &raw); err != nil {
 		return nil, ErrParse
@@ -223,7 +243,50 @@ func ParseLayoutYAML(data []byte) (*LayoutConfig, error) {
 		return nil, err
 	}
 
+	layout.Console = isConsoleVariant(configFile)
+
+	applyConsoleGlyphs(layout)
+
 	return layout, nil
+}
+
+// applyConsoleGlyphs rewrites every compiled separator for a text console.
+//
+// It runs after normalization rather than inside it so it catches literal
+// glyphs too: a config that writes `trailing_separator: "\ue0b0"` by hand is
+// just as unreadable on a console as one that writes `style: powerline`, and
+// both should end up as ">".
+func applyConsoleGlyphs(layout *LayoutConfig) {
+	if !layout.Console {
+		return
+	}
+
+	for _, lines := range [][]PromptLayout{
+		layout.Prompt, layout.RPrompt, layout.SecondaryPrompt,
+		layout.TransientPrompt, layout.TransientRPrompt,
+	} {
+		for i := range lines {
+			lines[i].LeadingGlyph = toConsoleGlyph(lines[i].LeadingGlyph)
+			lines[i].TrailingGlyph = toConsoleGlyph(lines[i].TrailingGlyph)
+		}
+	}
+
+	shaped := make([]*Segment, 0, len(layout.Segments)+len(layout.Tooltips)+3)
+	for _, segment := range layout.Segments {
+		shaped = append(shaped, segment)
+	}
+
+	shaped = append(shaped, layout.Tooltips...)
+	shaped = append(shaped, layout.DebugPrompt, layout.ValidLine, layout.ErrorLine)
+
+	for _, segment := range shaped {
+		if segment == nil {
+			continue
+		}
+
+		segment.LeadingGlyph = toConsoleGlyph(segment.LeadingGlyph)
+		segment.TrailingGlyph = toConsoleGlyph(segment.TrailingGlyph)
+	}
 }
 
 func validateLayoutTopLevelKeys(doc map[string]any) error {
@@ -333,26 +396,101 @@ var separatorAliases = map[string]separatorPair{
 	"lego":           {left: "\uE0CE", right: "\uE0CF"},
 }
 
+// consoleSeparatorAliases is what the same aliases compile to on a text
+// console, where no Nerd Font glyph is available. The shapes are approximations
+// of the originals: a chevron for the powerlines, brackets for the arcs and
+// blocks, slashes for the slants.
+//
+// flame, pixel and lego have no ASCII that reads as the same shape, so they
+// compile to nothing rather than to a character that misleads. An alias absent
+// here is not an error: it renders as a segment with no separator, which is
+// what it would look like on a console with the glyph missing anyway.
+var consoleSeparatorAliases = map[string]separatorPair{
+	"powerline":      {left: "<", right: ">"},
+	"powerline_thin": {left: "<", right: ">"},
+	"rounded":        {left: "(", right: ")"},
+	"rounded_thin":   {left: "(", right: ")"},
+	"slant":          {left: "\\", right: "/"},
+	"block":          {left: "[", right: "]"},
+}
+
 // mirroredGlyphs pairs each separator glyph with the one facing the other way.
 // Derived from separatorAliases rather than written out again, so an alias
 // cannot be added in one place and forgotten in the other.
-var mirroredGlyphs = func() map[string]string {
-	mirrored := make(map[string]string, len(separatorAliases)*2)
+// consoleGlyphs maps each Nerd Font separator to its console stand-in, keyed by
+// the alias the two tables share. An alias with no console entry maps to the
+// empty string: the glyph is dropped rather than replaced by a character that
+// reads as a different shape.
+var consoleGlyphs = func() map[string]string {
+	glyphs := make(map[string]string, len(separatorAliases)*2)
 
-	for _, pair := range separatorAliases {
+	for alias, pair := range separatorAliases {
+		console := consoleSeparatorAliases[alias]
+		glyphs[pair.left] = console.left
+		glyphs[pair.right] = console.right
+	}
+
+	return glyphs
+}()
+
+// toConsoleGlyph rewrites one separator for a text console, rune by rune so a
+// glyph wrapped in color markup keeps its markup. A rune with no stand-in is
+// dropped: the console font has nothing to draw for it, and a box or a question
+// mark is worse than a segment that simply stops flat.
+func toConsoleGlyph(glyph string) string {
+	if glyph == "" {
+		return ""
+	}
+
+	var builder strings.Builder
+
+	for _, r := range glyph {
+		if console, ok := consoleGlyphs[string(r)]; ok {
+			builder.WriteString(console)
+			continue
+		}
+
+		if r < 0x80 {
+			builder.WriteRune(r)
+		}
+	}
+
+	return builder.String()
+}
+
+var mirroredGlyphs = mirrorTable(separatorAliases)
+
+// consoleMirroredGlyphs is kept separate rather than merged into the table
+// above: "(" and ">" are ordinary characters that graphical themes use as
+// literal separators, and mirroring those on a right-aligned line would flip a
+// glyph the theme wrote deliberately.
+var consoleMirroredGlyphs = mirrorTable(consoleSeparatorAliases)
+
+func mirrorTable(aliases map[string]separatorPair) map[string]string {
+	mirrored := make(map[string]string, len(aliases)*2)
+
+	for _, pair := range aliases {
 		mirrored[pair.left] = pair.right
 		mirrored[pair.right] = pair.left
 	}
 
 	return mirrored
-}()
+}
 
 // MirrorGlyph returns the glyph that faces the other way, so a separator
 // written for a left-aligned line reads correctly on a right-aligned one. A
 // glyph with no mirror — a custom one, or a symmetric alias like pixel — is
 // returned unchanged.
-func MirrorGlyph(glyph string) string {
-	if mirrored, ok := mirroredGlyphs[glyph]; ok {
+//
+// onConsole picks the ASCII table, because a console config has already had its
+// Nerd Font glyphs translated by the time anything mirrors them.
+func MirrorGlyph(glyph string, onConsole bool) string {
+	table := mirroredGlyphs
+	if onConsole {
+		table = consoleMirroredGlyphs
+	}
+
+	if mirrored, ok := table[glyph]; ok {
 		return mirrored
 	}
 
@@ -991,7 +1129,7 @@ func normalizeExtraSegments(doc map[string]any, layout *LayoutConfig) error {
 		// nothing else would turn its separators around. Mirroring here is what
 		// makes a tooltip carry the same separator keys as a segment named on an
 		// rprompt line and get the same shape.
-		segment.MirrorSeparators()
+		segment.MirrorSeparators(false)
 
 		layout.Tooltips = append(layout.Tooltips, segment)
 	}

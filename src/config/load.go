@@ -96,7 +96,7 @@ func Parse(configFile string) (*Config, error) {
 		return nil, ErrFileNotFound
 	}
 
-	layout, err := ParseLayoutYAML(data)
+	layout, err := ParseLayoutYAMLFrom(data, configFile)
 	if err != nil {
 		log.Errorf("failed to parse layout config: %v", err)
 		return nil, ErrParse

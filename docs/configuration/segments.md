@@ -268,6 +268,24 @@ This also applies to a segment that draws its own opening inside its `template` 
 both separators unset, or the separator before it gains a filled block behind the outline the template
 draws.
 
+## `separator_foreground`
+
+A separator is drawn in the segment's `background`, because it is the edge of
+that block. `separator_foreground` overrides it, for a theme that wants the edge
+in a color of its own:
+
+```yaml
+path:
+  style: powerline
+  background: transparent
+  separator_foreground: red
+  template: " {{ .Path }} "
+```
+
+On a [console config](./console.md) — one named `config.console.yaml` — a
+separator with no background falls back to the segment's `foreground` rather
+than vanishing. Elsewhere the rule below still applies.
+
 ## Separators Need a Background
 
 A separator is the segment's own block, shaped into a point or a cap. It is drawn in the segment's

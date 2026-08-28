@@ -730,7 +730,7 @@ func TestTooltipSeparatorsMatchARightAlignedSegment(t *testing.T) {
 			require.NoError(t, err)
 
 			expected := onLine.Segments["s"].Clone()
-			expected.MirrorSeparators()
+			expected.MirrorSeparators(false)
 
 			asTooltip, err := ParseLayoutYAML(fmt.Appendf(nil,
 				"prompt:\n  - segments: [\"s\"]\ns:\n  type: \"session\"\ntooltips:\n  - type: \"aws\"\n    tips: [\"aws\"]\n    %s\n", key))
@@ -855,15 +855,15 @@ debug_prompt:
 // step, which a hand-written mirror did not.
 func TestMirrorGlyphCoversEverySeparatorAlias(t *testing.T) {
 	for alias, pair := range separatorAliases {
-		assert.Equal(t, pair.right, MirrorGlyph(pair.left), "%s left", alias)
-		assert.Equal(t, pair.left, MirrorGlyph(pair.right), "%s right", alias)
+		assert.Equal(t, pair.right, MirrorGlyph(pair.left, false), "%s left", alias)
+		assert.Equal(t, pair.left, MirrorGlyph(pair.right, false), "%s right", alias)
 	}
 }
 
 // A glyph the user wrote themselves has no mirror to look up.
 func TestMirrorGlyphLeavesUnknownGlyphsAlone(t *testing.T) {
-	assert.Equal(t, ">", MirrorGlyph(">"))
-	assert.Equal(t, "", MirrorGlyph(""))
+	assert.Equal(t, ">", MirrorGlyph(">", false))
+	assert.Equal(t, "", MirrorGlyph("", false))
 }
 
 // options and cache are the only segment keys that decode to a map, so a
@@ -942,4 +942,125 @@ git:
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "named instances")
 	assert.ErrorContains(t, err, "work")
+}
+
+// A console config compiles separator aliases to ASCII. The graphical glyphs
+// are unreadable on a text console, and the alias is the same one either way,
+// so the theme does not have to be rewritten to move between them.
+func TestParseLayoutYAMLCompilesConsoleSeparators(t *testing.T) {
+	body := `
+prompt:
+  - segments: ["path"]
+
+path:
+  type: "text"
+  style: "powerline"
+  template: " ~ "
+`
+
+	graphical, err := ParseLayoutYAML([]byte(body))
+	require.NoError(t, err)
+	assert.Equal(t, "\ue0b0", graphical.Segments["path"].TrailingGlyph)
+
+	console, err := ParseLayoutYAMLFrom([]byte(body), "theme.console.yaml")
+	require.NoError(t, err)
+	assert.Equal(t, ">", console.Segments["path"].TrailingGlyph)
+}
+
+// The translation runs on the compiled glyph, so a config that writes the Nerd
+// Font character out by hand is converted too — it is exactly as unreadable on
+// a console as the alias that produces it.
+func TestParseLayoutYAMLConvertsLiteralGlyphsOnConsole(t *testing.T) {
+	raw := `
+
+prompt:
+  - segments: ["path"]
+    trailing_separator: "\ue0b4"
+
+path:
+  type: "text"
+  trailing_separator: "\ue0b0"
+  template: " ~ "
+`
+
+	cfg, err := ParseLayoutYAMLFrom([]byte(raw), "theme.console.yaml")
+	require.NoError(t, err)
+	assert.Equal(t, ">", cfg.Segments["path"].TrailingGlyph)
+	assert.Equal(t, ")", cfg.Prompt[0].TrailingGlyph)
+}
+
+// flame, pixel and lego have no ASCII that reads as the same shape. Dropping
+// the glyph leaves the segment flat, which is what a console font would show
+// for it anyway; substituting an unrelated character would not.
+func TestParseLayoutYAMLDropsSeparatorsWithNoConsoleShape(t *testing.T) {
+	raw := `
+
+prompt:
+  - segments: ["path"]
+
+path:
+  type: "text"
+  style: "flame"
+  template: " ~ "
+`
+
+	cfg, err := ParseLayoutYAMLFrom([]byte(raw), "theme.console.yaml")
+	require.NoError(t, err)
+	assert.Empty(t, cfg.Segments["path"].TrailingGlyph)
+}
+
+// Mirroring has to know the charset. ">" is an ordinary character a graphical
+// theme may use as a literal separator, and flipping it there would turn a
+// glyph the theme chose deliberately.
+func TestMirrorGlyphOnlyMirrorsASCIIOnConsole(t *testing.T) {
+	assert.Equal(t, ">", MirrorGlyph(">", false), "graphical themes keep a literal >")
+	assert.Equal(t, "<", MirrorGlyph(">", true))
+	assert.Equal(t, "(", MirrorGlyph(")", true))
+	assert.Equal(t, "\ue0b0", MirrorGlyph("\ue0b2", false))
+}
+
+// Every graphical alias needs a console counterpart or a deliberate omission,
+// so adding an alias cannot silently leave the console rendering it as nothing.
+func TestConsoleSeparatorAliasesCoverTheGraphicalOnes(t *testing.T) {
+	withoutConsoleShape := map[string]bool{"flame": true, "pixel": true, "lego": true}
+
+	for alias := range separatorAliases {
+		_, hasConsole := consoleSeparatorAliases[alias]
+		require.Equal(t, !withoutConsoleShape[alias], hasConsole,
+			"%s: console table and the documented omissions disagree", alias)
+	}
+
+	for alias := range consoleSeparatorAliases {
+		require.Contains(t, separatorAliases, alias, "%s is console-only", alias)
+	}
+}
+
+// Console mode is derived from the file name, not declared inside the file. A
+// console config is already named config.console.yaml — that is how Resolve
+// finds it — so the same document means different things read from the two
+// paths, and neither has to say so.
+func TestParseLayoutYAMLDerivesConsoleFromTheFileName(t *testing.T) {
+	body := `
+prompt:
+  - segments: ["path"]
+
+path:
+  type: "text"
+  style: "powerline"
+  template: " ~ "
+`
+
+	for name, want := range map[string]string{
+		"config.yaml":               "",
+		"config.yml":                "",
+		"config.console.yaml":       ">",
+		"~/themes/mine.console.yml": ">",
+		"":                          "",
+	} {
+		t.Run(name, func(t *testing.T) {
+			cfg, err := ParseLayoutYAMLFrom([]byte(body), name)
+			require.NoError(t, err)
+			assert.Equal(t, want, cfg.Segments["path"].TrailingGlyph)
+		})
+	}
 }
