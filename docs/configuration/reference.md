@@ -89,6 +89,7 @@
 | `trailing_style` | string | trailing separator alias for the segment |
 | `leading_separator` | string | leading separator glyph |
 | `trailing_separator` | string | trailing separator glyph |
+| `separator_foreground` | color | color for this segment's separators; defaults to `background` |
 | `keep_when_empty` | bool | keep the segment's separators when it renders no text, instead of hiding it |
 | `render_pending_icon` | string | per-segment pending icon override |
 | `render_pending_background` | color | per-segment pending background override |

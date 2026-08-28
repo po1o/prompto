@@ -350,6 +350,11 @@
         "foreground": {
           "$ref": "#/definitions/color"
         },
+        "separator_foreground": {
+          "title": "Color for this segment's separator glyphs",
+          "description": "Overrides the default, which is the segment's background.",
+          "$ref": "#/definitions/color"
+        },
         "foreground_templates": {
           "$ref": "#/definitions/templates",
           "description": "https://prompto.dev/docs/configuration/colors#color-templates"

@@ -48,6 +48,36 @@ without any extra work. The variants are hand-maintained, though, and nothing ge
 without one falls back to `config.yaml` on the console exactly as described above, which is the unreadable
 prompt this feature exists to avoid. See [Themes](../themes.md#console-variants).
 
+## Separators On A Console
+
+A console config is recognised by its name — the same `.console` marker that
+[Resolve](#naming-rule) uses to find it. Nothing inside the file declares it.
+
+Two things follow. Separator aliases compile to ASCII instead of Nerd Font
+glyphs, and a separator on a segment with no background is drawn in the
+segment's `foreground` instead of vanishing — console themes leave backgrounds
+transparent, and the usual rule would draw the separator in nothing at all.
+
+| alias | graphical | console |
+| --- | --- | --- |
+| `powerline` | `\ue0b2` `\ue0b0` | `<` `>` |
+| `powerline_thin` | `\ue0b3` `\ue0b1` | `<` `>` |
+| `rounded` | `\ue0b6` `\ue0b4` | `(` `)` |
+| `rounded_thin` | `\ue0b7` `\ue0b5` | `(` `)` |
+| `slant` | `\ue0ba` `\ue0bc` | `\` `/` |
+| `block` | `\ue0b8` `\ue0be` | `[` `]` |
+| `flame`, `pixel`, `lego` | — | dropped |
+
+The last three have no ASCII that reads as the same shape, so they are dropped
+rather than replaced by something misleading. A literal Nerd Font glyph written
+into `trailing_separator` is translated the same way, since it is just as
+unreadable on a console as the alias that produces it.
+
+Because the name carries the decision, one daemon can serve a console session
+and a desktop session at once: each render passes its own config path. See
+[`separator_foreground`](./segments.md#separator_foreground) to color a
+separator explicitly.
+
 ## Naming Rule
 
 The variant is the config path with `.console` inserted before the extension.
@@ -104,29 +134,33 @@ actually has:
 `darkGray`, `lightRed`, `lightGreen`, `lightYellow`, `lightBlue`,
 `lightMagenta`, `lightCyan`, `lightWhite`
 
-**Drop Powerline and Nerd Font glyphs.** That means:
+**Drop Nerd Font icons.** Separators are handled for you once `console: true`
+is set, but icons inside templates are not:
 
-- no `style`, `leading_style`, or `trailing_style`, since every separator alias
-  is a Powerline glyph
-- either no separators at all, with `background: transparent`, or ASCII ones via
-  `leading_separator` and `trailing_separator` — for example `(` and `)`, or a
-  `>` closing the left prompt and a `<` opening the right one
 - no `branch_icon`, `github_icon`, or `git_icon`; set `fetch_upstream_icon:
   false`
 - ASCII replacements for typographic characters: `..` for `…`, `↑`/`↓` for
   `⇡`/`⇣`
 
-A left prompt built this way:
+Separators are written exactly as in the graphical theme — the alias is
+translated, and `separator_foreground` colors it against a transparent
+background:
 
 ```yaml
 prompt:
   - segments: [path]
 
 path:
+  style: powerline
   foreground: lightWhite
   background: transparent
-  template: "{{ .Path }} <red>></>"
+  separator_foreground: red
+  template: "{{ .Path }} "
 ```
+
+That renders `~ >` with a red `>`. Writing the ASCII out by hand with
+`trailing_separator: ">"` still works, and is what you want for a shape the
+alias table does not cover.
 
 ## Checking Your Config Is Console-Safe
 

@@ -68,7 +68,7 @@ func (e *Engine) layoutBlock(layout *config.PromptLayout, blockType config.Block
 
 		segment := segmentDef.Clone()
 		if alignment == config.Right {
-			segment.MirrorSeparators()
+			segment.MirrorSeparators(e.LayoutConfig != nil && e.LayoutConfig.Console)
 		}
 
 		block.Segments = append(block.Segments, segment)

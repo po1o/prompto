@@ -284,7 +284,7 @@ func (e *Engine) renderActiveSegment() {
 		}
 	}
 
-	terminal.Write(background, color.Background, e.activeSegment.LeadingGlyph)
+	terminal.Write(background, e.separatorForeground(e.activeSegment, color.Background), e.activeSegment.LeadingGlyph)
 
 	// A segment kept via keep_when_empty draws its glyphs but no text, so the
 	// prompt holds its shape instead of reflowing.
@@ -297,13 +297,36 @@ func (e *Engine) renderActiveSegment() {
 	terminal.SetParentColors(e.previousActiveSegment.ResolveBackground(), e.previousActiveSegment.ResolveForeground())
 }
 
+// separatorForeground is the color the given segment's separator glyphs take.
+//
+// fallback is the keyword this call site used before separator_foreground
+// existed, and it differs per site: a segment's own glyphs resolve against its
+// background, while the trailing glyph of the segment before it resolves
+// against the parent's. Passing it through keeps every graphical theme byte
+// identical, since the keyword is still what reaches the writer.
+//
+// The console fallback is a property of the config rather than of TERM: the
+// daemon serves console and desktop sessions at once and cannot tell them
+// apart, so each session's own config carries the answer.
+func (e *Engine) separatorForeground(segment *config.Segment, fallback color.Ansi) color.Ansi {
+	if segment.SeparatorForeground != "" {
+		return segment.SeparatorForeground
+	}
+
+	if e.LayoutConfig == nil || !e.LayoutConfig.Console {
+		return fallback
+	}
+
+	return segment.ResolveSeparatorForeground(true)
+}
+
 func (e *Engine) writeSeparator(final bool) {
 	if e.activeSegment == nil {
 		return
 	}
 
 	if final {
-		terminal.Write(color.Transparent, color.Background, e.activeSegment.TrailingGlyph)
+		terminal.Write(color.Transparent, e.separatorForeground(e.activeSegment, color.Background), e.activeSegment.TrailingGlyph)
 		return
 	}
 
@@ -319,11 +342,11 @@ func (e *Engine) writeSeparator(final bool) {
 	// link in that ribbon, so the glyph closes onto the terminal background and
 	// keeps its shape instead of merging into a block of colour.
 	if e.activeSegment.LeadingGlyph == "" && e.activeSegment.TrailingGlyph != "" {
-		terminal.Write(color.Background, color.ParentBackground, e.previousActiveSegment.TrailingGlyph)
+		terminal.Write(color.Background, e.separatorForeground(e.previousActiveSegment, color.ParentBackground), e.previousActiveSegment.TrailingGlyph)
 		return
 	}
 
-	terminal.Write(color.Transparent, color.ParentBackground, e.previousActiveSegment.TrailingGlyph)
+	terminal.Write(color.Transparent, e.separatorForeground(e.previousActiveSegment, color.ParentBackground), e.previousActiveSegment.TrailingGlyph)
 }
 
 func (e *Engine) adjustTrailingGlyphColorOverrides() {
