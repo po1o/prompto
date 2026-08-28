@@ -401,29 +401,66 @@ function _prompto_should_change_cursor
     return 0
 end
 
+# Mirrors config.IsConsole: PROMPTO_CONSOLE overrides, otherwise TERM.
+function _prompto_is_console
+    test "$PROMPTO_CONSOLE" = "1" && return 0
+    test "$PROMPTO_CONSOLE" = "0" && return 1
+    test "$TERM" = "linux"
+end
+
 function _prompto_apply_cursor_shape
     # Change cursor shape if enabled and terminal doesn't handle it natively
-    if test "$_prompto_cursor_shape" = "1" && _prompto_should_change_cursor
-        set --local block_code 2
-        set --local beam_code 6
-        set --local underline_code 4
-        if test "$_prompto_cursor_blink" = "1"
-            set block_code 1
-            set beam_code 5
-            set underline_code 3
-        end
+    if not test "$_prompto_cursor_shape" = "1"; or not _prompto_should_change_cursor
+        return
+    end
+
+    # The Linux console ignores DECSCUSR, so the cursor stayed a block in every
+    # mode. It has its own interface -- ESC[?size;xor;and c, the VGA softcursor --
+    # where size is the kernel's CUR_* value: 2 underline, 6 block.
+    #
+    # The cursor blinks and that cannot be fixed while keeping the shapes. Adding
+    # 16 (CUR_SW) stops the blink but also sets `enable && !use_sw` in bitblit.c,
+    # which stops the cursor being drawn at all; a software cursor is rendered by
+    # recolouring the whole cell through the xor/set masks instead, so it has no
+    # shape. Shaped-and-blinking or unshaped-and-steady are the only two options,
+    # and the blink-interval escape clamps at 50ms so it cannot be zeroed either.
+    #
+    # There is no beam. The console cursor is a horizontal slab of scanlines
+    # spanning the whole cell with no width control, so an underline is the
+    # thinnest shape there is.
+    #
+    # The console check is not cosmetic: on a VT-style terminal ESC[?...c is a
+    # Device Attributes query, and the terminal's reply would land in the user's
+    # input line as stray text.
+    if _prompto_is_console
         switch $fish_bind_mode
-            case default
-                printf '\e['$block_code' q'  # Block for normal mode
-            case insert
-                printf '\e['$beam_code' q'  # Beam for insert mode
-            case replace_one replace
-                printf '\e['$underline_code' q'  # Underline for replace mode
-            case visual
-                printf '\e['$block_code' q'  # Block for visual mode
+            case default visual
+                printf '\e[?6c'  # Block for normal and visual mode
             case '*'
-                printf '\e['$beam_code' q'  # Beam for insert mode
+                printf '\e[?2c'  # Underline: the thinnest the console offers
         end
+        return
+    end
+
+    set --local block_code 2
+    set --local beam_code 6
+    set --local underline_code 4
+    if test "$_prompto_cursor_blink" = "1"
+        set block_code 1
+        set beam_code 5
+        set underline_code 3
+    end
+    switch $fish_bind_mode
+        case default
+            printf '\e['$block_code' q'  # Block for normal mode
+        case insert
+            printf '\e['$beam_code' q'  # Beam for insert mode
+        case replace_one replace
+            printf '\e['$underline_code' q'  # Underline for replace mode
+        case visual
+            printf '\e['$block_code' q'  # Block for visual mode
+        case '*'
+            printf '\e['$beam_code' q'  # Beam for insert mode
     end
 end
 
