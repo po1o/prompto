@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/daemon/ipc"
 	"github.com/po1o/prompto/src/log"
 	"github.com/po1o/prompto/src/runtime"
@@ -143,11 +142,12 @@ func (c *Client) Close() error {
 func (c *Client) RenderPrompt(ctx context.Context, flags *runtime.Flags, pid int, sessionID string, env map[string]string, repaint bool, callback ResponseCallback) error {
 	requestID := uuid.NewString()
 
-	// Use PID as SessionID if available to ensure accurate session tracking and cleanup in daemon
-	if pid > 0 {
-		sessionID = fmt.Sprint(pid)
-	} else if sessionID == "" {
-		sessionID = getSessionID()
+	// The session is the shell, identified by its pid: the daemon watches that
+	// process to know when to reap the session. Every shell integration passes
+	// one; a hand-run `prompto render` does not, so fall back to the parent,
+	// which is the shell that invoked us.
+	if sessionID == "" {
+		sessionID = sessionIDForPID(pid)
 	}
 
 	req := &ipc.PromptRequest{
@@ -216,15 +216,8 @@ func (c *Client) RenderPromptSync(ctx context.Context, flags *runtime.Flags, pid
 
 // ToggleSegment toggles segments in the daemon.
 func (c *Client) ToggleSegment(ctx context.Context, pid int, segments []string) error {
-	var sessionID string
-	if pid > 0 {
-		sessionID = fmt.Sprint(pid)
-	} else {
-		sessionID = getSessionID()
-	}
-
 	req := &ipc.ToggleSegmentRequest{
-		SessionId: sessionID,
+		SessionId: sessionIDForPID(pid),
 		Segments:  segments,
 	}
 
@@ -279,12 +272,14 @@ func (c *Client) SetLogging(ctx context.Context, path string) error {
 	return nil
 }
 
-// getSessionID returns the session ID from environment or cache.
-func getSessionID() string {
-	if id := os.Getenv("PROMPTO_SESSION_ID"); id != "" {
-		return id
+// sessionIDForPID names the session a request belongs to. The daemon parses it
+// back into a pid to watch the process, so it has to stay a number.
+func sessionIDForPID(pid int) string {
+	if pid > 0 {
+		return fmt.Sprint(pid)
 	}
-	return cache.SessionID()
+
+	return fmt.Sprint(os.Getppid())
 }
 
 // IsRunning checks if the daemon is currently running.
