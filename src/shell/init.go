@@ -59,7 +59,7 @@ func Init(env runtime.Environment, feats Features) string {
 // This is used by the --print flag to output the script to stdout.
 func Script(env runtime.Environment, feats Features) string {
 	script := generateScript(env, feats)
-	return fmt.Sprintf("%s\n%s", sessionScript(env.Flags().Shell), script)
+	return script
 }
 
 // Debug writes the init script and returns debug information.
@@ -157,7 +157,6 @@ func generateScript(env runtime.Environment, feats Features) string {
 	init := strings.NewReplacer(
 		"::PROMPTO::", executable,
 		"::CONFIG::", configPath,
-		"::SESSION_ID::", cache.SessionID(),
 	).Replace(script)
 
 	return feats.Lines(env.Flags().Shell).String(init)
@@ -174,24 +173,20 @@ func sourceCommand(env runtime.Environment, scriptPath string, async bool) strin
 		}
 	}
 
-	script := sessionScript(env.Flags().Shell)
-
 	if async {
-		return script + sourceCommandAsync(env.Flags().Shell, scriptPath)
+		return sourceCommandAsync(env.Flags().Shell, scriptPath)
 	}
 
 	switch env.Flags().Shell {
 	case PWSH:
-		script += fmt.Sprintf("& %s", quotePwshOrElvishStr(scriptPath))
+		return fmt.Sprintf("& %s", quotePwshOrElvishStr(scriptPath))
 	case ZSH, BASH:
-		script += fmt.Sprintf("source %s", QuotePosixStr(scriptPath))
+		return fmt.Sprintf("source %s", QuotePosixStr(scriptPath))
 	case FISH:
-		script += fmt.Sprintf("source %s", quoteFishStr(scriptPath))
+		return fmt.Sprintf("source %s", quoteFishStr(scriptPath))
 	default:
 		return fmt.Sprintf("echo \"No source command available for %s\"", env.Flags().Shell)
 	}
-
-	return script
 }
 
 // sourceCommandAsync returns the async source command for supported shells.
@@ -220,16 +215,4 @@ func printDebugInfo(env runtime.Environment, startTime *time.Time) string {
 	builder.WriteString(env.Logs())
 
 	return builder.String()
-}
-
-func sessionScript(shell string) string {
-	switch shell {
-	case PWSH:
-		return fmt.Sprintf("$env:PROMPTO_SESSION_ID = \"%s\";", cache.SessionID())
-	case ZSH, BASH:
-		return fmt.Sprintf("export PROMPTO_SESSION_ID=\"%s\";", cache.SessionID())
-	case FISH:
-		return fmt.Sprintf("set --export --global PROMPTO_SESSION_ID \"%s\";", cache.SessionID())
-	}
-	return ""
 }
