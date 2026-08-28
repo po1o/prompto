@@ -105,7 +105,6 @@ func runInit(sh string) {
 		if err := cache.Clear(false, shell.InitScriptName(env.Flags())); err != nil {
 			log.Error(err)
 		}
-		cache.Close()
 	}()
 
 	feats := cfg.Features(env, true)

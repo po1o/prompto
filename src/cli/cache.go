@@ -87,9 +87,8 @@ You can do the following:
 				}
 			}
 			// Fallback to CLI mode
-			cache.Init(cache.Persist)
+			cache.Init()
 			cache.Set(cache.Device, cache.TTL, ttl, cache.INFINITE)
-			cache.Close()
 			fmt.Printf("TTL set to %d days\n", ttl)
 		case "show":
 			cache.Init()

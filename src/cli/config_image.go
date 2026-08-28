@@ -70,7 +70,6 @@ Exports the config to an image file using customized output settings.`,
 
 		defer func() {
 			template.SaveCache()
-			cache.Close()
 		}()
 
 		// set sane defaults for things we don't print

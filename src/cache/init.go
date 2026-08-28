@@ -8,10 +8,6 @@ type Option func()
 
 var noSession bool
 
-var Persist Option = func() {
-	log.Debug("persistent cache is disabled")
-}
-
 var NoSession Option = func() {
 	log.Debug("disable session cache")
 	noSession = true
@@ -31,9 +27,4 @@ func Init(options ...Option) {
 	}
 
 	Session.init()
-}
-
-func Close() {
-	Session.close()
-	Device.close()
 }
