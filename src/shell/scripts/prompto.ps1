@@ -583,10 +583,6 @@ New-Module -Name "prompto-core" -ScriptBlock {
     # Vim mode variables
     $script:VimMode = $false
     $script:VimModeRepaint = $false
-    # Prompts precomputed by the daemon for each vim mode, keyed
-    # "<mode>.primary"/"<mode>.right". Replaced wholesale on every render, so
-    # they cannot outlive the prompt they came from.
-    $script:VimPrompts = @{}
     $script:CursorShape = $false
     $script:CursorBlink = $false
 
@@ -663,22 +659,6 @@ New-Module -Name "prompto-core" -ScriptBlock {
         }
     }
 
-    # Serves a vim mode change from the prompts the daemon precomputed, so the
-    # switch costs a swap rather than re-invoking the prompt and spawning a
-    # render. Returns false when this mode was not precomputed (visual,
-    # replace) or nothing has arrived yet, and the caller falls back.
-    function Use-PromptoVimVariant {
-        param([string]$Mode)
-
-        if (-not $script:DaemonMode -or -not $script:VimPrompts.ContainsKey("$Mode.primary")) {
-            return $false
-        }
-
-        $script:DaemonCurrentPrompt = $script:VimPrompts["$Mode.primary"]
-        $script:DaemonCurrentRPrompt = $script:VimPrompts["$Mode.right"]
-        return $true
-    }
-
     function Set-VimModeCursorFromState {
         if (-not $script:VimMode) {
             return
@@ -703,11 +683,9 @@ New-Module -Name "prompto-core" -ScriptBlock {
 
         # Escape key -> Command mode
         Set-PSReadLineKeyHandler -Key Escape -ViMode Insert -BriefDescription 'PromptoViEscapeHandler' -ScriptBlock {
+            $script:VimModeRepaint = $true
             Set-VimModeCursor "Command"
             [Microsoft.PowerShell.PSConsoleReadLine]::ViCommandMode()
-            if (-not (Use-PromptoVimVariant "normal")) {
-                $script:VimModeRepaint = $true
-            }
             if ($script:DaemonMode) {
                 try {
                     $previousOutputEncoding = [Console]::OutputEncoding
@@ -725,10 +703,8 @@ New-Module -Name "prompto-core" -ScriptBlock {
         foreach ($key in @('i', 'I', 'a', 'A', 'o', 'O')) {
             Set-PSReadLineKeyHandler -Key $key -ViMode Command -BriefDescription "PromptoVi${key}Handler" -ScriptBlock {
                 param($key)
+                $script:VimModeRepaint = $true
                 Set-VimModeCursor "Insert"
-                if (-not (Use-PromptoVimVariant "insert")) {
-                    $script:VimModeRepaint = $true
-                }
                 switch ($key.KeyChar) {
                     'i' { [Microsoft.PowerShell.PSConsoleReadLine]::ViInsertMode() }
                     'I' { [Microsoft.PowerShell.PSConsoleReadLine]::ViInsertAtBegining() }
@@ -782,9 +758,6 @@ New-Module -Name "prompto-core" -ScriptBlock {
         if ($script:VimModeRepaint) {
             $repaintFlag = " --repaint"
             $script:VimModeRepaint = $false
-        }
-        else {
-            $script:VimPrompts = @{}
         }
 
         $vimModeArg = ""
@@ -842,11 +815,6 @@ New-Module -Name "prompto-core" -ScriptBlock {
                 }
                 "secondary" {
                     $script:DaemonPendingSecondary = (Expand-PromptoShellClock @($text))[0]
-                }
-                { $_ -like "vim.*" } {
-                    # vim.<mode>.primary / vim.<mode>.right, precomputed by the
-                    # daemon so a mode change costs a swap, not a render.
-                    $script:VimPrompts[$_.Substring(4)] = (Expand-PromptoShellClock @($text))[0]
                 }
                 "status" {
                     if ($null -ne $script:DaemonPendingPrompt) {

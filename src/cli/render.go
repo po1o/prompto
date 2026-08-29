@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -193,23 +192,6 @@ func outputPrompts(resp *ipc.PromptResponse) {
 				fmt.Printf("%s:%s\n", pt, encodeRenderOutputText(p.Text))
 			}
 		}
-	}
-
-	// Precomputed vim mode variants, sent once the render is complete, so the
-	// shell can switch modes without asking us again. Sorted for a stable
-	// stream; the shell keys them by name and ignores ones it does not know.
-	variants := make([]string, 0, len(resp.Prompts))
-
-	for name := range resp.Prompts {
-		if strings.HasPrefix(name, "vim.") {
-			variants = append(variants, name)
-		}
-	}
-
-	sort.Strings(variants)
-
-	for _, name := range variants {
-		fmt.Printf("%s:%s\n", name, encodeRenderOutputText(resp.Prompts[name].Text))
 	}
 
 	// Output status line so shell knows when a batch is complete
