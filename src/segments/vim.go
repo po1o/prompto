@@ -2,6 +2,15 @@ package segments
 
 import "strings"
 
+// The vim modes a shell reports through --vim-mode. The daemon precomputes the
+// prompt for some of these so a mode change needs no render; see ARCHITECTURE.md.
+const (
+	VimInsert  = "insert"
+	VimNormal  = "normal"
+	VimVisual  = "visual"
+	VimReplace = "replace"
+)
+
 type Vim struct {
 	Base
 	Insert  bool
@@ -12,10 +21,10 @@ type Vim struct {
 
 func (v *Vim) Enabled() bool {
 	mode := strings.ToLower(v.env.Flags().VimMode)
-	v.Insert = mode == "insert"
-	v.Normal = mode == "normal"
-	v.Visual = mode == "visual"
-	v.Replace = mode == "replace"
+	v.Insert = mode == VimInsert
+	v.Normal = mode == VimNormal
+	v.Visual = mode == VimVisual
+	v.Replace = mode == VimReplace
 
 	return true
 }
