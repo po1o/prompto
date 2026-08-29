@@ -122,7 +122,7 @@ function _prompto_get_primary() {
         # Disable in POSIX mode.
         prompt='[NOTICE: Prompto prompt is not supported in POSIX mode]\n\u@\h:\w\$ '
     else
-        prompt=(
+        prompt=$(
             _prompto_render_type primary \
                 --shell=bash \
                 --shell-version="$BASH_VERSION" \
@@ -379,7 +379,7 @@ function _prompto_daemon_render() {
 
     # Run the render command in the background using ble.sh job system
     ble/util/job.start \
-        "$_prompto_executable" render \
+        "$_prompto_executable render \
             $config_arg \
             --shell=bash \
             --shell-version=$BASH_VERSION \
