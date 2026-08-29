@@ -473,8 +473,22 @@ function _prompto_on_bind_mode_change --on-variable fish_bind_mode
 
     _prompto_apply_cursor_shape
 
-    # In daemon mode, trigger async repaint with new vim mode
     if test "$_prompto_daemon_mode" = "1"
+        set --local mode (_prompto_get_vim_mode)
+        set --local primary_var _prompto_vim_{$mode}_primary
+        set --local right_var _prompto_vim_{$mode}_right
+
+        # The daemon sends the prompt for each mode with the render, because a
+        # repaint only ever changes the vim segment. Swapping here avoids
+        # spawning a process to redraw one segment.
+        if set --query $primary_var
+            set --global _prompto_current_prompt $$primary_var
+            set --global _prompto_current_rprompt $$right_var
+            commandline -f repaint
+            return
+        end
+
+        # No variant for this mode (visual, replace) or none received yet.
         _prompto_daemon_render --repaint
     end
 
@@ -511,6 +525,11 @@ function _prompto_daemon_repaint --on-signal USR1
                     end
                 case secondary
                     set --global _prompto_current_secondary (_prompto_expand_shell_clock "$text" | string collect)
+                case 'vim.*'
+                    # vim.<mode>.primary / vim.<mode>.right, precomputed by the
+                    # daemon so a mode change costs a swap, not a render.
+                    set --local vim_var _prompto_(string replace --all '.' '_' -- $type)
+                    set --global $vim_var (_prompto_expand_shell_clock "$text" | string collect)
             end
         end < $_prompto_daemon_prompt_file
     end
@@ -534,6 +553,14 @@ end
 # Pass --repaint for vim mode toggles (soft cancel, reuse computations)
 function _prompto_daemon_render
     set --local repaint_flag $argv[1]
+
+    if test "$repaint_flag" != "--repaint"
+        # Drop the previous prompt's variants: a render that sends none must
+        # not leave the last one's lying around.
+        for vim_var in (set --names | string match '_prompto_vim_*_primary' '_prompto_vim_*_right')
+            set --erase $vim_var
+        end
+    end
 
     set --local vim_mode_arg ""
     if test "$_prompto_vim_mode" = "1"
