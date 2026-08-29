@@ -950,3 +950,95 @@ vim:
 	require.Equal(t, "insert", engine.Env.Flags().VimMode)
 	require.Contains(t, engine.PrimaryRepaint(), "INSERT")
 }
+
+// Pending render, user toggles vim mode while a segment is still loading, then
+// the segment lands. The prompt must show the mode the user is actually in and
+// the freshly loaded segment text.
+func TestPendingSegmentUpdateKeepsTheCurrentVimMode(t *testing.T) {
+	segmentType := config.SegmentType("slow_vim_interleave_test")
+	previous, had := config.Segments[segmentType]
+	config.Segments[segmentType] = func() config.SegmentWriter {
+		return &slowWriter{text: "LOADED", delay: 120 * time.Millisecond}
+	}
+	t.Cleanup(func() {
+		if had {
+			config.Segments[segmentType] = previous
+			return
+		}
+		delete(config.Segments, segmentType)
+	})
+
+	cfgPath := filepath.Join(t.TempDir(), "c.omp.yaml")
+	cfg := `
+vim-mode:
+  enabled: true
+
+daemon_timeout: 20
+render_pending_icon: "PENDING"
+
+prompt:
+  - segments: ["slow", "vim"]
+
+slow:
+  type: "slow_vim_interleave_test"
+  template: " {{ .Text }} "
+
+vim:
+  type: "vim"
+  template: "{{ if .Normal }}NORMAL{{ end }}{{ if .Insert }}INSERT{{ end }}"
+`
+	require.NoError(t, os.WriteFile(cfgPath, []byte(cfg), 0o644))
+
+	engine := New(&runtime.Flags{
+		ConfigPath: cfgPath, Plain: true, Shell: shell.GENERIC, VimMode: "insert",
+	})
+	t.Cleanup(engine.WaitForSegmentExecutions)
+
+	done := make(chan struct{})
+	var updates []string
+	initial := engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, func(name string) {
+		if name == "" {
+			close(done)
+			return
+		}
+		updates = append(updates, name)
+	})
+	t.Logf("initial (pending, insert): %q", initial)
+	require.Contains(t, initial, "INSERT")
+
+	// User toggles while the slow segment is still pending.
+	engine.Env.Flags().VimMode = "normal"
+	afterEsc := engine.PrimaryRepaint()
+	t.Logf("after ESC while pending:   %q", afterEsc)
+	require.Contains(t, afterEsc, "NORMAL")
+	require.NotContains(t, afterEsc, "INSERT")
+
+	engine.Env.Flags().VimMode = "insert"
+	afterI := engine.PrimaryRepaint()
+	t.Logf("after i while pending:     %q", afterI)
+	require.Contains(t, afterI, "INSERT")
+
+	engine.Env.Flags().VimMode = "normal"
+	_ = engine.PrimaryRepaint()
+
+	<-done // slow segment lands
+
+	// The update the daemon would ship: ReRender with current state.
+	afterUpdate := engine.ReRender()
+	t.Logf("after segment landed:      %q", afterUpdate)
+	require.Contains(t, afterUpdate, "LOADED", "the finished segment must appear")
+	require.Contains(t, afterUpdate, "NORMAL", "vim mode at update time must be preserved")
+	require.NotContains(t, afterUpdate, "INSERT")
+
+	// And the variants shipped at completion.
+	variants := engine.VimVariants("normal", "insert")
+	t.Logf("variant normal: %q", variants["normal"].Primary)
+	t.Logf("variant insert: %q", variants["insert"].Primary)
+	for mode, v := range variants {
+		require.Contains(t, v.Primary, "LOADED", "%s variant must have the loaded segment", mode)
+	}
+	require.Contains(t, variants["normal"].Primary, "NORMAL")
+	require.Contains(t, variants["insert"].Primary, "INSERT")
+	require.Equal(t, "normal", engine.Env.Flags().VimMode, "mode must be restored")
+	require.True(t, strings.Contains(engine.PrimaryRepaint(), "NORMAL"))
+}
