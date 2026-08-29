@@ -909,3 +909,44 @@ text.second:
 	// The glyph still has to be drawn — the restore must not cost the opening.
 	require.Contains(t, first, "")
 }
+
+// A vim mode change re-renders only the vim segment, so the daemon precomputes
+// the prompt for each mode and the shell swaps strings instead of asking again.
+// The variants have to differ, or the shell would swap identical prompts and
+// the vim indicator would never appear.
+func TestVimVariantsRenderEachModeAndRestoreTheCurrentOne(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "vim.omp.yaml")
+	cfg := `
+vim-mode:
+  enabled: true
+
+prompt:
+  - segments: ["vim"]
+
+vim:
+  type: "vim"
+  template: "{{ if .Normal }}NORMAL{{ end }}{{ if .Insert }}INSERT{{ end }}"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	engine := New(&runtime.Flags{
+		ConfigPath: configPath,
+		Plain:      true,
+		Shell:      shell.GENERIC,
+		VimMode:    "insert",
+	})
+	t.Cleanup(engine.WaitForSegmentExecutions)
+
+	_ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+
+	variants := engine.VimVariants("normal", "insert")
+	require.Len(t, variants, 2)
+	require.Contains(t, variants["normal"].Primary, "NORMAL")
+	require.Contains(t, variants["insert"].Primary, "INSERT")
+	require.NotEqual(t, variants["normal"].Primary, variants["insert"].Primary)
+
+	// The engine keeps rendering the mode it was called under, so a caller
+	// reading the prompt afterwards is unaffected by the precompute.
+	require.Equal(t, "insert", engine.Env.Flags().VimMode)
+	require.Contains(t, engine.PrimaryRepaint(), "INSERT")
+}
