@@ -7,7 +7,6 @@ import (
 	runtimePkg "github.com/po1o/prompto/src/runtime"
 
 	"github.com/po1o/prompto/src/prompt"
-	"github.com/po1o/prompto/src/segments"
 	"github.com/po1o/prompto/src/template"
 )
 
@@ -218,9 +217,6 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 					includeSecondary: true,
 					includeTransient: true,
 				})
-				// Nothing is pending, so this render is already complete and
-				// never reaches Next: attach the variants here too.
-				addVimVariants(&bundle, engine)
 				return bundle, nil
 			}
 		} else {
@@ -403,57 +399,13 @@ func (active *ActiveRender) Next(updateContext context.Context, after uint64) (P
 		primary = engine.ReRender()
 	}
 
-	bundle := active.renderer.Bundle(engine, primary, bundleOptions{
-		includeSecondary: snapshot.Payload == renderCompletePayload,
-		includeTransient: true,
-	})
-
-	if snapshot.Payload == renderCompletePayload {
-		addVimVariants(&bundle, engine)
-	}
-
 	return PromptUpdate{
 		Snapshot: snapshot,
-		Bundle:   bundle,
+		Bundle: active.renderer.Bundle(engine, primary, bundleOptions{
+			includeSecondary: snapshot.Payload == renderCompletePayload,
+			includeTransient: true,
+		}),
 	}, true
-}
-
-// vimVariantModes are the modes precomputed for the shell: the two the keymap
-// hook toggles between constantly. Visual and replace are rarer and still ask
-// the daemon, which keeps working.
-var vimVariantModes = []string{segments.VimNormal, segments.VimInsert}
-
-// addVimVariants attaches the prompt as it renders under each vim mode, so the
-// shell can switch modes by swapping a string instead of spawning a process and
-// making a round trip to redraw one segment. A repaint only re-renders the vim
-// segment, so almost all of that cost was overhead.
-//
-// Only on a completed render. It goes through PrimaryRepaint, which marks the
-// canonical vim segment authoritative and drops late async vim results; a cold
-// start still needs that merge, so doing this mid-render would lose it.
-func addVimVariants(bundle *PromptBundle, engine *prompt.Engine) {
-	if bundle == nil || engine == nil || engine.Env == nil {
-		return
-	}
-
-	flags := engine.Env.Flags()
-	if flags == nil || flags.VimMode == "" {
-		return
-	}
-
-	variants := engine.VimVariants(vimVariantModes...)
-	if len(variants) == 0 {
-		return
-	}
-
-	if bundle.Extras == nil {
-		bundle.Extras = make(map[string]string, len(variants)*2)
-	}
-
-	for mode, variant := range variants {
-		bundle.Extras["vim."+mode+".primary"] = variant.Primary
-		bundle.Extras["vim."+mode+".right"] = variant.RPrompt
-	}
 }
 
 func (active *ActiveRender) Complete() {

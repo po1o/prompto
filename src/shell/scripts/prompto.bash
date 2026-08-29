@@ -311,30 +311,11 @@ function _prompto_apply_cursor_shape() {
 function _prompto_ble_keymap_change() {
     _prompto_apply_cursor_shape
 
-    if [[ $_prompto_daemon_mode != 1 ]]; then
-        return
+    # In daemon mode, trigger async repaint with new vim mode
+    if [[ $_prompto_daemon_mode == 1 ]]; then
+        _prompto_daemon_render --repaint
     fi
-
-    local mode
-    mode=$(_prompto_get_vim_mode)
-
-    # The daemon sends the prompt for each mode with the render, because a
-    # repaint only ever changes the vim segment. Swapping here avoids spawning
-    # a process and a round trip to redraw one segment.
-    if [[ -n ${_prompto_vim_prompts[$mode.primary]+set} ]]; then
-        PS1="${_prompto_vim_prompts[$mode.primary]}"
-        bleopt prompt_rps1="${_prompto_vim_prompts[$mode.right]}"
-        return
-    fi
-
-    # No variant for this mode (visual, replace) or none received yet.
-    _prompto_daemon_render --repaint
 }
-
-# Prompts precomputed by the daemon for each vim mode, so a mode change is a
-# string swap rather than a process spawn. Replaced wholesale on every render,
-# so they cannot outlive their prompt.
-declare -gA _prompto_vim_prompts
 
 function _prompto_daemon_parse_line() {
     local line="$1"
@@ -356,11 +337,6 @@ function _prompto_daemon_parse_line() {
             if [[ $_prompto_transient_enabled == 1 ]]; then
                 _prompto_transient_prompt="$text"
             fi
-            ;;
-        vim.*)
-            # vim.<mode>.primary / vim.<mode>.right, precomputed by the daemon
-            # so a mode change costs a string swap instead of a render.
-            _prompto_vim_prompts["${type#vim.}"]="$text"
             ;;
     esac
 }
@@ -391,13 +367,6 @@ function _prompto_daemon_job() {
 # Pass --repaint for vim mode toggles (soft cancel, reuse computations)
 function _prompto_daemon_render() {
     local repaint_flag="$1"
-
-    if [[ $repaint_flag != "--repaint" ]]; then
-        # Drop the previous prompt's variants: a render that sends none must
-        # not leave the last one's lying around.
-        _prompto_vim_prompts=()
-    fi
-
     local config_arg=""
     if [[ -n "$_prompto_config" ]]; then
         config_arg="--config=$_prompto_config"

@@ -344,10 +344,6 @@ _prompto_transient_enabled=0
 # Vim mode variables
 _prompto_vim_mode=0
 _prompto_vim_mode_repaint=0
-# Prompts precomputed by the daemon for each vim mode, so a mode change is a
-# string swap rather than a process spawn. Keyed "<mode>.primary"/"<mode>.right"
-# and replaced wholesale on every render, so they cannot outlive their prompt.
-typeset -gA _prompto_vim_prompts
 _prompto_cursor_shape=0
 _prompto_cursor_blink=0
 
@@ -432,20 +428,8 @@ function _prompto_apply_cursor_shape() {
 function _prompto_zle-keymap-select() {
   _prompto_apply_cursor_shape
 
+  # In daemon mode, trigger async repaint with new vim mode
   if [[ $_prompto_daemon_mode == 1 ]]; then
-    local mode=$(_prompto_get_vim_mode)
-
-    # The daemon sends the prompt for each mode with the render, because a
-    # repaint only ever changes the vim segment. Swapping the string here
-    # avoids spawning a process and a round trip to redraw one segment.
-    if [[ -n ${_prompto_vim_prompts[$mode.primary]+set} ]]; then
-      PROMPT=${_prompto_vim_prompts[$mode.primary]}
-      RPROMPT=${_prompto_vim_prompts[$mode.right]}
-      zle .reset-prompt
-      return
-    fi
-
-    # No variant for this mode (visual, operator) or none received yet.
     _prompto_daemon_render --repaint
   fi
 
@@ -498,9 +482,6 @@ function _prompto_daemon_render() {
   if [[ $repaint_flag != "--repaint" ]]; then
     _prompto_transient_prompt=
     _prompto_transient_rprompt=
-    # Drop the previous prompt's variants: a render that sends none (vim mode
-    # off, or an older daemon) must not leave the last one's lying around.
-    _prompto_vim_prompts=()
   fi
 
   # Clean up any existing fd handler from previous render
@@ -588,11 +569,6 @@ function _prompto_daemon_parse_line() {
       ;;
     rtransient)
       _prompto_transient_rprompt=$text
-      ;;
-    vim.*)
-      # vim.<mode>.primary / vim.<mode>.right, precomputed by the daemon so a
-      # mode change costs a string swap instead of a render.
-      _prompto_vim_prompts[${type#vim.}]=$text
       ;;
   esac
 }
