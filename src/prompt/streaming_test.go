@@ -13,6 +13,7 @@ import (
 	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/segments/options"
 	"github.com/po1o/prompto/src/shell"
+	"github.com/po1o/prompto/src/terminal"
 
 	"github.com/stretchr/testify/require"
 )
@@ -908,4 +909,174 @@ text.second:
 
 	// The glyph still has to be drawn — the restore must not cost the opening.
 	require.Contains(t, first, "")
+}
+
+// A segment colored only by a template must keep that color on every render
+// after the first. Later renders draw it from the text it already produced and
+// drop its templates, so the resolved colors have to be frozen onto the
+// segment when it renders: a segment that configures neither `foreground` nor
+// `background` would otherwise fall back to an empty color, losing its
+// background and drawing the separator — which takes the block's color — in
+// the terminal default.
+func TestStreamingKeepsTemplatedColorsOnAnAlreadyRenderedSegment(t *testing.T) {
+	configPath := filepath.Join(t.TempDir(), "templated-colors.omp.yaml")
+	cfg := `
+prompt:
+  - segments: ["test.templated"]
+
+test.templated:
+  type: "text"
+  template: "T"
+  foreground_templates:
+    - '{{ if true }}#00ff00{{ end }}'
+  background_templates:
+    - '{{ if true }}#ff0000{{ end }}'
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	plain := terminal.Plain
+	t.Cleanup(func() {
+		terminal.Plain = plain
+	})
+
+	engine := New(&runtime.Flags{
+		ConfigPath:    configPath,
+		Shell:         shell.GENERIC,
+		TerminalWidth: 80,
+	})
+	t.Cleanup(engine.WaitForSegmentExecutions)
+
+	const (
+		onRedBackground   = "\x1b[48;2;255;0;0m"
+		inGreenForeground = "\x1b[38;2;0;255;0m"
+	)
+
+	initial := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	require.Contains(t, initial, onRedBackground)
+	require.Contains(t, initial, inGreenForeground)
+
+	// The update the daemon streams once a slow segment lands re-renders every
+	// segment, including the ones already drawn.
+	rendered := engine.ReRender()
+
+	require.Contains(t, rendered, onRedBackground, "the templated background must survive the re-render")
+	require.Contains(t, rendered, inGreenForeground, "the templated foreground must survive the re-render")
+}
+
+// slowerWriter finishes well after slowWriter, so a prompt holding one of each
+// streams its two updates in a known order.
+type slowerWriter struct {
+	slowWriter
+}
+
+func (w *slowerWriter) Init(_ options.Provider, _ runtime.Environment) {
+	w.delay = 450 * time.Millisecond
+}
+
+// The daemon re-renders the whole prompt on every streamed segment update, so
+// a prompt with two slow segments draws the first one again when the second
+// lands. That second frame is where a segment colored only by a template lost
+// its color: the render reuses the text the segment already produced and drops
+// its templates, leaving nothing behind to draw with.
+//
+// This is the sequence a detached HEAD produced — `git status` ran past the
+// cutoff, so both the git segment and its transient twin streamed in, and the
+// git segment went transparent the moment the second one arrived.
+func TestStreamingUpdatesKeepTemplatedColorsInEveryFrame(t *testing.T) {
+	fastType := config.SegmentType("slow_templated_fast")
+	fastPrevious, fastHadPrevious := config.Segments[fastType]
+	config.Segments[fastType] = func() config.SegmentWriter { return &slowWriter{} }
+	t.Cleanup(func() {
+		if fastHadPrevious {
+			config.Segments[fastType] = fastPrevious
+			return
+		}
+
+		delete(config.Segments, fastType)
+	})
+
+	slowType := config.SegmentType("slow_templated_slow")
+	slowPrevious, slowHadPrevious := config.Segments[slowType]
+	config.Segments[slowType] = func() config.SegmentWriter { return &slowerWriter{} }
+	t.Cleanup(func() {
+		if slowHadPrevious {
+			config.Segments[slowType] = slowPrevious
+			return
+		}
+
+		delete(config.Segments, slowType)
+	})
+
+	configPath := filepath.Join(t.TempDir(), "streamed-templated-colors.omp.yaml")
+	cfg := `
+prompt:
+  - segments: ["streamed.templated", "streamed.plain"]
+
+streamed.templated:
+  type: "slow_templated_fast"
+  template: "TEMPLATED"
+  foreground: "#ffffff"
+  background_templates:
+    - '{{ if true }}#ff0000{{ end }}'
+
+streamed.plain:
+  type: "slow_templated_slow"
+  template: "PLAIN"
+  foreground: "#ffffff"
+  background: "#0000ff"
+`
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	plain := terminal.Plain
+	t.Cleanup(func() {
+		terminal.Plain = plain
+	})
+
+	engine := New(&runtime.Flags{
+		ConfigPath:    configPath,
+		Shell:         shell.GENERIC,
+		TerminalWidth: 80,
+	})
+	t.Cleanup(engine.WaitForSegmentExecutions)
+
+	const onRedBackground = "\x1b[48;2;255;0;0m"
+
+	// Re-render on every update the way the daemon's render pipeline does.
+	frames := make(chan string, 16)
+	initial := engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, func(string) {
+		frames <- engine.ReRender()
+	})
+	require.NotContains(t, initial, "TEMPLATED", "both segments should still be pending")
+
+	var collected []string
+	require.Eventually(t, func() bool {
+		select {
+		case frame := <-frames:
+			collected = append(collected, frame)
+		default:
+		}
+
+		for _, frame := range collected {
+			if strings.Contains(frame, "TEMPLATED") && strings.Contains(frame, "PLAIN") {
+				return true
+			}
+		}
+
+		return false
+	}, 3*time.Second, 20*time.Millisecond, "never saw a frame with both segments rendered")
+
+	var sawReuse bool
+	for _, frame := range collected {
+		if !strings.Contains(frame, "TEMPLATED") {
+			continue
+		}
+
+		require.Contains(t, frame, onRedBackground, "a streamed frame dropped the templated background")
+
+		if strings.Contains(frame, "PLAIN") {
+			sawReuse = true
+		}
+	}
+
+	require.True(t, sawReuse, "the frame that re-draws an already-rendered segment is the one under test")
 }

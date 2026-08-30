@@ -649,6 +649,7 @@ func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, 
 		renderedAt := time.Now()
 		e.markSegmentRendered(segment, renderedAt)
 		e.storeSegmentCache(segment, renderedAt)
+		bakeResolvedColors(segment)
 		e.writeSegment(block, segment)
 	}
 
@@ -666,6 +667,32 @@ func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, 
 	e.endBlock()
 
 	return terminal.String()
+}
+
+// bakeResolvedColors freezes a segment's templated colors onto the segment
+// itself, the way a restored cache entry does.
+//
+// Every later render of this generation draws the segment from the text it
+// already produced, and drops its templates rather than evaluate them again
+// against a writer whose state belongs to an earlier render. A segment colored
+// only by a template configures neither Foreground nor Background, so without
+// this it loses its color at that point: the background goes transparent, and
+// the separator, which takes the block's color, falls back to the terminal
+// default.
+//
+// Writing back is what ResolveForeground deliberately stopped doing, because
+// making one render's answer the next render's fallback keeps a stale color on
+// a segment whose template has since stopped matching. That cannot happen
+// here: a block holds clones of the segment definitions, made fresh for each
+// render generation, and within one generation a rendered segment is never
+// executed again — so the template's inputs, and its answer, cannot change
+// between the render that resolved the color and the renders that reuse it.
+func bakeResolvedColors(segment *config.Segment) {
+	foreground := segment.ResolveForeground()
+	background := segment.ResolveBackground()
+
+	segment.Foreground = foreground
+	segment.Background = background
 }
 
 func (e *Engine) streamingBlockSets() []streamingBlockSet {
