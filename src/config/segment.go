@@ -365,13 +365,10 @@ func (segment *Segment) hasCache() bool {
 }
 
 func (segment *Segment) isToggled() bool {
-	segmentName := segment.Alias
-	if segmentName == "" {
-		segmentName = string(segment.Type)
-	}
+	segmentName := segment.toggleName()
 
-	if segment.env != nil && segment.env.Flags() != nil && len(segment.env.Flags().SegmentToggles) > 0 {
-		if segment.env.Flags().SegmentToggles[segmentName] {
+	if toggles := segment.sessionToggles(); toggles != nil {
+		if toggles[segmentName] {
 			log.Debugf("segment toggled off: %s", segment.Name())
 			return true
 		}
@@ -391,6 +388,41 @@ func (segment *Segment) isToggled() bool {
 	}
 
 	return false
+}
+
+// toggleName returns the key a segment is toggled under. Writers of a toggle
+// set and isToggled must derive it the same way or a toggle silently never
+// matches, so both go through here.
+func (segment *Segment) toggleName() string {
+	if segment.Alias != "" {
+		return segment.Alias
+	}
+
+	return string(segment.Type)
+}
+
+// sessionToggles returns the toggle set the caller tracks for this session, or
+// nil when the caller tracks none.
+//
+// The daemon seeds every session from the shared toggle cache and then owns
+// that copy, so a stored map is authoritative even when empty: empty means the
+// session toggled everything back on. Treating empty as "no answer" and
+// falling through to the shared cache would resurrect the `toggled: true`
+// segments the config seeded there and make them impossible to re-enable.
+//
+// A render outside the daemon carries no map and reads the shared cache
+// directly — the same process wrote it in toggleSegments.
+func (segment *Segment) sessionToggles() map[string]bool {
+	if segment.env == nil {
+		return nil
+	}
+
+	flags := segment.env.Flags()
+	if flags == nil {
+		return nil
+	}
+
+	return flags.SegmentToggles
 }
 
 func (segment *Segment) restoreCache() bool {

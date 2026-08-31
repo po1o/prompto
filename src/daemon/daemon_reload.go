@@ -23,7 +23,11 @@ func (daemon *Daemon) startReloadAndWatchers() {
 	configWatcher, err := NewConfigWatcher(daemon.requestConfigReload)
 	if err == nil {
 		daemon.configWatcher = configWatcher
-		daemon.refreshConfigWatches()
+
+		if cfg, parseErr := config.Parse(daemon.configPath); parseErr == nil {
+			daemon.refreshConfigWatches(cfg)
+		}
+
 		go daemon.configReloadWorker()
 	}
 
@@ -103,7 +107,18 @@ func (daemon *Daemon) applyConfigReload() {
 
 	daemon.Reload(nil)
 
-	daemon.refreshConfigWatches()
+	// Parse once and serve both consumers below: toggleSegments republishes the
+	// shared toggle cache as a side effect of parsing, and doing that twice per
+	// reload is both wasted work and a second writer to reason about.
+	if cfg, err := config.Parse(daemon.configPath); err == nil {
+		daemon.refreshConfigWatches(cfg)
+	}
+
+	// Live sessions own their toggles, so the reloaded config's `toggled: true`
+	// set has to be pushed to them explicitly. A failed parse leaves the shared
+	// cache as it was, which the snapshot already covers, so this is then a no-op.
+	daemon.syncConfigToggles()
+
 	daemon.captureConfigModTime()
 }
 
@@ -147,13 +162,8 @@ func (daemon *Daemon) requestConfigReload(configPath string) {
 
 // refreshConfigWatches re-registers all resolved files (root + extends +
 // symlink targets). ConfigWatcher.Watch is idempotent.
-func (daemon *Daemon) refreshConfigWatches() {
-	if daemon.configWatcher == nil || daemon.configPath == "" {
-		return
-	}
-
-	cfg, err := config.Parse(daemon.configPath)
-	if err != nil {
+func (daemon *Daemon) refreshConfigWatches(cfg *config.Config) {
+	if daemon.configWatcher == nil || daemon.configPath == "" || cfg == nil {
 		return
 	}
 

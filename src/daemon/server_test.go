@@ -48,6 +48,11 @@ blocks:
 	sessionOneToggles := server.core.SessionToggles("session-one")
 	require.True(t, sessionOneToggles["left"])
 
+	// RenderPrompt hands this map to every render as Flags.SegmentToggles, and
+	// Segment.isToggled only consults it when it is non-nil. A session that has
+	// never toggled anything must still get a map, not nil.
+	require.NotNil(t, server.core.SessionToggles("never-rendered"))
+
 	sessionTwoToggles := server.core.SessionToggles("session-two")
 	require.False(t, sessionTwoToggles["left"])
 
