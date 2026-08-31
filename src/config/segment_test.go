@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/color"
 	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/runtime/mock"
@@ -296,4 +297,73 @@ func TestResolveColorsDoNotOverwriteTheConfiguredValue(t *testing.T) {
 	// Resolving again must give the same answer, not one built on the last.
 	assert.Equal(t, color.Ansi("#00ff00"), segment.ResolveForeground())
 	assert.Equal(t, color.Ansi("#ff0000"), segment.ResolveBackground())
+}
+
+// A segment the config seeded with `toggled: true` must still be re-enablable
+// with `prompto toggle`. Un-toggling the last entry leaves the session map
+// empty, and treating empty as "no answer" used to fall through to the shared
+// cache — which the config had seeded — so the segment could never come back.
+func TestIsToggledTreatsAnEmptySessionMapAsAuthoritative(t *testing.T) {
+	seedToggleCache(t, map[string]bool{"git": true})
+
+	env := new(mock.Environment)
+	env.On("Flags").Return(&runtime.Flags{SegmentToggles: map[string]bool{}})
+
+	segment := &Segment{Alias: "git", env: env}
+
+	assert.False(t, segment.isToggled())
+}
+
+func TestIsToggledReadsTheSessionMapWhenItHasEntries(t *testing.T) {
+	seedToggleCache(t, nil)
+
+	env := new(mock.Environment)
+	env.On("Flags").Return(&runtime.Flags{SegmentToggles: map[string]bool{"git": true}})
+
+	segment := &Segment{Alias: "git", env: env}
+
+	assert.True(t, segment.isToggled())
+}
+
+// Outside the daemon nothing tracks toggles per session, so the shared cache
+// the same process wrote in toggleSegments stays the source of truth.
+func TestIsToggledFallsBackToTheSharedCacheWithoutASessionMap(t *testing.T) {
+	seedToggleCache(t, map[string]bool{"git": true})
+
+	env := new(mock.Environment)
+	env.On("Flags").Return(&runtime.Flags{})
+
+	segment := &Segment{Alias: "git", env: env}
+
+	assert.True(t, segment.isToggled())
+}
+
+func TestIsToggledFallsBackToTheSegmentTypeWithoutAnAlias(t *testing.T) {
+	seedToggleCache(t, nil)
+
+	env := new(mock.Environment)
+	env.On("Flags").Return(&runtime.Flags{SegmentToggles: map[string]bool{"git": true}})
+
+	segment := &Segment{Type: GIT, env: env}
+
+	assert.True(t, segment.isToggled())
+}
+
+// seedToggleCache sets the shared toggle cache for one test. It deliberately
+// avoids cache.Init, which clears both process-global stores and would reach
+// well beyond the entry under test; the stores are created lazily, so setting
+// and deleting the one key is enough.
+func seedToggleCache(t *testing.T, toggles map[string]bool) {
+	t.Helper()
+
+	t.Cleanup(func() {
+		cache.Delete(cache.Session, cache.TOGGLECACHE)
+	})
+
+	if toggles == nil {
+		cache.Delete(cache.Session, cache.TOGGLECACHE)
+		return
+	}
+
+	cache.Set(cache.Session, cache.TOGGLECACHE, toggles, cache.INFINITE)
 }

@@ -57,6 +57,7 @@ type Daemon struct {
 	deviceCache           *DeviceCache
 	renders               map[string]*ActiveRender
 	segmentToggles        map[string]map[string]bool
+	seededToggles         map[string]bool
 	configWatcher         *ConfigWatcher
 	binaryWatcher         *BinaryWatcher
 	configReloadCh        chan struct{}
@@ -107,6 +108,7 @@ func NewWithIdleTimeoutAndDeviceCache(idleTimeout time.Duration, renderer prompt
 		deviceCache:    deviceCache,
 		renders:        make(map[string]*ActiveRender),
 		segmentToggles: make(map[string]map[string]bool),
+		seededToggles:  configToggleSnapshot(),
 		configReloadCh: make(chan struct{}, 1),
 		done:           make(chan struct{}),
 		idleTimeout:    idleTimeout,
@@ -403,11 +405,21 @@ func (daemon *Daemon) scheduleIdleIfNoSessions() {
 	daemon.mu.Unlock()
 }
 
-// completeRender tears down the active render stream for a session and clears
-// its pipeline-level state. Used by both CompleteSession (the public API) and
-// onSessionUnregister (when a tracked PID exits). It deliberately does NOT
-// touch ProcessTracker or idle scheduling — those are the caller's concern.
+// completeRender tears down a finished session: the active render stream, its
+// pipeline-level state, and its segment toggles. Used by both CompleteSession
+// (the public API) and onSessionUnregister (when a tracked PID exits). It
+// deliberately does NOT touch ProcessTracker or idle scheduling — those are
+// the caller's concern.
 func (daemon *Daemon) completeRender(sessionID string) {
+	// Sessions are keyed by the shell's pid and the OS recycles pids, so a new
+	// shell can land on a dead one's entry. Its toggle set has to go with it:
+	// SessionToggles treats a stored map as authoritative even when empty, so
+	// an inherited one would leave a `toggled: true` segment visible in a shell
+	// that never toggled it. Dropping it also bounds the map's growth.
+	daemon.toggleMu.Lock()
+	delete(daemon.segmentToggles, sessionID)
+	daemon.toggleMu.Unlock()
+
 	daemon.rendersMu.Lock()
 	active := daemon.renders[sessionID]
 	delete(daemon.renders, sessionID)
@@ -462,19 +474,25 @@ func (daemon *Daemon) isCompletedRender(active *ActiveRender) bool {
 // persistent toggle cache on first access. The returned map is a clone;
 // callers may mutate it without affecting daemon state.
 func (daemon *Daemon) SessionToggles(sessionID string) map[string]bool {
-	daemon.toggleMu.RLock()
-	existing, ok := daemon.segmentToggles[sessionID]
-	daemon.toggleMu.RUnlock()
-	if ok {
-		return cloneToggleMap(existing)
+	if toggles, seeded := daemon.seededSessionToggles(sessionID); seeded {
+		return toggles
 	}
 
 	baseToggles, _ := cache.Get[map[string]bool](cache.Session, cache.TOGGLECACHE)
 	cloned := cloneToggleMap(baseToggles)
 
 	daemon.toggleMu.Lock()
+	defer daemon.toggleMu.Unlock()
+
+	// Another caller may have seeded this session while we were reading the
+	// cache — a first render and a `prompto toggle` for the same shell can
+	// overlap. Storing our copy unconditionally would discard whatever it had
+	// already recorded, silently losing the toggle. First seed wins.
+	if seeded, found := daemon.segmentToggles[sessionID]; found {
+		cloned = seeded
+	}
+
 	daemon.segmentToggles[sessionID] = cloned
-	daemon.toggleMu.Unlock()
 
 	return cloneToggleMap(cloned)
 }
@@ -482,7 +500,20 @@ func (daemon *Daemon) SessionToggles(sessionID string) map[string]bool {
 // ToggleSegment flips the visibility of the named segments for a session:
 // segments currently toggled-on become toggled-off and vice versa.
 func (daemon *Daemon) ToggleSegment(sessionID string, segments []string) {
-	current := daemon.SessionToggles(sessionID)
+	// Seed first so the session starts from the config's toggles rather than an
+	// empty set, then re-read and mutate under the lock: syncConfigToggles can
+	// push a newly configured toggle into the stored map in between, and a
+	// clone-mutate-store would drop it.
+	daemon.SessionToggles(sessionID)
+
+	daemon.toggleMu.Lock()
+	defer daemon.toggleMu.Unlock()
+
+	current, ok := daemon.segmentToggles[sessionID]
+	if !ok {
+		current = map[string]bool{}
+		daemon.segmentToggles[sessionID] = current
+	}
 
 	for _, segment := range segments {
 		if current[segment] {
@@ -492,10 +523,6 @@ func (daemon *Daemon) ToggleSegment(sessionID string, segments []string) {
 
 		current[segment] = true
 	}
-
-	daemon.toggleMu.Lock()
-	daemon.segmentToggles[sessionID] = current
-	daemon.toggleMu.Unlock()
 }
 
 // ResetToggles clears all per-session segment toggles. Used when the
@@ -503,7 +530,78 @@ func (daemon *Daemon) ToggleSegment(sessionID string, segments []string) {
 func (daemon *Daemon) ResetToggles() {
 	daemon.toggleMu.Lock()
 	daemon.segmentToggles = make(map[string]map[string]bool)
+	// The caller also empties the shared toggle cache this snapshot describes.
+	// Left behind, it would report the config's toggles as already seeded and
+	// syncConfigToggles would never push them again, so `toggled: true` would
+	// stay lost in every live session until the daemon restarted.
+	daemon.seededToggles = make(map[string]bool)
 	daemon.toggleMu.Unlock()
+}
+
+// seededSessionToggles returns a copy of an already-seeded session's toggles.
+//
+// The copy is taken while the read lock is still held: ToggleSegment and
+// syncConfigToggles mutate the stored map in place, so cloning it after
+// releasing the lock races them.
+func (daemon *Daemon) seededSessionToggles(sessionID string) (map[string]bool, bool) {
+	daemon.toggleMu.RLock()
+	defer daemon.toggleMu.RUnlock()
+
+	existing, ok := daemon.segmentToggles[sessionID]
+	if !ok {
+		return nil, false
+	}
+
+	return cloneToggleMap(existing), true
+}
+
+// syncConfigToggles pushes the toggles the config has gained since the last
+// sync into every live session.
+//
+// A session owns its toggle set once seeded, which is what lets a user switch
+// a `toggled: true` segment back on. Left at that, a segment that only just
+// gained `toggled: true` would never reach a shell that is already running —
+// it would wait for that shell to exit. Comparing the shared cache against the
+// last snapshot isolates exactly what the config added, and only that is
+// pushed: a toggle the user cleared is absent from the difference, so it is
+// not resurrected.
+func (daemon *Daemon) syncConfigToggles() {
+	if daemon.configPath == "" {
+		return
+	}
+
+	current, _ := cache.Get[map[string]bool](cache.Session, cache.TOGGLECACHE)
+
+	daemon.toggleMu.Lock()
+	defer daemon.toggleMu.Unlock()
+
+	added := make([]string, 0, len(current))
+	for name, on := range current {
+		if !on || daemon.seededToggles[name] {
+			continue
+		}
+
+		added = append(added, name)
+		daemon.seededToggles[name] = true
+	}
+
+	if len(added) == 0 {
+		return
+	}
+
+	for _, toggles := range daemon.segmentToggles {
+		for _, name := range added {
+			toggles[name] = true
+		}
+	}
+}
+
+// configToggleSnapshot records the toggles config.Load has already seeded into
+// the shared cache, so the first sync reports no difference and does not push
+// them into sessions that were seeded from them anyway.
+func configToggleSnapshot() map[string]bool {
+	seeded, _ := cache.Get[map[string]bool](cache.Session, cache.TOGGLECACHE)
+	return cloneToggleMap(seeded)
 }
 
 func cloneToggleMap(source map[string]bool) map[string]bool {

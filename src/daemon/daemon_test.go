@@ -6,9 +6,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/po1o/prompto/src/cache"
+	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/prompt"
 	"github.com/po1o/prompto/src/runtime"
 
@@ -346,4 +349,220 @@ func startDetachedTestProcessPID(t *testing.T) int {
 
 func detachedProcessPIDCommand() (string, []string) {
 	return "sleep", []string{"1"}
+}
+
+// Segment.isToggled treats a session's toggle map as authoritative whenever it
+// is non-nil, so SessionToggles must never hand back nil: a nil map sends the
+// render back to the shared toggle cache, where the config's `toggled: true`
+// seeds live, and makes such a segment impossible to switch on again.
+func TestSessionTogglesNeverReturnsNil(t *testing.T) {
+	clearSharedToggleCache(t)
+
+	daemon := New(&rendererStub{})
+
+	require.NotNil(t, daemon.SessionToggles("never-seen"))
+
+	daemon.ToggleSegment(sessionIDFixture, []string{"git"})
+	require.True(t, daemon.SessionToggles(sessionIDFixture)["git"])
+
+	// Toggling the only entry back on leaves an empty map, never a nil one.
+	daemon.ToggleSegment(sessionIDFixture, []string{"git"})
+	toggles := daemon.SessionToggles(sessionIDFixture)
+	require.NotNil(t, toggles)
+	require.False(t, toggles["git"])
+}
+
+// Pids are recycled, so a session's toggles must not outlive its shell. The
+// next shell landing on that pid would inherit them, and since even an empty
+// map is authoritative it would render a `toggled: true` segment it never
+// toggled — or keep one hidden that it never turned off.
+func TestCompleteSessionForgetsSessionToggles(t *testing.T) {
+	clearSharedToggleCache(t)
+
+	daemon := New(&rendererStub{})
+	sessionID := strconv.Itoa(os.Getpid())
+
+	daemon.ToggleSegment(sessionID, []string{"git"})
+	require.True(t, daemon.SessionToggles(sessionID)["git"])
+
+	daemon.CompleteSession(sessionID)
+
+	daemon.toggleMu.RLock()
+	_, stored := daemon.segmentToggles[sessionID]
+	daemon.toggleMu.RUnlock()
+	require.False(t, stored, "toggles must not outlive the session")
+
+	// A shell reusing the pid is seeded afresh from the shared cache.
+	require.False(t, daemon.SessionToggles(sessionID)["git"])
+}
+
+// A shell that exits for real must lose its toggles, not just one taken down
+// through CompleteSession: onSessionUnregister is the only route into
+// completeRender that production actually uses.
+func TestExitedProcessForgetsSessionToggles(t *testing.T) {
+	clearSharedToggleCache(t)
+
+	daemon := New(&rendererStub{})
+	pid := startDetachedTestProcessPID(t)
+	sessionID := strconv.Itoa(pid)
+
+	daemon.StartRender(RenderRequest{
+		SessionID: sessionID,
+		Flags:     &runtime.Flags{},
+	})
+
+	daemon.ToggleSegment(sessionID, []string{"git"})
+	require.True(t, daemon.SessionToggles(sessionID)["git"])
+
+	require.NoError(t, exec.Command("kill", strconv.Itoa(pid)).Run())
+
+	require.Eventually(t, func() bool {
+		daemon.toggleMu.RLock()
+		defer daemon.toggleMu.RUnlock()
+		_, stored := daemon.segmentToggles[sessionID]
+		return !stored
+	}, 5*time.Second, 10*time.Millisecond, "toggles must not outlive the shell")
+}
+
+// The shared toggle cache is process-global and any test that loads a config
+// writes it, so tests asserting on seeded toggles must start from a known
+// state rather than inherit whatever ran before them.
+func clearSharedToggleCache(t *testing.T) {
+	t.Helper()
+
+	cache.Delete(cache.Session, cache.TOGGLECACHE)
+	t.Cleanup(func() {
+		cache.Delete(cache.Session, cache.TOGGLECACHE)
+	})
+}
+
+// A `toggled: true` the config gains must reach shells that are already
+// running — before the seed delta they kept rendering the segment until they
+// exited. The converse must not happen: a toggle the user cleared stays
+// cleared across the reload rather than being seeded back on.
+func TestConfigReloadPushesOnlyNewlyAddedToggles(t *testing.T) {
+	clearSharedToggleCache(t)
+
+	configPath := filepath.Join(t.TempDir(), "reload-toggles.prompto.yaml")
+	write := func(body string) {
+		t.Helper()
+		require.NoError(t, os.WriteFile(configPath, []byte(body), 0o644))
+	}
+
+	write(`
+left:
+    type: text
+    template: A
+    toggled: true
+right:
+    type: text
+    template: B
+prompt:
+    - segments:
+        - left
+        - right
+`)
+
+	daemon := newConfigTestDaemon(t, configPath)
+
+	// The session inherits the config's toggle, then the user switches it on.
+	require.True(t, daemon.SessionToggles(sessionIDFixture)["left"])
+	daemon.ToggleSegment(sessionIDFixture, []string{"left"})
+	require.False(t, daemon.SessionToggles(sessionIDFixture)["left"])
+
+	write(`
+left:
+    type: text
+    template: A
+    toggled: true
+right:
+    type: text
+    template: B
+    toggled: true
+prompt:
+    - segments:
+        - left
+        - right
+`)
+
+	daemon.applyConfigReload()
+
+	toggles := daemon.SessionToggles(sessionIDFixture)
+	require.True(t, toggles["right"], "a newly configured toggle must reach a live session")
+	require.False(t, toggles["left"], "a toggle the user cleared must not be seeded back on")
+}
+
+// Clearing the cache empties the shared toggle cache the seed snapshot
+// describes. The snapshot has to go with it, or the config's `toggled: true`
+// looks already-seeded forever after and never reaches a session again.
+func TestResetTogglesLetsTheConfigReseedLiveSessions(t *testing.T) {
+	clearSharedToggleCache(t)
+
+	configPath := filepath.Join(t.TempDir(), "reset-toggles.prompto.yaml")
+	require.NoError(t, os.WriteFile(configPath, []byte(`
+left:
+    type: text
+    template: A
+    toggled: true
+prompt:
+    - segments:
+        - left
+`), 0o644))
+
+	daemon := newConfigTestDaemon(t, configPath)
+
+	require.True(t, daemon.SessionToggles(sessionIDFixture)["left"])
+
+	// What the CacheClear RPC does: drop the toggles and the shared cache.
+	daemon.ResetToggles()
+	cache.DeleteAll(cache.Session)
+
+	// A render lands before the config is reloaded, so the session re-seeds
+	// from the now-empty cache and holds an (authoritative) empty map.
+	require.False(t, daemon.SessionToggles(sessionIDFixture)["left"])
+
+	daemon.applyConfigReload()
+
+	require.True(t, daemon.SessionToggles(sessionIDFixture)["left"], "the config must be able to seed toggles again after a cache clear")
+}
+
+// newConfigTestDaemon binds a daemon to a config path without starting the
+// fsnotify watcher. These tests drive applyConfigReload themselves, and a live
+// reload worker would fire on their own file writes — running a second,
+// concurrent reload whose config.Load races the test's.
+func newConfigTestDaemon(t *testing.T, configPath string) *Daemon {
+	t.Helper()
+
+	// Mirrors NewFromConfigWithDeviceCache: the config must be loaded before
+	// the constructor, which snapshots the toggles it seeded.
+	cfg := config.Load(configPath)
+	daemon := NewWithIdleTimeoutAndDeviceCache(cfg.GetDaemonIdleTimeout(), &rendererStub{}, nil)
+	daemon.configPath = configPath
+	t.Cleanup(daemon.Stop)
+
+	return daemon
+}
+
+// A shell's first render and a `prompto toggle` for that same shell can
+// overlap: both seed the session. Whichever seeds second must not overwrite
+// the first, or the toggle command silently does nothing.
+func TestSessionTogglesDoesNotDropAConcurrentToggle(t *testing.T) {
+	clearSharedToggleCache(t)
+
+	daemon := New(&rendererStub{})
+
+	for i := range 2000 {
+		sessionID := strconv.Itoa(i)
+
+		var wg sync.WaitGroup
+		wg.Go(func() {
+			daemon.SessionToggles(sessionID)
+		})
+		wg.Go(func() {
+			daemon.ToggleSegment(sessionID, []string{"git"})
+		})
+		wg.Wait()
+
+		require.True(t, daemon.SessionToggles(sessionID)["git"], "toggle lost to a concurrent first render (session %s)", sessionID)
+	}
 }

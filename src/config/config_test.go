@@ -319,7 +319,6 @@ func TestGetDaemonTimeout(t *testing.T) {
 	var nilCfg *Config
 	assert.Equal(t, 100*time.Millisecond, nilCfg.GetDaemonTimeout())
 }
-
 // TestGetRenderTimeout pins the mapping the render marker rests on, including
 // the negative case, which reads like "disable" and deliberately is not: the
 // caller's stream deadline applies regardless, so suppressing the marker
@@ -345,4 +344,37 @@ func TestGetRenderTimeout(t *testing.T) {
 
 	var nilConfig *Config
 	assert.Equal(t, 60*time.Second, nilConfig.GetRenderTimeout(), "a nil config takes the default")
+}
+
+// cache.Get returns the stored map itself, so toggleSegments has to publish a
+// fresh copy rather than write into what it read. The daemon holds references
+// to previously published maps and reads them from other goroutines — seeding
+// sessions, diffing on reload — while renders in other shells call Load, so
+// mutating a published map in place is a data race that brings the daemon down
+// with "concurrent map read and map write".
+func TestToggleSegmentsPublishesACopyInsteadOfMutating(t *testing.T) {
+	cache.Delete(cache.Session, cache.TOGGLECACHE)
+	t.Cleanup(func() {
+		cache.Delete(cache.Session, cache.TOGGLECACHE)
+	})
+
+	first := &Config{Layout: &LayoutConfig{Segments: map[string]*Segment{
+		"left": {Alias: "left", Toggled: true},
+	}}}
+	first.toggleSegments()
+
+	published, OK := cache.Get[map[string]bool](cache.Session, cache.TOGGLECACHE)
+	assert.True(t, OK)
+	assert.True(t, published["left"])
+
+	second := &Config{Layout: &LayoutConfig{Segments: map[string]*Segment{
+		"right": {Alias: "right", Toggled: true},
+	}}}
+	second.toggleSegments()
+
+	assert.False(t, published["right"], "a published toggle map must never be written to again")
+
+	latest, _ := cache.Get[map[string]bool](cache.Session, cache.TOGGLECACHE)
+	assert.True(t, latest["left"], "the new map must carry the toggles the old one had")
+	assert.True(t, latest["right"])
 }

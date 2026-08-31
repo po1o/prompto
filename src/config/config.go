@@ -1,6 +1,7 @@
 package config
 
 import (
+	libmaps "maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -295,13 +296,20 @@ func (cfg *Config) GetRenderTimeout() time.Duration {
 	return time.Duration(cfg.RenderTimeout) * time.Second
 }
 
-// toggleSegments processes all layout segments and adds segments
-// with Toggled == true to the toggle cache, effectively toggling them off.
+// toggleSegments adds every segment declaring `toggled: true` to the toggle
+// cache, so it starts hidden.
+//
+// The new set is built as a copy and published whole. cache.Get returns the
+// stored map itself, and the daemon reads that map from other goroutines — it
+// seeds each session from it and diffs it on reload — while renders in other
+// shells can be calling Load concurrently. Writing into the stored map in
+// place is a data race that takes the whole daemon down with a "concurrent map
+// read and map write", so a published map must never be mutated again.
 func (cfg *Config) toggleSegments() {
-	currentToggleSet, _ := cache.Get[map[string]bool](cache.Session, cache.TOGGLECACHE)
-	if currentToggleSet == nil {
-		currentToggleSet = make(map[string]bool)
-	}
+	stored, _ := cache.Get[map[string]bool](cache.Session, cache.TOGGLECACHE)
+
+	toggles := make(map[string]bool, len(stored))
+	libmaps.Copy(toggles, stored)
 
 	if cfg.Layout != nil {
 		for _, segment := range cfg.Layout.Segments {
@@ -309,15 +317,9 @@ func (cfg *Config) toggleSegments() {
 				continue
 			}
 
-			segmentName := segment.Alias
-			if segmentName == "" {
-				segmentName = string(segment.Type)
-			}
-
-			currentToggleSet[segmentName] = true
+			toggles[segment.toggleName()] = true
 		}
 	}
 
-	// Update cache with the map directly
-	cache.Set(cache.Session, cache.TOGGLECACHE, currentToggleSet, cache.INFINITE)
+	cache.Set(cache.Session, cache.TOGGLECACHE, toggles, cache.INFINITE)
 }
