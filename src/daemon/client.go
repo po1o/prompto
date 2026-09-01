@@ -96,39 +96,61 @@ func NewClient() (*Client, error) {
 	}, nil
 }
 
-// ConnectOrStart attempts to connect to the daemon. If that fails it kills any
-// stale daemon, calls startFunc to start a fresh one, and waits for it to come
-// up.
+// ConnectOrStart connects to the daemon, waiting for one that is coming up and
+// starting one if there is none.
 func ConnectOrStart(startFunc func() error) (*Client, error) {
 	client, err := NewClient()
 	if err == nil {
 		return client, nil
 	}
 
-	// Force kill ANY existing daemon/lock, for a clean slate to start from.
+	// A live daemon that did not answer is not one to replace. Other shells are
+	// using it, and taking it down makes their next prompt pay the restart too;
+	// it may also be one another shell has only just spawned and that is still
+	// binding its socket. Wait for it, and replace it only if it stays
+	// unreachable — or goes away, which stops the wait early.
+	if DaemonRunning() {
+		reconnected, retryErr := awaitDaemon(DaemonRunning)
+		if retryErr == nil {
+			return reconnected, nil
+		}
+
+		log.Debugf("daemon is running but unreachable, replacing it: %v", retryErr)
+	}
+
+	// Nothing alive to talk to: clear the lock, stale or otherwise, and start
+	// from a clean slate.
 	_ = KillDaemon()
 
 	if err := startFunc(); err != nil {
 		return nil, fmt.Errorf("failed to start daemon: %w", err)
 	}
 
-	return waitForDaemon()
+	return awaitDaemon(nil)
 }
 
-// waitForDaemon retries until the daemon accepts a connection. A connect to a
+// awaitDaemon retries until the daemon accepts a connection. A connect to a
 // socket that is not bound yet fails at once rather than blocking, so a single
 // attempt after a fixed sleep gives the daemon only that sleep to get ready —
 // and it needs longer than any sleep short enough to keep a prompt responsive.
 // Retrying returns as soon as the daemon is up instead of always paying the
-// wait, and it lets a shell that lost the race to spawn the daemon connect to
-// the winner's rather than fail.
-func waitForDaemon() (*Client, error) {
+// wait.
+//
+// stillExpected is checked after each failed attempt, so a caller waiting on a
+// daemon that has since gone away can stop rather than sit out the deadline. A
+// caller that has just spawned one passes nil: that daemon may not have written
+// its lock file yet.
+func awaitDaemon(stillExpected func() bool) (*Client, error) {
 	deadline := time.Now().Add(startTimeout)
 
 	for {
 		client, err := NewClient()
 		if err == nil {
 			return client, nil
+		}
+
+		if stillExpected != nil && !stillExpected() {
+			return nil, fmt.Errorf("daemon is no longer running: %w", err)
 		}
 
 		if time.Now().After(deadline) {

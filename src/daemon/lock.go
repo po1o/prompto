@@ -16,17 +16,34 @@ type LockFile struct {
 	path string
 }
 
+// lockFilePath is where the daemon records the PID holding the single-instance
+// lock.
+func lockFilePath() string {
+	return filepath.Join(statePath(), "daemon.lock")
+}
+
+// DaemonRunning reports whether the process named by the lock file is alive. It
+// says nothing about whether that daemon is answering: a caller that failed to
+// reach one uses this to tell "there is no daemon" from "the daemon did not
+// answer me just now".
+func DaemonRunning() bool {
+	pid, err := ReadPID(lockFilePath())
+	if err != nil {
+		return false
+	}
+
+	return IsProcessRunning(pid)
+}
+
 // NewLockFile creates and acquires an exclusive lock file.
 // Returns error if lock is already held by another process.
 func NewLockFile(configPath string) (*LockFile, error) {
-	stateDir := statePath()
-
 	// Ensure state directory exists
-	if err := os.MkdirAll(stateDir, 0o755); err != nil {
+	if err := os.MkdirAll(statePath(), 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create state directory: %w", err)
 	}
 
-	path := filepath.Join(stateDir, "daemon.lock")
+	path := lockFilePath()
 
 	// Try to acquire lock
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
@@ -120,20 +137,18 @@ func (lf *LockFile) Release() error {
 
 // CleanupLock removes a stale lock file (for crash recovery).
 func CleanupLock() error {
-	path := filepath.Join(statePath(), "daemon.lock")
-	return os.Remove(path)
+	return os.Remove(lockFilePath())
 }
 
 // GetRunningDaemonInfo returns the PID and config path of the running daemon.
 func GetRunningDaemonInfo() (int, string, error) {
-	path := filepath.Join(statePath(), "daemon.lock")
-	return ReadLockInfo(path)
+	return ReadLockInfo(lockFilePath())
 }
 
 // KillDaemon checks for an existing daemon and kills it if running.
 // It also removes the lock file.
 func KillDaemon() error {
-	path := filepath.Join(statePath(), "daemon.lock")
+	path := lockFilePath()
 
 	pid, err := ReadPID(path)
 	if err != nil {
