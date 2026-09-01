@@ -19,6 +19,16 @@ import (
 // DialTimeout is the maximum time to wait for daemon connection.
 const DialTimeout = 2 * time.Second
 
+const (
+	// startTimeout bounds how long a freshly spawned daemon is given to accept
+	// connections, and startPoll how often it is tried in the meantime.
+	// Measured cold starts land in the low hundreds of milliseconds: the daemon
+	// loads its config before it listens, so the socket is not there the moment
+	// the process is.
+	startTimeout = 2 * time.Second
+	startPoll    = 25 * time.Millisecond
+)
+
 // ResponseTypeComplete indicates the final response from the daemon.
 const ResponseTypeComplete = "complete"
 
@@ -86,37 +96,47 @@ func NewClient() (*Client, error) {
 	}, nil
 }
 
-// ConnectOrStart attempts to connect to the daemon.
-// If connection fails, it kills any stale daemon, calls startFunc to start a new one,
-// waits briefly, and retries the connection once.
+// ConnectOrStart attempts to connect to the daemon. If that fails it kills any
+// stale daemon, calls startFunc to start a fresh one, and waits for it to come
+// up.
 func ConnectOrStart(startFunc func() error) (*Client, error) {
 	client, err := NewClient()
 	if err == nil {
 		return client, nil
 	}
 
-	// Connection failed.
-	// 1. Force kill ANY existing daemon/lock (clean slate)
+	// Force kill ANY existing daemon/lock, for a clean slate to start from.
 	_ = KillDaemon()
 
-	// 2. Start a fresh daemon
 	if err := startFunc(); err != nil {
 		return nil, fmt.Errorf("failed to start daemon: %w", err)
 	}
 
-	// 3. Wait briefly for startup
-	// TODO: Replace with a more robust readiness check if needed,
-	// but NewClient already waits for connection readiness.
-	// This sleep is just to allow the process to initialize the socket file.
-	time.Sleep(50 * time.Millisecond)
+	return waitForDaemon()
+}
 
-	// Attempt 2: Connect again
-	client, err = NewClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to daemon after restart: %w", err)
+// waitForDaemon retries until the daemon accepts a connection. A connect to a
+// socket that is not bound yet fails at once rather than blocking, so a single
+// attempt after a fixed sleep gives the daemon only that sleep to get ready —
+// and it needs longer than any sleep short enough to keep a prompt responsive.
+// Retrying returns as soon as the daemon is up instead of always paying the
+// wait, and it lets a shell that lost the race to spawn the daemon connect to
+// the winner's rather than fail.
+func waitForDaemon() (*Client, error) {
+	deadline := time.Now().Add(startTimeout)
+
+	for {
+		client, err := NewClient()
+		if err == nil {
+			return client, nil
+		}
+
+		if time.Now().After(deadline) {
+			return nil, fmt.Errorf("daemon did not accept connections within %s: %w", startTimeout, err)
+		}
+
+		time.Sleep(startPoll)
 	}
-
-	return client, nil
 }
 
 // Close closes the client connection.

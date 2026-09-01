@@ -1,11 +1,14 @@
 package daemon
 
 import (
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/po1o/prompto/src/daemon/ipc"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 )
 
 // The client's connection and RPC wrappers need an in-process gRPC harness
@@ -76,4 +79,61 @@ func TestExtractPromptsIgnoresUnknownKeys(t *testing.T) {
 	})
 
 	require.Equal(t, &PromptResult{Primary: "P"}, result)
+}
+
+// TestConnectOrStartWaitsForTheDaemonToAcceptConnections covers the cold start.
+// The daemon loads its config before it listens, so its socket is not bound the
+// moment the process exists — measured starts take a few hundred milliseconds.
+// A connect to an unbound socket fails at once rather than blocking, so waiting
+// a fixed 50ms and trying once gave up while the daemon was still coming up,
+// and the first prompt after a daemon restart failed outright.
+func TestConnectOrStartWaitsForTheDaemonToAcceptConnections(t *testing.T) {
+	socketDir := t.TempDir()
+	t.Setenv("XDG_RUNTIME_DIR", socketDir)
+	t.Setenv("XDG_STATE_HOME", socketDir)
+
+	// Longer than any fixed sleep short enough to keep a prompt responsive.
+	const startupDelay = 250 * time.Millisecond
+
+	server := grpc.NewServer()
+	t.Cleanup(server.Stop)
+
+	startFunc := func() error {
+		go func() {
+			time.Sleep(startupDelay)
+
+			listener, err := ipc.Listen()
+			if err != nil {
+				return
+			}
+
+			_ = server.Serve(listener)
+		}()
+
+		return nil
+	}
+
+	start := time.Now()
+	client, err := ConnectOrStart(startFunc)
+	require.NoError(t, err, "gave up while the daemon was still starting")
+	require.NotNil(t, client)
+	t.Cleanup(func() { _ = client.Close() })
+
+	require.GreaterOrEqual(t, time.Since(start), startupDelay,
+		"cannot have connected before the daemon was listening")
+}
+
+// TestConnectOrStartReportsAFailureToSpawn keeps a daemon that cannot be
+// started from being retried against; there is nothing coming up to wait for.
+func TestConnectOrStartReportsAFailureToSpawn(t *testing.T) {
+	socketDir := t.TempDir()
+	t.Setenv("XDG_RUNTIME_DIR", socketDir)
+	t.Setenv("XDG_STATE_HOME", socketDir)
+
+	start := time.Now()
+	client, err := ConnectOrStart(func() error { return errors.New("no binary") })
+
+	require.Error(t, err)
+	require.Nil(t, client)
+	require.Less(t, time.Since(start), startTimeout, "must not wait for a daemon that was never started")
 }
