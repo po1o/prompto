@@ -39,8 +39,8 @@ func TestCancelActiveRenderCancelsOnlyCurrentSession(t *testing.T) {
 	t.Cleanup(cancelA)
 	t.Cleanup(cancelB)
 
-	registry.SetActiveRenderCancel("session-a", cancelA)
-	registry.SetActiveRenderCancel("session-b", cancelB)
+	registry.SetActiveRender("session-a", ctxA, cancelA)
+	registry.SetActiveRender("session-b", ctxB, cancelB)
 	registry.CancelActiveRender("session-a")
 
 	select {
@@ -117,13 +117,13 @@ func TestRenderHandleCompleteClearsOnlyMatchingActiveRender(t *testing.T) {
 
 	first.Complete()
 
-	activeContext, ok := registry.GetActiveRenderContext("session-a")
+	activeContext, _, ok := registry.GetActiveRender("session-a")
 	require.True(t, ok)
 	require.Same(t, second.Context, activeContext)
 
 	second.Complete()
 
-	_, ok = registry.GetActiveRenderContext("session-a")
+	_, _, ok = registry.GetActiveRender("session-a")
 	require.False(t, ok)
 }
 

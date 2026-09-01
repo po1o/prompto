@@ -253,9 +253,8 @@ func newCacheTestEngine(count *int32) *Engine {
 				return &countingProvider{count: count}
 			},
 		},
-		segmentStates: make(map[string]*segmentAsyncState),
-		sessionCache:  make(map[string]segmentRenderCache),
-		folderCache:   make(map[string]segmentRenderCache),
+		sessionCache: make(map[string]segmentRenderCache),
+		folderCache:  make(map[string]segmentRenderCache),
 	}
 }
 
@@ -272,11 +271,10 @@ func newCacheTestEngineWithPwd(t *testing.T, pwd string) *Engine {
 	env.Init(flags)
 
 	return &Engine{
-		Env:           env,
-		Config:        &config.Config{},
-		LayoutConfig:  &config.LayoutConfig{},
-		segmentStates: make(map[string]*segmentAsyncState),
-		sessionCache:  make(map[string]segmentRenderCache),
-		folderCache:   make(map[string]segmentRenderCache),
+		Env:          env,
+		Config:       &config.Config{},
+		LayoutConfig: &config.LayoutConfig{},
+		sessionCache: make(map[string]segmentRenderCache),
+		folderCache:  make(map[string]segmentRenderCache),
 	}
 }

@@ -22,8 +22,6 @@ func (e *Engine) writeBlockSegments(block *config.Block) (string, int) {
 		return "", 0
 	}
 
-	e.prepareSegmentStates(block.Segments, false)
-
 	out := make(chan result, length)
 
 	e.writeSegmentsConcurrently(block.Segments, out)
@@ -54,8 +52,6 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 
 	for i, segment := range segments {
 		go func(segment *config.Segment, index int) {
-			e.markSegmentPending(segment)
-
 			if e.applySegmentCacheBeforeExecute(segment) {
 				out <- result{segment, index}
 				return
@@ -64,8 +60,6 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 			if providerFactory, ok := e.sharedProviderFactory[segment.Type]; ok {
 				err := segment.MapSegmentWithWriter(e.Env)
 				if err != nil {
-					e.markSegmentDone(segment)
-					e.notifySegmentUpdate(segment.Name())
 					out <- result{segment, index}
 					return
 				}
@@ -77,8 +71,6 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 					_ = segment.CopyWriterStateFrom(res.Source)
 				}
 
-				e.markSegmentDone(segment)
-				e.notifySegmentUpdate(segment.Name())
 				out <- result{segment, index}
 				return
 			}
@@ -89,8 +81,6 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 				e.executeWithoutLegacySegmentCache(segment)
 			}
 
-			e.markSegmentDone(segment)
-			e.notifySegmentUpdate(segment.Name())
 			out <- result{segment, index}
 		}(segment, i)
 	}
@@ -149,9 +139,7 @@ func (e *Engine) writeSegments(out chan result, block *config.Block) {
 
 			if segment.Render(segmentIndex, e.forceRender) {
 				segmentIndex++
-				renderedAt := time.Now()
-				e.markSegmentRendered(segment, renderedAt)
-				e.storeSegmentCache(segment, renderedAt)
+				e.storeSegmentCache(segment, time.Now())
 			}
 
 			e.writeSegment(block, segment)
@@ -164,9 +152,7 @@ func (e *Engine) writeSegments(out chan result, block *config.Block) {
 		segment := results[current]
 		if segment.Render(segmentIndex, e.forceRender) {
 			segmentIndex++
-			renderedAt := time.Now()
-			e.markSegmentRendered(segment, renderedAt)
-			e.storeSegmentCache(segment, renderedAt)
+			e.storeSegmentCache(segment, time.Now())
 		}
 
 		e.writeSegment(block, segment)

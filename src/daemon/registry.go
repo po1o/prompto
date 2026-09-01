@@ -148,10 +148,6 @@ func (registry *EngineRegistry) StartRender(sessionID string, flags *runtime.Fla
 	}
 }
 
-func (registry *EngineRegistry) SetActiveRenderCancel(sessionID string, cancel context.CancelFunc) {
-	_, _ = registry.SetActiveRender(sessionID, context.Background(), cancel)
-}
-
 func (registry *EngineRegistry) SetActiveRender(sessionID string, ctx context.Context, cancel context.CancelFunc) (uint64, bool) {
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
@@ -166,18 +162,6 @@ func (registry *EngineRegistry) SetActiveRender(sessionID string, ctx context.Co
 	state.activeCancel = cancel
 	state.activeID = id
 	return id, true
-}
-
-func (registry *EngineRegistry) GetActiveRenderContext(sessionID string) (context.Context, bool) {
-	registry.mu.Lock()
-	defer registry.mu.Unlock()
-
-	state, ok := registry.sessions[sessionID]
-	if !ok || state.activeCtx == nil {
-		return nil, false
-	}
-
-	return state.activeCtx, true
 }
 
 func (registry *EngineRegistry) GetActiveRender(sessionID string) (context.Context, uint64, bool) {
@@ -195,51 +179,35 @@ func (registry *EngineRegistry) GetActiveRender(sessionID string) (context.Conte
 // CancelActiveRender cancels the active render for a session.
 // Repaint requests should skip this cancellation and reattach.
 func (registry *EngineRegistry) CancelActiveRender(sessionID string) {
-	registry.mu.Lock()
-
-	state, ok := registry.sessions[sessionID]
-	if !ok || state.activeCancel == nil {
-		registry.mu.Unlock()
-		return
-	}
-
-	cancel := registry.clearActiveLocked(state)
-	registry.mu.Unlock()
-	cancel()
+	registry.cancelActive(sessionID, anyRender)
 }
 
+// CancelRenderIf cancels the active render only if it is still the generation
+// the caller started, so a handle retired late cannot abort its successor.
 func (registry *EngineRegistry) CancelRenderIf(sessionID string, renderID uint64) {
+	registry.cancelActive(sessionID, renderID)
+}
+
+// anyRender matches whichever generation is active. Render IDs come from
+// nextID.Add(1) and so start at one, leaving zero free to mean "no preference".
+const anyRender uint64 = 0
+
+func (registry *EngineRegistry) cancelActive(sessionID string, renderID uint64) {
 	registry.mu.Lock()
 
 	state, ok := registry.sessions[sessionID]
-	if !ok || state.activeCancel == nil || state.activeID != renderID {
+	if !ok || state.activeCancel == nil || (renderID != anyRender && state.activeID != renderID) {
 		registry.mu.Unlock()
 		return
 	}
 
-	cancel := registry.clearActiveLocked(state)
+	cancel := state.activeCancel
+	state.activeCtx = nil
+	state.activeCancel = nil
+	state.activeID = 0
 	registry.mu.Unlock()
+
 	cancel()
-}
-
-func (registry *EngineRegistry) ClearActiveRenderIf(sessionID string, renderID uint64) {
-	registry.mu.Lock()
-	defer registry.mu.Unlock()
-
-	state, ok := registry.sessions[sessionID]
-	if !ok {
-		return
-	}
-
-	if state.activeCancel == nil {
-		return
-	}
-
-	if state.activeID != renderID {
-		return
-	}
-
-	_ = registry.clearActiveLocked(state)
 }
 
 func (registry *EngineRegistry) RemoveSession(sessionID string) {
@@ -252,16 +220,4 @@ func (registry *EngineRegistry) Reset() {
 	registry.mu.Lock()
 	registry.sessions = make(map[string]*sessionState)
 	registry.mu.Unlock()
-}
-
-func (registry *EngineRegistry) clearActiveLocked(state *sessionState) context.CancelFunc {
-	if state == nil {
-		return nil
-	}
-
-	cancel := state.activeCancel
-	state.activeCtx = nil
-	state.activeCancel = nil
-	state.activeID = 0
-	return cancel
 }

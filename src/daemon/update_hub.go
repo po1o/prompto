@@ -1,6 +1,9 @@
 package daemon
 
-import "sync"
+import (
+	"slices"
+	"sync"
+)
 
 type UpdateSnapshot struct {
 	Payload  string
@@ -8,10 +11,17 @@ type UpdateSnapshot struct {
 	Sequence uint64
 }
 
+// historyLimit caps the catch-up window a session keeps. A render publishes one
+// update per pending segment plus a completion, so this holds several whole
+// generations. Without a cap the history grows for the life of the shell.
+const historyLimit = 64
+
 type SessionUpdateHub struct {
 	// waiters are blocked subscribers waiting for sequence > after.
 	waiters []updateWaiter
-	// updates keeps ordered history so late subscribers can catch up without polling.
+	// updates keeps the most recent history, oldest first, so late subscribers
+	// can catch up without polling. Publish is the only writer and appends
+	// after incrementing, so the entries are contiguous and end at sequence.
 	updates  []UpdateSnapshot
 	sequence uint64
 	mu       sync.Mutex
@@ -40,6 +50,11 @@ func (hub *SessionUpdateHub) Publish(payload string, renderID ...uint64) UpdateS
 		RenderID: id,
 	}
 	hub.updates = append(hub.updates, snapshot)
+	// Trim in batches so the copy is amortised. Cloning rather than reslicing
+	// releases the discarded prefix instead of leaving it pinned by the array.
+	if len(hub.updates) > 2*historyLimit {
+		hub.updates = slices.Clone(hub.updates[len(hub.updates)-historyLimit:])
+	}
 	// Split waiters into ready vs still-pending under lock, then notify outside lock.
 	// This avoids sending on channels while holding the mutex.
 	ready := make([]chan UpdateSnapshot, 0, len(hub.waiters))
@@ -102,14 +117,15 @@ func (hub *SessionUpdateHub) Subscribe(after uint64) <-chan UpdateSnapshot {
 	return channel
 }
 
+// nextAfterLocked returns the first retained update newer than after. The
+// entries are contiguous and end at hub.sequence, so the successor's position
+// is arithmetic rather than a search. A subscriber older than the retained
+// window resumes at the oldest entry held: every update carries a whole prompt,
+// so it converges on the current one without replaying what it skipped.
 func (hub *SessionUpdateHub) nextAfterLocked(after uint64) (UpdateSnapshot, bool) {
-	for _, snapshot := range hub.updates {
-		if snapshot.Sequence <= after {
-			continue
-		}
-
-		return snapshot, true
+	if after >= hub.sequence {
+		return UpdateSnapshot{}, false
 	}
 
-	return UpdateSnapshot{}, false
+	return hub.updates[max(len(hub.updates)-int(hub.sequence-after), 0)], true
 }

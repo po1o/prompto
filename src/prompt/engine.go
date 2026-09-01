@@ -22,7 +22,6 @@ type Engine struct {
 	folderCache           map[string]segmentRenderCache
 	activeSegment         *config.Segment
 	sharedProviderFactory map[config.SegmentType]sharedProviderFactory
-	updateCallback        func(string)
 	// restoreLeadingGlyph undoes the block-level leading glyph substitution made
 	// in writeSegment. It is held until the block ends rather than run on
 	// return, because the next segment still reads the substituted value.
@@ -35,7 +34,6 @@ type Engine struct {
 	pendingSegments       map[string]bool
 	cachedValues          map[string]string
 	segmentCacheKeys      map[string]string
-	segmentStates         map[string]*segmentAsyncState
 	Overflow              config.Overflow
 	rprompt               string
 	prompt                strings.Builder
@@ -48,7 +46,6 @@ type Engine struct {
 	cacheMu               sync.Mutex
 	sharedProviderMu      sync.Mutex
 	streamingMu           sync.Mutex
-	stateMu               sync.Mutex
 	executionWG           sync.WaitGroup
 	Plain                 bool
 	forceRender           bool
@@ -442,7 +439,6 @@ func New(flags *runtime.Flags) *Engine {
 		forceRender:           flags.Force || len(env.Getenv("PROMPTO_FORCE_RENDER")) > 0,
 		LayoutConfig:          layoutCfg,
 		sharedProviderFactory: defaultSharedProviderFactories(),
-		segmentStates:         make(map[string]*segmentAsyncState),
 		sessionCache:          make(map[string]segmentRenderCache),
 		folderCache:           make(map[string]segmentRenderCache),
 		prompt:                strings.Builder{},

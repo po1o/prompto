@@ -134,43 +134,31 @@ func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
 	// Any tracked PID render is considered activity and cancels pending idle stop.
 	daemon.registerSessionPID(request)
 
+	// What becomes of the session's current handle, if it has one: a finished
+	// generation and a hard cancel both retire it outright, while a soft cancel
+	// keeps the generation alive for the reattaching request and only replaces
+	// the handle in front of it.
 	daemon.rendersMu.Lock()
-	existing, ok := daemon.renders[request.SessionID]
-	var staleCompleted *ActiveRender
-	var previous *ActiveRender
-	if ok && existing != nil && daemon.isCompletedRender(existing) {
+	existing := daemon.renders[request.SessionID]
+	var retire, superseded *ActiveRender
+	switch {
+	case existing == nil:
+	case daemon.isCompletedRender(existing), !request.Cancel.Repaint():
 		delete(daemon.renders, request.SessionID)
-		staleCompleted = existing
-		existing = nil
-		ok = false
-	}
-
-	var superseded *ActiveRender
-	if ok && existing != nil {
-		if request.Cancel.Repaint() {
-			// A soft cancel keeps the generation alive for the reattaching
-			// request but retires this handle: the map entry below replaces it,
-			// so nothing else would ever hand its reload-gate slot back.
-			superseded = existing
-		} else {
-			// A hard cancel starts a new render generation; cancel the previous one.
-			delete(daemon.renders, request.SessionID)
-			previous = existing
-		}
+		retire = existing
+	default:
+		superseded = existing
 	}
 	daemon.rendersMu.Unlock()
 
-	if staleCompleted != nil {
-		staleCompleted.Complete()
-	}
-	if previous != nil {
-		previous.Complete()
-	}
+	retire.Complete()
 
 	bundle, active := daemon.pipeline.Start(request.SessionID, request.Flags, request.Env, request.Cancel)
 
-	// After Start, so the gate's active count never dips to zero between the
-	// two handles and lets a queued reload cut in on this render.
+	// Retiring the replaced handle after Start, so the reload gate's active
+	// count never dips to zero between the two and lets a queued reload cut in
+	// on this render. Release, not Complete: the reattached handle shares the
+	// generation, which must survive.
 	superseded.Release()
 
 	// The render's own baseline, taken before it could publish. Re-reading the
@@ -179,7 +167,7 @@ func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
 	// never arrives while the prompt keeps showing pending placeholders. A
 	// render that produced no stream has no baseline of its own, and nothing
 	// will follow it, so the hub's current position stands in.
-	sequence := daemon.currentSequence(request.SessionID)
+	sequence := daemon.pipeline.SessionHub(request.SessionID).Sequence()
 	if active != nil {
 		sequence = active.BaseSequence()
 	}
@@ -205,9 +193,9 @@ func (daemon *Daemon) NextUpdate(ctx context.Context, sessionID string, after ui
 	}
 
 	daemon.rendersMu.Lock()
-	active, ok := daemon.renders[sessionID]
+	active := daemon.renders[sessionID]
 	daemon.rendersMu.Unlock()
-	if !ok || active == nil {
+	if active == nil {
 		return RenderResponse{}, false
 	}
 
@@ -292,10 +280,6 @@ func (daemon *Daemon) Reset() {
 		}
 
 		active.Complete()
-	}
-
-	if daemon.pipeline == nil {
-		return
 	}
 
 	daemon.pipeline.Reset()
@@ -420,17 +404,12 @@ func (daemon *Daemon) scheduleIdleIfNoSessions() {
 // touch ProcessTracker or idle scheduling — those are the caller's concern.
 func (daemon *Daemon) completeRender(sessionID string) {
 	daemon.rendersMu.Lock()
-	active, ok := daemon.renders[sessionID]
-	if ok {
-		delete(daemon.renders, sessionID)
-	}
+	active := daemon.renders[sessionID]
+	delete(daemon.renders, sessionID)
 	daemon.rendersMu.Unlock()
 
-	if ok && active != nil {
-		// Ensure request gate "active" counter is released.
-		active.Complete()
-	}
-
+	// Releases the reload gate's "active" counter as well as the generation.
+	active.Complete()
 	daemon.pipeline.RemoveSession(sessionID)
 }
 
@@ -452,26 +431,8 @@ func (daemon *Daemon) releaseActiveRenderIfCurrent(sessionID string, expected *A
 	expected.Complete()
 }
 
-func (daemon *Daemon) currentSequence(sessionID string) uint64 {
-	if daemon.pipeline == nil {
-		return 0
-	}
-
-	hub := daemon.pipeline.SessionHub(sessionID)
-	if hub == nil {
-		return 0
-	}
-
-	snapshot, ok := hub.Last()
-	if !ok {
-		return 0
-	}
-
-	return snapshot.Sequence
-}
-
 func (daemon *Daemon) isCompletedRender(active *ActiveRender) bool {
-	if active == nil || active.hub == nil {
+	if active == nil {
 		return false
 	}
 

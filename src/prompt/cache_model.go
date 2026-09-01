@@ -52,23 +52,17 @@ func (e *Engine) applySegmentCacheBeforeExecute(segment *config.Segment) (reused
 	duration := segment.Cache.Duration
 	if duration.IsEmpty() || duration == cache.INFINITE {
 		e.applySegmentCacheEntry(segment, entry)
-		e.markSegmentDone(segment)
-		e.markSegmentRendered(segment, entry.RenderedAt)
 		return true
 	}
 
 	expiresIn := time.Duration(duration.Seconds()) * time.Second
 	if expiresIn <= 0 {
 		e.applySegmentCacheEntry(segment, entry)
-		e.markSegmentDone(segment)
-		e.markSegmentRendered(segment, entry.RenderedAt)
 		return true
 	}
 
 	if time.Since(entry.RenderedAt) <= expiresIn {
 		e.applySegmentCacheEntry(segment, entry)
-		e.markSegmentDone(segment)
-		e.markSegmentRendered(segment, entry.RenderedAt)
 		return true
 	}
 
