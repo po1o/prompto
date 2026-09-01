@@ -102,7 +102,11 @@ type ActiveRender struct {
 	hub           *SessionUpdateHub
 	renderer      promptBundleRenderer
 	releaseActive func()
-	once          sync.Once
+	// baseSequence is the hub sequence as of the moment this render was
+	// created, before it could publish anything. Streaming from it is what
+	// keeps a client from stepping over its own generation's updates.
+	baseSequence uint64
+	once         sync.Once
 }
 
 func (active *ActiveRender) engine() *prompt.Engine {
@@ -148,7 +152,20 @@ func (pipeline *RenderPipeline) newActiveRender(sessionID string, flags *runtime
 		hub:           hub,
 		renderer:      pipeline.renderer,
 		releaseActive: release,
+		// Read before the render runs: everything this generation publishes
+		// from here on is still ahead of the client.
+		baseSequence: hub.Sequence(),
 	}
+}
+
+// BaseSequence returns the sequence a client should stream from to receive
+// every update this render publishes.
+func (active *ActiveRender) BaseSequence() uint64 {
+	if active == nil {
+		return 0
+	}
+
+	return active.baseSequence
 }
 
 func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags, envVars map[string]string, kind CancelKind) (PromptBundle, *ActiveRender) {
@@ -200,7 +217,8 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 		if active.hub != nil {
 			renderID := active.renderID()
 			// PrimaryStreaming returns quickly with pending placeholders, then publishes updates.
-			primary = engine.PrimaryStreaming(active.context(), timeout, func(segmentName string) {
+			var streaming bool
+			primary, streaming = engine.PrimaryStreaming(active.context(), timeout, func(segmentName string) {
 				if segmentName == "" {
 					active.hub.Publish(renderCompletePayload, renderID)
 					return
@@ -209,7 +227,13 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 				active.hub.Publish(segmentName, renderID)
 			})
 
-			if engine.PendingSegmentCount() == 0 {
+			// Only a prompt rendered without placeholders is final. Asking the
+			// engine again for its pending count would race the publisher
+			// goroutine: draining the last result between the render and the
+			// question makes the count read 0, and this would then hand back a
+			// placeholder prompt as the finished one with no stream left to
+			// correct it.
+			if !streaming {
 				active.hub.Publish(renderCompletePayload, renderID)
 				active.Complete()
 
@@ -418,6 +442,24 @@ func (active *ActiveRender) Complete() {
 			active.render.Complete()
 		}
 
+		if active.releaseActive != nil {
+			active.releaseActive()
+		}
+	})
+}
+
+// Release retires a handle that a soft cancel superseded, returning its
+// reload-gate slot without touching the render generation. Complete would
+// cancel that generation, and after a soft cancel the reattached handle shares
+// its render ID — so completing the old handle would abort the very
+// computation the new one exists to reuse. Sharing Complete's once also makes
+// a later Complete on this handle a no-op, for the same reason.
+func (active *ActiveRender) Release() {
+	if active == nil {
+		return
+	}
+
+	active.once.Do(func() {
 		if active.releaseActive != nil {
 			active.releaseActive()
 		}

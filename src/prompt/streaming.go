@@ -98,7 +98,14 @@ func (e *Engine) WaitForSegmentExecutions() {
 }
 
 // PrimaryStreaming renders a prompt with a timeout cutoff and pending placeholders.
-func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, updateCallback func(string)) string {
+//
+// streaming reports whether the returned prompt carries pending placeholders,
+// and so whether updateCallback will run: it is latched under the same lock
+// that rendered the prompt, so the two always describe the same instant. The
+// caller must not re-derive it from PendingSegmentCount afterwards — the
+// publisher goroutine below can drain the last result microseconds later,
+// making the count read 0 for a prompt that still shows placeholders.
+func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, updateCallback func(string)) (initial string, streaming bool) {
 	if timeout <= 0 {
 		timeout = 100 * time.Millisecond
 	}
@@ -137,31 +144,43 @@ func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, up
 	hasPending := len(e.pendingSegments) > 0
 	e.streamingMu.Unlock()
 
-	if hasPending {
-		go func() {
-			for result := range results {
-				e.streamingMu.Lock()
-				// Re-check under the lock: a Hard Cancel may have landed while
-				// this goroutine was blocked acquiring streamingMu, in which
-				// case pendingSegments already belongs to the next render
-				// generation and must not be touched or published.
-				if ctx.Err() != nil {
-					e.streamingMu.Unlock()
-					return
-				}
-
-				e.mergeStreamingResultLocked(ctx, result)
-				delete(e.pendingSegments, result.key)
-				e.streamingMu.Unlock()
-				updateCallback(result.segment.Name())
-			}
-			if ctx.Err() == nil {
-				updateCallback("")
-			}
-		}()
+	if !hasPending {
+		return initialPrompt, false
 	}
 
-	return initialPrompt
+	go e.publishStreamingResults(ctx, results, updateCallback)
+
+	return initialPrompt, true
+}
+
+// publishStreamingResults merges each late segment result and announces it,
+// then announces completion with the empty segment name. It is the only writer
+// of updates once PrimaryStreaming has returned, so a caller told streaming is
+// true can rely on the completion announcement arriving unless ctx is
+// cancelled — in which case the render generation is being torn down anyway.
+func (e *Engine) publishStreamingResults(ctx context.Context, results <-chan streamingResult, updateCallback func(string)) {
+	for result := range results {
+		e.streamingMu.Lock()
+		// Re-check under the lock: a Hard Cancel may have landed while this
+		// goroutine was blocked acquiring streamingMu, in which case
+		// pendingSegments already belongs to the next render generation and
+		// must not be touched or published.
+		if ctx.Err() != nil {
+			e.streamingMu.Unlock()
+			return
+		}
+
+		e.mergeStreamingResultLocked(ctx, result)
+		delete(e.pendingSegments, result.key)
+		e.streamingMu.Unlock()
+		updateCallback(result.segment.Name())
+	}
+
+	if ctx.Err() != nil {
+		return
+	}
+
+	updateCallback("")
 }
 
 func (e *Engine) prepareStreamingSegments() ([]streamingSegment, map[string]bool) {

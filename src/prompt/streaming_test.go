@@ -133,7 +133,7 @@ slow.main:
 
 	updates := make(chan string, 8)
 	start := time.Now()
-	initial := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(segment string) {
+	initial, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(segment string) {
 		updates <- segment
 	})
 	elapsed := time.Since(start)
@@ -199,7 +199,7 @@ slow.main:
 
 	updates := make(chan string, 8)
 	start := time.Now()
-	_ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(segment string) {
+	_, _ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(segment string) {
 		updates <- segment
 	})
 	elapsed := time.Since(start)
@@ -280,7 +280,7 @@ slow.rtransient:
 	t.Cleanup(engine.WaitForSegmentExecutions)
 
 	updates := make(chan string, 16)
-	initial := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(segment string) {
+	initial, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(segment string) {
 		updates <- segment
 	})
 
@@ -354,7 +354,7 @@ text.time:
 	}
 	engine := New(flags)
 	t.Cleanup(engine.WaitForSegmentExecutions)
-	_ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	_, _ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
 
 	pending := engine.StreamingTransientRPrompt()
 	require.NotEmpty(t, pending)
@@ -397,7 +397,7 @@ blocking.main:
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		_ = engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, func(string) {})
+		_, _ = engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, func(string) {})
 	}()
 
 	require.Eventually(t, func() bool {
@@ -437,7 +437,7 @@ vim:
 	engine := New(flags)
 	t.Cleanup(engine.WaitForSegmentExecutions)
 
-	_ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	_, _ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
 	require.True(t, strings.Contains(engine.StreamingRPrompt(), "INSERT"), "expected initial render to include INSERT mode")
 
 	flags.VimMode = "normal"
@@ -464,7 +464,7 @@ session:
 	}
 	engine := New(flags)
 	t.Cleanup(engine.WaitForSegmentExecutions)
-	_ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	_, _ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
 
 	const hold = 80 * time.Millisecond
 	locked := make(chan struct{})
@@ -792,7 +792,7 @@ slow.main:
 
 	ctx, cancel := context.WithCancel(context.Background())
 	var updates atomic.Int32
-	_ = engine.PrimaryStreaming(ctx, 50*time.Millisecond, func(string) {
+	_, _ = engine.PrimaryStreaming(ctx, 50*time.Millisecond, func(string) {
 		updates.Add(1)
 	})
 	require.NotEmpty(t, engine.PendingSegments())
@@ -844,7 +844,7 @@ vim:
 	engine := New(flags)
 	t.Cleanup(engine.WaitForSegmentExecutions)
 
-	initial := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	initial, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
 	require.Contains(t, initial, "[]", "the kept segment should hold its shape on the first render")
 
 	flags.VimMode = "normal"
@@ -894,7 +894,7 @@ text.second:
 	engine := New(flags)
 	t.Cleanup(engine.WaitForSegmentExecutions)
 
-	first := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	first, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
 	require.NotEmpty(t, first)
 
 	require.NotEmpty(t, engine.streamingBlocks)
@@ -951,7 +951,7 @@ test.templated:
 		inGreenForeground = "\x1b[38;2;0;255;0m"
 	)
 
-	initial := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	initial, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
 	require.Contains(t, initial, onRedBackground)
 	require.Contains(t, initial, inGreenForeground)
 
@@ -1043,7 +1043,7 @@ streamed.plain:
 
 	// Re-render on every update the way the daemon's render pipeline does.
 	frames := make(chan string, 16)
-	initial := engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, func(string) {
+	initial, _ := engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, func(string) {
 		frames <- engine.ReRender()
 	})
 	require.NotContains(t, initial, "TEMPLATED", "both segments should still be pending")
