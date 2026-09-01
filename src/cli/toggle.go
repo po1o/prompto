@@ -34,7 +34,7 @@ var toggleCmd = &cobra.Command{
 				return
 			}
 			defer client.Close()
-			ctx, cancel := context.WithTimeout(context.Background(), renderTimeout)
+			ctx, cancel := context.WithTimeout(context.Background(), daemonCallTimeout)
 			defer cancel()
 			if err := client.ToggleSegment(ctx, os.Getppid(), segmentsToToggle); err != nil {
 				fmt.Printf("daemon error: %v\n", err)

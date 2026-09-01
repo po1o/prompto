@@ -18,7 +18,21 @@ import (
 )
 
 const (
-	renderTimeout = 10 * time.Second
+	// daemonCallTimeout bounds a single request-response call to the daemon.
+	daemonCallTimeout = 10 * time.Second
+
+	// renderStreamTimeout bounds a streaming render. It is a safety net against
+	// a daemon that has stopped answering, not a budget for segment work: a
+	// render runs until its slowest segment finishes, and segments that need
+	// bounding carry a per-segment `timeout`.
+	//
+	// Giving up early is not a graceful degradation, it loses the render
+	// outright. The shell has already drawn the pending placeholders, and the
+	// update that would replace them only ever arrives on this stream, so the
+	// prompt keeps the placeholders until the next command. Waiting costs at
+	// most a lingering process, and not even for long: the shell closes this
+	// stream when it starts the next prompt.
+	renderStreamTimeout = 60 * time.Second
 )
 
 var renderOutputEscaper = strings.NewReplacer(
@@ -161,13 +175,26 @@ func renderViaDaemon(flags *runtime.Flags, pid int, repaint bool) error {
 	}
 	defer client.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), renderTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), renderStreamTimeout)
 	defer cancel()
 
-	return client.RenderPrompt(ctx, flags, pid, "", clientEnvMap(), repaint, func(resp *ipc.PromptResponse) bool {
+	err = client.RenderPrompt(ctx, flags, pid, "", clientEnvMap(), repaint, func(resp *ipc.PromptResponse) bool {
 		outputPrompts(resp)
 		return resp.Type != "complete"
 	})
+	if err != nil {
+		return err
+	}
+
+	// A stream can also end because the daemon superseded this render, which is
+	// routine — the next prompt is already on its way. Our own deadline passing
+	// is not: the segments never reported back and the shell is left holding
+	// the pending placeholders, so say so rather than exit as if it worked.
+	if ctx.Err() != nil {
+		return fmt.Errorf("render abandoned after %s with segments still pending", renderStreamTimeout)
+	}
+
+	return nil
 }
 
 func outputPrompts(resp *ipc.PromptResponse) {
