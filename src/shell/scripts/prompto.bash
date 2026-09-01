@@ -377,7 +377,11 @@ function _prompto_daemon_render() {
         vim_mode_arg="--vim-mode=$(_prompto_get_vim_mode)"
     fi
 
-    # Run the render command in the background using ble.sh job system
+    # Run the render command in the background using ble.sh job system.
+    # _prompto_daemon_job is the second argument: the callback that consumes the
+    # job's output. Losing the line continuation before it makes it a separate
+    # command instead, so nothing reads the stream and the prompt keeps the
+    # placeholders the first batch delivered.
     ble/util/job.start \
         "$_prompto_executable render \
             $config_arg \
@@ -393,7 +397,7 @@ function _prompto_daemon_render() {
             --terminal-width=${COLUMNS-0} \
             --escape=false \
             $vim_mode_arg \
-            $repaint_flag"
+            $repaint_flag" \
         _prompto_daemon_job
 }
 

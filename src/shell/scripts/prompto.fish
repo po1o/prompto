@@ -519,6 +519,16 @@ function _prompto_daemon_repaint --on-signal USR1
     commandline -f repaint >/dev/null 2>/dev/null
 end
 
+# The prompt file outlives each render so a late signal still finds the last
+# batch, so the session has to clean it up on the way out.
+function _prompto_daemon_cleanup --on-event fish_exit
+    if test -n "$_prompto_daemon_prompt_file"
+        # No wildcard here: fish aborts a command whose glob matches nothing,
+        # which is the normal case. Each reader removes its own batch file.
+        rm -f $_prompto_daemon_prompt_file 2>/dev/null
+    end
+end
+
 function enable_prompto_daemon
     set --global _prompto_daemon_mode 1
     set --global _prompto_daemon_prompt_file /tmp/prompto_fish_prompt_$fish_pid
@@ -540,8 +550,9 @@ function _prompto_daemon_render
         set vim_mode_arg "--vim-mode="(_prompto_get_vim_mode)
     end
 
-    # Clear temp file and start background reader
-    echo -n "" > $_prompto_daemon_prompt_file
+    # Start the background reader. The prompt file is deliberately left alone:
+    # it holds the last batch published, and the signal handler may still be on
+    # its way to read it. The reader replaces it whole, per batch.
     _prompto_daemon_reader $_prompto_daemon_prompt_file $fish_pid $repaint_flag $vim_mode_arg &
     disown
 end
@@ -557,6 +568,11 @@ function _prompto_daemon_reader
     if test -n "$_prompto_config"
         set config_arg "--config=$_prompto_config"
     end
+
+    # Private to this reader, so a superseded one cannot write into the batch
+    # this one is assembling.
+    set --local batch_file $prompt_file.(random).part
+    rm -f $batch_file 2>/dev/null
 
     $_prompto_executable render \
         $config_arg \
@@ -574,27 +590,36 @@ function _prompto_daemon_reader
         set --local parts (string split -m1 ':' -- $line)
         set --local type $parts[1]
 
-        # Write prompt lines to temp file
+        # Collect the batch in a private file. The parent reads $prompt_file
+        # whenever the signal reaches it, which is not necessarily before the
+        # next line arrives, so a half-written batch must never be visible there.
         if test "$type" = "primary" || test "$type" = "right" || test "$type" = "secondary"
-            echo $line >> $prompt_file
+            echo $line >> $batch_file
         else if test "$type" = "transient" && test $_prompto_transient_prompt = 1
-            echo $line >> $prompt_file
+            echo $line >> $batch_file
         end
 
-        # Signal parent on each status line (batch complete)
+        # A status line closes a batch: publish it, then signal.
         if test "$type" = "status"
+            # Publish by rename, so the parent always reads a whole batch, and
+            # start the next one from empty. Truncating $prompt_file in place
+            # instead loses the batch whenever the handler reads between the
+            # signal and the next line — and since USR1 does not queue, a
+            # coalesced pair of signals then leaves the prompt on its
+            # placeholders for good.
+            mv -f $batch_file $prompt_file 2>/dev/null
             kill -USR1 $parent_pid 2>/dev/null
-            # Clear file for next batch
-            if test "$parts[2]" != "complete"
-                echo -n "" > $prompt_file
-            else
+
+            if test "$parts[2]" = "complete"
                 break
             end
         end
     end
 
-    # Cleanup
-    rm -f $prompt_file 2>/dev/null
+    # Only the private batch file is cleaned up. $prompt_file holds the final
+    # prompt and is the parent's to read, including for a signal still in
+    # flight; removing it here is what leaves the prompt showing placeholders.
+    rm -f $batch_file 2>/dev/null
 end
 
 function _prompto_daemon_fish_prompt

@@ -145,10 +145,18 @@ func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
 		ok = false
 	}
 
-	if ok && existing != nil && !request.Cancel.Repaint() {
-		// A hard cancel starts a new render generation; cancel the previous one.
-		delete(daemon.renders, request.SessionID)
-		previous = existing
+	var superseded *ActiveRender
+	if ok && existing != nil {
+		if request.Cancel.Repaint() {
+			// A soft cancel keeps the generation alive for the reattaching
+			// request but retires this handle: the map entry below replaces it,
+			// so nothing else would ever hand its reload-gate slot back.
+			superseded = existing
+		} else {
+			// A hard cancel starts a new render generation; cancel the previous one.
+			delete(daemon.renders, request.SessionID)
+			previous = existing
+		}
 	}
 	daemon.rendersMu.Unlock()
 
@@ -160,7 +168,21 @@ func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
 	}
 
 	bundle, active := daemon.pipeline.Start(request.SessionID, request.Flags, request.Env, request.Cancel)
+
+	// After Start, so the gate's active count never dips to zero between the
+	// two handles and lets a queued reload cut in on this render.
+	superseded.Release()
+
+	// The render's own baseline, taken before it could publish. Re-reading the
+	// hub here instead would skip whatever the render published while it ran —
+	// including its completion, leaving the client waiting on a sequence that
+	// never arrives while the prompt keeps showing pending placeholders. A
+	// render that produced no stream has no baseline of its own, and nothing
+	// will follow it, so the hub's current position stands in.
 	sequence := daemon.currentSequence(request.SessionID)
+	if active != nil {
+		sequence = active.BaseSequence()
+	}
 
 	daemon.rendersMu.Lock()
 	if active == nil {

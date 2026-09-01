@@ -88,3 +88,41 @@ func TestDaemonScriptsIncludePIDAndVimModeSupport(t *testing.T) {
 		})
 	}
 }
+
+// TestBashDaemonJobConsumesTheRenderStream guards the line continuation that
+// makes _prompto_daemon_job the second argument to ble/util/job.start — the
+// callback that consumes the job's output. Without it the callback becomes a
+// separate command, nothing applies the streamed updates, and the prompt keeps
+// the placeholders the first batch delivered.
+func TestBashDaemonJobConsumesTheRenderStream(t *testing.T) {
+	start := strings.Index(bashInit, "ble/util/job.start")
+	assert.NotEqual(t, -1, start, "bash daemon render must start the render as a ble.sh job")
+
+	call := bashInit[start:]
+	if end := strings.Index(call, "_prompto_daemon_job"); end != -1 {
+		call = call[:end]
+	}
+
+	assert.True(t, strings.Contains(call, "$repaint_flag\" \\"),
+		"the job command must end with a line continuation so _prompto_daemon_job is job.start's callback argument, not a separate command")
+}
+
+// TestFishDaemonReaderPublishesBatchesAtomically locks the handoff between the
+// background reader and the USR1 handler. The handler reads the prompt file at
+// a moment the reader does not control, so the reader must publish whole
+// batches by rename and must not truncate or delete the file it reads.
+func TestFishDaemonReaderPublishesBatchesAtomically(t *testing.T) {
+	assert.True(t, strings.Contains(fishInit, "mv -f $batch_file $prompt_file"),
+		"fish reader must publish each batch by rename so the handler never reads a half-written one")
+
+	assert.False(t, strings.Contains(fishInit, "echo -n \"\" > $prompt_file"),
+		"fish reader must not truncate the prompt file in place; a handler reading between the signal and the next line loses the batch")
+
+	assert.False(t, strings.Contains(fishInit, "rm -f $prompt_file"),
+		"fish reader must not delete the prompt file it just published; a signal still in flight would find nothing and leave the prompt pending")
+
+	publish := strings.Index(fishInit, "mv -f $batch_file $prompt_file")
+	signal := strings.Index(fishInit, "kill -USR1 $parent_pid")
+	assert.True(t, publish != -1 && signal != -1 && publish < signal,
+		"fish reader must publish the batch before signalling the parent")
+}

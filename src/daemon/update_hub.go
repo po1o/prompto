@@ -63,6 +63,16 @@ func (hub *SessionUpdateHub) Publish(payload string, renderID ...uint64) UpdateS
 	return snapshot
 }
 
+// Sequence returns the highest sequence published so far, or zero when the hub
+// is empty. A subscriber that reads it before a render generation starts is
+// guaranteed to see every update that generation goes on to publish.
+func (hub *SessionUpdateHub) Sequence() uint64 {
+	hub.mu.Lock()
+	defer hub.mu.Unlock()
+
+	return hub.sequence
+}
+
 func (hub *SessionUpdateHub) Last() (UpdateSnapshot, bool) {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
