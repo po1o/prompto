@@ -109,36 +109,23 @@ type ActiveRender struct {
 	once         sync.Once
 }
 
-func (active *ActiveRender) engine() *prompt.Engine {
-	if active == nil || active.render == nil {
-		return nil
+// newActiveRender is the only constructor and always supplies a render handle,
+// so these read it directly. Next is the one entry point a nil ActiveRender can
+// reach, and it returns before touching any of them.
+func (active *ActiveRender) engine() *prompt.Engine   { return active.render.Engine }
+func (active *ActiveRender) context() context.Context { return active.render.Context }
+func (active *ActiveRender) renderID() uint64         { return active.render.RenderID() }
+func (active *ActiveRender) reattached() bool         { return active.render.Reattached }
+
+// publishSegment announces one finished segment to the session's subscribers.
+// PrimaryStreaming names the end of a generation with the empty string. The
+// render ID is fixed for the life of the handle, so it needs no capturing.
+func (active *ActiveRender) publishSegment(name string) {
+	if name == "" {
+		name = renderCompletePayload
 	}
 
-	return active.render.Engine
-}
-
-func (active *ActiveRender) context() context.Context {
-	if active == nil || active.render == nil {
-		return nil
-	}
-
-	return active.render.Context
-}
-
-func (active *ActiveRender) renderID() uint64 {
-	if active == nil || active.render == nil {
-		return 0
-	}
-
-	return active.render.RenderID()
-}
-
-func (active *ActiveRender) reattached() bool {
-	if active == nil || active.render == nil {
-		return false
-	}
-
-	return active.render.Reattached
+	active.hub.Publish(name, active.renderID())
 }
 
 func (pipeline *RenderPipeline) newActiveRender(sessionID string, flags *runtimePkg.Flags, kind CancelKind) *ActiveRender {
@@ -168,99 +155,78 @@ func (active *ActiveRender) BaseSequence() uint64 {
 	return active.baseSequence
 }
 
+// isPrimaryRequest reports whether the request wants the primary prompt, the
+// only streamed one. Every other type is a synchronous one-shot.
+func isPrimaryRequest(flags *runtimePkg.Flags) bool {
+	return flags == nil || flags.Type == "" || flags.Type == prompt.PRIMARY
+}
+
 func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags, envVars map[string]string, kind CancelKind) (PromptBundle, *ActiveRender) {
 	repaint := kind.Repaint()
 	active := pipeline.newActiveRender(sessionID, flags, kind)
 	engine := active.engine()
-	primary := ""
 
-	if repaint && !active.reattached() && (engine == nil || engine.Config == nil) {
-		active.Complete()
-		bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{})
-		return bundle, nil
-	}
-
-	if engine != nil && engine.Config != nil {
-		engine.SetDeviceCache(pipeline.deviceCache)
-		applyRenderFlags(engine, flags, envVars, repaint)
-		template.Init(engine.Env, engine.Config.Var, engine.Config.Maps)
-
-		if flags != nil && flags.Type != "" && flags.Type != prompt.PRIMARY {
-			// Non-primary type requests are synchronous one-shots.
-			bundle := renderPromptByType(engine, flags.Type, flags.Command)
-			if active.hub != nil {
-				active.hub.Publish(renderCompletePayload, active.renderID())
-			}
-			return bundle, active
-		}
-
-		if repaint && active.reattached() {
-			// Repaint updates vim-mode-driven output without restarting async segment jobs.
-			primary = engine.PrimaryRepaint()
-			if engine.PendingSegmentCount() == 0 && active.hub != nil {
-				active.hub.Publish(renderCompletePayload, active.renderID())
-			}
-
-			bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{includeTransient: true})
-			return bundle, active
-		}
-
-		if repaint {
-			primary = engine.PrimaryRepaint()
+	if engine == nil || engine.Config == nil {
+		// Nothing to render from. A repaint that found no live render to
+		// reattach to has nowhere to go at all, so it ends here.
+		if repaint && !active.reattached() {
 			active.Complete()
+			return pipeline.renderer.Bundle(engine, "", bundleOptions{}), nil
+		}
 
-			bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{includeTransient: true})
+		options := bundleOptions{includeTransient: isPrimaryRequest(flags)}
+		return pipeline.renderer.Bundle(engine, "", options), active
+	}
+
+	engine.SetDeviceCache(pipeline.deviceCache)
+	applyRenderFlags(engine, flags, envVars, repaint)
+	template.Init(engine.Env, engine.Config.Var, engine.Config.Maps)
+
+	if !isPrimaryRequest(flags) {
+		// Non-primary type requests are synchronous one-shots.
+		bundle := renderPromptByType(engine, flags.Type, flags.Command)
+		active.publishSegment("")
+		return bundle, active
+	}
+
+	if repaint {
+		// Repaint updates vim-mode-driven output without restarting async segment jobs.
+		primary := engine.PrimaryRepaint()
+		bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{includeTransient: true})
+
+		if !active.reattached() {
+			// No in-flight generation to keep streaming from.
+			active.Complete()
 			return bundle, nil
 		}
 
-		timeout := engine.Config.GetDaemonTimeout()
-		if active.hub != nil {
-			renderID := active.renderID()
-			// PrimaryStreaming returns quickly with pending placeholders, then publishes updates.
-			var streaming bool
-			primary, streaming = engine.PrimaryStreaming(active.context(), timeout, func(segmentName string) {
-				if segmentName == "" {
-					active.hub.Publish(renderCompletePayload, renderID)
-					return
-				}
-
-				active.hub.Publish(segmentName, renderID)
-			})
-
-			// Only a prompt rendered without placeholders is final. Asking the
-			// engine again for its pending count would race the publisher
-			// goroutine: draining the last result between the render and the
-			// question makes the count read 0, and this would then hand back a
-			// placeholder prompt as the finished one with no stream left to
-			// correct it.
-			if !streaming {
-				active.hub.Publish(renderCompletePayload, renderID)
-				active.Complete()
-
-				bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{
-					includeSecondary: true,
-					includeTransient: true,
-				})
-				return bundle, nil
-			}
-		} else {
-			primary = engine.Primary()
-
-			bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{
-				includeSecondary: true,
-				includeTransient: true,
-			})
-			return bundle, nil
+		if engine.PendingSegmentCount() == 0 {
+			active.publishSegment("")
 		}
+
+		return bundle, active
 	}
 
-	options := bundleOptions{}
-	if flags == nil || flags.Type == "" || flags.Type == prompt.PRIMARY {
-		options.includeTransient = true
+	// PrimaryStreaming returns quickly with pending placeholders, then publishes
+	// updates. Only a prompt rendered without placeholders is final: asking the
+	// engine again for its pending count would race the publisher, which can
+	// drain the last result between the render and the question, and this would
+	// then hand back a placeholder prompt as the finished one with no stream
+	// left to correct it.
+	timeout := engine.Config.GetDaemonTimeout()
+	primary, streaming := engine.PrimaryStreaming(active.context(), timeout, active.publishSegment)
+	if streaming {
+		return pipeline.renderer.Bundle(engine, primary, bundleOptions{includeTransient: true}), active
 	}
 
-	bundle := pipeline.renderer.Bundle(engine, primary, options)
-	return bundle, active
+	active.publishSegment("")
+	active.Complete()
+
+	bundle := pipeline.renderer.Bundle(engine, primary, bundleOptions{
+		includeSecondary: true,
+		includeTransient: true,
+	})
+	return bundle, nil
 }
 
 // Reload runs action while holding the reload gate, after waiting for active
@@ -289,10 +255,6 @@ func (pipeline *RenderPipeline) RemoveSession(sessionID string) {
 }
 
 func (pipeline *RenderPipeline) Reset() {
-	if pipeline.sessions == nil {
-		return
-	}
-
 	pipeline.sessions.Reset()
 }
 
@@ -380,7 +342,7 @@ func applyRenderFlags(engine *prompt.Engine, flags *runtimePkg.Flags, envVars ma
 }
 
 func (active *ActiveRender) Next(updateContext context.Context, after uint64) (PromptUpdate, bool) {
-	if active == nil || active.relay == nil || active.renderer == nil {
+	if active == nil {
 		return PromptUpdate{}, false
 	}
 

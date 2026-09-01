@@ -274,14 +274,11 @@ func (e *Engine) executeStreamingSegment(
 	sources map[config.SegmentType]*config.Segment,
 	results chan<- streamingResult,
 ) {
-	select {
-	case <-ctx.Done():
+	if ctx.Err() != nil {
 		return
-	default:
 	}
 
 	segment := entry.segment
-	e.markSegmentPending(segment)
 
 	// Execute on the private clone taken under streamingMu: the canonical
 	// segment is owned by that lock (the render path reads and temporarily
@@ -297,13 +294,10 @@ func (e *Engine) executeStreamingSegment(
 			}
 		}
 
-		select {
-		case <-ctx.Done():
+		if ctx.Err() != nil {
 			return
-		default:
 		}
 
-		e.markSegmentDone(segment)
 		results <- streamingResult{segment: segment, executed: working, key: entry.key}
 		return
 	}
@@ -316,10 +310,8 @@ func (e *Engine) executeStreamingSegment(
 		return
 	}
 
-	select {
-	case <-ctx.Done():
+	if ctx.Err() != nil {
 		return
-	default:
 	}
 
 	if !clean {
@@ -329,7 +321,6 @@ func (e *Engine) executeStreamingSegment(
 		working = nil
 	}
 
-	e.markSegmentDone(segment)
 	results <- streamingResult{segment: segment, executed: working, key: entry.key}
 }
 
@@ -351,21 +342,16 @@ func (e *Engine) executeSegmentWithContext(ctx context.Context, segment *config.
 
 	gid := <-gidChan
 
+	// A nil channel blocks forever, which is what "no timeout" means here.
+	var expired <-chan time.Time
+	if segment.Timeout > 0 {
+		expired = time.After(time.Duration(segment.Timeout) * time.Millisecond)
+	}
+
 	// Mark abandoned before killing: KillGoroutineChildren unblocks the hung
 	// Execute, so the goroutine's deferred template-cache registration can run
 	// the instant we kill. The atomic store must happen-before the kill for the
 	// defer's isAbandoned() load to observe it and suppress the stale write.
-	if segment.Timeout <= 0 {
-		select {
-		case <-done:
-			return true, true
-		case <-ctx.Done():
-			segment.MarkAbandoned()
-			_ = runjobs.KillGoroutineChildren(gid)
-			return false, false
-		}
-	}
-
 	select {
 	case <-done:
 		return true, true
@@ -373,7 +359,7 @@ func (e *Engine) executeSegmentWithContext(ctx context.Context, segment *config.
 		segment.MarkAbandoned()
 		_ = runjobs.KillGoroutineChildren(gid)
 		return false, false
-	case <-time.After(time.Duration(segment.Timeout) * time.Millisecond):
+	case <-expired:
 		log.Errorf("timeout after %dms for segment: %s", segment.Timeout, segment.Name())
 		segment.MarkAbandoned()
 		if err := runjobs.KillGoroutineChildren(gid); err != nil {
@@ -389,23 +375,23 @@ func (e *Engine) collectStreamingResultsUntil(
 	results <-chan streamingResult,
 	completed map[string]bool,
 ) {
-	timeoutChan := time.After(timeout)
-	doneWaiting := false
-	for !doneWaiting {
+	cutoff := time.After(timeout)
+
+	for {
 		select {
 		case result, ok := <-results:
 			if !ok {
-				doneWaiting = true
-				continue
+				return
 			}
+
 			e.streamingMu.Lock()
 			e.mergeStreamingResultLocked(ctx, result)
 			e.streamingMu.Unlock()
 			completed[result.key] = true
 		case <-ctx.Done():
-			doneWaiting = true
-		case <-timeoutChan:
-			doneWaiting = true
+			return
+		case <-cutoff:
+			return
 		}
 	}
 }
@@ -594,17 +580,7 @@ func (e *Engine) renderBlockStreaming(block *config.Block, blockIndex int, cance
 func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, blockIndex int) (string, int) {
 	segmentIndex := 0
 
-	type pendingRestore struct {
-		segment             *config.Segment
-		text                string
-		foreground          color.Ansi
-		background          color.Ansi
-		foregroundTemplates template.List
-		backgroundTemplates template.List
-		enabled             bool
-	}
-
-	restores := make([]pendingRestore, 0, len(block.Segments))
+	saved := make([]segmentStyle, 0, len(block.Segments))
 
 	for segmentPosition, segment := range block.Segments {
 		key := segmentKey(scope, blockIndex, segmentPosition, segment)
@@ -612,15 +588,7 @@ func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, 
 			cachedVal := e.cachedValues[key]
 			text, background := segment.GetPendingText(cachedVal, e.Config)
 
-			restores = append(restores, pendingRestore{
-				segment:             segment,
-				text:                segment.Text(),
-				foreground:          segment.Foreground,
-				background:          segment.Background,
-				foregroundTemplates: segment.ForegroundTemplates,
-				backgroundTemplates: segment.BackgroundTemplates,
-				enabled:             segment.Enabled,
-			})
+			saved = append(saved, styleOf(segment))
 
 			segment.SetText(text)
 			if background != "" {
@@ -637,15 +605,7 @@ func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, 
 		}
 
 		if segment.Text() != "" && segment.Enabled {
-			restores = append(restores, pendingRestore{
-				segment:             segment,
-				text:                segment.Text(),
-				foreground:          segment.Foreground,
-				background:          segment.Background,
-				foregroundTemplates: segment.ForegroundTemplates,
-				backgroundTemplates: segment.BackgroundTemplates,
-				enabled:             segment.Enabled,
-			})
+			saved = append(saved, styleOf(segment))
 
 			segment.ForegroundTemplates = nil
 			segment.BackgroundTemplates = nil
@@ -665,22 +625,15 @@ func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, 
 		}
 
 		segmentIndex++
-		renderedAt := time.Now()
-		e.markSegmentRendered(segment, renderedAt)
-		e.storeSegmentCache(segment, renderedAt)
+		e.storeSegmentCache(segment, time.Now())
 		bakeResolvedColors(segment)
 		e.writeSegment(block, segment)
 	}
 
 	e.writeBlockSeparator(block)
 
-	for _, restore := range restores {
-		restore.segment.SetText(restore.text)
-		restore.segment.Foreground = restore.foreground
-		restore.segment.Background = restore.background
-		restore.segment.ForegroundTemplates = restore.foregroundTemplates
-		restore.segment.BackgroundTemplates = restore.backgroundTemplates
-		restore.segment.Enabled = restore.enabled
+	for i := range saved {
+		saved[i].restore()
 	}
 
 	e.endBlock()
@@ -714,29 +667,47 @@ func bakeResolvedColors(segment *config.Segment) {
 	segment.Background = background
 }
 
+// segmentStyle is a segment's drawing state, taken before the render path
+// rewrites it — for a pending placeholder, or to drop templates from a segment
+// already rendered this generation — and put back once the block is written.
+// Capture and restore live together so they cannot drift apart.
+type segmentStyle struct {
+	segment             *config.Segment
+	text                string
+	foreground          color.Ansi
+	background          color.Ansi
+	foregroundTemplates template.List
+	backgroundTemplates template.List
+	enabled             bool
+}
+
+func styleOf(segment *config.Segment) segmentStyle {
+	return segmentStyle{
+		segment:             segment,
+		text:                segment.Text(),
+		foreground:          segment.Foreground,
+		background:          segment.Background,
+		foregroundTemplates: segment.ForegroundTemplates,
+		backgroundTemplates: segment.BackgroundTemplates,
+		enabled:             segment.Enabled,
+	}
+}
+
+func (style *segmentStyle) restore() {
+	style.segment.SetText(style.text)
+	style.segment.Foreground = style.foreground
+	style.segment.Background = style.background
+	style.segment.ForegroundTemplates = style.foregroundTemplates
+	style.segment.BackgroundTemplates = style.backgroundTemplates
+	style.segment.Enabled = style.enabled
+}
+
 func (e *Engine) streamingBlockSets() []streamingBlockSet {
-	sets := []streamingBlockSet{
-		{
-			scope:  streamScopePrimary,
-			blocks: e.streamingBlocks,
-		},
+	return []streamingBlockSet{
+		{scope: streamScopePrimary, blocks: e.streamingBlocks},
+		{scope: streamScopeTransient, blocks: e.streamingTransient},
+		{scope: streamScopeRTransient, blocks: e.streamingRTransient},
 	}
-
-	if len(e.streamingTransient) > 0 {
-		sets = append(sets, streamingBlockSet{
-			scope:  streamScopeTransient,
-			blocks: e.streamingTransient,
-		})
-	}
-
-	if len(e.streamingRTransient) > 0 {
-		sets = append(sets, streamingBlockSet{
-			scope:  streamScopeRTransient,
-			blocks: e.streamingRTransient,
-		})
-	}
-
-	return sets
 }
 
 func (e *Engine) resolveStreamingTransientBlocks() []*config.Block {
@@ -837,10 +808,6 @@ func (e *Engine) renderBlockWithText(block *config.Block, blockText string, leng
 	}
 
 	return true
-}
-
-func (e *Engine) StreamingMu() *sync.Mutex {
-	return &e.streamingMu
 }
 
 func (e *Engine) PendingSegments() map[string]bool {
