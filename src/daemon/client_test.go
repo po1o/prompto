@@ -93,7 +93,7 @@ func TestExtractPromptsIgnoresUnknownKeys(t *testing.T) {
 // a fixed 50ms and trying once gave up while the daemon was still coming up,
 // and the first prompt after a daemon restart failed outright.
 func TestConnectOrStartWaitsForTheDaemonToAcceptConnections(t *testing.T) {
-	socketDir := t.TempDir()
+	socketDir := testSocketDir(t)
 	t.Setenv("XDG_RUNTIME_DIR", socketDir)
 	t.Setenv("XDG_STATE_HOME", socketDir)
 
@@ -109,6 +109,7 @@ func TestConnectOrStartWaitsForTheDaemonToAcceptConnections(t *testing.T) {
 
 			listener, err := ipc.Listen()
 			if err != nil {
+				t.Errorf("fake daemon could not listen: %v", err)
 				return
 			}
 
@@ -131,7 +132,7 @@ func TestConnectOrStartWaitsForTheDaemonToAcceptConnections(t *testing.T) {
 // TestConnectOrStartReportsAFailureToSpawn keeps a daemon that cannot be
 // started from being retried against; there is nothing coming up to wait for.
 func TestConnectOrStartReportsAFailureToSpawn(t *testing.T) {
-	socketDir := t.TempDir()
+	socketDir := testSocketDir(t)
 	t.Setenv("XDG_RUNTIME_DIR", socketDir)
 	t.Setenv("XDG_STATE_HOME", socketDir)
 
@@ -196,6 +197,10 @@ func serveAfter(t *testing.T, delay time.Duration) {
 
 		listener, err := ipc.Listen()
 		if err != nil {
+			// Reported rather than swallowed: a socket that cannot be bound
+			// otherwise looks exactly like a daemon that never came up, and the
+			// test fails on the timeout instead of the cause.
+			t.Errorf("fake daemon could not listen: %v", err)
 			return
 		}
 
@@ -210,7 +215,7 @@ func serveAfter(t *testing.T, delay time.Duration) {
 // and makes their next prompt pay the restart, so only a daemon that stays
 // unreachable is replaced.
 func TestConnectOrStartDoesNotReplaceAReachableDaemon(t *testing.T) {
-	socketDir := t.TempDir()
+	socketDir := testSocketDir(t)
 	t.Setenv("XDG_RUNTIME_DIR", socketDir)
 	t.Setenv("XDG_STATE_HOME", socketDir)
 
@@ -240,7 +245,7 @@ func TestConnectOrStartDoesNotReplaceAReachableDaemon(t *testing.T) {
 // left to wait for, so the wait ends as soon as the process is gone and a fresh
 // daemon is started rather than the deadline being sat out.
 func TestConnectOrStartReplacesADaemonThatGoesAway(t *testing.T) {
-	socketDir := t.TempDir()
+	socketDir := testSocketDir(t)
 	t.Setenv("XDG_RUNTIME_DIR", socketDir)
 	t.Setenv("XDG_STATE_HOME", socketDir)
 

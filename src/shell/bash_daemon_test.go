@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -60,15 +61,11 @@ for arg in "$@"; do printf 'ARG %s\n' "$arg"; done
 // placeholders — and $PWD was expanded twice, making a directory named
 // '$(...)' execute on every prompt.
 func TestBashDaemonRenderSurvivesBeingReparsed(t *testing.T) {
-	if _, err := exec.LookPath("bash"); err != nil {
-		t.Skip("bash is not installed")
-	}
+	requireModernBash(t)
 
 	t.Run("the command parses and carries every argument", func(t *testing.T) {
 		output := runBashDriver(t, t.TempDir(), "", "")
 
-		require.Contains(t, output, "CAPTURED_CALLBACK _prompto_daemon_job",
-			"the output-consuming callback must be job.start's second argument")
 		requireCommandParsed(t, output)
 
 		require.Contains(t, output, "ARG render")
@@ -131,11 +128,45 @@ _ble_decode_keymap=vi_nmap`
 // requireCommandParsed is the cause behind every other assertion here: a
 // command that does not parse produces no arguments at all, and a bare missing
 // ARG says much less about why.
+//
+// It checks the command was captured as well as evaluated. An empty one
+// evaluates cleanly, so EVAL_STATUS alone would report success for a script
+// that never even defined the function.
 func requireCommandParsed(t *testing.T, output string) {
 	t.Helper()
 
+	require.Contains(t, output, "CAPTURED_CALLBACK _prompto_daemon_job",
+		"job.start was never reached; the script did not source or the callback is gone")
+	require.Regexp(t, `CAPTURED_COMMAND \S`, output,
+		"job.start was handed an empty command")
 	require.Contains(t, output, "EVAL_STATUS 0",
 		"the command must parse; a syntax error means the render never runs at all")
+}
+
+// requireModernBash skips where bash is too old to source prompto.bash at all.
+// The script uses [[ -v ]] (4.2) and ${var@P} (4.4), so on macOS's stock 3.2 it
+// is a syntax error and nothing under test ever gets defined. That is a
+// property of the shell, not of the render command this exercises.
+func requireModernBash(t *testing.T) {
+	t.Helper()
+
+	path, err := exec.LookPath("bash")
+	if err != nil {
+		t.Skip("bash is not installed")
+	}
+
+	command := exec.CommandContext(t.Context(), path, "-c",
+		`printf '%s.%s' "${BASH_VERSINFO[0]}" "${BASH_VERSINFO[1]}"`)
+	output, err := command.Output()
+	require.NoError(t, err)
+
+	var major, minor int
+	_, err = fmt.Sscanf(string(output), "%d.%d", &major, &minor)
+	require.NoError(t, err, "could not read the bash version from %q", output)
+
+	if major < 4 || (major == 4 && minor < 4) {
+		t.Skipf("bash %d.%d is too old to source prompto.bash; needs 4.4+", major, minor)
+	}
 }
 
 func runBashDriver(t *testing.T, workingDir, repaint, setup string) string {
