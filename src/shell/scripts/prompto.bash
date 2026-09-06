@@ -367,38 +367,51 @@ function _prompto_daemon_job() {
 # Pass --repaint for vim mode toggles (soft cancel, reuse computations)
 function _prompto_daemon_render() {
     local repaint_flag="$1"
-    local config_arg=""
+
+    local -a render_args=(
+        render
+        --shell=bash
+        "--shell-version=$BASH_VERSION"
+        "--pwd=$PWD"
+        "--pid=$$"
+        "--status=$_prompto_status"
+        "--pipestatus=${_prompto_pipestatus[*]}"
+        "--no-status=$_prompto_no_status"
+        "--execution-time=$_prompto_execution_time"
+        "--stack-count=$_prompto_stack_count"
+        "--terminal-width=${COLUMNS-0}"
+        --escape=false
+    )
+
     if [[ -n "$_prompto_config" ]]; then
-        config_arg="--config=$_prompto_config"
+        render_args+=("--config=$_prompto_config")
     fi
 
-    local vim_mode_arg=""
     if [[ $_prompto_vim_mode == 1 ]]; then
-        vim_mode_arg="--vim-mode=$(_prompto_get_vim_mode)"
+        render_args+=("--vim-mode=$(_prompto_get_vim_mode)")
     fi
 
-    # Run the render command in the background using ble.sh job system.
+    if [[ -n "$repaint_flag" ]]; then
+        render_args+=("$repaint_flag")
+    fi
+
+    # ble/util/job.start takes a command *string* and parses it, so every value
+    # interpolated into it has to survive being read as shell source. Quoting
+    # them by hand is not enough: $BASH_VERSION always contains "(1)", which is
+    # a syntax error that aborts the whole command, so the render never runs and
+    # the prompt keeps the placeholders the first batch delivered. And $PWD is
+    # expanded twice, so a directory named '$(...)' — one arriving from a clone
+    # or an unpacked archive — would execute on every prompt.
+    #
+    # %q quotes each value for exactly this round trip.
+    local render_command
+    printf -v render_command '%q ' "$_prompto_executable" "${render_args[@]}"
+
     # _prompto_daemon_job is the second argument: the callback that consumes the
     # job's output. Losing the line continuation before it makes it a separate
-    # command instead, so nothing reads the stream and the prompt keeps the
-    # placeholders the first batch delivered.
-    ble/util/job.start \
-        "$_prompto_executable render \
-            $config_arg \
-            --shell=bash \
-            --shell-version=$BASH_VERSION \
-            --pwd=$PWD \
-            --pid=$$ \
-            --status=$_prompto_status \
-            --pipestatus=${_prompto_pipestatus[*]} \
-            --no-status=$_prompto_no_status \
-            --execution-time=$_prompto_execution_time \
-            --stack-count=$_prompto_stack_count \
-            --terminal-width=${COLUMNS-0} \
-            --escape=false \
-            $vim_mode_arg \
-            $repaint_flag" \
-        _prompto_daemon_job
+    # command instead, so nothing reads the stream and the prompt keeps its
+    # placeholders.
+    ble/util/job.start "$render_command" _prompto_daemon_job
 }
 
 function _prompto_daemon_hook() {
