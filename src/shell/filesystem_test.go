@@ -1,9 +1,13 @@
 package shell
 
 import (
+	"os"
 	"testing"
 
+	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/runtime"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCacheValueChangesWhenDaemonModeChanges(t *testing.T) {
@@ -79,6 +83,8 @@ func TestCacheValueChangesWhenConfigPathChanges(t *testing.T) {
 func TestHasScriptAndWriteScript(t *testing.T) {
 	tempDir := t.TempDir()
 	t.Setenv("PROMPTO_CACHE_DIR", tempDir)
+	cache.ResetPath()
+	t.Cleanup(cache.ResetPath)
 
 	scriptPathCache = ""
 	t.Cleanup(func() {
@@ -123,5 +129,46 @@ func TestHasScriptAndWriteScript(t *testing.T) {
 	_, ok = hasScript(envChanged)
 	if ok {
 		t.Fatalf("expected hasScript to return false when context changes")
+	}
+}
+
+func TestHasScriptCorruptedOrEmptyFile(t *testing.T) {
+	cases := []struct {
+		name    string
+		content string
+	}{
+		{"empty file", ""},
+		{"newline only", "\n"},
+		{"corrupted signature", "# prompto-sig: invalid_hash\n"},
+		{"wrong prefix", "echo 'hello'\n"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+			t.Setenv("PROMPTO_CACHE_DIR", tempDir)
+			cache.ResetPath()
+			t.Cleanup(cache.ResetPath)
+
+			scriptPathCache = ""
+			t.Cleanup(func() {
+				scriptPathCache = ""
+			})
+
+			flags := &runtime.Flags{
+				Shell:      ZSH,
+				ConfigHash: 12345,
+			}
+			env := &runtime.Terminal{}
+			env.Init(flags)
+
+			path := scriptPath(env)
+			require.NoError(t, os.WriteFile(path, []byte(tc.content), 0o644))
+
+			scriptPathCache = ""
+			gotPath, ok := hasScript(env)
+			require.False(t, ok)
+			require.Empty(t, gotPath)
+		})
 	}
 }

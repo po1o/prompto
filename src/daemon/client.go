@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -294,8 +295,14 @@ func (c *Client) CacheShow(ctx context.Context, sessionID string) (*ipc.CacheSho
 
 // CacheSetTTL sets the default cache TTL (in days).
 func (c *Client) CacheSetTTL(ctx context.Context, days int) error {
-	_, err := c.client.CacheSetTTL(ctx, &ipc.CacheSetTTLRequest{Days: int32(days)})
-	return err
+	resp, err := c.client.CacheSetTTL(ctx, &ipc.CacheSetTTLRequest{Days: int32(days)})
+	if err != nil {
+		return err
+	}
+	if !resp.Success {
+		return errors.New("failed to set cache TTL")
+	}
+	return nil
 }
 
 // CacheGetTTL gets the current default cache TTL (in days).

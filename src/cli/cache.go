@@ -61,7 +61,8 @@ var cacheClearCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, _ []string) {
 		if clearInit {
 			if err := cache.ClearInit(); err != nil {
-				printErrorAndExit(err)
+				fmt.Fprintln(cmd.ErrOrStderr(), err)
+				exitcode = 1
 				return
 			}
 
@@ -81,7 +82,8 @@ var cacheClearCmd = &cobra.Command{
 		defer cancel()
 
 		if err := client.CacheClear(ctx); err != nil {
-			printErrorAndExit(err)
+			fmt.Fprintln(cmd.ErrOrStderr(), err)
+			exitcode = 1
 			return
 		}
 
@@ -99,6 +101,24 @@ var cacheTTLCmd = &cobra.Command{
 	Short: "Get or set how long cached values live",
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		var days int
+		if len(args) > 0 {
+			parsed, err := strconv.Atoi(args[0])
+			if err != nil {
+				fmt.Fprintf(cmd.ErrOrStderr(), "TTL must be a whole number of days: %v\n", err)
+				exitcode = 2
+				return
+			}
+
+			if parsed <= 0 {
+				fmt.Fprintf(cmd.ErrOrStderr(), "TTL must be at least one day, got %d\n", parsed)
+				exitcode = 2
+				return
+			}
+
+			days = parsed
+		}
+
 		client, ok := cacheClient(cmd)
 		if !ok {
 			return
@@ -109,31 +129,20 @@ var cacheTTLCmd = &cobra.Command{
 		defer cancel()
 
 		if len(args) == 0 {
-			days, err := client.CacheGetTTL(ctx)
+			currentDays, err := client.CacheGetTTL(ctx)
 			if err != nil {
-				printErrorAndExit(err)
+				fmt.Fprintln(cmd.ErrOrStderr(), err)
+				exitcode = 1
 				return
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "TTL: %d days\n", days)
-			return
-		}
-
-		days, err := strconv.Atoi(args[0])
-		if err != nil {
-			printErrorAndExit(fmt.Errorf("TTL must be a whole number of days: %w", err))
-			exitcode = 2
-			return
-		}
-
-		if days <= 0 {
-			printErrorAndExit(fmt.Errorf("TTL must be at least one day, got %d", days))
-			exitcode = 2
+			fmt.Fprintf(cmd.OutOrStdout(), "TTL: %d days\n", currentDays)
 			return
 		}
 
 		if err := client.CacheSetTTL(ctx, days); err != nil {
-			printErrorAndExit(err)
+			fmt.Fprintln(cmd.ErrOrStderr(), err)
+			exitcode = 1
 			return
 		}
 
@@ -170,7 +179,8 @@ Values whose key names a credential are shown as <redacted>.`,
 
 		response, err := client.CacheShow(ctx, sessionID)
 		if err != nil {
-			printErrorAndExit(err)
+			fmt.Fprintln(cmd.ErrOrStderr(), err)
+			exitcode = 1
 			return
 		}
 

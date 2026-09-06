@@ -26,15 +26,16 @@ func ClearInit() error {
 		if entry.IsDir() {
 			continue
 		}
-
-		if strings.HasPrefix(entry.Name(), "init.") {
-			path := filepath.Join(cacheDir, entry.Name())
-			if err := os.Remove(path); err != nil {
-				log.Error(err)
-				continue
-			}
-			log.Debugf("removed cached init script: %s", path)
+		if !strings.HasPrefix(entry.Name(), "init.") {
+			continue
 		}
+
+		path := filepath.Join(cacheDir, entry.Name())
+		if err := os.Remove(path); err != nil {
+			log.Error(err)
+			continue
+		}
+		log.Debugf("removed cached init script: %s", path)
 	}
 
 	return nil
