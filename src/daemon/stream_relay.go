@@ -3,7 +3,8 @@ package daemon
 import "context"
 
 type StreamRelay struct {
-	// hub contains all updates ever published for one session.
+	// hub holds the recent update history for one session; it is bounded, so
+	// a subscriber far enough behind resumes at the oldest entry still held.
 	hub *SessionUpdateHub
 }
 
