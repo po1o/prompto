@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/log"
 	"github.com/po1o/prompto/src/runtime"
@@ -81,7 +80,6 @@ func runInit(sh string) {
 	configFlag = config.Resolve(configFlag)
 
 	cfg := config.Load(configFlag)
-	initCache()
 
 	flags := &runtime.Flags{
 		Shell:      sh,
@@ -100,12 +98,7 @@ func runInit(sh string) {
 
 	template.Init(env, cfg.Var, cfg.Maps)
 
-	defer func() {
-		template.SaveCache()
-		if err := cache.Clear(false, shell.InitScriptName(env.Flags())); err != nil {
-			log.Error(err)
-		}
-	}()
+	defer template.SaveCache()
 
 	feats := cfg.Features(env, true)
 
@@ -158,8 +151,4 @@ func getFullCommand(cmd *cobra.Command, args []string) string {
 	})
 
 	return cmdPath
-}
-
-func initCache() {
-	cache.Init(cache.NoSession)
 }
