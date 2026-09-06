@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/po1o/prompto/src/config"
 	"github.com/po1o/prompto/src/prompt"
 	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/shell"
@@ -70,7 +71,7 @@ func TestRenderPipelineStartRendersInitialBundle(t *testing.T) {
 	renderer := &rendererStub{}
 	pipeline := NewRenderPipeline(registry, nil, renderer, nil)
 
-	bundle, active := pipeline.Start("session-a", &runtime.Flags{}, nil, CancelHard)
+	bundle, active := pipeline.Start(RenderRequest{SessionID: "session-a", Flags: &runtime.Flags{}, Cancel: CancelHard})
 	require.Equal(t, "render", bundle.Primary)
 	require.Equal(t, "transient", bundle.Transient)
 	require.Equal(t, "rtransient", bundle.RTransient)
@@ -90,7 +91,7 @@ func TestRenderPipelineNextRendersAfterUpdate(t *testing.T) {
 	renderer := &rendererStub{}
 	pipeline := NewRenderPipeline(registry, nil, renderer, nil)
 
-	_, active := pipeline.Start("session-a", &runtime.Flags{}, nil, CancelHard)
+	_, active := pipeline.Start(RenderRequest{SessionID: "session-a", Flags: &runtime.Flags{}, Cancel: CancelHard})
 	defer active.Complete()
 
 	go func() {
@@ -194,7 +195,7 @@ func TestRenderPipelineRepaintWithoutActiveRenderReturnsNoActiveHandle(t *testin
 	renderer := &rendererStub{}
 	pipeline := NewRenderPipeline(registry, nil, renderer, nil)
 
-	bundle, active := pipeline.Start("session-a", &runtime.Flags{VimMode: "normal"}, nil, CancelSoft)
+	bundle, active := pipeline.Start(RenderRequest{SessionID: "session-a", Flags: &runtime.Flags{VimMode: "normal"}, Cancel: CancelSoft})
 
 	require.Equal(t, "render", bundle.Primary)
 	require.Nil(t, active)
@@ -240,7 +241,7 @@ text.rtransient:
 		Plain:         true,
 	}
 
-	bundle, active := pipeline.Start("session-a", flags, nil, CancelHard)
+	bundle, active := pipeline.Start(RenderRequest{SessionID: "session-a", Flags: flags, Cancel: CancelHard})
 
 	require.Equal(t, "render", bundle.Primary)
 	require.Equal(t, "transient", bundle.Transient)
@@ -282,12 +283,76 @@ status:
 		}
 	}
 
-	success, active := pipeline.Start("session-a", flags(0), nil, CancelHard)
+	success, active := pipeline.Start(RenderRequest{SessionID: "session-a", Flags: flags(0), Cancel: CancelHard})
 	require.Nil(t, active)
 	require.True(t, strings.Contains(success.Primary, "OK"))
 	require.False(t, strings.Contains(success.Primary, "ERROR"))
 
-	failure, active := pipeline.Start("session-a", flags(1), nil, CancelHard)
+	failure, active := pipeline.Start(RenderRequest{SessionID: "session-a", Flags: flags(1), Cancel: CancelHard})
 	require.Nil(t, active)
 	require.True(t, strings.Contains(failure.Primary, "ERROR"))
+}
+
+// TestRenderMarkerDeadlineStaysAheadOfTheClient covers the ordering the timed-out
+// marker depends on. The configured deadline and the client's stream deadline
+// are set independently, so nothing stops them being equal, or the configured
+// one being later. Either way the client hangs up first, the marker is produced
+// for nobody, and the shell keeps the pending placeholders — the exact failure
+// the marker exists to prevent. The client's deadline is therefore the ceiling.
+func TestRenderMarkerDeadlineStaysAheadOfTheClient(t *testing.T) {
+	t.Run("no client deadline leaves the configured one alone", func(t *testing.T) {
+		require.Equal(t, 60*time.Second, renderMarkerDeadline(60*time.Second, time.Time{}))
+	})
+
+	t.Run("a configured deadline that fits is kept", func(t *testing.T) {
+		client := time.Now().Add(2 * time.Minute)
+		require.Equal(t, 30*time.Second, renderMarkerDeadline(30*time.Second, client))
+	})
+
+	t.Run("a configured deadline past the client is pulled in", func(t *testing.T) {
+		client := time.Now().Add(20 * time.Second)
+		marker := renderMarkerDeadline(5*time.Minute, client)
+
+		// Bounded on both sides: pulling it in must leave the margin, and must
+		// not collapse it to nothing.
+		require.Greater(t, marker, 14*time.Second)
+		require.LessOrEqual(t, marker, 20*time.Second-clientReportMargin)
+	})
+
+	t.Run("deadlines set to the same value still leave room to report", func(t *testing.T) {
+		// The case that has no margin by construction: both sides asked for the
+		// same 30 seconds.
+		client := time.Now().Add(30 * time.Second)
+		marker := renderMarkerDeadline(30*time.Second, client)
+
+		require.Less(t, marker, 30*time.Second, "the marker must land before the client gives up")
+	})
+
+	t.Run("no deadline configured still reports before the client goes", func(t *testing.T) {
+		client := time.Now().Add(20 * time.Second)
+		marker := renderMarkerDeadline(0, client)
+
+		require.Greater(t, marker, 14*time.Second)
+		require.LessOrEqual(t, marker, 20*time.Second-clientReportMargin)
+	})
+
+	t.Run("a negative deadline defers to the client rather than disabling", func(t *testing.T) {
+		// Through the real mapping, not a hand-written zero: this is the
+		// behaviour a user writing `render_timeout: -1` actually gets.
+		configured := (&config.Config{RenderTimeout: -1}).GetRenderTimeout()
+		require.Equal(t, time.Duration(0), configured, "a negative config means no deadline of its own")
+
+		client := time.Now().Add(20 * time.Second)
+		marker := renderMarkerDeadline(configured, client)
+
+		// It cannot mean "never": the client stops listening regardless, and
+		// silence there is the bug the marker exists to prevent.
+		require.Greater(t, marker, time.Duration(0),
+			"deferring must still leave a marker the client can receive")
+		require.LessOrEqual(t, marker, 20*time.Second-clientReportMargin)
+	})
+
+	t.Run("a client already out of time gets nothing", func(t *testing.T) {
+		require.Equal(t, time.Duration(0), renderMarkerDeadline(time.Minute, time.Now()))
+	})
 }

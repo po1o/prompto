@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/po1o/prompto/src/config"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,22 +30,20 @@ func TestEncodeRenderOutputTextPreservesPlainOutput(t *testing.T) {
 	assert.Equal(t, "line1\nline2", encodeRenderOutputText("line1\nline2"))
 }
 
-// TestRenderStreamOutlastsASlowSegment pins the streaming render's deadline
-// apart from the single-call one. They were the same ten seconds, so a segment
-// slower than that — a git status on a large repository takes twelve — could
-// never deliver its update: the client abandoned the stream first, the shell
-// kept the pending placeholders it had already drawn, and the next prompt
-// cancelled the render, killing the command just short of finishing. The
-// segment resolved on no prompt, ever.
+// TestRenderStreamOutlastsTheDaemonRenderDeadline pins an ordering that spans
+// two packages and so can drift without anything noticing. The daemon draws
+// segments as timed out at its own deadline; this client has to still be
+// listening when that lands, or the marker is produced for nobody and the shell
+// keeps the pending placeholders — the failure the marker exists to prevent.
 //
-// This pins the intent rather than the exact value. The streaming deadline is
-// a safety net against a daemon that has stopped answering, so it has to
-// outlast any segment worth waiting for.
-func TestRenderStreamOutlastsASlowSegment(t *testing.T) {
-	require.Greater(t, renderStreamTimeout, daemonCallTimeout,
-		"a streaming render must not be held to the timeout for a single call")
+// The daemon clamps against the deadline this client sends, so correctness does
+// not rest on this. What rests on it is the clamp never having to do anything
+// in the default configuration.
+func TestRenderStreamOutlastsTheDaemonRenderDeadline(t *testing.T) {
+	daemonDefault := (&config.Config{}).GetRenderTimeout()
 
-	const slowestRealisticSegment = 30 * time.Second
-	require.GreaterOrEqual(t, renderStreamTimeout, slowestRealisticSegment,
-		"a segment slower than this loses its update entirely, it does not degrade")
+	require.Greater(t, renderStreamTimeout, daemonDefault,
+		"the client must outlast the daemon's own render deadline")
+	require.Greater(t, renderStreamTimeout-daemonDefault, 30*time.Second,
+		"and by enough that a late segment still gets its marker across")
 }

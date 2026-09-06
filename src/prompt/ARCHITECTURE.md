@@ -32,6 +32,10 @@ description: How the prompt engine builds layout blocks and renders sync, async,
 - Starts segment executions concurrently.
 - Returns quickly after timeout using pending placeholders.
 - Streams updates as segments complete.
+- Past `render_timeout`, segments still pending are drawn as timed out. This
+  marks them; it does not end the render, because completing a render retires
+  its generation and cancels the context its segments execute under. A segment
+  that answers later still replaces its own marker.
 
 ## Repaint Behavior
 

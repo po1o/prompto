@@ -39,6 +39,8 @@ type LayoutConfig struct {
 	DaemonIdleTimeout       string                 `yaml:"daemon_idle_timeout,omitempty"`
 	RenderPendingIcon       string                 `yaml:"render_pending_icon,omitempty"`
 	RenderPendingBackground color.Ansi             `yaml:"render_pending_background,omitempty"`
+	RenderTimeoutIcon       string                 `yaml:"render_timeout_icon,omitempty"`
+	RenderTimeoutForeground color.Ansi             `yaml:"render_timeout_foreground,omitempty"`
 	ConsoleTitleTemplate    string                 `yaml:"console_title_template,omitempty"`
 	PWD                     string                 `yaml:"pwd,omitempty"`
 	TerminalBackground      color.Ansi             `yaml:"terminal_background,omitempty"`
@@ -55,6 +57,7 @@ type LayoutConfig struct {
 	TransientPrompt         []PromptLayout         `yaml:"transient,omitempty"`
 	TransientRPrompt        []PromptLayout         `yaml:"rtransient,omitempty"`
 	DaemonTimeout           int                    `yaml:"daemon_timeout,omitempty"`
+	RenderTimeout           int                    `yaml:"render_timeout,omitempty"`
 	Async                   bool                   `yaml:"async,omitempty"`
 	ShellIntegration        bool                   `yaml:"shell_integration,omitempty"`
 	CursorPadding           bool                   `yaml:"cursor_padding,omitempty"`
@@ -91,6 +94,8 @@ type layoutRawConfig struct {
 	ToolTipsAction          Action                 `yaml:"tooltips_action"`
 	RenderPendingBackground color.Ansi             `yaml:"render_pending_background"`
 	RenderPendingIcon       string                 `yaml:"render_pending_icon"`
+	RenderTimeoutForeground color.Ansi             `yaml:"render_timeout_foreground"`
+	RenderTimeoutIcon       string                 `yaml:"render_timeout_icon"`
 	DaemonIdleTimeout       string                 `yaml:"daemon_idle_timeout"`
 	Tooltips                []*Segment             `yaml:"tooltips"`
 	Prompt                  []PromptLayout         `yaml:"prompt"`
@@ -101,6 +106,7 @@ type layoutRawConfig struct {
 	ITermFeatures           terminal.ITermFeatures `yaml:"iterm_features"`
 	Cycle                   color.Cycle            `yaml:"cycle"`
 	DaemonTimeout           int                    `yaml:"daemon_timeout"`
+	RenderTimeout           int                    `yaml:"render_timeout"`
 	Async                   bool                   `yaml:"async"`
 	ShellIntegration        bool                   `yaml:"shell_integration"`
 	PatchPwshBleed          bool                   `yaml:"patch_pwsh_bleed"`
@@ -205,6 +211,8 @@ func ParseLayoutYAMLFrom(data []byte, configFile string) (*LayoutConfig, error) 
 		DaemonIdleTimeout:       raw.DaemonIdleTimeout,
 		RenderPendingIcon:       raw.RenderPendingIcon,
 		RenderPendingBackground: raw.RenderPendingBackground,
+		RenderTimeoutIcon:       raw.RenderTimeoutIcon,
+		RenderTimeoutForeground: raw.RenderTimeoutForeground,
 		ConsoleTitleTemplate:    raw.ConsoleTitleTemplate,
 		PWD:                     raw.PWD,
 		TerminalBackground:      raw.TerminalBackground,
@@ -219,6 +227,7 @@ func ParseLayoutYAMLFrom(data []byte, configFile string) (*LayoutConfig, error) 
 		TransientPrompt:         raw.Transient,
 		TransientRPrompt:        raw.RTransient,
 		DaemonTimeout:           raw.DaemonTimeout,
+		RenderTimeout:           raw.RenderTimeout,
 		Async:                   raw.Async,
 		ShellIntegration:        raw.ShellIntegration,
 		CursorPadding:           cursorPadding,
@@ -346,6 +355,8 @@ func (cfg *LayoutConfig) ApplyMetadata(target *Config) {
 	target.DaemonIdleTimeout = cfg.DaemonIdleTimeout
 	target.RenderPendingIcon = cfg.RenderPendingIcon
 	target.RenderPendingBackground = cfg.RenderPendingBackground
+	target.RenderTimeoutIcon = cfg.RenderTimeoutIcon
+	target.RenderTimeoutForeground = cfg.RenderTimeoutForeground
 	target.ConsoleTitleTemplate = cfg.ConsoleTitleTemplate
 	target.PWD = cfg.PWD
 	target.TerminalBackground = cfg.TerminalBackground
@@ -355,6 +366,7 @@ func (cfg *LayoutConfig) ApplyMetadata(target *Config) {
 	target.ValidLine = cfg.ValidLine
 	target.ErrorLine = cfg.ErrorLine
 	target.DaemonTimeout = cfg.DaemonTimeout
+	target.RenderTimeout = cfg.RenderTimeout
 	target.Async = cfg.Async
 	target.ShellIntegration = cfg.ShellIntegration
 	target.CursorPadding = cfg.CursorPadding

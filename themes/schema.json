@@ -491,6 +491,14 @@
           "type": "string",
           "title": "Per-segment pending icon override"
         },
+        "render_timeout_icon": {
+          "type": "string",
+          "title": "Per-segment timeout icon override"
+        },
+        "render_timeout_foreground": {
+          "$ref": "#/definitions/color",
+          "title": "Per-segment timeout foreground override"
+        },
         "render_pending_background": {
           "$ref": "#/definitions/color",
           "title": "Per-segment pending background override"
@@ -5420,6 +5428,19 @@
     "render_pending_icon": {
       "type": "string",
       "title": "Global pending icon"
+    },
+    "render_timeout": {
+      "type": "integer",
+      "title": "Seconds a render may keep segments pending before drawing them as timed out; negative defers to the caller's own deadline",
+      "default": 60
+    },
+    "render_timeout_icon": {
+      "type": "string",
+      "title": "Global timeout icon"
+    },
+    "render_timeout_foreground": {
+      "$ref": "#/definitions/color",
+      "title": "Global timeout foreground"
     },
     "render_pending_background": {
       "$ref": "#/definitions/color",

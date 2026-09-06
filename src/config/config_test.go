@@ -319,3 +319,30 @@ func TestGetDaemonTimeout(t *testing.T) {
 	var nilCfg *Config
 	assert.Equal(t, 100*time.Millisecond, nilCfg.GetDaemonTimeout())
 }
+
+// TestGetRenderTimeout pins the mapping the render marker rests on, including
+// the negative case, which reads like "disable" and deliberately is not: the
+// caller's stream deadline applies regardless, so suppressing the marker
+// entirely would only trade something the user can read for a prompt that keeps
+// its placeholders with nothing to explain why.
+func TestGetRenderTimeout(t *testing.T) {
+	cases := []struct {
+		Case       string
+		Configured int
+		Expected   time.Duration
+	}{
+		{Case: "unset takes the default", Configured: 0, Expected: 60 * time.Second},
+		{Case: "seconds are honoured", Configured: 5, Expected: 5 * time.Second},
+		{Case: "a large value is honoured", Configured: 600, Expected: 600 * time.Second},
+		{Case: "negative means no deadline of its own", Configured: -1, Expected: 0},
+		{Case: "any negative, not just -1", Configured: -99, Expected: 0},
+	}
+
+	for _, tc := range cases {
+		cfg := &Config{RenderTimeout: tc.Configured}
+		assert.Equal(t, tc.Expected, cfg.GetRenderTimeout(), tc.Case)
+	}
+
+	var nilConfig *Config
+	assert.Equal(t, 60*time.Second, nilConfig.GetRenderTimeout(), "a nil config takes the default")
+}

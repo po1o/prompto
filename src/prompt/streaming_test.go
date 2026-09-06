@@ -2,6 +2,8 @@ package prompt
 
 import (
 	"context"
+	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -133,7 +135,7 @@ slow.main:
 
 	updates := make(chan string, 8)
 	start := time.Now()
-	initial, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(segment string) {
+	initial, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, 0, func(segment string) {
 		updates <- segment
 	})
 	elapsed := time.Since(start)
@@ -199,7 +201,7 @@ slow.main:
 
 	updates := make(chan string, 8)
 	start := time.Now()
-	_, _ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(segment string) {
+	_, _ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, 0, func(segment string) {
 		updates <- segment
 	})
 	elapsed := time.Since(start)
@@ -280,7 +282,7 @@ slow.rtransient:
 	t.Cleanup(engine.WaitForSegmentExecutions)
 
 	updates := make(chan string, 16)
-	initial, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(segment string) {
+	initial, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, 0, func(segment string) {
 		updates <- segment
 	})
 
@@ -354,7 +356,7 @@ text.time:
 	}
 	engine := New(flags)
 	t.Cleanup(engine.WaitForSegmentExecutions)
-	_, _ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	_, _ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, 0, func(string) {})
 
 	pending := engine.StreamingTransientRPrompt()
 	require.NotEmpty(t, pending)
@@ -397,7 +399,7 @@ blocking.main:
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		_, _ = engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, func(string) {})
+		_, _ = engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, 0, func(string) {})
 	}()
 
 	require.Eventually(t, func() bool {
@@ -437,7 +439,7 @@ vim:
 	engine := New(flags)
 	t.Cleanup(engine.WaitForSegmentExecutions)
 
-	_, _ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	_, _ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, 0, func(string) {})
 	require.True(t, strings.Contains(engine.StreamingRPrompt(), "INSERT"), "expected initial render to include INSERT mode")
 
 	flags.VimMode = "normal"
@@ -464,7 +466,7 @@ session:
 	}
 	engine := New(flags)
 	t.Cleanup(engine.WaitForSegmentExecutions)
-	_, _ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	_, _ = engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, 0, func(string) {})
 
 	const hold = 80 * time.Millisecond
 	locked := make(chan struct{})
@@ -792,7 +794,7 @@ slow.main:
 
 	ctx, cancel := context.WithCancel(context.Background())
 	var updates atomic.Int32
-	_, _ = engine.PrimaryStreaming(ctx, 50*time.Millisecond, func(string) {
+	_, _ = engine.PrimaryStreaming(ctx, 50*time.Millisecond, 0, func(string) {
 		updates.Add(1)
 	})
 	require.NotEmpty(t, engine.PendingSegments())
@@ -844,7 +846,7 @@ vim:
 	engine := New(flags)
 	t.Cleanup(engine.WaitForSegmentExecutions)
 
-	initial, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	initial, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, 0, func(string) {})
 	require.Contains(t, initial, "[]", "the kept segment should hold its shape on the first render")
 
 	flags.VimMode = "normal"
@@ -894,7 +896,7 @@ text.second:
 	engine := New(flags)
 	t.Cleanup(engine.WaitForSegmentExecutions)
 
-	first, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	first, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, 0, func(string) {})
 	require.NotEmpty(t, first)
 
 	require.NotEmpty(t, engine.streamingBlocks)
@@ -951,7 +953,7 @@ test.templated:
 		inGreenForeground = "\x1b[38;2;0;255;0m"
 	)
 
-	initial, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, func(string) {})
+	initial, _ := engine.PrimaryStreaming(context.Background(), 50*time.Millisecond, 0, func(string) {})
 	require.Contains(t, initial, onRedBackground)
 	require.Contains(t, initial, inGreenForeground)
 
@@ -1043,7 +1045,7 @@ streamed.plain:
 
 	// Re-render on every update the way the daemon's render pipeline does.
 	frames := make(chan string, 16)
-	initial, _ := engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, func(string) {
+	initial, _ := engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, 0, func(string) {
 		frames <- engine.ReRender()
 	})
 	require.NotContains(t, initial, "TEMPLATED", "both segments should still be pending")
@@ -1079,4 +1081,252 @@ streamed.plain:
 	}
 
 	require.True(t, sawReuse, "the frame that re-draws an already-rendered segment is the one under test")
+}
+
+// gatedWriter blocks until the test releases it, standing in for a segment
+// whose command outruns the render deadline.
+type gatedWriter struct {
+	release <-chan struct{}
+	text    string
+}
+
+func (w *gatedWriter) Enabled() bool {
+	<-w.release
+	return true
+}
+
+func (w *gatedWriter) Template() string                               { return "{{ .Text }}" }
+func (w *gatedWriter) SetText(text string)                            { w.text = text }
+func (w *gatedWriter) SetIndex(_ int)                                 {}
+func (w *gatedWriter) Text() string                                   { return w.text }
+func (w *gatedWriter) Init(_ options.Provider, _ runtime.Environment) {}
+func (w *gatedWriter) CacheKey() (string, bool)                       { return "", false }
+
+// TestPrimaryStreamingDrawsSegmentsStillPendingAtTheDeadline covers what the
+// shell is left holding when a segment does not report back. It used to be the
+// pending placeholders, for good: nothing else was ever published, so the
+// update that would have replaced them never came. Past render_timeout the
+// segment is drawn as timed out instead.
+//
+// The render deliberately stays open. Completing it would retire the
+// generation, and retiring it cancels the context the segment is executing
+// under — killing the work that would have answered, so the segment could never
+// resolve on any prompt.
+func TestPrimaryStreamingDrawsSegmentsStillPendingAtTheDeadline(t *testing.T) {
+	release := make(chan struct{})
+	segmentType := config.SegmentType("gated_test")
+	previous, hadPrevious := config.Segments[segmentType]
+	config.Segments[segmentType] = func() config.SegmentWriter { return &gatedWriter{release: release} }
+	t.Cleanup(func() {
+		if hadPrevious {
+			config.Segments[segmentType] = previous
+			return
+		}
+
+		delete(config.Segments, segmentType)
+	})
+
+	engine := newGatedEngine(t, "gated_test")
+	t.Cleanup(func() {
+		close(release)
+		engine.WaitForSegmentExecutions()
+	})
+
+	updates := make(chan string, 8)
+	initial, streaming := engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, time.Second, func(segment string) {
+		updates <- segment
+	})
+
+	require.True(t, streaming, "the gated segment must still be pending")
+	require.Contains(t, initial, "PENDING:", "the first prompt shows the pending placeholder")
+
+	select {
+	case update := <-updates:
+		require.Equal(t, SegmentsTimedOut, update, "the deadline must announce the segments it marked")
+	case <-time.After(5 * time.Second):
+		t.Fatal("nothing was announced; the shell would keep its placeholders")
+	}
+
+	timedOut := engine.ReRender()
+	require.Contains(t, timedOut, "TIMEDOUT:", "the segment must be drawn as timed out")
+	require.NotContains(t, timedOut, "PENDING:", "the pending placeholder must be gone")
+
+	// Still pending, so the work is still running and can still answer.
+	require.Equal(t, 1, engine.PendingSegmentCount())
+}
+
+// TestPrimaryStreamingReplacesATimeoutMarkerWhenTheSegmentLands is the point of
+// leaving the render open: work that outran the deadline is not thrown away,
+// and its result replaces the marker when it arrives.
+func TestPrimaryStreamingReplacesATimeoutMarkerWhenTheSegmentLands(t *testing.T) {
+	release := make(chan struct{})
+	segmentType := config.SegmentType("gated_test_late")
+	previous, hadPrevious := config.Segments[segmentType]
+	config.Segments[segmentType] = func() config.SegmentWriter { return &gatedWriter{release: release} }
+	t.Cleanup(func() {
+		if hadPrevious {
+			config.Segments[segmentType] = previous
+			return
+		}
+
+		delete(config.Segments, segmentType)
+	})
+
+	engine := newGatedEngine(t, "gated_test_late")
+	t.Cleanup(engine.WaitForSegmentExecutions)
+
+	updates := make(chan string, 8)
+	_, streaming := engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, time.Second, func(segment string) {
+		updates <- segment
+	})
+	require.True(t, streaming)
+
+	require.Equal(t, SegmentsTimedOut, <-updates)
+	require.Contains(t, engine.ReRender(), "TIMEDOUT:")
+
+	// The segment answers after the deadline had already given up on it.
+	close(release)
+
+	require.Eventually(t, func() bool {
+		return engine.PendingSegmentCount() == 0
+	}, 5*time.Second, 10*time.Millisecond)
+
+	resolved := engine.ReRender()
+	require.Contains(t, resolved, "READY", "the late result must reach the prompt")
+	require.NotContains(t, resolved, "TIMEDOUT:", "its marker must be gone")
+}
+
+// TestPrimaryStreamingKeepsPendingSegmentsBeforeTheDeadline is the other half:
+// a segment that reports back in time is never marked, so the deadline cannot
+// flag a render that is merely slower than the placeholder cutoff.
+func TestPrimaryStreamingKeepsPendingSegmentsBeforeTheDeadline(t *testing.T) {
+	release := make(chan struct{})
+	segmentType := config.SegmentType("gated_test_ok")
+	previous, hadPrevious := config.Segments[segmentType]
+	config.Segments[segmentType] = func() config.SegmentWriter { return &gatedWriter{release: release} }
+	t.Cleanup(func() {
+		if hadPrevious {
+			config.Segments[segmentType] = previous
+			return
+		}
+
+		delete(config.Segments, segmentType)
+	})
+
+	engine := newGatedEngine(t, "gated_test_ok")
+	t.Cleanup(engine.WaitForSegmentExecutions)
+
+	updates := make(chan string, 8)
+	_, streaming := engine.PrimaryStreaming(context.Background(), 20*time.Millisecond, 30*time.Second, func(segment string) {
+		updates <- segment
+	})
+	require.True(t, streaming)
+
+	close(release)
+
+	require.Eventually(t, func() bool {
+		return engine.PendingSegmentCount() == 0
+	}, 5*time.Second, 10*time.Millisecond)
+
+	resolved := engine.ReRender()
+	require.Contains(t, resolved, "READY")
+	require.NotContains(t, resolved, "TIMEDOUT:", "a segment that reported in time must not be flagged")
+}
+
+// newGatedEngine builds an engine whose only segment is the named gated type.
+func newGatedEngine(t *testing.T, segmentType string) *Engine {
+	t.Helper()
+
+	configPath := filepath.Join(t.TempDir(), "gated.omp.yaml")
+	cfg := fmt.Sprintf(`
+daemon_timeout: 20
+render_pending_icon: "PENDING:"
+render_timeout_icon: "TIMEDOUT:"
+render_timeout_foreground: "red"
+prompt:
+  - segments: ["gated.main"]
+
+gated.main:
+  type: "%s"
+  template: "READY"
+`, segmentType)
+	require.NoError(t, os.WriteFile(configPath, []byte(cfg), 0o644))
+
+	return New(&runtime.Flags{ConfigPath: configPath, Plain: true, Shell: shell.GENERIC})
+}
+
+// TestPrimaryStreamingDeadlineDoesNotMarkASupersededGeneration covers the race
+// between a hard cancel and the render deadline.
+//
+// The window is the wait for streamingMu. The publisher takes the deadline arm,
+// calls markPendingSegmentsTimedOut and blocks on the lock; meanwhile the next
+// render takes it, resets both maps and refills pendingSegments with its own
+// segments. If the publisher then marks whatever it finds, it paints a prompt
+// milliseconds old as timed out, and the markers clear only as each segment
+// reports — so a slow one stays wrongly red for that whole render.
+//
+// Checking the context before taking the lock cannot close this: that check is
+// on the near side of the window. The test holds the lock itself to put the
+// publisher exactly there, cancels, and then releases.
+func TestPrimaryStreamingDeadlineDoesNotMarkASupersededGeneration(t *testing.T) {
+	release := make(chan struct{})
+	segmentType := config.SegmentType("gated_test_generation")
+	previous, hadPrevious := config.Segments[segmentType]
+	config.Segments[segmentType] = func() config.SegmentWriter { return &gatedWriter{release: release} }
+	t.Cleanup(func() {
+		if hadPrevious {
+			config.Segments[segmentType] = previous
+			return
+		}
+
+		delete(config.Segments, segmentType)
+	})
+
+	engine := newGatedEngine(t, "gated_test_generation")
+	t.Cleanup(func() {
+		close(release)
+		engine.WaitForSegmentExecutions()
+	})
+
+	superseded, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	var announced atomic.Int64
+
+	// The window this test needs is between the placeholder cutoff and the
+	// deadline: long enough that taking the lock below cannot lose a race with
+	// the timer on a loaded machine.
+	const markerAfter = 300 * time.Millisecond
+	_, streaming := engine.PrimaryStreaming(superseded, 20*time.Millisecond, markerAfter, func(string) {
+		announced.Add(1)
+	})
+	require.True(t, streaming)
+
+	// Hold the lock the publisher needs, so that when the deadline arrives it
+	// blocks inside markPendingSegmentsTimedOut rather than completing it.
+	engine.streamingMu.Lock()
+	time.Sleep(2 * markerAfter)
+
+	// The generation is superseded while the publisher waits behind us.
+	cancel()
+	engine.streamingMu.Unlock()
+
+	// Give the publisher every chance to mark now that the lock is free.
+	time.Sleep(2 * markerAfter)
+
+	require.Empty(t, engine.timedOutSnapshot(),
+		"a superseded generation marked segments as timed out")
+	require.Zero(t, announced.Load(),
+		"a superseded generation announced an update")
+}
+
+// timedOutSnapshot copies the marker set under the lock that owns it.
+func (e *Engine) timedOutSnapshot() map[string]bool {
+	e.streamingMu.Lock()
+	defer e.streamingMu.Unlock()
+
+	snapshot := make(map[string]bool, len(e.timedOutSegments))
+	maps.Copy(snapshot, e.timedOutSegments)
+
+	return snapshot
 }

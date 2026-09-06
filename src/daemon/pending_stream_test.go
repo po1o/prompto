@@ -96,7 +96,10 @@ func drainRenderStream(t *testing.T, daemon *Daemon, sessionID, configPath strin
 		Cancel:    CancelHard,
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// Generous on purpose. It only bounds a render that has gone wrong, and a
+	// tight bound here is what makes a sweep like this flaky on a loaded
+	// machine rather than a real signal.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	last := initial.Bundle

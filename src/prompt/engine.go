@@ -32,6 +32,7 @@ type Engine struct {
 	LayoutConfig          *config.LayoutConfig
 	previousActiveSegment *config.Segment
 	pendingSegments       map[string]bool
+	timedOutSegments      map[string]bool
 	cachedValues          map[string]string
 	segmentCacheKeys      map[string]string
 	Overflow              config.Overflow

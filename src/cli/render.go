@@ -21,18 +21,22 @@ const (
 	// daemonCallTimeout bounds a single request-response call to the daemon.
 	daemonCallTimeout = 10 * time.Second
 
-	// renderStreamTimeout bounds a streaming render. It is a safety net against
-	// a daemon that has stopped answering, not a budget for segment work: a
-	// render runs until its slowest segment finishes, and segments that need
-	// bounding carry a per-segment `timeout`.
+	// renderStreamTimeout bounds a streaming render. It is the last resort for a
+	// daemon that has stopped answering altogether, not the deadline for a slow
+	// render: `render_timeout` is that, and the daemon applies it by drawing the
+	// segments still outstanding as timed out.
 	//
-	// Giving up early is not a graceful degradation, it loses the render
-	// outright. The shell has already drawn the pending placeholders, and the
-	// update that would replace them only ever arrives on this stream, so the
-	// prompt keeps the placeholders until the next command. Waiting costs at
-	// most a lingering process, and not even for long: the shell closes this
-	// stream when it starts the next prompt.
-	renderStreamTimeout = 60 * time.Second
+	// Drawing that marker deliberately does NOT end the render — completing it
+	// would retire the render generation, and retiring it cancels the context
+	// the segment is executing under, killing the work that would have answered.
+	// So a render can legitimately stay open past its marker, and this deadline
+	// is what eventually reclaims the process.
+	//
+	// It therefore has to sit above `render_timeout`, or the client hangs up
+	// before the marker is drawn and the shell never receives it. The daemon
+	// enforces that from its side too, clamping against the deadline gRPC
+	// carries from here, so the two cannot be misordered by configuration.
+	renderStreamTimeout = 120 * time.Second
 )
 
 var renderOutputEscaper = strings.NewReplacer(
