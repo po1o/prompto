@@ -109,7 +109,9 @@ const (
 ```
 
 `CancelKind` is derived **once**, at the boundary between `Server` and
-`Daemon`, from `PromptRequest.repaint`:
+`Daemon`, from `PromptRequest.repaint`. The request also carries the client's
+own deadline, which gRPC propagates on the wire, so a render can tell how long
+it has before nobody is listening:
 
 ```go
 kind := CancelHard

@@ -1237,6 +1237,10 @@ func TestPrimaryStreamingKeepsPendingSegmentsBeforeTheDeadline(t *testing.T) {
 func newGatedEngine(t *testing.T, segmentType string) *Engine {
 	t.Helper()
 
+	// New writes the process-global terminal.Plain; put it back so this helper
+	// does not decide the rendering mode for whatever runs next.
+	restorePlain(t, terminal.Plain)
+
 	configPath := filepath.Join(t.TempDir(), "gated.omp.yaml")
 	cfg := fmt.Sprintf(`
 daemon_timeout: 20

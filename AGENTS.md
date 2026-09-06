@@ -18,7 +18,7 @@ When editing Go files (`*.go`):
   - `` go list ./... | grep -v '/daemon/ipc$' | xargs go tool fieldalignment ``
   - `` go list ./... | grep -v '/daemon/ipc$' | xargs go tool modernize ``
   - `go test -count=1 ./...`
-  - `go test -race -count=3 ./daemon/... ./log/...`
+  - `go test -race -count=3 ./daemon/... ./log/... ./prompt/...`
 - Lint-tool versions are pinned in `src/go.mod` via the `tool` directive — CI
   runs the same binaries. **Never** install a different version with
   `go install ...@latest`; bump via `go get -tool <pkg>@<ver>` so CI follows.
