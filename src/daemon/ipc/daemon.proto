@@ -33,6 +33,9 @@ service DaemonService {
   // CacheGetTTL gets the current default cache TTL (in days).
   rpc CacheGetTTL(CacheGetTTLRequest) returns (CacheGetTTLResponse);
 
+  // CacheShow retrieves daemon cache entries grouped by scope.
+  rpc CacheShow(CacheShowRequest) returns (CacheShowResponse);
+
   // SetLogging enables or disables file logging on the running daemon.
   rpc SetLogging(SetLoggingRequest) returns (SetLoggingResponse);
 }
@@ -132,6 +135,34 @@ message CacheGetTTLRequest {}
 // CacheGetTTLResponse returns the current default cache TTL.
 message CacheGetTTLResponse {
   int32 days = 1;                     // TTL in days
+}
+
+// CacheShowRequest asks for the daemon's cache contents.
+message CacheShowRequest {
+  string session_id = 1;              // Restrict per-session scopes to this session
+}
+
+// CacheEntry is one cached value, rendered for display.
+message CacheEntry {
+  string key = 1;                     // Cache key
+  string value = 2;                   // Rendered value, empty when redacted
+  string type = 3;                    // Go type of the stored value
+  int64 created = 4;                  // Unix seconds, 0 when unknown
+  int64 expires = 5;                  // Unix seconds, 0 when it never expires
+  bool expired = 6;                   // Entry is past its TTL but not yet evicted
+  bool redacted = 7;                  // Value withheld: the key names a credential
+}
+
+// CacheScope groups entries by the cache they came from.
+message CacheScope {
+  string name = 1;                    // Human-readable cache name
+  string session_id = 2;              // Set when the scope belongs to one shell
+  repeated CacheEntry entries = 3;
+}
+
+// CacheShowResponse returns every cache the daemon holds.
+message CacheShowResponse {
+  repeated CacheScope scopes = 1;
 }
 
 // SetLoggingRequest enables or disables daemon file logging.

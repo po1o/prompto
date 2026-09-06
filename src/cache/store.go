@@ -2,6 +2,7 @@ package cache
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -155,45 +156,56 @@ func DeleteAll(s Store) {
 	store.cache.Clear()
 }
 
-func Print(s Store) string {
+// Item is a flattened, display-ready view of one cached value. The stored
+// entry is not exposed: callers only ever render it.
+type Item struct {
+	CreatedAt time.Time
+	ExpiresAt time.Time
+	Key       string
+	Value     string
+	Type      string
+	Expired   bool
+	Forever   bool
+}
+
+// Items lists a store's contents, sorted by key so repeated calls read the
+// same way. Expired entries are included rather than dropped: seeing that a
+// value went stale is usually the reason for looking.
+func Items(s Store) []Item {
 	defer log.Trace(time.Now(), string(s))
 
 	store := s.get()
 	if store == nil {
-		return fmt.Sprintf("Store %s is nil", string(s))
+		return nil
 	}
 
-	cache := store.cache.ToSimple()
-	if len(cache) == 0 {
-		return fmt.Sprintf("Store %s is empty", string(s))
-	}
+	entries := store.cache.ToSimple()
+	items := make([]Item, 0, len(entries))
 
-	var builder strings.Builder
-
-	for key, entry := range cache {
-		builder.WriteString("\n")
-
-		if entry.Expired() {
-			fmt.Fprintf(&builder, "Key: %s [EXPIRED]\n", key)
-			builder.WriteString("\n")
+	for key, entry := range entries {
+		if entry == nil {
 			continue
 		}
 
-		var ttlInfo string
-		if entry.TTL < 0 {
-			ttlInfo = "never expires"
-		}
-		if entry.TTL >= 0 {
-			expiresAt := time.Unix(entry.Timestamp+int64(entry.TTL), 0)
-			ttlInfo = fmt.Sprintf("expires at %s", expiresAt.Format("2006-01-02 15:04:05"))
+		item := Item{
+			Key:       key,
+			Value:     fmt.Sprintf("%v", entry.Value),
+			Type:      fmt.Sprintf("%T", entry.Value),
+			CreatedAt: time.Unix(entry.Timestamp, 0),
+			Expired:   entry.Expired(),
+			Forever:   entry.TTL < 0,
 		}
 
-		fmt.Fprintf(&builder, "Key: %s\n", key)
-		fmt.Fprintf(&builder, "  Value: %#v\n", entry.Value)
-		fmt.Fprintf(&builder, "  Type: %T\n", entry.Value)
-		fmt.Fprintf(&builder, "  Created: %s\n", time.Unix(entry.Timestamp, 0).Format("2006-01-02 15:04:05"))
-		fmt.Fprintf(&builder, "  TTL: %s\n", ttlInfo)
+		if !item.Forever {
+			item.ExpiresAt = time.Unix(entry.Timestamp+int64(entry.TTL), 0)
+		}
+
+		items = append(items, item)
 	}
 
-	return builder.String()
+	slices.SortFunc(items, func(a, b Item) int {
+		return strings.Compare(a.Key, b.Key)
+	})
+
+	return items
 }

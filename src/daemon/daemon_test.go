@@ -414,7 +414,7 @@ func TestExitedProcessForgetsSessionToggles(t *testing.T) {
 	daemon.ToggleSegment(sessionID, []string{"git"})
 	require.True(t, daemon.SessionToggles(sessionID)["git"])
 
-	require.NoError(t, exec.Command("kill", strconv.Itoa(pid)).Run())
+	require.NoError(t, exec.CommandContext(t.Context(), "kill", strconv.Itoa(pid)).Run())
 
 	require.Eventually(t, func() bool {
 		daemon.toggleMu.RLock()

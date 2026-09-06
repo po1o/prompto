@@ -3,7 +3,11 @@ package cli
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
+	"text/tabwriter"
+	"time"
 
 	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/daemon"
@@ -12,148 +16,247 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	session bool
-)
+// sessionOnly limits `cache show` to the calling shell's own session.
+var sessionOnly bool
 
-// cacheCmd represents the cache command
+// clearInit also removes the shell init scripts cached on disk.
+var clearInit bool
+
+// errNoDaemon is what every subcommand reports when it cannot reach the
+// daemon. The caches live only in the daemon's memory, so without one there is
+// nothing to read, clear or configure — and saying so beats printing an empty
+// listing that looks like an answer.
+const errNoDaemon = "no daemon running: the cache lives in the daemon, start a shell with prompto enabled first"
+
 var cacheCmd = &cobra.Command{
-	Use:   "cache [path|clear|ttl|show]",
+	Use:   "cache",
 	Short: "Interact with the prompto cache",
 	Long: `Interact with the prompto cache.
 
-You can do the following:
-
-- path: list cache path
-- clear: remove all cache values
-- ttl: get/set cache TTL in days
-- show: print a detailed list of all cached values`,
-	ValidArgs: []string{
-		"path",
-		"clear",
-		cache.TTL,
-		"show",
+The cache lives in the daemon's memory and is never written to disk, so these
+commands talk to the running daemon.`,
+	Args: cobra.NoArgs,
+	Run: func(cmd *cobra.Command, _ []string) {
+		_ = cmd.Help()
 	},
-	Args: cobra.RangeArgs(1, 2),
-	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			_ = cmd.Help()
+}
+
+var cachePathCmd = &cobra.Command{
+	Use:   "path",
+	Short: "Print the directory prompto writes generated files to",
+	Long: `Print the directory prompto writes generated files to.
+
+This holds the generated shell init scripts and, with --trace, the logs. The
+cache itself is in-memory and has no path; use "prompto cache show" for that.`,
+	Args: cobra.NoArgs,
+	Run: func(cmd *cobra.Command, _ []string) {
+		fmt.Fprintln(cmd.OutOrStdout(), cache.Path())
+	},
+}
+
+var cacheClearCmd = &cobra.Command{
+	Use:   "clear",
+	Short: "Drop everything the daemon has cached",
+	Args:  cobra.NoArgs,
+	Run: func(cmd *cobra.Command, _ []string) {
+		if clearInit {
+			if err := cache.ClearInit(); err != nil {
+				printErrorAndExit(err)
+				return
+			}
+
+			if !ipc.SocketExists() {
+				fmt.Fprintln(cmd.OutOrStdout(), "init scripts cleared")
+				return
+			}
+		}
+
+		client, ok := cacheClient(cmd)
+		if !ok {
+			return
+		}
+		defer client.Close()
+
+		ctx, cancel := context.WithTimeout(context.Background(), daemonCallTimeout)
+		defer cancel()
+
+		if err := client.CacheClear(ctx); err != nil {
+			printErrorAndExit(err)
 			return
 		}
 
-		switch args[0] {
-		case "path":
-			fmt.Println(cache.Path())
-		case "clear":
-			// Try daemon first
-			if ipc.SocketExists() {
-				if cleared := clearDaemonCache(); cleared {
-					return
-				}
-			}
-			// Fallback to CLI mode
-			err := cache.Clear(true)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			fmt.Println("cache cleared")
-		case cache.TTL:
-			if len(args) < 2 {
-				// GET TTL
-				if ipc.SocketExists() {
-					if days, ok := getDaemonTTL(); ok {
-						fmt.Printf("daemon TTL: %d days\n", days)
-						return
-					}
-				}
-				// Fallback to CLI mode - show default
-				fmt.Printf("TTL: 7 days (default)\n")
-				return
-			}
-
-			// SET TTL
-			ttl, err := strconv.Atoi(args[1])
-			if err != nil {
-				fmt.Println("error parsing TTL:", err.Error())
-				exitcode = 2
-				return
-			}
-
-			// Try daemon first
-			if ipc.SocketExists() {
-				if set := setDaemonTTL(ttl); set {
-					return
-				}
-			}
-			// Fallback to CLI mode
-			cache.Init()
-			cache.Set(cache.Device, cache.TTL, ttl, cache.INFINITE)
-			fmt.Printf("TTL set to %d days\n", ttl)
-		case "show":
-			cache.Init()
-			store := cache.Device
-			if session {
-				store = cache.Session
-			}
-
-			fmt.Println(cache.Print(store))
+		if clearInit {
+			fmt.Fprintln(cmd.OutOrStdout(), "cache and init scripts cleared")
+			return
 		}
+
+		fmt.Fprintln(cmd.OutOrStdout(), "cache cleared")
 	},
 }
 
-// clearDaemonCache attempts to clear the daemon cache.
-// Returns true if successful, false if we should fall back to CLI mode.
-func clearDaemonCache() bool {
-	client, err := daemon.NewClient()
-	if err != nil {
-		return false
-	}
-	defer client.Close()
+var cacheTTLCmd = &cobra.Command{
+	Use:   "ttl [days]",
+	Short: "Get or set how long cached values live",
+	Args:  cobra.MaximumNArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		client, ok := cacheClient(cmd)
+		if !ok {
+			return
+		}
+		defer client.Close()
 
-	if err := client.CacheClear(context.Background()); err != nil {
-		return false
-	}
+		ctx, cancel := context.WithTimeout(context.Background(), daemonCallTimeout)
+		defer cancel()
 
-	fmt.Println("daemon cache cleared")
-	return true
+		if len(args) == 0 {
+			days, err := client.CacheGetTTL(ctx)
+			if err != nil {
+				printErrorAndExit(err)
+				return
+			}
+
+			fmt.Fprintf(cmd.OutOrStdout(), "TTL: %d days\n", days)
+			return
+		}
+
+		days, err := strconv.Atoi(args[0])
+		if err != nil {
+			printErrorAndExit(fmt.Errorf("TTL must be a whole number of days: %w", err))
+			exitcode = 2
+			return
+		}
+
+		if days <= 0 {
+			printErrorAndExit(fmt.Errorf("TTL must be at least one day, got %d", days))
+			exitcode = 2
+			return
+		}
+
+		if err := client.CacheSetTTL(ctx, days); err != nil {
+			printErrorAndExit(err)
+			return
+		}
+
+		fmt.Fprintf(cmd.OutOrStdout(), "TTL set to %d days\n", days)
+	},
 }
 
-// getDaemonTTL attempts to get the TTL from the daemon.
-// Returns the days and true if successful, or 0 and false if we should fall back.
-func getDaemonTTL() (int, bool) {
-	client, err := daemon.NewClient()
-	if err != nil {
-		return 0, false
-	}
-	defer client.Close()
+var cacheShowCmd = &cobra.Command{
+	Use:   "show",
+	Short: "Print everything the daemon has cached",
+	Long: `Print everything the daemon has cached.
 
-	days, err := client.CacheGetTTL(context.Background())
-	if err != nil {
-		return 0, false
-	}
+Entries are grouped by the cache holding them: "device" and "session" are the
+process-wide stores segments write to, "rendered segments" is cached prompt
+output. Session-scoped rendered segments belong to a single shell and are
+listed per session id, which is that shell's pid.
 
-	return days, true
+Values whose key names a credential are shown as <redacted>.`,
+	Args: cobra.NoArgs,
+	Run: func(cmd *cobra.Command, _ []string) {
+		client, ok := cacheClient(cmd)
+		if !ok {
+			return
+		}
+		defer client.Close()
+
+		ctx, cancel := context.WithTimeout(context.Background(), daemonCallTimeout)
+		defer cancel()
+
+		var sessionID string
+		if sessionOnly {
+			sessionID = strconv.Itoa(os.Getppid())
+		}
+
+		response, err := client.CacheShow(ctx, sessionID)
+		if err != nil {
+			printErrorAndExit(err)
+			return
+		}
+
+		writeCacheScopes(cmd.OutOrStdout(), response.Scopes)
+	},
 }
 
-// setDaemonTTL attempts to set the TTL in the daemon.
-// Returns true if successful, false if we should fall back to CLI mode.
-func setDaemonTTL(days int) bool {
+// cacheClient dials the running daemon. It deliberately does not start one:
+// these commands inspect and mutate cache state, and a daemon started just to
+// answer them would report an empty cache it had only just created.
+func cacheClient(cmd *cobra.Command) (*daemon.Client, bool) {
+	if !ipc.SocketExists() {
+		fmt.Fprintln(cmd.ErrOrStderr(), errNoDaemon)
+		exitcode = 1
+		return nil, false
+	}
+
 	client, err := daemon.NewClient()
 	if err != nil {
-		return false
-	}
-	defer client.Close()
-
-	if err := client.CacheSetTTL(context.Background(), days); err != nil {
-		return false
+		fmt.Fprintln(cmd.ErrOrStderr(), errNoDaemon)
+		exitcode = 1
+		return nil, false
 	}
 
-	fmt.Printf("daemon TTL set to %d days\n", days)
-	return true
+	return client, true
+}
+
+func writeCacheScopes(out io.Writer, scopes []*ipc.CacheScope) {
+	var written int
+
+	for _, scope := range scopes {
+		if len(scope.Entries) == 0 {
+			continue
+		}
+
+		if written > 0 {
+			fmt.Fprintln(out)
+		}
+		written++
+
+		fmt.Fprintf(out, "%s\n", cacheScopeTitle(scope))
+
+		writer := tabwriter.NewWriter(out, 0, 0, 2, ' ', 0)
+		for _, entry := range scope.Entries {
+			fmt.Fprintf(writer, "  %s\t%s\t%s\n", entry.Key, cacheEntryValue(entry), cacheEntryLifetime(entry))
+		}
+		_ = writer.Flush()
+	}
+
+	if written == 0 {
+		fmt.Fprintln(out, "the cache is empty")
+	}
+}
+
+func cacheScopeTitle(scope *ipc.CacheScope) string {
+	title := fmt.Sprintf("%s (%d)", scope.Name, len(scope.Entries))
+	if scope.SessionId == "" {
+		return title
+	}
+
+	return fmt.Sprintf("%s (%d) · session %s", scope.Name, len(scope.Entries), scope.SessionId)
+}
+
+func cacheEntryValue(entry *ipc.CacheEntry) string {
+	if entry.Redacted {
+		return "<redacted>"
+	}
+
+	return entry.Value
+}
+
+func cacheEntryLifetime(entry *ipc.CacheEntry) string {
+	if entry.Expired {
+		return "expired"
+	}
+
+	if entry.Expires == 0 {
+		return "never expires"
+	}
+
+	return "expires " + time.Unix(entry.Expires, 0).Format("2006-01-02 15:04:05")
 }
 
 func init() {
-	cacheCmd.Flags().BoolVarP(&session, "session", "s", false, "show the session cache")
+	cacheShowCmd.Flags().BoolVarP(&sessionOnly, "session", "s", false, "only this shell's session")
+	cacheClearCmd.Flags().BoolVar(&clearInit, "init", false, "also clear cached shell init scripts on disk")
+	cacheCmd.AddCommand(cachePathCmd, cacheClearCmd, cacheTTLCmd, cacheShowCmd)
 	RootCmd.AddCommand(cacheCmd)
 }

@@ -319,6 +319,7 @@ func TestGetDaemonTimeout(t *testing.T) {
 	var nilCfg *Config
 	assert.Equal(t, 100*time.Millisecond, nilCfg.GetDaemonTimeout())
 }
+
 // TestGetRenderTimeout pins the mapping the render marker rests on, including
 // the negative case, which reads like "disable" and deliberately is not: the
 // caller's stream deadline applies regardless, so suppressing the marker

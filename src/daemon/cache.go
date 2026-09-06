@@ -1,6 +1,8 @@
 package daemon
 
 import (
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -104,6 +106,44 @@ func (cache *DeviceCache) Count() int {
 	cache.mu.RLock()
 	defer cache.mu.RUnlock()
 	return len(cache.entries)
+}
+
+// Item describes one cached rendered segment for display.
+type Item struct {
+	RenderedAt time.Time
+	ExpiresAt  time.Time
+	Key        string
+	Text       string
+	Expired    bool
+	Forever    bool
+}
+
+// Items lists the cache's contents, sorted by key. Expired entries are
+// reported rather than skipped: seeing that an entry went stale is the point
+// of inspecting the cache.
+func (cache *DeviceCache) Items() []Item {
+	cache.mu.RLock()
+	defer cache.mu.RUnlock()
+
+	now := time.Now()
+	items := make([]Item, 0, len(cache.entries))
+
+	for key, entry := range cache.entries {
+		items = append(items, Item{
+			Key:        key,
+			Text:       entry.value.Text,
+			RenderedAt: entry.value.RenderedAt,
+			ExpiresAt:  entry.expiresAt,
+			Expired:    !entry.infinite && now.After(entry.expiresAt),
+			Forever:    entry.infinite,
+		})
+	}
+
+	slices.SortFunc(items, func(a, b Item) int {
+		return strings.Compare(a.Key, b.Key)
+	})
+
+	return items
 }
 
 func (cache *DeviceCache) EvictExpired() {

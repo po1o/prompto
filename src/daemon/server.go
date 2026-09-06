@@ -256,6 +256,45 @@ func (server *Server) CacheGetTTL(_ context.Context, _ *ipc.CacheGetTTLRequest) 
 	return &ipc.CacheGetTTLResponse{Days: int32(defaultDays)}, nil
 }
 
+func (server *Server) CacheShow(_ context.Context, request *ipc.CacheShowRequest) (*ipc.CacheShowResponse, error) {
+	scopes := server.core.CacheScopes(request.SessionId)
+	response := &ipc.CacheShowResponse{Scopes: make([]*ipc.CacheScope, 0, len(scopes))}
+
+	for _, scope := range scopes {
+		entries := make([]*ipc.CacheEntry, 0, len(scope.Items))
+
+		for _, item := range scope.Items {
+			entries = append(entries, &ipc.CacheEntry{
+				Key:      item.Key,
+				Value:    item.Value,
+				Type:     item.Type,
+				Created:  unixOrZero(item.Created),
+				Expires:  unixOrZero(item.Expires),
+				Expired:  item.Expired,
+				Redacted: item.Redacted,
+			})
+		}
+
+		response.Scopes = append(response.Scopes, &ipc.CacheScope{
+			Name:      scope.Name,
+			SessionId: scope.SessionID,
+			Entries:   entries,
+		})
+	}
+
+	return response, nil
+}
+
+// unixOrZero keeps the zero time zero on the wire rather than sending the year
+// 1, so the client can tell "no expiry" from a timestamp.
+func unixOrZero(at time.Time) int64 {
+	if at.IsZero() {
+		return 0
+	}
+
+	return at.Unix()
+}
+
 func (server *Server) SetLogging(_ context.Context, request *ipc.SetLoggingRequest) (*ipc.SetLoggingResponse, error) {
 	if request.Path == "" {
 		return loggingResponse(log.SetOutputPath(""))

@@ -24,7 +24,6 @@ func editFileWithEditor(file string) int {
 	cmd := exec.CommandContext(ctx, editor, args...)
 
 	cmd.Stdin = os.Stdin
-	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

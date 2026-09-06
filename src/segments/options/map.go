@@ -1,7 +1,6 @@
 package options
 
 import (
-	"encoding/gob"
 	"fmt"
 
 	"github.com/po1o/prompto/src/color"
@@ -10,23 +9,6 @@ import (
 	"github.com/po1o/prompto/src/regex"
 	"github.com/po1o/prompto/src/template"
 )
-
-func init() {
-	gob.Register([]any{})
-	gob.Register(map[string]any{})
-	gob.Register(map[any]any{})
-	gob.Register([]string{})
-	gob.Register(map[string]string{})
-	gob.Register([]int{})
-	gob.Register([]float64{})
-	gob.Register([]bool{})
-	gob.Register(int64(0))
-	gob.Register(uint64(0))
-	gob.Register(float32(0))
-	gob.Register(Map{})
-	gob.Register((*Option)(nil))
-	gob.Register(map[Option]any{})
-}
 
 type Provider interface {
 	Color(option Option, defaultValue color.Ansi) color.Ansi

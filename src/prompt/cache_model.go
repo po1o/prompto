@@ -1,6 +1,8 @@
 package prompt
 
 import (
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -186,11 +188,33 @@ func (e *Engine) ensureSegmentWriter(segment *config.Segment) bool {
 	return err == nil
 }
 
-func (e *Engine) executeWithoutLegacySegmentCache(segment *config.Segment) {
-	original := segment.Cache
-	segment.Cache = nil
-	segment.Execute(e.Env)
-	segment.Cache = original
+// SessionCacheItem describes one rendered segment cached on a session's engine.
+type SessionCacheItem struct {
+	RenderedAt time.Time
+	Key        string
+	Text       string
+}
+
+// SessionCacheItems returns a snapshot of every segment currently cached for
+// this session, sorted by key.
+func (e *Engine) SessionCacheItems() []SessionCacheItem {
+	e.cacheMu.Lock()
+	defer e.cacheMu.Unlock()
+
+	items := make([]SessionCacheItem, 0, len(e.sessionCache))
+	for key, entry := range e.sessionCache {
+		items = append(items, SessionCacheItem{
+			Key:        key,
+			Text:       entry.Text,
+			RenderedAt: entry.RenderedAt,
+		})
+	}
+
+	slices.SortFunc(items, func(a, b SessionCacheItem) int {
+		return strings.Compare(a.Key, b.Key)
+	})
+
+	return items
 }
 
 func (e *Engine) SetDeviceCache(cacheStore DeviceCache) {
