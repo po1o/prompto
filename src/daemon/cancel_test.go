@@ -1,7 +1,6 @@
 package daemon
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -21,17 +20,4 @@ func TestCancelKindString(t *testing.T) {
 	require.Equal(t, "hard", CancelHard.String())
 	require.Equal(t, "soft", CancelSoft.String())
 	require.Equal(t, "unknown", CancelKind(99).String())
-}
-
-func TestWithCancelKindPreservesContextAndKind(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	rc := WithCancelKind(ctx, CancelSoft)
-	require.Equal(t, CancelSoft, rc.Kind)
-	require.NoError(t, rc.Err())
-
-	// The embedded context still drives cancellation.
-	cancel()
-	require.Error(t, rc.Err())
 }

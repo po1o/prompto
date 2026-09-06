@@ -66,8 +66,8 @@ between commands so that:
 |  EngineRegistry            |  SessionUpdateHub               |
 |  (registry.go + cancel.go) |  (update_hub.go)                |
 |    per-session prompt.Engine    per-session pub/sub of       |
-|    + RegistryContext (the      sequence-numbered segment     |
-|    Hard/Soft-aware ctx)        updates                        |
+|    + the generation's ctx      sequence-numbered segment     |
+|    and cancel func             updates                        |
 +----------------------------+----------------+----------------+
                              |                |
                              v                v
@@ -120,22 +120,15 @@ daemon.StartRender(RenderRequest{..., Cancel: kind})
 ```
 
 From there, no boolean `repaint` parameter exists in the daemon-internal
-API. `RegistryContext` (defined in `cancel.go`) wraps a `context.Context`
-with the `CancelKind` that started it:
-
-```go
-type RegistryContext struct {
-    context.Context
-    Kind CancelKind
-}
-```
+API. `EngineRegistry` holds the render generation's `context.Context` and its
+cancel func in `sessionState`, keyed by session.
 
 Cancellation rules — enforced in `EngineRegistry`:
 
 | New request kind | Action on prior in-flight render |
 |---|---|
-| `CancelHard` | Cancel `RegistryContext` of prior render. Hub writes from prior render are dropped (`ctx.Err() != nil` gate). |
-| `CancelSoft` | Close the prior RPC stream only. **Preserve** `RegistryContext` — in-flight compute keeps running; new request reattaches via `Registry.GetActiveRender`. |
+| `CancelHard` | Cancel the prior render's context. Hub writes from prior render are dropped (`ctx.Err() != nil` gate). |
+| `CancelSoft` | Close the prior RPC stream only. **Preserve** the context — in-flight compute keeps running; new request reattaches via `Registry.GetActiveRender`. |
 
 Cache-write safety: every cache write in the render path is preceded by a
 context-error check at the call site (e.g. in `PrimaryStreaming`'s segment
@@ -249,13 +242,13 @@ Net effect: git runs **once** regardless of toggle count.
 
 | File | Owns |
 |---|---|
-| `render_pipeline.go` | `RenderPipeline.Start(sessionID, flags, kind CancelKind) → (PromptBundle, *ActiveRender)`. Owns the `ReloadGate`, `EngineRegistry`, and `PromptSessionStore` (per-session hubs). Resolves engine via Registry, applies flags (full vs repaint-only), publishes segment updates inline from `PrimaryStreaming`'s callback. `ActiveRender` bundles the render generation (engine, context, render ID), the update hub + relay, and the reload-gate release; `Next(ctx, after)` streams via `StreamRelay` and `Complete` is idempotent. |
+| `render_pipeline.go` | `RenderPipeline.Start(request RenderRequest) → (PromptBundle, *ActiveRender)`. Owns the `ReloadGate`, `EngineRegistry`, and `PromptSessionStore` (per-session hubs). Resolves engine via Registry, applies flags (full vs repaint-only), publishes segment updates inline from `PrimaryStreaming`'s callback. `ActiveRender` bundles the render generation (engine, context, render ID), the update hub + relay, and the reload-gate release; `Next(ctx, after)` streams via `StreamRelay` and `Complete` is idempotent. |
 
 ### Registry + cancellation — `src/daemon/registry.go` + `cancel.go`
 
 | File | Owns |
 |---|---|
-| `cancel.go` | `CancelKind` enum (`CancelHard`, `CancelSoft`) + `RegistryContext` wrapper + `CancelKindForRepaint(bool)` (the single bool→kind boundary at the Server↔Daemon edge) + `CancelKind.Repaint()` predicate. |
+| `cancel.go` | `CancelKind` enum (`CancelHard`, `CancelSoft`) + `CancelKindForRepaint(bool)` (the single bool→kind boundary at the Server↔Daemon edge) + `CancelKind.Repaint()` predicate. |
 | `registry.go` | `EngineRegistry`. Per-session `prompt.Engine` cache + active-render slot (context + cancel func + renderID). One kind-aware entry point: `StartRender(sessionID, flags, kind CancelKind) → *RenderHandle` — soft kind reattaches to the live render, hard kind aborts the prior and starts a new one. Plus `RenderHandle` (the registry-owned generation handle: `Complete`, `RenderID`). |
 
 ### Update streaming — `src/daemon/update_hub.go` + `stream_relay.go` + `session_store.go`
@@ -313,9 +306,9 @@ Net effect: git runs **once** regardless of toggle count.
   from `Daemon.configReloadCh`, calls `Daemon.applyConfigReload`.
 
 Shared state is documented per-field with `// guarded by mu` comments
-(see `code-style` in `SPEC.md`). All cancellation flows through
-`RegistryContext`; no goroutine spawns a background context that isn't
-tracked by Registry.
+(see `code-style` in `SPEC.md`). All cancellation flows through the
+generation context the Registry holds; no goroutine spawns a background
+context that isn't tracked by it.
 
 ## What this architecture deliberately does **not** do
 

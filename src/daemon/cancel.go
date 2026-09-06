@@ -1,7 +1,5 @@
 package daemon
 
-import "context"
-
 // CancelKind classifies why an in-flight render is being interrupted. It is
 // the single signal the render path uses to decide whether to abort or
 // preserve in-flight segment computations. See ARCHITECTURE.md, "The cancel
@@ -45,18 +43,4 @@ func (k CancelKind) String() string {
 	default:
 		return "unknown"
 	}
-}
-
-// RegistryContext pairs a render's context with the CancelKind that created
-// it, so code holding the context can reason about whether a cancellation
-// aborts (hard) or preserves (soft) the underlying computation. It embeds
-// context.Context, so a RegistryContext is usable anywhere a context is.
-type RegistryContext struct {
-	context.Context
-	Kind CancelKind
-}
-
-// WithCancelKind wraps a context with its CancelKind.
-func WithCancelKind(ctx context.Context, kind CancelKind) RegistryContext {
-	return RegistryContext{Context: ctx, Kind: kind}
 }
