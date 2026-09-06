@@ -19,16 +19,19 @@ const (
 // rather than a list of known keys: the device cache already holds OAuth
 // access and refresh tokens for several segments, and a segment that starts
 // caching a token tomorrow is covered without anyone remembering this file.
-var credentialKeyParts = []string{"token", "secret", "password", "credential", "api_key", "apikey"}
+var credentialKeyParts = []string{
+	"token", "secret", "password", "credential",
+	"api_key", "apikey", "access_key", "private_key", "secret_key",
+}
 
 // IsCredentialKey reports whether a cache key names something that must not be
 // printed. `prompto cache show` renders whatever the daemon holds, and that
 // includes credentials which would otherwise land in a terminal scrollback.
 func IsCredentialKey(key string) bool {
-	lowered := strings.ToLower(key)
+	normalized := strings.ReplaceAll(strings.ToLower(key), "-", "_")
 
 	return slices.ContainsFunc(credentialKeyParts, func(part string) bool {
-		return strings.Contains(lowered, part)
+		return strings.Contains(normalized, part)
 	})
 }
 

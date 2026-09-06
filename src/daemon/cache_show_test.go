@@ -23,9 +23,12 @@ func TestIsCredentialKey(t *testing.T) {
 		{"strava_refresh_token", true},
 		// Shapes a future segment might plausibly use.
 		{"SOME_API_KEY", true},
+		{"api-key", true},
 		{"client_secret", true},
 		{"user_password", true},
 		{"aws_credentials", true},
+		{"aws-access-key", true},
+		{"ssh-private-key", true},
 		// Values that are safe to print, including one that merely looks close.
 		{"is_wsl", false},
 		{"environment_platform", false},
