@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/po1o/prompto/src/cache"
 	"github.com/po1o/prompto/src/log"
 	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/runtime/path"
@@ -28,8 +27,7 @@ func getExecutablePath(env runtime.Environment) (string, error) {
 		return "", err
 	}
 
-	_, msix := cache.PackageFamilyName()
-	if msix || env.Flags().Strict {
+	if env.Flags().Strict {
 		return path.Base(executable), nil
 	}
 

@@ -11,6 +11,11 @@ import (
 
 var cachePath string
 
+// ResetPath clears the cached path, allowing Path() to recalculate on the next call.
+func ResetPath() {
+	cachePath = ""
+}
+
 func Path() string {
 	defer log.Trace(time.Now())
 

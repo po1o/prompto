@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"bufio"
 	"fmt"
 	"hash/fnv"
 	"os"
@@ -15,6 +16,8 @@ import (
 
 var scriptPathCache string
 
+const scriptSigPrefix = "# prompto-sig: "
+
 func hasScript(env runtime.Environment) (string, bool) {
 	if env.Flags().Debug || env.Flags().Eval {
 		log.Debug("in debug or eval mode, no script path will be used")
@@ -23,14 +26,23 @@ func hasScript(env runtime.Environment) (string, bool) {
 
 	path := scriptPath(env)
 
-	_, err := os.Stat(path)
+	file, err := os.Open(path)
 	if err != nil {
 		log.Debug("script path does not exist")
 		return "", false
 	}
+	defer file.Close()
 
-	// check if we have the same context
-	if val, _ := cache.Get[string](cache.Device, cacheKey(env.Flags().Shell)); val != cacheValue(env) {
+	reader := bufio.NewReader(file)
+	firstLine, err := reader.ReadString('\n')
+	if err != nil && len(firstLine) == 0 {
+		log.Debug("failed to read script signature")
+		return "", false
+	}
+
+	sig := strings.TrimSpace(firstLine)
+	expectedSig := scriptSigPrefix + cacheValue(env)
+	if sig != expectedSig {
 		log.Debug("script context has changed")
 		return "", false
 	}
@@ -42,20 +54,15 @@ func hasScript(env runtime.Environment) (string, bool) {
 func writeScript(env runtime.Environment, script string) (string, error) {
 	path := scriptPath(env)
 
-	err := os.WriteFile(path, []byte(script), 0o644)
+	content := scriptSigPrefix + cacheValue(env) + "\n" + script
+	err := os.WriteFile(path, []byte(content), 0o644)
 	if err != nil {
 		log.Error(err)
 		return "", err
 	}
 
 	log.Debug("init script written successfully")
-	cache.Set(cache.Device, cacheKey(env.Flags().Shell), cacheValue(env), cache.INFINITE)
-
 	return path, nil
-}
-
-func cacheKey(sh string) string {
-	return fmt.Sprintf("INITVERSION%s", strings.ToUpper(sh))
 }
 
 func cacheValue(env runtime.Environment) string {
