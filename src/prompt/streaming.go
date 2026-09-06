@@ -95,10 +95,22 @@ func (e *Engine) mergeStreamingResultLocked(ctx context.Context, result streamin
 	result.segment.NameLength = result.executed.NameLength
 }
 
-// WaitForSegmentExecutions blocks until all in-flight segment execution
-// goroutines have finished, including ones abandoned by a segment timeout.
-// Segment executions may outlive PrimaryStreaming's render window by design;
-// use this to quiesce the engine (tests, daemon shutdown).
+// WaitForSegmentExecutions blocks until every goroutine a render started has
+// finished: the segment executions, including ones abandoned by a segment
+// timeout, and the publisher that announces their results. All of them outlive
+// PrimaryStreaming's render window by design; use this to quiesce the engine
+// (tests, daemon shutdown).
+//
+// The publisher belongs here as much as the executions do. It calls back into
+// the engine to re-render, so a caller that waited only for the executions
+// would be told the engine was idle while a render was still running inside
+// it — which is how a caller then reaches for state the render is reading.
+//
+// Waiting on the publisher puts a requirement on the updateCallback given to
+// PrimaryStreaming: it must return. One that blocks forever hangs this wait,
+// where before it would have leaked a goroutine and let the wait return early.
+// The daemon's callback satisfies this — it publishes to a hub whose waiters
+// are buffered for the single send they receive — and a test's must too.
 func (e *Engine) WaitForSegmentExecutions() {
 	e.executionWG.Wait()
 }
@@ -177,7 +189,14 @@ func (e *Engine) PrimaryStreaming(
 		return initialPrompt, false
 	}
 
-	go e.publishStreamingResults(ctx, results, updateCallback, timedOut)
+	// Tracked, not detached: see WaitForSegmentExecutions. It blocks on two
+	// things — results, which the segment executions close and which wait on
+	// nothing, so that side cannot cycle back into the wait; and updateCallback,
+	// which belongs to the caller. A callback that never returns therefore hangs
+	// the wait rather than leaking a goroutine behind it.
+	e.executionWG.Go(func() {
+		e.publishStreamingResults(ctx, results, updateCallback, timedOut)
+	})
 
 	return initialPrompt, true
 }

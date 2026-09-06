@@ -52,6 +52,11 @@ func TestCanWriteRPrompt(t *testing.T) {
 }
 
 func TestPrintPWD(t *testing.T) {
+	// prompt.New writes the process-global terminal.Plain and nothing puts it
+	// back, so whether this passes depends on which tests ran before it. Pin it,
+	// the way the other render tests in this package already do.
+	restorePlain(t, false)
+
 	cases := []struct {
 		Case     string
 		Expected string
@@ -120,6 +125,11 @@ func TestPrintPWD(t *testing.T) {
 }
 
 func TestPrintPWDWSL(t *testing.T) {
+	// prompt.New writes the process-global terminal.Plain and nothing puts it
+	// back, so whether this passes depends on which tests ran before it. Pin it,
+	// the way the other render tests in this package already do.
+	restorePlain(t, false)
+
 	cases := []struct {
 		Case     string
 		Expected string
@@ -476,4 +486,18 @@ func TestShouldFill(t *testing.T) {
 		assert.Equal(t, tc.ExpectedFiller, gotFiller, tc.Case)
 		assert.Equal(t, tc.ExpectedBool, gotBool, tc.Case)
 	}
+}
+
+// restorePlain pins the process-global terminal.Plain for one test and puts it
+// back afterwards. prompt.New writes it from its flags and never restores it,
+// so a test that cares about the value has to say so; otherwise it inherits
+// whatever the last engine built in this run happened to want.
+func restorePlain(t *testing.T, plain bool) {
+	t.Helper()
+
+	original := terminal.Plain
+	terminal.Plain = plain
+	t.Cleanup(func() {
+		terminal.Plain = original
+	})
 }

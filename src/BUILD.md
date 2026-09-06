@@ -25,11 +25,11 @@ go build -o ~/bin/prompto
 
 ```bash
 go test -count=1 ./...                       # unit tests
-go test -race -count=3 ./daemon/... ./log/... # race tests (required on daemon/, log/)
+go test -race -count=3 ./daemon/... ./log/... ./prompt/... # race tests (required on daemon/, log/, prompt/)
 ```
 
-The `-race` run is a hard gate in CI for `daemon/` and `log/` because both have
-goroutines guarding shared state. Don't merge code that fails race tests.
+The `-race` run is a hard gate in CI for `daemon/`, `log/` and `prompt/`, which
+all have goroutines over shared state. Don't merge code that fails race tests.
 
 ## Lint
 
@@ -84,7 +84,7 @@ go tool golangci-lint run
 go list ./... | grep -v '/daemon/ipc$' | xargs go tool fieldalignment
 go list ./... | grep -v '/daemon/ipc$' | xargs go tool modernize
 go test -count=1 ./...
-go test -race -count=3 ./daemon/... ./log/...
+go test -race -count=3 ./daemon/... ./log/... ./prompt/...
 (cd .. && npx -y markdownlint-cli2@0.20.0 '**/*.md')
 ```
 
