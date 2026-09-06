@@ -522,9 +522,9 @@ end
 # The prompt file outlives each render so a late signal still finds the last
 # batch, so the session has to clean it up on the way out.
 function _prompto_daemon_cleanup --on-event fish_exit
+    # No wildcard: fish aborts a command whose glob matches nothing, which is
+    # the normal case. Each reader removes its own batch file.
     if test -n "$_prompto_daemon_prompt_file"
-        # No wildcard here: fish aborts a command whose glob matches nothing,
-        # which is the normal case. Each reader removes its own batch file.
         rm -f $_prompto_daemon_prompt_file 2>/dev/null
     end
 end
@@ -553,6 +553,13 @@ function _prompto_daemon_render
     # Start the background reader. The prompt file is deliberately left alone:
     # it holds the last batch published, and the signal handler may still be on
     # its way to read it. The reader replaces it whole, per batch.
+    #
+    # A superseded reader is left running rather than killed. It can still
+    # publish a batch that has gone stale over a newer one, which shows the
+    # previous command's state for a single prompt; killing it would trade that
+    # for signalling a pid that fish has already reaped and reused, on every
+    # vim-mode keystroke. Closing the race properly needs a generation token the
+    # reader re-reads before publishing, not a signal.
     _prompto_daemon_reader $_prompto_daemon_prompt_file $fish_pid $repaint_flag $vim_mode_arg &
     disown
 end
@@ -570,9 +577,16 @@ function _prompto_daemon_reader
     end
 
     # Private to this reader, so a superseded one cannot write into the batch
-    # this one is assembling.
-    set --local batch_file $prompt_file.(random).part
-    rm -f $batch_file 2>/dev/null
+    # this one is assembling. mktemp rather than a random suffix: fish seeds
+    # `random` per process, so readers forked from a shell that has already
+    # called it draw the same number and collide on the very file that is
+    # supposed to keep them apart.
+    set --local batch_file (mktemp "$prompt_file.XXXXXX")
+    if test -z "$batch_file"
+        # Without somewhere to assemble batches this reader can only publish
+        # nothing at all, which leaves the prompt on its placeholders for good.
+        return
+    end
 
     $_prompto_executable render \
         $config_arg \
