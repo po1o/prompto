@@ -100,7 +100,9 @@ func TestFishDaemonReaderPublishesBatchesAtomically(t *testing.T) {
 	assert.False(t, strings.Contains(fishInit, "echo -n \"\" > $prompt_file"),
 		"fish reader must not truncate the prompt file in place; a handler reading between the signal and the next line loses the batch")
 
-	assert.False(t, strings.Contains(fishInit, "rm -f $prompt_file"),
+	_, reader, found := strings.Cut(fishInit, "function _prompto_daemon_reader")
+	assert.True(t, found, "fish daemon reader function must exist")
+	assert.False(t, strings.Contains(reader, "rm -f $prompt_file"),
 		"fish reader must not delete the prompt file it just published; a signal still in flight would find nothing and leave the prompt pending")
 
 	publish := strings.Index(fishInit, "mv -f $batch_file $prompt_file")
