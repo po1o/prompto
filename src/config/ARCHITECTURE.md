@@ -42,5 +42,6 @@ final diamonds/separators used by rendering.
 - `palette`, `palettes`, `maps`, `var`, `cycle`, `iterm_features`
 - `vim-mode`, `daemon_timeout`, `daemon_idle_timeout`
 - `render_pending_icon`, `render_pending_background`
+- `render_timeout`, `render_timeout_icon`, `render_timeout_foreground`
 - `console_title_template`, `pwd`, `terminal_background`, `shell_integration`, `cursor_padding`
 - `valid_line`, `error_line`, `debug_prompt`, `tooltips`, `tooltips_action`

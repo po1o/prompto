@@ -17,6 +17,12 @@ import (
 	"github.com/po1o/prompto/src/terminal"
 )
 
+// SegmentsTimedOut names the update announcing that segments outran the render
+// deadline and are now drawn as timed out. It is a label for subscribers, not a
+// completion: the render stays open, and a segment that finishes later still
+// replaces its marker.
+const SegmentsTimedOut = "__prompto_segments_timed_out__"
+
 const (
 	streamScopePrimary    = "primary"
 	streamScopeTransient  = "transient"
@@ -97,7 +103,10 @@ func (e *Engine) WaitForSegmentExecutions() {
 	e.executionWG.Wait()
 }
 
-// PrimaryStreaming renders a prompt with a timeout cutoff and pending placeholders.
+// PrimaryStreaming renders a prompt with a timeout cutoff and pending
+// placeholders. placeholderAfter is how long to wait before returning with
+// them; timedOutAfter is how long a segment may then stay pending before it is
+// drawn as timed out, and zero leaves it pending indefinitely.
 //
 // streaming reports whether the returned prompt carries pending placeholders,
 // and so whether updateCallback will run: it is latched under the same lock
@@ -105,9 +114,13 @@ func (e *Engine) WaitForSegmentExecutions() {
 // caller must not re-derive it from PendingSegmentCount afterwards — the
 // publisher goroutine below can drain the last result microseconds later,
 // making the count read 0 for a prompt that still shows placeholders.
-func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, updateCallback func(string)) (initial string, streaming bool) {
-	if timeout <= 0 {
-		timeout = 100 * time.Millisecond
+func (e *Engine) PrimaryStreaming(
+	ctx context.Context,
+	placeholderAfter, timedOutAfter time.Duration,
+	updateCallback func(string),
+) (initial string, streaming bool) {
+	if placeholderAfter <= 0 {
+		placeholderAfter = 100 * time.Millisecond
 	}
 
 	if ctx == nil {
@@ -118,6 +131,7 @@ func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, up
 
 	e.streamingMu.Lock()
 	e.pendingSegments = make(map[string]bool)
+	e.timedOutSegments = make(map[string]bool)
 	e.cachedValues = make(map[string]string)
 	e.segmentCacheKeys = make(map[string]string)
 	// New render generation: its own vim worker result must merge (cold
@@ -130,7 +144,18 @@ func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, up
 	segmentsToExecute, completed := e.prepareStreamingSegments()
 	e.streamingMu.Unlock()
 	results := e.startStreamingExecutions(ctx, segmentsToExecute)
-	e.collectStreamingResultsUntil(ctx, timeout, results, completed)
+
+	// Armed before the placeholder wait rather than after it: timedOutAfter
+	// counts from the start of the render, and that wait is part of the render.
+	// Arming it afterwards would push the marker out by placeholderAfter, which
+	// a large daemon_timeout can make the difference between the marker
+	// arriving and the client having already stopped listening for it.
+	var timedOut *time.Timer
+	if timedOutAfter > 0 {
+		timedOut = time.NewTimer(timedOutAfter)
+	}
+
+	e.collectStreamingResultsUntil(ctx, placeholderAfter, results, completed)
 
 	e.streamingMu.Lock()
 	for _, entry := range segmentsToExecute {
@@ -145,10 +170,14 @@ func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, up
 	e.streamingMu.Unlock()
 
 	if !hasPending {
+		if timedOut != nil {
+			timedOut.Stop()
+		}
+
 		return initialPrompt, false
 	}
 
-	go e.publishStreamingResults(ctx, results, updateCallback)
+	go e.publishStreamingResults(ctx, results, updateCallback, timedOut)
 
 	return initialPrompt, true
 }
@@ -158,29 +187,93 @@ func (e *Engine) PrimaryStreaming(ctx context.Context, timeout time.Duration, up
 // of updates once PrimaryStreaming has returned, so a caller told streaming is
 // true can rely on the completion announcement arriving unless ctx is
 // cancelled — in which case the render generation is being torn down anyway.
-func (e *Engine) publishStreamingResults(ctx context.Context, results <-chan streamingResult, updateCallback func(string)) {
-	for result := range results {
-		e.streamingMu.Lock()
-		// Re-check under the lock: a Hard Cancel may have landed while this
-		// goroutine was blocked acquiring streamingMu, in which case
-		// pendingSegments already belongs to the next render generation and
-		// must not be touched or published.
-		if ctx.Err() != nil {
+//
+// deadline caps how long a segment may stay pending before it is drawn as
+// timed out, so the shell is left with something that says so rather than the
+// pending placeholders it drew at the start. It does not end the render:
+// completing it would retire the generation, and retiring it cancels the
+// context the segment is still executing under, killing the very work that
+// would have answered. A segment that arrives late still replaces its own
+// marker, and still warms the cache for the next prompt.
+func (e *Engine) publishStreamingResults(
+	ctx context.Context,
+	results <-chan streamingResult,
+	updateCallback func(string),
+	timedOut *time.Timer,
+) {
+	var expired <-chan time.Time
+	if timedOut != nil {
+		expired = timedOut.C
+		defer timedOut.Stop()
+	}
+
+	for {
+		select {
+		case result, ok := <-results:
+			if !ok {
+				if ctx.Err() == nil {
+					updateCallback("")
+				}
+
+				return
+			}
+
+			e.streamingMu.Lock()
+			// Re-check under the lock: a Hard Cancel may have landed while this
+			// goroutine was blocked acquiring streamingMu, in which case
+			// pendingSegments already belongs to the next render generation and
+			// must not be touched or published.
+			if ctx.Err() != nil {
+				e.streamingMu.Unlock()
+				return
+			}
+
+			e.mergeStreamingResultLocked(ctx, result)
+			delete(e.pendingSegments, result.key)
+			delete(e.timedOutSegments, result.key)
 			e.streamingMu.Unlock()
+
+			updateCallback(result.segment.Name())
+		case <-expired:
+			// The timer fires once, but clear the arm so it cannot be chosen
+			// again over a result that is ready at the same moment.
+			expired = nil
+
+			if !e.markPendingSegmentsTimedOut(ctx) {
+				// Everything landed in the meantime, or this generation is
+				// gone; either way there is nothing to mark and nothing to say.
+				continue
+			}
+
+			updateCallback(SegmentsTimedOut)
+		case <-ctx.Done():
 			return
 		}
+	}
+}
 
-		e.mergeStreamingResultLocked(ctx, result)
-		delete(e.pendingSegments, result.key)
-		e.streamingMu.Unlock()
-		updateCallback(result.segment.Name())
+// markPendingSegmentsTimedOut flags every segment still outstanding so the
+// render draws it as timed out, and reports whether there was any.
+//
+// The context is re-checked here rather than before the call, because the wait
+// for streamingMu is exactly where a hard cancel lands: the next generation
+// takes the lock, resets both maps and refills pendingSegments with its own
+// segments, and only then is this granted the lock. Marking at that point
+// paints a prompt milliseconds old as timed out, and the markers clear only as
+// each segment reports, so a slow one stays wrongly red for the whole render.
+func (e *Engine) markPendingSegmentsTimedOut(ctx context.Context) bool {
+	e.streamingMu.Lock()
+	defer e.streamingMu.Unlock()
+
+	if ctx.Err() != nil || len(e.pendingSegments) == 0 {
+		return false
 	}
 
-	if ctx.Err() != nil {
-		return
+	for key := range e.pendingSegments {
+		e.timedOutSegments[key] = true
 	}
 
-	updateCallback("")
+	return true
 }
 
 func (e *Engine) prepareStreamingSegments() ([]streamingSegment, map[string]bool) {
@@ -410,6 +503,10 @@ func (e *Engine) PrimaryRepaint() string {
 		e.pendingSegments = make(map[string]bool)
 	}
 
+	if e.timedOutSegments == nil {
+		e.timedOutSegments = make(map[string]bool)
+	}
+
 	if e.cachedValues == nil {
 		e.cachedValues = make(map[string]string)
 	}
@@ -585,22 +682,8 @@ func (e *Engine) writeBlockSegmentsStreaming(scope string, block *config.Block, 
 	for segmentPosition, segment := range block.Segments {
 		key := segmentKey(scope, blockIndex, segmentPosition, segment)
 		if e.pendingSegments[key] {
-			cachedVal := e.cachedValues[key]
-			text, background := segment.GetPendingText(cachedVal, e.Config)
-
 			saved = append(saved, styleOf(segment))
-
-			segment.SetText(text)
-			if background != "" {
-				segment.Background = background
-			} else {
-				segment.Background = "darkGray"
-			}
-			segment.ForegroundTemplates = nil
-			segment.BackgroundTemplates = nil
-			segment.Enabled = true
-
-			e.writeSegment(block, segment)
+			e.writePlaceholderSegment(block, segment, key)
 			continue
 		}
 
@@ -700,6 +783,36 @@ func (style *segmentStyle) restore() {
 	style.segment.ForegroundTemplates = style.foregroundTemplates
 	style.segment.BackgroundTemplates = style.backgroundTemplates
 	style.segment.Enabled = style.enabled
+}
+
+// writePlaceholderSegment draws a segment that has not produced its value: the
+// pending marker while it is still running, or the timeout marker once the
+// render deadline passed with it still outstanding. The caller saves the
+// segment's style first — this rewrites it.
+func (e *Engine) writePlaceholderSegment(block *config.Block, segment *config.Segment, key string) {
+	cached := e.cachedValues[key]
+
+	// Both states drop the segment's own colour templates, so one coloured only
+	// by those would draw transparent — and the separator, which takes the
+	// block's colour, with it. The pending background backs both states.
+	text, background := segment.GetPendingText(cached, e.Config)
+	if e.timedOutSegments[key] {
+		timedOutText, foreground := segment.GetTimeoutText(cached, e.Config)
+		text = timedOutText
+		segment.Foreground = foreground
+	}
+
+	if background == "" {
+		background = "darkGray"
+	}
+
+	segment.SetText(text)
+	segment.Background = background
+	segment.ForegroundTemplates = nil
+	segment.BackgroundTemplates = nil
+	segment.Enabled = true
+
+	e.writeSegment(block, segment)
 }
 
 func (e *Engine) streamingBlockSets() []streamingBlockSet {

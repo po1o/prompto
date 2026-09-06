@@ -39,6 +39,7 @@ type Segment struct {
 	LeadingGlyph            string         `yaml:"leading_glyph,omitempty"`
 	TrailingGlyph           string         `yaml:"trailing_glyph,omitempty"`
 	RenderPendingIcon       string         `yaml:"render_pending_icon,omitempty"`
+	RenderTimeoutIcon       string         `yaml:"render_timeout_icon,omitempty"`
 	Template                string         `yaml:"template,omitempty"`
 	Foreground              color.Ansi     `yaml:"foreground,omitempty"`
 	SeparatorForeground     color.Ansi     `yaml:"separator_foreground,omitempty"`
@@ -46,6 +47,7 @@ type Segment struct {
 	Background              color.Ansi     `yaml:"background,omitempty"`
 	Type                    SegmentType    `yaml:"type,omitempty"`
 	RenderPendingBackground color.Ansi     `yaml:"render_pending_background,omitempty"`
+	RenderTimeoutForeground color.Ansi     `yaml:"render_timeout_foreground,omitempty"`
 	ForegroundTemplates     template.List  `yaml:"foreground_templates,omitempty"`
 	Tips                    []string       `yaml:"tips,omitempty"`
 	BackgroundTemplates     template.List  `yaml:"background_templates,omitempty"`
@@ -589,6 +591,38 @@ func (segment *Segment) getPendingIcon(cfg *Config) string {
 	}
 
 	return "\uf254 "
+}
+
+// GetTimeoutText computes the text to display for a segment still outstanding
+// when the render deadline passed. Like a pending segment it always has
+// something to show: the last value it produced, marked as stale, or the icon
+// on its own.
+func (segment *Segment) GetTimeoutText(cachedText string, cfg *Config) (text string, foreground color.Ansi) {
+	return segment.getTimeoutIcon(cfg) + cachedText, segment.getTimeoutForeground(cfg)
+}
+
+func (segment *Segment) getTimeoutIcon(cfg *Config) string {
+	if segment.RenderTimeoutIcon != "" {
+		return segment.RenderTimeoutIcon
+	}
+
+	if cfg != nil && cfg.RenderTimeoutIcon != "" {
+		return cfg.RenderTimeoutIcon
+	}
+
+	return "\uea87 "
+}
+
+func (segment *Segment) getTimeoutForeground(cfg *Config) color.Ansi {
+	if segment.RenderTimeoutForeground != "" {
+		return segment.RenderTimeoutForeground
+	}
+
+	if cfg != nil && cfg.RenderTimeoutForeground != "" {
+		return cfg.RenderTimeoutForeground
+	}
+
+	return "red"
 }
 
 func (segment *Segment) getPendingBackground(cfg *Config) color.Ansi {

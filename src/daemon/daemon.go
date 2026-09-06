@@ -25,8 +25,13 @@ type RenderRequest struct {
 	Flags *runtime.Flags
 	// Env holds the client shell's environment variables. Segments resolve
 	// Getenv against these instead of the daemon's own (stale) environment.
-	Env       map[string]string
-	SessionID string
+	Env map[string]string
+	// ClientDeadline is when the caller stops listening, as gRPC propagated it
+	// from the client's context. Zero when the caller set none. The render uses
+	// it to make sure anything it still has to say is said while someone is
+	// there to hear it.
+	ClientDeadline time.Time
+	SessionID      string
 	// Cancel selects the cancel semantics for this render: CancelHard
 	// (default — new command, abort prior in-flight work) or CancelSoft
 	// (vim toggle / repaint — preserve in-flight work and reattach).
@@ -153,7 +158,7 @@ func (daemon *Daemon) StartRender(request RenderRequest) RenderResponse {
 
 	retire.Complete()
 
-	bundle, active := daemon.pipeline.Start(request.SessionID, request.Flags, request.Env, request.Cancel)
+	bundle, active := daemon.pipeline.Start(request)
 
 	// Retiring the replaced handle after Start, so the reload gate's active
 	// count never dips to zero between the two and lets a queued reload cut in

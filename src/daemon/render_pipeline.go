@@ -3,6 +3,7 @@ package daemon
 import (
 	"context"
 	"sync"
+	"time"
 
 	runtimePkg "github.com/po1o/prompto/src/runtime"
 
@@ -155,15 +156,48 @@ func (active *ActiveRender) BaseSequence() uint64 {
 	return active.baseSequence
 }
 
+// clientReportMargin is how far ahead of the client's own deadline the render
+// draws segments as timed out. The marker is only worth producing while the
+// client is still listening for it.
+const clientReportMargin = 5 * time.Second
+
+// renderMarkerDeadline is how long the render may keep segments pending before
+// it draws them as timed out.
+//
+// The configured value cannot be trusted on its own: it and the client's stream
+// deadline are set independently, and if the client hangs up first the marker
+// is produced for nobody and the shell keeps the pending placeholders — the
+// exact failure the marker exists to prevent. So the client's deadline is the
+// ceiling, whatever the config says, and a configured deadline only ever brings
+// the marker forward.
+func renderMarkerDeadline(configured time.Duration, clientDeadline time.Time) time.Duration {
+	if clientDeadline.IsZero() {
+		return configured
+	}
+
+	latest := time.Until(clientDeadline) - clientReportMargin
+	if latest <= 0 {
+		// Already too late to say anything the client would receive.
+		return 0
+	}
+
+	if configured <= 0 || configured > latest {
+		return latest
+	}
+
+	return configured
+}
+
 // isPrimaryRequest reports whether the request wants the primary prompt, the
 // only streamed one. Every other type is a synchronous one-shot.
 func isPrimaryRequest(flags *runtimePkg.Flags) bool {
 	return flags == nil || flags.Type == "" || flags.Type == prompt.PRIMARY
 }
 
-func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags, envVars map[string]string, kind CancelKind) (PromptBundle, *ActiveRender) {
-	repaint := kind.Repaint()
-	active := pipeline.newActiveRender(sessionID, flags, kind)
+func (pipeline *RenderPipeline) Start(request RenderRequest) (PromptBundle, *ActiveRender) {
+	flags := request.Flags
+	repaint := request.Cancel.Repaint()
+	active := pipeline.newActiveRender(request.SessionID, flags, request.Cancel)
 	engine := active.engine()
 
 	if engine == nil || engine.Config == nil {
@@ -179,7 +213,7 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 	}
 
 	engine.SetDeviceCache(pipeline.deviceCache)
-	applyRenderFlags(engine, flags, envVars, repaint)
+	applyRenderFlags(engine, flags, request.Env, repaint)
 	template.Init(engine.Env, engine.Config.Var, engine.Config.Maps)
 
 	if !isPrimaryRequest(flags) {
@@ -213,8 +247,9 @@ func (pipeline *RenderPipeline) Start(sessionID string, flags *runtimePkg.Flags,
 	// drain the last result between the render and the question, and this would
 	// then hand back a placeholder prompt as the finished one with no stream
 	// left to correct it.
-	timeout := engine.Config.GetDaemonTimeout()
-	primary, streaming := engine.PrimaryStreaming(active.context(), timeout, active.publishSegment)
+	placeholderAfter := engine.Config.GetDaemonTimeout()
+	timedOutAfter := renderMarkerDeadline(engine.Config.GetRenderTimeout(), request.ClientDeadline)
+	primary, streaming := engine.PrimaryStreaming(active.context(), placeholderAfter, timedOutAfter, active.publishSegment)
 	if streaming {
 		return pipeline.renderer.Bundle(engine, primary, bundleOptions{includeTransient: true}), active
 	}

@@ -39,6 +39,9 @@
 | `daemon_timeout` | int | initial daemon wait in milliseconds |
 | `render_pending_icon` | string | global pending icon |
 | `render_pending_background` | color | global pending background |
+| `render_timeout` | int | seconds a render may keep segments pending before drawing them as timed out (default 60; negative defers to the caller's own deadline) |
+| `render_timeout_icon` | string | global timeout icon |
+| `render_timeout_foreground` | color | global timeout foreground |
 | `console_title_template` | string | terminal title template |
 | `pwd` | string | working-directory integration mode |
 | `terminal_background` | color | declared terminal background color |
@@ -52,6 +55,10 @@
 | `cursor_padding` | bool | add one space between the left prompt and the cursor |
 | `patch_pwsh_bleed` | bool | PowerShell background-bleed workaround |
 | `enable_cursor_positioning` | bool | allow cursor position queries |
+
+A timed-out segment keeps the pending background and overrides only the foreground, so
+`render_pending_background` and `render_timeout_foreground` must not be set to the same
+colour or the marker renders invisible.
 
 ## Prompt Layout Fields
 
@@ -93,6 +100,8 @@
 | `keep_when_empty` | bool | keep the segment's separators when it renders no text, instead of hiding it |
 | `render_pending_icon` | string | per-segment pending icon override |
 | `render_pending_background` | color | per-segment pending background override |
+| `render_timeout_icon` | string | per-segment timeout icon override |
+| `render_timeout_foreground` | color | per-segment timeout foreground override |
 | `options` | map | segment-specific options |
 | `cache` | object | segment cache settings |
 | `interactive` | bool | interactive terminal-writer mode |
@@ -214,6 +223,8 @@ palettes:
 ```yaml
 render_pending_icon: " "
 render_pending_background: darkGray
+render_timeout: 60
+render_timeout_foreground: red
 
 daemon_timeout: 100
 daemon_idle_timeout: "5"

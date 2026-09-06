@@ -55,6 +55,8 @@ type Config struct {
 	DaemonIdleTimeout       string                 `yaml:"daemon_idle_timeout,omitempty"`
 	RenderPendingIcon       string                 `yaml:"render_pending_icon,omitempty"`
 	RenderPendingBackground color.Ansi             `yaml:"render_pending_background,omitempty"`
+	RenderTimeoutIcon       string                 `yaml:"render_timeout_icon,omitempty"`
+	RenderTimeoutForeground color.Ansi             `yaml:"render_timeout_foreground,omitempty"`
 	ConsoleTitleTemplate    string                 `yaml:"console_title_template,omitempty"`
 	PWD                     string                 `yaml:"pwd,omitempty"`
 	AccentColor             color.Ansi             `yaml:"accent_color,omitempty"`
@@ -66,6 +68,7 @@ type Config struct {
 	Cycle                   color.Cycle            `yaml:"cycle,omitempty"`
 	ITermFeatures           terminal.ITermFeatures `yaml:"iterm_features,omitempty"`
 	DaemonTimeout           int                    `yaml:"daemon_timeout,omitempty"`
+	RenderTimeout           int                    `yaml:"render_timeout,omitempty"`
 	hash                    uint64
 	Async                   bool `yaml:"async,omitempty"`
 	HasTransient            bool `yaml:"-"`
@@ -257,6 +260,10 @@ func (cfg *Config) GetDaemonIdleTimeout() time.Duration {
 	return time.Duration(minutes) * time.Minute
 }
 
+// defaultRenderTimeout is how long a render waits on its segments before
+// drawing the ones still outstanding as timed out.
+const defaultRenderTimeout = 60 * time.Second
+
 // GetDaemonTimeout returns the timeout for switching from initial to streamed daemon updates.
 // Defaults to 100 milliseconds when unset or invalid.
 func (cfg *Config) GetDaemonTimeout() time.Duration {
@@ -265,6 +272,27 @@ func (cfg *Config) GetDaemonTimeout() time.Duration {
 	}
 
 	return time.Duration(cfg.DaemonTimeout) * time.Millisecond
+}
+
+// GetRenderTimeout returns how long a render may keep segments pending before
+// it draws them as timed out. It does not end the render: a segment that
+// answers later still replaces its own marker.
+//
+// Configured in seconds. Zero takes the default. A negative value asks for no
+// deadline of its own, which is not the same as none at all — the caller's
+// stream deadline still applies, and the marker is then drawn as late as that
+// allows. Suppressing it entirely would only trade a marker the user can read
+// for a prompt that keeps its placeholders with nothing to explain why.
+func (cfg *Config) GetRenderTimeout() time.Duration {
+	if cfg == nil || cfg.RenderTimeout == 0 {
+		return defaultRenderTimeout
+	}
+
+	if cfg.RenderTimeout < 0 {
+		return 0
+	}
+
+	return time.Duration(cfg.RenderTimeout) * time.Second
 }
 
 // toggleSegments processes all layout segments and adds segments

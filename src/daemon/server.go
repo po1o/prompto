@@ -152,11 +152,16 @@ func (server *Server) RenderPrompt(
 		}()
 	}
 
+	// gRPC carries the client's deadline on the wire, so the render can tell
+	// how long it has before nobody is listening. Zero when the client set none.
+	clientDeadline, _ := stream.Context().Deadline()
+
 	initial := server.core.StartRender(RenderRequest{
-		SessionID: sessionID,
-		Flags:     flags,
-		Env:       request.Env,
-		Cancel:    CancelKindForRepaint(request.Repaint),
+		SessionID:      sessionID,
+		Flags:          flags,
+		Env:            request.Env,
+		Cancel:         CancelKindForRepaint(request.Repaint),
+		ClientDeadline: clientDeadline,
 	})
 
 	if initial.Type == "stopped" {
