@@ -325,10 +325,13 @@ func TestParseSessionPID(t *testing.T) {
 }
 
 func startDetachedTestProcessPID(t *testing.T) int {
+	return startDetachedTestProcessPIDWithDuration(t, "1")
+}
+
+func startDetachedTestProcessPIDWithDuration(t *testing.T, duration string) int {
 	t.Helper()
 
-	command, args := detachedProcessPIDCommand()
-	cmd := exec.CommandContext(context.Background(), command, args...)
+	cmd := exec.CommandContext(context.Background(), "sleep", duration)
 	err := cmd.Start()
 	require.NoError(t, err)
 
@@ -345,10 +348,6 @@ func startDetachedTestProcessPID(t *testing.T) int {
 	require.Greater(t, cmd.Process.Pid, 0)
 
 	return cmd.Process.Pid
-}
-
-func detachedProcessPIDCommand() (string, []string) {
-	return "sleep", []string{"1"}
 }
 
 // Segment.isToggled treats a session's toggle map as authoritative whenever it
@@ -403,7 +402,9 @@ func TestExitedProcessForgetsSessionToggles(t *testing.T) {
 	clearSharedToggleCache(t)
 
 	daemon := New(&rendererStub{})
-	pid := startDetachedTestProcessPID(t)
+	t.Cleanup(daemon.Stop)
+
+	pid := startDetachedTestProcessPIDWithDuration(t, "60")
 	sessionID := strconv.Itoa(pid)
 
 	daemon.StartRender(RenderRequest{
