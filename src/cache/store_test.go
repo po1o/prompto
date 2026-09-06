@@ -2,22 +2,22 @@ package cache
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestStore(t *testing.T) {
+func TestStoreItems(t *testing.T) {
 	cases := []struct {
 		setupFunc func() *store
 		testFunc  func(t *testing.T)
 		name      string
 	}{
 		{
-			name: "Print store with data",
+			name: "store with data",
 			setupFunc: func() *store {
 				testStore := Session.new()
 				testStore.cache.Set("test_key1", &Entry[any]{
@@ -39,45 +39,38 @@ func TestStore(t *testing.T) {
 				return testStore
 			},
 			testFunc: func(t *testing.T) {
-				result := Print(Session)
-				assert.Contains(t, result, "Key: test_key1")
-				assert.Contains(t, result, `Value: "test_value1"`) // Note: quotes are included in output
-				assert.Contains(t, result, "Type: string")
-				assert.Contains(t, result, "Key: test_key2")
-				assert.Contains(t, result, "Value: 42")
-				assert.Contains(t, result, "Type: int")
-				assert.Contains(t, result, "Key: expired_key [EXPIRED]")
-				assert.Contains(t, result, "never expires")
-				assert.Contains(t, result, "expires at")
+				items := Items(Session)
+				require.Len(t, items, 3)
 
-				// Verify structure
-				lines := strings.Split(result, "\n")
-				assert.True(t, len(lines) > 10, "Output should have multiple lines")
+				// Sorted by key, so repeated calls read the same way.
+				assert.Equal(t, "expired_key", items[0].Key)
+				assert.Equal(t, "test_key1", items[1].Key)
+				assert.Equal(t, "test_key2", items[2].Key)
+
+				// An expired entry is reported rather than dropped: seeing that
+				// a value went stale is usually the reason for looking.
+				assert.True(t, items[0].Expired)
+
+				assert.Equal(t, "test_value1", items[1].Value)
+				assert.Equal(t, "string", items[1].Type)
+				assert.False(t, items[1].Forever)
+				assert.False(t, items[1].ExpiresAt.IsZero())
+
+				assert.Equal(t, "42", items[2].Value)
+				assert.Equal(t, "int", items[2].Type)
+				assert.True(t, items[2].Forever)
+				assert.True(t, items[2].ExpiresAt.IsZero(), "an entry that never expires has no expiry")
 			},
 		},
 		{
-			name: "Print empty store",
+			name: "empty store",
 			setupFunc: func() *store {
 				testStore := Session.new()
 				session = testStore
 				return testStore
 			},
 			testFunc: func(t *testing.T) {
-				result := Print(Session)
-				assert.Contains(t, result, "Store session is empty")
-			},
-		},
-		{
-			name: "Print nil store check",
-			setupFunc: func() *store {
-				testStore := Session.new()
-				session = testStore
-				return testStore
-			},
-			testFunc: func(t *testing.T) {
-				// Since get() always creates a store, we test empty store behavior
-				result := Print(Session)
-				assert.Contains(t, result, "Store session is empty")
+				assert.Empty(t, Items(Session))
 			},
 		},
 	}
@@ -127,6 +120,35 @@ func TestStoreConcurrentAccessWithClear(t *testing.T) {
 		}
 		close(stop)
 	}()
+
+	wg.Wait()
+}
+
+// Items reads the store while other goroutines write it, so it must not hand
+// back a view that can be mutated underneath the caller.
+func TestItemsConcurrentWithWrites(t *testing.T) {
+	session = Session.new()
+
+	var wg sync.WaitGroup
+	stop := make(chan struct{})
+
+	wg.Go(func() {
+		for i := 0; ; i++ {
+			select {
+			case <-stop:
+				return
+			default:
+				Set(Session, fmt.Sprintf("key-%d", i%16), i, ONEDAY)
+			}
+		}
+	})
+
+	wg.Go(func() {
+		defer close(stop)
+		for range 500 {
+			_ = Items(Session)
+		}
+	})
 
 	wg.Wait()
 }

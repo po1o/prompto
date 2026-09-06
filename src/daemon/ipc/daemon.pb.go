@@ -873,6 +873,250 @@ func (x *CacheGetTTLResponse) GetDays() int32 {
 	return 0
 }
 
+// CacheShowRequest asks for the daemon's cache contents.
+type CacheShowRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"` // Restrict per-session scopes to this session
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CacheShowRequest) Reset() {
+	*x = CacheShowRequest{}
+	mi := &file_daemon_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CacheShowRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CacheShowRequest) ProtoMessage() {}
+
+func (x *CacheShowRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_daemon_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CacheShowRequest.ProtoReflect.Descriptor instead.
+func (*CacheShowRequest) Descriptor() ([]byte, []int) {
+	return file_daemon_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *CacheShowRequest) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+// CacheEntry is one cached value, rendered for display.
+type CacheEntry struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`            // Cache key
+	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`        // Rendered value, empty when redacted
+	Type          string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`          // Go type of the stored value
+	Created       int64                  `protobuf:"varint,4,opt,name=created,proto3" json:"created,omitempty"`   // Unix seconds, 0 when unknown
+	Expires       int64                  `protobuf:"varint,5,opt,name=expires,proto3" json:"expires,omitempty"`   // Unix seconds, 0 when it never expires
+	Expired       bool                   `protobuf:"varint,6,opt,name=expired,proto3" json:"expired,omitempty"`   // Entry is past its TTL but not yet evicted
+	Redacted      bool                   `protobuf:"varint,7,opt,name=redacted,proto3" json:"redacted,omitempty"` // Value withheld: the key names a credential
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CacheEntry) Reset() {
+	*x = CacheEntry{}
+	mi := &file_daemon_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CacheEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CacheEntry) ProtoMessage() {}
+
+func (x *CacheEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_daemon_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CacheEntry.ProtoReflect.Descriptor instead.
+func (*CacheEntry) Descriptor() ([]byte, []int) {
+	return file_daemon_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *CacheEntry) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *CacheEntry) GetValue() string {
+	if x != nil {
+		return x.Value
+	}
+	return ""
+}
+
+func (x *CacheEntry) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *CacheEntry) GetCreated() int64 {
+	if x != nil {
+		return x.Created
+	}
+	return 0
+}
+
+func (x *CacheEntry) GetExpires() int64 {
+	if x != nil {
+		return x.Expires
+	}
+	return 0
+}
+
+func (x *CacheEntry) GetExpired() bool {
+	if x != nil {
+		return x.Expired
+	}
+	return false
+}
+
+func (x *CacheEntry) GetRedacted() bool {
+	if x != nil {
+		return x.Redacted
+	}
+	return false
+}
+
+// CacheScope groups entries by the cache they came from.
+type CacheScope struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`                            // Human-readable cache name
+	SessionId     string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"` // Set when the scope belongs to one shell
+	Entries       []*CacheEntry          `protobuf:"bytes,3,rep,name=entries,proto3" json:"entries,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CacheScope) Reset() {
+	*x = CacheScope{}
+	mi := &file_daemon_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CacheScope) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CacheScope) ProtoMessage() {}
+
+func (x *CacheScope) ProtoReflect() protoreflect.Message {
+	mi := &file_daemon_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CacheScope.ProtoReflect.Descriptor instead.
+func (*CacheScope) Descriptor() ([]byte, []int) {
+	return file_daemon_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *CacheScope) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CacheScope) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *CacheScope) GetEntries() []*CacheEntry {
+	if x != nil {
+		return x.Entries
+	}
+	return nil
+}
+
+// CacheShowResponse returns every cache the daemon holds.
+type CacheShowResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Scopes        []*CacheScope          `protobuf:"bytes,1,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CacheShowResponse) Reset() {
+	*x = CacheShowResponse{}
+	mi := &file_daemon_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CacheShowResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CacheShowResponse) ProtoMessage() {}
+
+func (x *CacheShowResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_daemon_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CacheShowResponse.ProtoReflect.Descriptor instead.
+func (*CacheShowResponse) Descriptor() ([]byte, []int) {
+	return file_daemon_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *CacheShowResponse) GetScopes() []*CacheScope {
+	if x != nil {
+		return x.Scopes
+	}
+	return nil
+}
+
 // SetLoggingRequest enables or disables daemon file logging.
 type SetLoggingRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -883,7 +1127,7 @@ type SetLoggingRequest struct {
 
 func (x *SetLoggingRequest) Reset() {
 	*x = SetLoggingRequest{}
-	mi := &file_daemon_proto_msgTypes[12]
+	mi := &file_daemon_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -895,7 +1139,7 @@ func (x *SetLoggingRequest) String() string {
 func (*SetLoggingRequest) ProtoMessage() {}
 
 func (x *SetLoggingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_daemon_proto_msgTypes[12]
+	mi := &file_daemon_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -908,7 +1152,7 @@ func (x *SetLoggingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetLoggingRequest.ProtoReflect.Descriptor instead.
 func (*SetLoggingRequest) Descriptor() ([]byte, []int) {
-	return file_daemon_proto_rawDescGZIP(), []int{12}
+	return file_daemon_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SetLoggingRequest) GetPath() string {
@@ -929,7 +1173,7 @@ type SetLoggingResponse struct {
 
 func (x *SetLoggingResponse) Reset() {
 	*x = SetLoggingResponse{}
-	mi := &file_daemon_proto_msgTypes[13]
+	mi := &file_daemon_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -941,7 +1185,7 @@ func (x *SetLoggingResponse) String() string {
 func (*SetLoggingResponse) ProtoMessage() {}
 
 func (x *SetLoggingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_daemon_proto_msgTypes[13]
+	mi := &file_daemon_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -954,7 +1198,7 @@ func (x *SetLoggingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetLoggingResponse.ProtoReflect.Descriptor instead.
 func (*SetLoggingResponse) Descriptor() ([]byte, []int) {
-	return file_daemon_proto_rawDescGZIP(), []int{13}
+	return file_daemon_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SetLoggingResponse) GetSuccess() bool {
@@ -1057,19 +1301,40 @@ const file_daemon_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x14\n" +
 	"\x12CacheGetTTLRequest\")\n" +
 	"\x13CacheGetTTLResponse\x12\x12\n" +
-	"\x04days\x18\x01 \x01(\x05R\x04days\"'\n" +
+	"\x04days\x18\x01 \x01(\x05R\x04days\"1\n" +
+	"\x10CacheShowRequest\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\"\xb2\x01\n" +
+	"\n" +
+	"CacheEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\x12\x12\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x18\n" +
+	"\acreated\x18\x04 \x01(\x03R\acreated\x12\x18\n" +
+	"\aexpires\x18\x05 \x01(\x03R\aexpires\x12\x18\n" +
+	"\aexpired\x18\x06 \x01(\bR\aexpired\x12\x1a\n" +
+	"\bredacted\x18\a \x01(\bR\bredacted\"j\n" +
+	"\n" +
+	"CacheScope\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x02 \x01(\tR\tsessionId\x12)\n" +
+	"\aentries\x18\x03 \x03(\v2\x0f.ipc.CacheEntryR\aentries\"<\n" +
+	"\x11CacheShowResponse\x12'\n" +
+	"\x06scopes\x18\x01 \x03(\v2\x0f.ipc.CacheScopeR\x06scopes\"'\n" +
 	"\x11SetLoggingRequest\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\"D\n" +
 	"\x12SetLoggingResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x14\n" +
-	"\x05error\x18\x02 \x01(\tR\x05error2\x94\x03\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error2\xd0\x03\n" +
 	"\rDaemonService\x129\n" +
 	"\fRenderPrompt\x12\x12.ipc.PromptRequest\x1a\x13.ipc.PromptResponse0\x01\x12F\n" +
 	"\rToggleSegment\x12\x19.ipc.ToggleSegmentRequest\x1a\x1a.ipc.ToggleSegmentResponse\x12=\n" +
 	"\n" +
 	"CacheClear\x12\x16.ipc.CacheClearRequest\x1a\x17.ipc.CacheClearResponse\x12@\n" +
 	"\vCacheSetTTL\x12\x17.ipc.CacheSetTTLRequest\x1a\x18.ipc.CacheSetTTLResponse\x12@\n" +
-	"\vCacheGetTTL\x12\x17.ipc.CacheGetTTLRequest\x1a\x18.ipc.CacheGetTTLResponse\x12=\n" +
+	"\vCacheGetTTL\x12\x17.ipc.CacheGetTTLRequest\x1a\x18.ipc.CacheGetTTLResponse\x12:\n" +
+	"\tCacheShow\x12\x15.ipc.CacheShowRequest\x1a\x16.ipc.CacheShowResponse\x12=\n" +
 	"\n" +
 	"SetLogging\x12\x16.ipc.SetLoggingRequest\x1a\x17.ipc.SetLoggingResponseB(Z&github.com/po1o/prompto/src/daemon/ipcb\x06proto3"
 
@@ -1085,7 +1350,7 @@ func file_daemon_proto_rawDescGZIP() []byte {
 	return file_daemon_proto_rawDescData
 }
 
-var file_daemon_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_daemon_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_daemon_proto_goTypes = []any{
 	(*ToggleSegmentRequest)(nil),  // 0: ipc.ToggleSegmentRequest
 	(*ToggleSegmentResponse)(nil), // 1: ipc.ToggleSegmentResponse
@@ -1099,33 +1364,41 @@ var file_daemon_proto_goTypes = []any{
 	(*CacheSetTTLResponse)(nil),   // 9: ipc.CacheSetTTLResponse
 	(*CacheGetTTLRequest)(nil),    // 10: ipc.CacheGetTTLRequest
 	(*CacheGetTTLResponse)(nil),   // 11: ipc.CacheGetTTLResponse
-	(*SetLoggingRequest)(nil),     // 12: ipc.SetLoggingRequest
-	(*SetLoggingResponse)(nil),    // 13: ipc.SetLoggingResponse
-	nil,                           // 14: ipc.PromptRequest.EnvEntry
-	nil,                           // 15: ipc.PromptResponse.PromptsEntry
+	(*CacheShowRequest)(nil),      // 12: ipc.CacheShowRequest
+	(*CacheEntry)(nil),            // 13: ipc.CacheEntry
+	(*CacheScope)(nil),            // 14: ipc.CacheScope
+	(*CacheShowResponse)(nil),     // 15: ipc.CacheShowResponse
+	(*SetLoggingRequest)(nil),     // 16: ipc.SetLoggingRequest
+	(*SetLoggingResponse)(nil),    // 17: ipc.SetLoggingResponse
+	nil,                           // 18: ipc.PromptRequest.EnvEntry
+	nil,                           // 19: ipc.PromptResponse.PromptsEntry
 }
 var file_daemon_proto_depIdxs = []int32{
-	14, // 0: ipc.PromptRequest.env:type_name -> ipc.PromptRequest.EnvEntry
+	18, // 0: ipc.PromptRequest.env:type_name -> ipc.PromptRequest.EnvEntry
 	3,  // 1: ipc.PromptRequest.flags:type_name -> ipc.Flags
-	15, // 2: ipc.PromptResponse.prompts:type_name -> ipc.PromptResponse.PromptsEntry
-	5,  // 3: ipc.PromptResponse.PromptsEntry.value:type_name -> ipc.Prompt
-	2,  // 4: ipc.DaemonService.RenderPrompt:input_type -> ipc.PromptRequest
-	0,  // 5: ipc.DaemonService.ToggleSegment:input_type -> ipc.ToggleSegmentRequest
-	6,  // 6: ipc.DaemonService.CacheClear:input_type -> ipc.CacheClearRequest
-	8,  // 7: ipc.DaemonService.CacheSetTTL:input_type -> ipc.CacheSetTTLRequest
-	10, // 8: ipc.DaemonService.CacheGetTTL:input_type -> ipc.CacheGetTTLRequest
-	12, // 9: ipc.DaemonService.SetLogging:input_type -> ipc.SetLoggingRequest
-	4,  // 10: ipc.DaemonService.RenderPrompt:output_type -> ipc.PromptResponse
-	1,  // 11: ipc.DaemonService.ToggleSegment:output_type -> ipc.ToggleSegmentResponse
-	7,  // 12: ipc.DaemonService.CacheClear:output_type -> ipc.CacheClearResponse
-	9,  // 13: ipc.DaemonService.CacheSetTTL:output_type -> ipc.CacheSetTTLResponse
-	11, // 14: ipc.DaemonService.CacheGetTTL:output_type -> ipc.CacheGetTTLResponse
-	13, // 15: ipc.DaemonService.SetLogging:output_type -> ipc.SetLoggingResponse
-	10, // [10:16] is the sub-list for method output_type
-	4,  // [4:10] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	19, // 2: ipc.PromptResponse.prompts:type_name -> ipc.PromptResponse.PromptsEntry
+	13, // 3: ipc.CacheScope.entries:type_name -> ipc.CacheEntry
+	14, // 4: ipc.CacheShowResponse.scopes:type_name -> ipc.CacheScope
+	5,  // 5: ipc.PromptResponse.PromptsEntry.value:type_name -> ipc.Prompt
+	2,  // 6: ipc.DaemonService.RenderPrompt:input_type -> ipc.PromptRequest
+	0,  // 7: ipc.DaemonService.ToggleSegment:input_type -> ipc.ToggleSegmentRequest
+	6,  // 8: ipc.DaemonService.CacheClear:input_type -> ipc.CacheClearRequest
+	8,  // 9: ipc.DaemonService.CacheSetTTL:input_type -> ipc.CacheSetTTLRequest
+	10, // 10: ipc.DaemonService.CacheGetTTL:input_type -> ipc.CacheGetTTLRequest
+	12, // 11: ipc.DaemonService.CacheShow:input_type -> ipc.CacheShowRequest
+	16, // 12: ipc.DaemonService.SetLogging:input_type -> ipc.SetLoggingRequest
+	4,  // 13: ipc.DaemonService.RenderPrompt:output_type -> ipc.PromptResponse
+	1,  // 14: ipc.DaemonService.ToggleSegment:output_type -> ipc.ToggleSegmentResponse
+	7,  // 15: ipc.DaemonService.CacheClear:output_type -> ipc.CacheClearResponse
+	9,  // 16: ipc.DaemonService.CacheSetTTL:output_type -> ipc.CacheSetTTLResponse
+	11, // 17: ipc.DaemonService.CacheGetTTL:output_type -> ipc.CacheGetTTLResponse
+	15, // 18: ipc.DaemonService.CacheShow:output_type -> ipc.CacheShowResponse
+	17, // 19: ipc.DaemonService.SetLogging:output_type -> ipc.SetLoggingResponse
+	13, // [13:20] is the sub-list for method output_type
+	6,  // [6:13] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_daemon_proto_init() }
@@ -1139,7 +1412,7 @@ func file_daemon_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_daemon_proto_rawDesc), len(file_daemon_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -210,6 +210,25 @@ func (registry *EngineRegistry) cancelActive(sessionID string, renderID uint64) 
 	cancel()
 }
 
+// SessionEngines returns a snapshot of the live sessions and their engines,
+// so callers can inspect per-session state without holding the registry lock
+// while they work.
+func (registry *EngineRegistry) SessionEngines() map[string]*prompt.Engine {
+	registry.mu.Lock()
+	defer registry.mu.Unlock()
+
+	engines := make(map[string]*prompt.Engine, len(registry.sessions))
+	for sessionID, state := range registry.sessions {
+		if state == nil || state.engine == nil {
+			continue
+		}
+
+		engines[sessionID] = state.engine
+	}
+
+	return engines
+}
+
 func (registry *EngineRegistry) RemoveSession(sessionID string) {
 	registry.mu.Lock()
 	defer registry.mu.Unlock()

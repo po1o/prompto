@@ -24,6 +24,7 @@ const (
 	DaemonService_CacheClear_FullMethodName    = "/ipc.DaemonService/CacheClear"
 	DaemonService_CacheSetTTL_FullMethodName   = "/ipc.DaemonService/CacheSetTTL"
 	DaemonService_CacheGetTTL_FullMethodName   = "/ipc.DaemonService/CacheGetTTL"
+	DaemonService_CacheShow_FullMethodName     = "/ipc.DaemonService/CacheShow"
 	DaemonService_SetLogging_FullMethodName    = "/ipc.DaemonService/SetLogging"
 )
 
@@ -55,6 +56,8 @@ type DaemonServiceClient interface {
 	CacheSetTTL(ctx context.Context, in *CacheSetTTLRequest, opts ...grpc.CallOption) (*CacheSetTTLResponse, error)
 	// CacheGetTTL gets the current default cache TTL (in days).
 	CacheGetTTL(ctx context.Context, in *CacheGetTTLRequest, opts ...grpc.CallOption) (*CacheGetTTLResponse, error)
+	// CacheShow retrieves daemon cache entries grouped by scope.
+	CacheShow(ctx context.Context, in *CacheShowRequest, opts ...grpc.CallOption) (*CacheShowResponse, error)
 	// SetLogging enables or disables file logging on the running daemon.
 	SetLogging(ctx context.Context, in *SetLoggingRequest, opts ...grpc.CallOption) (*SetLoggingResponse, error)
 }
@@ -126,6 +129,16 @@ func (c *daemonServiceClient) CacheGetTTL(ctx context.Context, in *CacheGetTTLRe
 	return out, nil
 }
 
+func (c *daemonServiceClient) CacheShow(ctx context.Context, in *CacheShowRequest, opts ...grpc.CallOption) (*CacheShowResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CacheShowResponse)
+	err := c.cc.Invoke(ctx, DaemonService_CacheShow_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *daemonServiceClient) SetLogging(ctx context.Context, in *SetLoggingRequest, opts ...grpc.CallOption) (*SetLoggingResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SetLoggingResponse)
@@ -164,6 +177,8 @@ type DaemonServiceServer interface {
 	CacheSetTTL(context.Context, *CacheSetTTLRequest) (*CacheSetTTLResponse, error)
 	// CacheGetTTL gets the current default cache TTL (in days).
 	CacheGetTTL(context.Context, *CacheGetTTLRequest) (*CacheGetTTLResponse, error)
+	// CacheShow retrieves daemon cache entries grouped by scope.
+	CacheShow(context.Context, *CacheShowRequest) (*CacheShowResponse, error)
 	// SetLogging enables or disables file logging on the running daemon.
 	SetLogging(context.Context, *SetLoggingRequest) (*SetLoggingResponse, error)
 	mustEmbedUnimplementedDaemonServiceServer()
@@ -190,6 +205,9 @@ func (UnimplementedDaemonServiceServer) CacheSetTTL(context.Context, *CacheSetTT
 }
 func (UnimplementedDaemonServiceServer) CacheGetTTL(context.Context, *CacheGetTTLRequest) (*CacheGetTTLResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CacheGetTTL not implemented")
+}
+func (UnimplementedDaemonServiceServer) CacheShow(context.Context, *CacheShowRequest) (*CacheShowResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CacheShow not implemented")
 }
 func (UnimplementedDaemonServiceServer) SetLogging(context.Context, *SetLoggingRequest) (*SetLoggingResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetLogging not implemented")
@@ -298,6 +316,24 @@ func _DaemonService_CacheGetTTL_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DaemonService_CacheShow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CacheShowRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DaemonServiceServer).CacheShow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DaemonService_CacheShow_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DaemonServiceServer).CacheShow(ctx, req.(*CacheShowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _DaemonService_SetLogging_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetLoggingRequest)
 	if err := dec(in); err != nil {
@@ -338,6 +374,10 @@ var DaemonService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CacheGetTTL",
 			Handler:    _DaemonService_CacheGetTTL_Handler,
+		},
+		{
+			MethodName: "CacheShow",
+			Handler:    _DaemonService_CacheShow_Handler,
 		},
 		{
 			MethodName: "SetLogging",

@@ -448,7 +448,7 @@ func (e *Engine) executeSegmentWithContext(ctx context.Context, segment *config.
 	// (and possibly the render); WaitForSegmentExecutions joins it.
 	e.executionWG.Go(func() {
 		gidChan <- runjobs.CurrentGID()
-		e.executeWithoutLegacySegmentCache(segment)
+		segment.Execute(e.Env)
 		close(done)
 	})
 

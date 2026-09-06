@@ -69,7 +69,6 @@ type Segment struct {
 	Newline       bool `yaml:"newline,omitempty"`
 	KeepWhenEmpty bool `yaml:"keep_when_empty,omitempty"`
 	Force         bool `yaml:"force,omitempty"`
-	restored      bool `yaml:"-"`
 	Toggled       bool `yaml:"toggled,omitempty"`
 }
 
@@ -96,7 +95,6 @@ func (segment *Segment) Clone() *Segment {
 	cloned.NameLength = 0
 	cloned.Index = 0
 	cloned.Enabled = false
-	cloned.restored = false
 
 	return &cloned
 }
@@ -160,10 +158,6 @@ func (segment *Segment) Execute(env runtime.Environment) {
 	log.Debugf("segment: %s", segment.Name())
 
 	if segment.isToggled() {
-		return
-	}
-
-	if segment.restoreCache() {
 		return
 	}
 
@@ -231,7 +225,6 @@ func (segment *Segment) Render(index int, force bool) bool {
 	}
 
 	segment.SetText(text)
-	segment.setCache()
 
 	// We do this to make `.Text` available for a cross-segment reference in an extra prompt.
 	template.Cache.AddSegmentData(segment.Name(), segment.writer)
@@ -360,10 +353,6 @@ func (segment *Segment) HasEmptyGlyphAtEnd() bool {
 	return segment.LeadingGlyph != "" && segment.TrailingGlyph == ""
 }
 
-func (segment *Segment) hasCache() bool {
-	return segment.Cache != nil && !segment.Cache.Duration.IsEmpty()
-}
-
 func (segment *Segment) isToggled() bool {
 	segmentName := segment.toggleName()
 
@@ -423,65 +412,6 @@ func (segment *Segment) sessionToggles() map[string]bool {
 	}
 
 	return flags.SegmentToggles
-}
-
-func (segment *Segment) restoreCache() bool {
-	if !segment.hasCache() {
-		return false
-	}
-
-	key, store := segment.cacheKeyAndStore()
-	data, OK := cache.Get[string](store, key)
-	if !OK {
-		log.Debugf("no cache found for segment: %s, key: %s", segment.Name(), key)
-		return false
-	}
-
-	err := json.Unmarshal([]byte(data), &segment.writer)
-	if err != nil {
-		log.Error(err)
-	}
-
-	segment.Enabled = true
-	template.Cache.AddSegmentData(segment.Name(), segment.writer)
-
-	log.Debug("restored segment from cache: ", segment.Name())
-
-	segment.restored = true
-
-	return true
-}
-
-func (segment *Segment) setCache() {
-	if segment.restored || !segment.hasCache() {
-		return
-	}
-
-	data, err := json.Marshal(segment.writer)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
-	// TODO: check if we can make segmentwriter a generic Type indicator
-	// that way we can actually get the value straight from cache.Get
-	// and marchalling is obsolete
-	key, store := segment.cacheKeyAndStore()
-	cache.Set(store, key, string(data), segment.Cache.Duration)
-}
-
-func (segment *Segment) cacheKeyAndStore() (string, cache.Store) {
-	format := "segment_cache_%s"
-	switch segment.Cache.Strategy {
-	case Session:
-		return fmt.Sprintf(format, segment.Name()), cache.Session
-	case Device:
-		return fmt.Sprintf(format, segment.Name()), cache.Device
-	case Folder:
-		fallthrough
-	default:
-		return fmt.Sprintf(format, strings.Join([]string{segment.Name(), segment.folderKey()}, "_")), cache.Device
-	}
 }
 
 // DaemonCacheKey returns a cache key for daemon mode.

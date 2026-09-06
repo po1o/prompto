@@ -77,10 +77,11 @@ func (e *Engine) writeSegmentsConcurrently(segments []*config.Segment, out chan 
 
 			if segment.Timeout > 0 {
 				e.executeSegmentWithTimeout(segment)
-			} else {
-				e.executeWithoutLegacySegmentCache(segment)
+				out <- result{segment, index}
+				return
 			}
 
+			segment.Execute(e.Env)
 			out <- result{segment, index}
 		}(segment, i)
 	}

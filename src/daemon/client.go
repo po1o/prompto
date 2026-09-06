@@ -287,6 +287,11 @@ func (c *Client) CacheClear(ctx context.Context) error {
 	return nil
 }
 
+// CacheShow returns the daemon's cache contents.
+func (c *Client) CacheShow(ctx context.Context, sessionID string) (*ipc.CacheShowResponse, error) {
+	return c.client.CacheShow(ctx, &ipc.CacheShowRequest{SessionId: sessionID})
+}
+
 // CacheSetTTL sets the default cache TTL (in days).
 func (c *Client) CacheSetTTL(ctx context.Context, days int) error {
 	_, err := c.client.CacheSetTTL(ctx, &ipc.CacheSetTTLRequest{Days: int32(days)})

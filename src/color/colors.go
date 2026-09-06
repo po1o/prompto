@@ -1,7 +1,6 @@
 package color
 
 import (
-	"encoding/gob"
 	"fmt"
 	"strconv"
 	"strings"
@@ -14,14 +13,6 @@ import (
 	"github.com/po1o/prompto/src/runtime"
 	"github.com/po1o/prompto/src/template"
 )
-
-func init() {
-	gob.Register(&Set{})
-	gob.Register((*Ansi)(nil))
-	gob.Register(&Palette{})
-	gob.Register(&Palettes{})
-	gob.Register(&Cycle{})
-}
 
 const (
 	accentColor = "accent_color"
