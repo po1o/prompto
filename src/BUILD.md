@@ -1,92 +1,79 @@
 ---
 name: Build & test guide
-description: How to build, test, and lint prompto locally. Use the same commands CI runs.
+description: How to build, test, and lint prompto locally. The same commands CI runs.
 ---
 
 # Build & test
 
-All commands run from `src/`. Go version is pinned in `go.mod`.
+Everything is driven by [go-task](https://taskfile.dev). Tool versions are
+pinned via the `tool` directive in `src/go.mod` and invoked through `go tool`,
+so local and CI runs are byte-identical. Go's version is pinned in `go.mod`.
 
-## Build
+Invoke tasks with a global `task` binary, or through Go (no install needed):
 
 ```bash
-go build -o /path/to/prompto
+go tool task <name>     # or: task <name>
 ```
 
-Drop the binary anywhere on `$PATH`. For local iteration:
+## Common tasks
 
 ```bash
-go build -o ~/bin/prompto
+go tool task build       # build ./bin/prompto (override with OUTPUT=/path/to/prompto)
+go tool task test:unit   # go test -count=1 ./...
+go tool task test:race   # go test -race -count=3 ./daemon/... ./log/... ./prompt/...
+go tool task test        # the full CI check suite (see below)
 ```
 
 `prompto --version` on an unreleased build reports `0.0.0-dev`.
 
-## Test
-
-```bash
-go test -count=1 ./...                       # unit tests
-go test -race -count=3 ./daemon/... ./log/... ./prompt/... # race tests (required on daemon/, log/, prompt/)
-```
-
-The `-race` run is a hard gate in CI for `daemon/`, `log/` and `prompt/`, which
-all have goroutines over shared state. Don't merge code that fails race tests.
-
-## Lint
-
-All lint tools are pinned via the `tool` directive in `go.mod` and run via
-`go tool ...`. CI runs the same binaries. Bump a tool with:
-
-```bash
-go get -tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint@vX.Y.Z
-```
-
-To run everything CI runs locally:
-
-```bash
-go tool golangci-lint run
-go list ./... | grep -v '/daemon/ipc$' | xargs go tool fieldalignment
-go list ./... | grep -v '/daemon/ipc$' | xargs go tool modernize
-```
-
-`/daemon/ipc` is excluded because it contains generated protobuf code that
-upstream tools cannot satisfy.
-
-## Markdown lint
-
-```bash
-# from the repo root, not src/
-cd .. && npx -y markdownlint-cli2@0.20.0 '**/*.md'
-```
-
-The cli2 version is pinned in two places (bump together):
-
-- CI: `.github/workflows/markdown.yml` (action SHA bundles cli2 v0.20.0).
-- Local: the npx command above.
-
-Rules live in `.markdownlint-cli2.yaml` at the repo root.
-
-## Generated code
-
-The protobuf wire format lives in `daemon/daemon.proto`. After editing it:
-
-```bash
-go generate ./...
-```
-
-CI fails if generated files are stale. Run `go generate` and commit the
-regenerated `daemon/ipc/*.pb.go` files.
-
 ## Full pre-push check
 
 ```bash
-go generate ./...           # regenerate if .proto changed
-go tool golangci-lint run
-go list ./... | grep -v '/daemon/ipc$' | xargs go tool fieldalignment
-go list ./... | grep -v '/daemon/ipc$' | xargs go tool modernize
-go test -count=1 ./...
-go test -race -count=3 ./daemon/... ./log/... ./prompt/...
-(cd .. && npx -y markdownlint-cli2@0.20.0 '**/*.md')
+go tool task test
 ```
 
-If those pass locally, CI passes. They are byte-identical to what runs in
-`.github/workflows/{build_code,code,markdown}.yml`.
+`test` runs, in order:
+
+- `go vet ./...`
+- `go tool golangci-lint run`
+- `go list ./... | grep -v '/daemon/ipc$' | xargs go tool modernize`
+- `go list ./... | grep -v '/daemon/ipc$' | xargs go tool fieldalignment`
+- `go test -count=1 ./...`
+- `go test -race -count=3 ./daemon/... ./log/... ./prompt/...`
+
+`/daemon/ipc` is excluded from `modernize` and `fieldalignment` because it
+contains generated protobuf code that upstream tools cannot satisfy.
+
+If `go tool task test` passes locally, CI passes — `.github/workflows/ci.yml`
+runs the same `go tool task test` on Linux and macOS.
+
+## Generated code
+
+The protobuf wire format lives in `daemon/daemon.proto`. After editing it (or
+bundled themes/shell scripts):
+
+```bash
+go tool task generate
+```
+
+CI runs `go tool task generate:check` and fails if generated files are stale.
+Run `go tool task generate` and commit the regenerated files.
+
+## Bumping a pinned tool
+
+```bash
+go get -tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint@vX.Y.Z
+go mod tidy
+```
+
+## Markdown lint
+
+From the repo root (not `src/`):
+
+```bash
+task markdown-lint       # npx -y markdownlint-cli2@<MDLINT_VERSION> '**/*.md'
+```
+
+Rules live in `.markdownlint-cli2.yaml` at the repo root. The cli2 version is
+pinned in `Taskfile.yml` (`MDLINT_VERSION`) and `.github/workflows/markdown.yml`
+— bump them together.

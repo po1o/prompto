@@ -1,6 +1,6 @@
-# CI runs markdownlint-cli2 v0.20.0 via the @07035fd action commit pinned in
-# .github/workflows/markdown.yml. Local devs: `npx -y markdownlint-cli2@0.20.0
-# '**/*.md'`. Bump both together.
+# CI runs markdownlint-cli2 via the action commit pinned in
+# .github/workflows/markdown.yml. Local devs: `task markdown-lint` (which runs
+# `npx -y markdownlint-cli2@<MDLINT_VERSION> '**/*.md'`). Bump both together.
 config:
   MD013:
     line_length: 120

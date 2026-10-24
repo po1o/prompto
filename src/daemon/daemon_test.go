@@ -335,13 +335,19 @@ func startDetachedTestProcessPIDWithDuration(t *testing.T, duration string) int 
 	err := cmd.Start()
 	require.NoError(t, err)
 
+	waited := make(chan struct{})
+	go func() {
+		defer close(waited)
+		_, _ = cmd.Process.Wait()
+	}()
+
 	t.Cleanup(func() {
 		if cmd.Process == nil {
 			return
 		}
 
 		_ = cmd.Process.Kill()
-		_, _ = cmd.Process.Wait()
+		<-waited
 	})
 
 	require.NotNil(t, cmd.Process)

@@ -9,7 +9,7 @@ import (
 
 // waitForProcessExit blocks until the process with the given PID exits.
 func waitForProcessExit(ctx context.Context, pid int) {
-	if !IsProcessRunning(pid) {
+	if !isPIDAlive(pid) {
 		return
 	}
 
@@ -27,8 +27,16 @@ func waitForProcessExit(ctx context.Context, pid int) {
 	}
 	setIdent(&event, pid)
 
-	_, err = syscall.Kevent(kq, []syscall.Kevent_t{event}, nil, nil)
+	for {
+		_, err = syscall.Kevent(kq, []syscall.Kevent_t{event}, nil, nil)
+		if err != syscall.EINTR {
+			break
+		}
+	}
 	if err != nil {
+		if !isPIDAlive(pid) {
+			return
+		}
 		pollForProcessExit(ctx, pid)
 		return
 	}
@@ -37,7 +45,12 @@ func waitForProcessExit(ctx context.Context, pid int) {
 	go func() {
 		defer close(done)
 		events := make([]syscall.Kevent_t, 1)
-		_, _ = syscall.Kevent(kq, nil, events, nil)
+		for {
+			_, waitErr := syscall.Kevent(kq, nil, events, nil)
+			if waitErr != syscall.EINTR {
+				return
+			}
+		}
 	}()
 
 	select {
