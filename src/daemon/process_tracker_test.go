@@ -90,9 +90,15 @@ func startSessionTestProcess(t *testing.T) *os.Process {
 	err := cmd.Start()
 	require.NoError(t, err)
 
+	waited := make(chan struct{})
+	go func() {
+		defer close(waited)
+		_, _ = cmd.Process.Wait()
+	}()
+
 	t.Cleanup(func() {
 		_ = cmd.Process.Kill()
-		_, _ = cmd.Process.Wait()
+		<-waited
 	})
 
 	return cmd.Process

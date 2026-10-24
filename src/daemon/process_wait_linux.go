@@ -12,7 +12,7 @@ import (
 func waitForProcessExit(ctx context.Context, pid int) {
 	pidfd, err := unix.PidfdOpen(pid, 0)
 	if err != nil {
-		if !IsProcessRunning(pid) {
+		if !isPIDAlive(pid) {
 			return
 		}
 		pollForProcessExit(ctx, pid)
@@ -24,7 +24,12 @@ func waitForProcessExit(ctx context.Context, pid int) {
 	go func() {
 		defer close(done)
 		fds := []unix.PollFd{{Fd: int32(pidfd), Events: unix.POLLIN}}
-		_, _ = unix.Poll(fds, -1)
+		for {
+			_, pollErr := unix.Poll(fds, -1)
+			if pollErr != unix.EINTR {
+				return
+			}
+		}
 	}()
 
 	select {

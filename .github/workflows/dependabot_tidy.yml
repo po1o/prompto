@@ -14,7 +14,8 @@ name: Dependabot Auto-Tidy
 # and nothing sensitive sits at rest in the secret store:
 #
 #   1. Create a GitHub App (Settings → Developer settings → GitHub Apps → New):
-#      - Repository permissions → Contents: Read and write (nothing else).
+#      - Repository permissions → Contents: Read and write (to push the tidy fix)
+#        + Pull requests: Read and write (for dependabot_automerge.yml).
 #      - Uncheck "Active" under Webhook (none needed).
 #      - Note the Client ID (the App's page → "Client ID", format Iv23li…);
 #        then "Generate a private key" and download the .pem.
@@ -45,7 +46,7 @@ name: Dependabot Auto-Tidy
 # THE ONE RULE: never add test / build / run / generate steps to this workflow.
 # The moment it runs the bumped dependency's code, that code runs WITH the token
 # in the environment — that is the line. Untrusted-code execution belongs in
-# code.yml, which runs in the hardened, secret-less context. Keeping the token
+# ci.yml, which runs in the hardened, secret-less context. Keeping the token
 # and the untrusted code in separate jobs is the whole security design.
 
 on: pull_request
@@ -70,7 +71,7 @@ jobs:
     steps:
       - name: Mint a short-lived token from the GitHub App
         id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ secrets.TIDY_APP_CLIENT_ID }}
           private-key: ${{ secrets.TIDY_APP_PRIVATE_KEY }}

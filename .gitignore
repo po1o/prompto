@@ -267,3 +267,7 @@ cosign.key
 
 __debug_bin
 src/src
+coverage.*
+go.work
+go.work.sum
+/.worktrees/

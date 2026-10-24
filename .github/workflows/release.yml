@@ -24,7 +24,7 @@ jobs:
       version: ${{ steps.version.outputs.value }}
     steps:
       - name: Checkout code 👋
-        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -66,7 +66,7 @@ jobs:
         run: go list ./... | grep -v '/daemon/ipc$' | xargs go tool modernize
 
       - name: Run GoReleaser 🚀
-        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94
+        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de
         with:
           distribution: goreleaser
           version: v2.3.2
