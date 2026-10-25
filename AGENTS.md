@@ -16,7 +16,7 @@ When editing Go files (`*.go`):
 - All sources live under `src/`. Run tasks from anywhere via go-task (`task <name>` or `go -C src tool task <name>`).
 - Before committing, run the full check suite:
   - `go tool task test`
-- This runs `go vet ./...`, `go tool golangci-lint run`,
+- This runs `go vet ./...` (also with `GOOS=freebsd`), `go tool golangci-lint run`,
   `go list ./... | grep -v '/daemon/ipc$' | xargs go tool modernize`,
   `go list ./... | grep -v '/daemon/ipc$' | xargs go tool fieldalignment`,
   `go test -count=1 ./...`, and

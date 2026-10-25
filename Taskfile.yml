@@ -150,10 +150,14 @@ tasks:
       - go tool golangci-lint fmt
 
   vet:
-    desc: Run go vet
+    # FreeBSD is a release target but has no CI runner. goreleaser cross-compiles
+    # the non-test sources, so the second pass is what typechecks the
+    # freebsd-tagged _test.go files, which goreleaser never builds.
+    desc: Run go vet (host, then FreeBSD cross-typecheck)
     dir: src
     cmds:
       - go vet ./...
+      - GOOS=freebsd GOARCH=amd64 go vet ./...
 
   lint:
     desc: Run golangci-lint (go tool)

@@ -34,7 +34,7 @@ go tool task test
 
 `test` runs, in order:
 
-- `go vet ./...`
+- `go vet ./...`, then `GOOS=freebsd GOARCH=amd64 go vet ./...` (typechecks the freebsd-tagged tests)
 - `go tool golangci-lint run`
 - `go list ./... | grep -v '/daemon/ipc$' | xargs go tool modernize`
 - `go list ./... | grep -v '/daemon/ipc$' | xargs go tool fieldalignment`
