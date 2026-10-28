@@ -29,7 +29,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/gookit/goutil v0.8.3
+	github.com/gookit/goutil v0.8.4
 	github.com/hashicorp/hcl/v2 v2.25.0
 	github.com/mattn/go-runewidth v0.0.31
 	github.com/pelletier/go-toml/v2 v2.4.3
@@ -38,7 +38,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	go.yaml.in/yaml/v3 v3.0.5
-	golang.org/x/mod v0.41.0
+	golang.org/x/mod v0.42.0
 	google.golang.org/grpc v1.84.0
 	google.golang.org/protobuf v1.36.12
 )
