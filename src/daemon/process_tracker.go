@@ -2,7 +2,9 @@ package daemon
 
 import (
 	"context"
+	"os"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -98,8 +100,22 @@ func (tracker *ProcessTracker) watchProcess(ctx context.Context, pid int) {
 	tracker.unregisterLocked(pid)
 }
 
+func isPIDAlive(pid int) bool {
+	if pid <= 0 {
+		return false
+	}
+
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return false
+	}
+
+	err = process.Signal(syscall.Signal(0))
+	return err == nil || err == syscall.EPERM
+}
+
 func pollForProcessExit(ctx context.Context, pid int) {
-	if !IsProcessRunning(pid) {
+	if !isPIDAlive(pid) {
 		return
 	}
 
@@ -111,7 +127,7 @@ func pollForProcessExit(ctx context.Context, pid int) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			if !IsProcessRunning(pid) {
+			if !isPIDAlive(pid) {
 				return
 			}
 		}

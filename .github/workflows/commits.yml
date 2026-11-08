@@ -1,21 +1,48 @@
-name: Validate Commits
+name: Commit-PR
 
-on: [pull_request]
+# `edited` so renaming a PR re-runs the title check; the rest are the defaults.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# commitlint reads the PR's commit list via the API — needs pull-requests:read.
+# New repos default the GITHUB_TOKEN to contents+metadata read only, so without
+# this the action fails with "Resource not accessible by integration" on every
+# PR (Dependabot's included).
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   commitlint:
+    name: convention
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
+      # Rebase merges keep individual commits, so each must be conventional.
       - name: Validate commit messages
         uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed
         with:
           configFile: .commitlintrc.cjs
+
+      # Squash merges use the PR title as the commit subject, so it must be
+      # conventional too. Lint it with the SAME .commitlintrc.cjs via pure npx
+      # (NODE_PATH so commitlint resolves the extended preset — see the
+      # commit-lint task). PR_TITLE via env, not ${{…}} inline, to avoid injection.
+      - name: Validate PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          npm_config_loglevel: error   # hush npm's transitive-dep deprecation warnings
+        run: |
+          printf '%s\n' "$PR_TITLE" | npx -y \
+            --package @commitlint/cli@19 \
+            --package @commitlint/config-conventional@19 \
+            -- sh -c 'NODE_PATH="$(dirname "$(dirname "$(command -v commitlint)")")" commitlint --config .commitlintrc.cjs --verbose'

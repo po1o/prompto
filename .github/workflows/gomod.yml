@@ -1,4 +1,4 @@
-name: Go Mod
+name: Dependencies
 
 on: [pull_request]
 
@@ -8,24 +8,18 @@ concurrency:
 
 jobs:
   go-mod:
+    name: tidy-check
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ${{ github.workspace }}/src
     steps:
-    - name: Checkout code
-      uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a
-    - name: Install Go 🗳
-      uses: ./.github/workflows/composite/bootstrap-go
-    # Generated code is committed, so `go mod tidy` sees protobuf's direct
-    # importer without running `go generate`. Generated-vs-source drift is
-    # verified once, in the Build Code workflow.
-    - name: Check for unused dependencies
-      run: |
-        go mod tidy
-        if ! git diff --exit-code -- go.mod go.sum; then
-          git --no-pager diff -- go.mod go.sum
-          echo "go mod tidy is needed"
-          exit 1
-        fi
-        echo "Nothing to tidy"
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Go 🗳
+        uses: ./.github/workflows/composite/bootstrap-go
+      # Generated code is committed, so `go mod tidy` sees protobuf's direct
+      # importer without running `go generate`. Generated-vs-source drift is
+      # verified once, in the Code workflow.
+      - name: Check for unused dependencies
+        run: go tool task tidy:check

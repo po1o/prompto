@@ -4,13 +4,12 @@ package daemon
 
 import (
 	"context"
-	"errors"
 	"syscall"
 )
 
 // waitForProcessExit blocks until the process with the given PID exits.
 func waitForProcessExit(ctx context.Context, pid int) {
-	if !IsProcessRunning(pid) {
+	if !isPIDAlive(pid) {
 		return
 	}
 
@@ -28,8 +27,16 @@ func waitForProcessExit(ctx context.Context, pid int) {
 	}
 	setIdent(&event, pid)
 
-	_, err = syscall.Kevent(kq, []syscall.Kevent_t{event}, nil, nil)
+	for {
+		_, err = syscall.Kevent(kq, []syscall.Kevent_t{event}, nil, nil)
+		if err != syscall.EINTR {
+			break
+		}
+	}
 	if err != nil {
+		if !isPIDAlive(pid) {
+			return
+		}
 		pollForProcessExit(ctx, pid)
 		return
 	}
@@ -38,11 +45,9 @@ func waitForProcessExit(ctx context.Context, pid int) {
 	go func() {
 		defer close(done)
 		events := make([]syscall.Kevent_t, 1)
-		// Retry on EINTR: Go's runtime signals threads routinely (e.g. for
-		// preemption), and an interrupted wait does not mean the process exited.
 		for {
-			_, err := syscall.Kevent(kq, nil, events, nil)
-			if !errors.Is(err, syscall.EINTR) {
+			_, waitErr := syscall.Kevent(kq, nil, events, nil)
+			if waitErr != syscall.EINTR {
 				return
 			}
 		}

@@ -19,6 +19,10 @@ indent_style = tab
 [*.toml]
 indent_size = 2
 
+; YAML
+[*.{yml,yaml}]
+indent_size = 2
+
 ; JavaScript and JS mixes - match eslint, other standards
 [*.{js,json,ts,vue}]
 indent_size = 2
