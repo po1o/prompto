@@ -4,6 +4,7 @@ package daemon
 
 import (
 	"context"
+	"errors"
 
 	"golang.org/x/sys/unix"
 )
@@ -24,7 +25,14 @@ func waitForProcessExit(ctx context.Context, pid int) {
 	go func() {
 		defer close(done)
 		fds := []unix.PollFd{{Fd: int32(pidfd), Events: unix.POLLIN}}
-		_, _ = unix.Poll(fds, -1)
+		// Retry on EINTR: Go's runtime signals threads routinely (e.g. for
+		// preemption), and an interrupted wait does not mean the process exited.
+		for {
+			_, err := unix.Poll(fds, -1)
+			if !errors.Is(err, unix.EINTR) {
+				return
+			}
+		}
 	}()
 
 	select {

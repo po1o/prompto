@@ -18,6 +18,11 @@ import (
 //
 // Like ConfigWatcher, we watch the parent directory rather than the file itself,
 // because installers replace binaries atomically (delete + rename or rename + rename).
+//
+// fsnotify can miss some replacements: on macOS, kqueue watches the file a symlink
+// points to rather than the symlink itself, so swapping a launcher symlink (what
+// "brew upgrade" does) produces no event. A slow poll of the target signatures
+// covers those cases.
 type BinaryWatcher struct {
 	watcher     *fsnotify.Watcher
 	done        chan struct{}
@@ -36,10 +41,10 @@ type binarySignature struct {
 // NewBinaryWatcher creates a watcher that monitors binPath for changes.
 // onChange is called at most once when the binary is replaced.
 func NewBinaryWatcher(binPath string, onChange func()) (*BinaryWatcher, error) {
-	return newBinaryWatcher(binPath, onChange, time.Second)
+	return newBinaryWatcher(binPath, onChange, time.Second, 5*time.Second)
 }
 
-func newBinaryWatcher(binPath string, onChange func(), debounceWindow time.Duration) (*BinaryWatcher, error) {
+func newBinaryWatcher(binPath string, onChange func(), debounceWindow, pollInterval time.Duration) (*BinaryWatcher, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -84,7 +89,10 @@ func newBinaryWatcher(binPath string, onChange func(), debounceWindow time.Durat
 		}
 	}
 
-	go bw.eventLoop(onChange, debounceWindow)
+	var fired sync.Once
+	notify := func() { fired.Do(onChange) }
+
+	go bw.eventLoop(notify, debounceWindow, pollInterval)
 
 	return bw, nil
 }
@@ -156,11 +164,20 @@ func (bw *BinaryWatcher) hasBinaryChanged() bool {
 }
 
 // eventLoop processes fsnotify events with debounce.
-func (bw *BinaryWatcher) eventLoop(onChange func(), debounceWindow time.Duration) {
+func (bw *BinaryWatcher) eventLoop(onChange func(), debounceWindow, pollInterval time.Duration) {
 	var debounce *time.Timer
+
+	poll := time.NewTicker(pollInterval)
+	defer poll.Stop()
 
 	for {
 		select {
+		case <-poll.C:
+			if bw.hasBinaryChanged() {
+				log.Debug("binary change detected by poll, triggering callback")
+				onChange()
+			}
+
 		case event, ok := <-bw.watcher.Events:
 			if !ok {
 				return

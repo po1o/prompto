@@ -4,6 +4,7 @@ package daemon
 
 import (
 	"context"
+	"errors"
 	"syscall"
 )
 
@@ -37,7 +38,14 @@ func waitForProcessExit(ctx context.Context, pid int) {
 	go func() {
 		defer close(done)
 		events := make([]syscall.Kevent_t, 1)
-		_, _ = syscall.Kevent(kq, nil, events, nil)
+		// Retry on EINTR: Go's runtime signals threads routinely (e.g. for
+		// preemption), and an interrupted wait does not mean the process exited.
+		for {
+			_, err := syscall.Kevent(kq, nil, events, nil)
+			if !errors.Is(err, syscall.EINTR) {
+				return
+			}
+		}
 	}()
 
 	select {

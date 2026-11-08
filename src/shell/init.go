@@ -42,6 +42,7 @@ func stableExecutablePath(executable string) string {
 	}
 
 	cleanExe := filepath.Clean(executable)
+	realExe := resolvePath(cleanExe)
 
 	// If invoked via an explicit path (e.g. /opt/homebrew/bin/prompto), check if
 	// that path is a symlink resolving to executable.
@@ -51,7 +52,7 @@ func stableExecutablePath(executable string) string {
 			if absArg, err := filepath.Abs(argPath); err == nil {
 				cleanArg := filepath.Clean(absArg)
 				if cleanArg != cleanExe {
-					if target, err := filepath.EvalSymlinks(cleanArg); err == nil && filepath.Clean(target) == cleanExe {
+					if resolvePath(cleanArg) == realExe {
 						return cleanArg
 					}
 				}
@@ -86,17 +87,23 @@ func stableExecutablePath(executable string) string {
 			continue
 		}
 
-		target, err := filepath.EvalSymlinks(cleanLook)
-		if err != nil {
-			continue
-		}
-
-		if filepath.Clean(target) == cleanExe {
+		if resolvePath(cleanLook) == realExe {
 			return cleanLook
 		}
 	}
 
 	return cleanExe
+}
+
+// resolvePath returns file with every symlink resolved, so two spellings of the
+// same file compare equal (e.g. /var vs /private/var on macOS).
+func resolvePath(file string) string {
+	resolved, err := filepath.EvalSymlinks(file)
+	if err != nil {
+		return filepath.Clean(file)
+	}
+
+	return filepath.Clean(resolved)
 }
 
 // Init returns the command to initialize prompto for the shell.

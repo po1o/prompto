@@ -20,7 +20,7 @@ func TestBinaryWatcherTriggersOnWrite(t *testing.T) {
 		case triggered <- struct{}{}:
 		default:
 		}
-	}, 25*time.Millisecond)
+	}, 25*time.Millisecond, 50*time.Millisecond)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = watcher.Close() })
 
@@ -47,7 +47,7 @@ func TestBinaryWatcherTriggersOnRemove(t *testing.T) {
 		case triggered <- struct{}{}:
 		default:
 		}
-	}, 25*time.Millisecond)
+	}, 25*time.Millisecond, 50*time.Millisecond)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = watcher.Close() })
 
@@ -80,7 +80,7 @@ func TestBinaryWatcherTracksResolvedPathForSymlinkInput(t *testing.T) {
 		case triggered <- struct{}{}:
 		default:
 		}
-	}, 25*time.Millisecond)
+	}, 25*time.Millisecond, 50*time.Millisecond)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = watcher.Close() })
 
@@ -122,7 +122,7 @@ func TestBinaryWatcherTracksSymlinkWhenInputIsResolvedPath(t *testing.T) {
 		case triggered <- struct{}{}:
 		default:
 		}
-	}, 25*time.Millisecond)
+	}, 25*time.Millisecond, 50*time.Millisecond)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = watcher.Close() })
 
@@ -154,7 +154,7 @@ func TestBinaryWatcherTriggersOnWatchedDirectoryRemoval(t *testing.T) {
 		case triggered <- struct{}{}:
 		default:
 		}
-	}, 25*time.Millisecond)
+	}, 25*time.Millisecond, 50*time.Millisecond)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = watcher.Close() })
 
