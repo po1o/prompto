@@ -18,6 +18,17 @@ func startDetachedDaemon() error {
 		return fmt.Errorf("failed to get executable path: %w", err)
 	}
 
+	// Prefer the stable PATH entry (e.g. Homebrew's bin symlink) over the versioned
+	// path it points to, which disappears on upgrade. Resolve both sides so that
+	// symlinked parents (e.g. /var vs /private/var on macOS) still compare equal.
+	if lookPath, err := exec.LookPath("prompto"); err == nil {
+		lookResolved, lookErr := filepath.EvalSymlinks(lookPath)
+		exeResolved, exeErr := filepath.EvalSymlinks(executable)
+		if lookErr == nil && exeErr == nil && lookResolved == exeResolved {
+			executable = lookPath
+		}
+	}
+
 	// The detached process runs "daemon serve"
 	args := []string{"daemon", daemonSubcommandServe}
 	if configFlag != "" {
